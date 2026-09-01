@@ -10,6 +10,7 @@ Public site: <https://mathforai26.github.io/>
 - `documents/assignments/`: assignment source and PDFs.
 - `documents/misc_files/`: reusable LaTeX templates.
 - `course-design-decisions.md`: internal decision ledger; it is not linked from the public site.
+- `lecture-plans/`: one canonical internal plan per lecture; it is excluded from the public site and repository.
 
 ## Local preview
 

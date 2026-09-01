@@ -34,6 +34,7 @@ defaults:
 
 exclude:
   - course-design-decisions.md
+  - lecture-plans
   - README.md
   - startlocalservice
   - tmp

@@ -5,6 +5,7 @@ _site/
 vendor/
 .DS_Store
 course-design-decisions.md
+lecture-plans/
 *.aux
 *.fdb_latexmk
 *.fls
