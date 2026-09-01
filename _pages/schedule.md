@@ -7,10 +7,9 @@ permalink: /schedule/
 
 # Course schedule
 
-The topic titles name the broader mathematical material in each lecture. The
-guiding questions identify the issue that organizes the lecture; they are not
-intended to delimit everything the lecture may contain. Readings and precise
-theorem selections will be added later without changing this arc.
+The titles name the broader topic in each lecture. The
+guiding questions identify the issue that organizes the lecture. Readings and precise
+theorem selections will be added later.
 
 | Week | Lecture A | Lecture B | Coursework milestone |
 |:--:|:--|:--|:--|
@@ -28,4 +27,4 @@ theorem selections will be added later without changing this arc.
 | 12 | <strong class="lecture-topic">Statistical and exact learning</strong><br><span class="lecture-question">When does statistical success mean that the underlying rule has been learned?</span> | <strong class="lecture-topic">Denoising and score estimation</strong><br><span class="lecture-question">Why does denoising reveal a distribution?</span> | Revised research-question note due; Homework 6 in progress |
 | 13 | <strong class="lecture-topic">Reverse diffusion and generative dynamics</strong><br><span class="lecture-question">Why can reverse dynamics generate, and how do errors accumulate?</span> | <strong class="lecture-topic">Transformer training on accelerators</strong><br><span class="lecture-question">Why can transformers convert accelerator computation into scalable training?</span> | Homework 6 due |
 
-Evaluation, uncertainty, contamination, distribution shift, empirical scaling laws, curricula, and synthetic data are incorporated where their mathematics arises. They do not occupy separate lectures.
+Topics also potentially include evaluation, uncertainty, contamination, distribution shift, empirical scaling laws, curricula, and synthetic data and these are incorporated where their mathematics arises. 

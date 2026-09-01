@@ -33,10 +33,14 @@ Originality is welcome but unnecessary. Precision, coherence, technical understa
 
 ## Promising forms of question
 
+- An empirical observation is puzzling (especially, if results are unexpectedly good). Is the phenomenon that is the subject of the observation real? Can theory explain what is happening?
+- A claimed explanation of an empirical phenomenon relies on a toy model. Which prediction of that explanation distinguishes it from alternatives? Are there better versions of the toy model?
 - A theorem assumes a particular distribution, symmetry, coverage condition, or initialization. Is that assumption necessary?
 - Two training objectives share the same population optimum. When do finite data, misspecification, optimization, or sequential deployment make them behave differently?
 - A negative result applies to a fixed-pass or bounded-memory model. Which additional resource removes the obstruction, and at what cost?
-- A claimed explanation of an empirical phenomenon relies on a toy model. Which prediction of that explanation distinguishes it from alternatives?
 - A task is statistically easy but exact identification is expensive. Can a curriculum, verifier, or different information protocol close the gap?
+
+These questions feel "small"; they are concerned with small alterations of a problem, or a statement. 
+This is normal -- this is how one starts. An important point about developing a question is that it should feel genuinely interesting. As one thinks about the question, further questions may arise, the scope may broaden. One often reads some literature that feels relevant. Big conceptual questions are also fine, but usually are harder to develop.
 
 Use the provided [LaTeX template]({{ '/documents/misc_files/research_question_template.tex' | relative_url }}).
