@@ -11,7 +11,7 @@ permalink: /
 # Mathematical Foundations of Modern AI
 
 <p class="course-lede">
-Where does the power of current AI systems come from? This course develops clean mathematical models for the ingredients of modern AI, examines when apparent obstacles become non-obstacles, and keeps proved results, empirical evidence, plausible mechanisms, and open questions separate.
+This course develops clean mathematical models for the sources of power in modern AI systems. It examines when apparent obstacles become non-obstacles and keeps proved results, empirical evidence, plausible mechanisms, and open questions separate.
 </p>
 
 <div class="question-panel">

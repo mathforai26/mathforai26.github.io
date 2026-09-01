@@ -7,8 +7,6 @@ permalink: /syllabus/
 
 # Syllabus
 
-<div class="draft-note"><strong>Administrative draft.</strong> Submission system and calendar dates remain to be filled in.</div>
-
 | | |
 |:--|:--|
 | **Course** | CMPUT 654: Mathematical Foundations of Modern AI |
@@ -78,4 +76,4 @@ Routine announcements and discussion will use the [course Slack workspace](https
 
 Students may discuss ideas with classmates unless an assignment states otherwise. Every submitted solution must be written independently and must acknowledge collaborators and all sources consulted, including books, papers, websites, course notes, code, and computational or AI tools. Students must understand and be able to explain every step of their submission. Sharing written solutions or consulting solutions from earlier offerings is prohibited.
 
-The detailed policy for generative-AI assistance will be published before Homework 1. At minimum, any permitted use must be disclosed precisely, and generated text or proofs cannot substitute for the student’s own mathematical understanding.
+Generative-AI assistance is discouraged because it can prevent the learning that homework is intended to produce. One potentially acceptable use is to discuss ideas with an AI system as one would with a classmate, without asking it to produce a solution, proof, or text for submission. Any use must be disclosed precisely. Students remain responsible for their own reasoning and must be able to explain every step of their work.
