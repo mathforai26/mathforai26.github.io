@@ -1,0 +1,41 @@
+title: Math for Modern AI
+description: >-
+  CMPUT 654: Mathematical Foundations of Modern AI, Fall 2026.
+baseurl: ""
+url: "https://mathforai26.github.io"
+
+remote_theme: just-the-docs/just-the-docs@v0.5.3
+theme: just-the-docs
+
+plugins:
+  - jekyll-feed
+
+collections:
+  pages:
+    permalink: "/:collection/:path/"
+    output: true
+
+just_the_docs:
+  collections:
+    pages:
+      name: Course pages
+
+search_enabled: true
+heading_anchors: false
+back_to_top: true
+back_to_top_text: "Back to top"
+footer_content: "CMPUT 654 · Mathematical Foundations of Modern AI · Fall 2026"
+color_scheme: custom_color_scheme
+
+defaults:
+  - scope:
+      path: ""
+    values:
+      image: /assets/og.png
+
+exclude:
+  - course-design-decisions.md
+  - README.md
+  - startlocalservice
+  - tmp
+  - vendor

@@ -1,0 +1,148 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage[colorlinks=true,linkcolor=black,urlcolor=blue]{hyperref}
+\usepackage{fancyhdr}
+
+\pagestyle{fancy}
+\setlength{\headheight}{14pt}
+\fancyhf{}
+\lhead{CMPUT 654: Mathematical Foundations of Modern AI}
+\rhead{Homework 0}
+\cfoot{\thepage}
+
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\Pp}{\mathbb{P}}
+\newcommand{\norm}[1]{\left\lVert #1\right\rVert}
+\DeclareMathOperator*{\argmin}{arg\,min}
+\DeclareMathOperator*{\argmax}{arg\,max}
+
+\newtheoremstyle{courseproblem}
+  {1.1em}{1.1em}{\normalfont}{}{\bfseries}{.}{0.6em}{}
+\theoremstyle{courseproblem}
+\newtheorem{problem}{Problem}
+
+\begin{document}
+
+\begin{center}
+{\Large\bfseries Homework 0: Mathematical Readiness}\\[0.35em]
+{\large CMPUT 654, Fall 2026}
+\end{center}
+
+\paragraph{Purpose.}
+This assignment is not graded. It samples the proof writing, probability,
+linear algebra, calculus, and abstraction used in the course. Attempt it during
+the first week without searching for solutions. If substantial parts remain
+inaccessible after reviewing the relevant prerequisites, speak with the
+instructor promptly and make an honest decision about whether the course is a
+good fit.
+
+\paragraph{Submission.}
+No submission is required unless the instructor announces otherwise. Students
+who would like diagnostic feedback may submit a typed PDF by the end of Week 1.
+Use the course homework template, acknowledge every source and collaborator,
+and write every argument in your own words.
+
+\paragraph{Total.} 100 diagnostic points. The points indicate intended effort,
+not a course grade.
+
+\begin{problem}[Log loss identifies a conditional probability --- 25 points]
+Let $Y\sim\operatorname{Bernoulli}(\eta)$, where $\eta\in(0,1)$. For a
+prediction $q\in(0,1)$, define the log loss
+\[
+\ell(q;Y)=-Y\log q-(1-Y)\log(1-q)
+\]
+and its population risk $L_\eta(q)=\E[\ell(q;Y)]$.
+\begin{enumerate}[label=(\alph*)]
+  \item Compute $L_\eta'(q)$ and $L_\eta''(q)$, and prove that $q=\eta$ is
+  its unique minimizer. \hfill [7]
+  \item Show that
+  \[
+  L_\eta(q)-L_\eta(\eta)
+  =\eta\log\frac{\eta}{q}+(1-\eta)\log\frac{1-\eta}{1-q}.
+  \]
+  Identify the expression on the right. \hfill [6]
+  \item You may use the Bernoulli form of Pinsker's inequality,
+  $D_{\mathrm{KL}}(\operatorname{Ber}(\eta)\|\operatorname{Ber}(q))
+  \ge 2(\eta-q)^2$. Deduce a bound on $|q-\eta|$ from an upper bound
+  $L_\eta(q)-L_\eta(\eta)\le\varepsilon$. \hfill [5]
+  \item A classifier predicts $1$ when $q\ge 1/2$ and $0$ otherwise. Find
+  the Bayes-optimal classifier under zero--one loss and explain why a small
+  probability-estimation error need not guarantee the correct classification
+  when $\eta$ is close to $1/2$. \hfill [7]
+\end{enumerate}
+\end{problem}
+
+\begin{problem}[Uniform estimation and selection --- 20 points]
+For every $j\in[m]$, let $Z_{j,1},\ldots,Z_{j,n}$ be independent random
+variables taking values in $[0,1]$, with common mean $\mu_j$ for fixed $j$.
+Let $\widehat\mu_j=n^{-1}\sum_{i=1}^n Z_{j,i}$. You may use Hoeffding's
+inequality
+\[
+\Pp\!\left(|\widehat\mu_j-\mu_j|\ge\varepsilon\right)
+\le 2e^{-2n\varepsilon^2}.
+\]
+\begin{enumerate}[label=(\alph*)]
+  \item Prove that, with probability at least $1-\delta$,
+  $\max_{j\in[m]}|\widehat\mu_j-\mu_j|\le\varepsilon$, provided
+  \[
+  n\ge \frac{\log(2m/\delta)}{2\varepsilon^2}.
+  \]
+  State exactly where independence is used and where it is not used. \hfill [10]
+  \item Let $\widehat j\in\argmax_j\widehat\mu_j$ and
+  $j^\star\in\argmax_j\mu_j$. On the event above, prove
+  $\mu_{j^\star}-\mu_{\widehat j}\le 2\varepsilon$. \hfill [10]
+\end{enumerate}
+\end{problem}
+
+\begin{problem}[Which interpolator does gradient descent select? --- 30 points]
+Let $A\in\R^{n\times d}$ have full row rank, with $n<d$, and let
+$b\in\R^n$. Consider
+\[
+f(w)=\frac12\norm{Aw-b}_2^2
+\]
+and gradient descent
+\[
+w_{t+1}=w_t-\gamma A^\top(Aw_t-b),\qquad w_0=0.
+\]
+\begin{enumerate}[label=(\alph*)]
+  \item Show that
+  $w^\dagger=A^\top(AA^\top)^{-1}b$ interpolates the data and is the unique
+  minimum-Euclidean-norm vector satisfying $Aw=b$. \hfill [10]
+  \item Prove that every iterate $w_t$ lies in the row space of $A$. \hfill [5]
+  \item Let $r_t=Aw_t-b$. Show
+  $r_{t+1}=(I-\gamma AA^\top)r_t$. Prove that $r_t\to0$ whenever
+  $0<\gamma<2/\norm{A}_2^2$. \hfill [10]
+  \item Conclude that $w_t\to w^\dagger$. What can change if $w_0$ has a
+  nonzero component in the null space of $A$? \hfill [5]
+\end{enumerate}
+\end{problem}
+
+\begin{problem}[A small query-complexity lower bound --- 25 points]
+An unknown index $i^\star\in[k]$ is selected. On query $j\in[k]$, a learner
+observes $1$ if $j=i^\star$ and $0$ otherwise. The learner must eventually
+identify $i^\star$ with probability one. It may choose queries adaptively and
+may randomize.
+\begin{enumerate}[label=(\alph*)]
+  \item Give a deterministic learner making at most $k-1$ queries on every
+  instance, and prove it is correct. \hfill [6]
+  \item Prove that every deterministic learner requires at least $k-1$
+  queries on some instance. \hfill [6]
+  \item Consider querying indices in a uniformly random order and stopping
+  after finding $i^\star$, or after eliminating $k-1$ indices. Show that for
+  every $i^\star$, its expected number of queries is
+  \[
+  \frac{k+1}{2}-\frac1k.
+  \]
+  \hfill [6]
+  \item Use Yao's minimax principle with a uniform random $i^\star$ to prove
+  that every randomized learner has worst-case expected query complexity at
+  least $(k+1)/2-1/k$. State the version of Yao's principle you use. \hfill [7]
+\end{enumerate}
+\end{problem}
+
+\end{document}

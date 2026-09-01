@@ -1,0 +1,86 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage[colorlinks=true,linkcolor=black,urlcolor=blue,citecolor=blue]{hyperref}
+\usepackage{fancyhdr}
+
+% ---------- Fill these in ----------
+\newcommand{\coursename}{CMPUT 654: Mathematical Foundations of Modern AI}
+\newcommand{\term}{Fall 2026}
+\newcommand{\hwnumber}{1}
+\newcommand{\duedate}{DATE}
+\newcommand{\studentname}{YOUR NAME}
+\newcommand{\studentid}{YOUR STUDENT ID}
+\newcommand{\collaborators}{None}
+\newcommand{\sourcesused}{Course notes only}
+% -----------------------------------
+
+\pagestyle{fancy}
+\setlength{\headheight}{14pt}
+\fancyhf{}
+\lhead{\coursename}
+\rhead{Homework \#\hwnumber}
+\cfoot{\thepage}
+
+\newtheoremstyle{courseproblem}
+  {1.1em}{1.1em}{\normalfont}{}% space above/below, body font, indent
+  {\bfseries}{.}{0.6em}{}
+\theoremstyle{courseproblem}
+\newtheorem{problem}{Problem}
+
+\newenvironment{solution}
+  {\begin{proof}[Solution]}
+  {\end{proof}}
+
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\Pp}{\mathbb{P}}
+\newcommand{\norm}[1]{\left\lVert #1\right\rVert}
+\newcommand{\abs}[1]{\left\lvert #1\right\rvert}
+\DeclareMathOperator*{\argmin}{arg\,min}
+\DeclareMathOperator*{\argmax}{arg\,max}
+
+\begin{document}
+
+\begin{center}
+  {\Large\bfseries Homework \#\hwnumber}\\[0.3em]
+  {\coursename, \term}\\[0.8em]
+  \begin{tabular}{rl}
+    Student: & \studentname\\
+    Student ID: & \studentid\\
+    Due: & \duedate
+  \end{tabular}
+\end{center}
+
+\paragraph{Collaborators.} \collaborators
+
+\paragraph{Sources and tools.} \sourcesused
+
+\paragraph{Submission.}
+Submit one PDF. Your solutions must be written in your own words, all sources and
+collaborators must be acknowledged, and you must understand every step. State
+clearly when you invoke a result from class. Keep the original problem numbering.
+
+% Copy the problem statement, then replace the placeholder text with your work.
+
+\begin{problem}
+Paste Problem 1 here.
+\end{problem}
+
+\begin{solution}
+Write a complete solution here.
+\end{solution}
+
+\begin{problem}
+Paste Problem 2 here.
+\end{problem}
+
+\begin{solution}
+Write a complete solution here.
+\end{solution}
+
+\end{document}

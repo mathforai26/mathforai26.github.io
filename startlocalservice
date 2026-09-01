@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+course_root="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$course_root"
+
+export BUNDLE_USER_HOME="${TMPDIR:-/tmp}/mathforai-bundler"
+export BUNDLE_PATH="$course_root/vendor/bundle"
+export BUNDLE_APP_CONFIG="$course_root/.bundle"
+export GEM_HOME="$course_root/vendor/bundle/ruby/3.0.0"
+
+bundle exec jekyll serve --config _config.yml,_config_local.yml

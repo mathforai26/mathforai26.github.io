@@ -1,0 +1,94 @@
+.site-title,
+.nav-list-link,
+.breadcrumb-nav,
+.label,
+.btn {
+  font-family: 'Source Sans 3', sans-serif;
+}
+
+.site-title {
+  font-weight: 700;
+}
+
+.course-kicker {
+  color: #7d1748;
+  font-family: 'Source Sans 3', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  margin-bottom: 0.65rem;
+  text-transform: uppercase;
+}
+
+.course-lede {
+  font-size: 1.16rem;
+  line-height: 1.75;
+  max-width: 48rem;
+}
+
+.question-panel {
+  background: #fbf7f8;
+  border-left: 5px solid #7d1748;
+  border-radius: 0 0.35rem 0.35rem 0;
+  margin: 2rem 0;
+  padding: 1.15rem 1.35rem;
+}
+
+.question-panel p:last-child {
+  margin-bottom: 0;
+}
+
+.course-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  margin: 2rem 0;
+}
+
+.course-card {
+  border: 1px solid #ded7da;
+  border-radius: 0.4rem;
+  padding: 1rem 1.1rem;
+}
+
+.course-card h3 {
+  font-family: 'Source Sans 3', sans-serif;
+  font-size: 1rem;
+  margin-top: 0;
+}
+
+.draft-note {
+  background: #fff8df;
+  border: 1px solid #ead798;
+  border-radius: 0.35rem;
+  margin: 1.5rem 0;
+  padding: 0.85rem 1rem;
+}
+
+table {
+  font-size: 0.94rem;
+}
+
+.lecture-topic {
+  color: #27262a;
+  font-family: 'Source Sans 3', sans-serif;
+  font-weight: 700;
+}
+
+.lecture-question {
+  color: #5c5760;
+  display: inline-block;
+  font-size: 0.84rem;
+  line-height: 1.45;
+  margin-top: 0.28rem;
+}
+
+hr {
+  border-top: 3px solid #7d1748;
+}
+
+@media (max-width: 42rem) {
+  .course-lede {
+    font-size: 1.04rem;
+  }
+}
