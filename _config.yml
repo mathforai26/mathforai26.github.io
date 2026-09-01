@@ -5,7 +5,6 @@ baseurl: ""
 url: "https://mathforai26.github.io"
 
 remote_theme: just-the-docs/just-the-docs@v0.5.3
-theme: just-the-docs
 
 plugins:
   - jekyll-feed
