@@ -14,8 +14,6 @@ permalink: /
 Where does the power of current AI systems come from? This course develops clean mathematical models for the ingredients of modern AI, examines when apparent obstacles become non-obstacles, and keeps proved results, empirical evidence, plausible mechanisms, and open questions separate.
 </p>
 
-<div class="draft-note"><strong>Draft syllabus.</strong> Calendar dates and submission details will be added when confirmed. The 13-week intellectual arc and assessment structure are fixed; the scribing format remains provisional.</div>
-
 <div class="question-panel">
 <strong>The recurring question.</strong> Where did the task-relevant information and computational power enter—from architecture, objective, data, optimization, feedback, interaction, memory, tools, evolution, or culture?
 </div>
