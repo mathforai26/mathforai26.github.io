@@ -7,7 +7,7 @@ permalink: /about/
 
 # About the course
 
-**CMPUT 654: Mathematical Foundations of Modern AI** is a graduate course taught in Fall 2026.
+**CMPUT 654: Mathematical Foundations of Modern AI Systems** is a graduate course taught in Fall 2026.
 
 The organizing question is:
 

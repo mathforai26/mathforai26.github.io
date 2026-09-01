@@ -2,13 +2,13 @@
 layout: default
 title: Home
 nav_order: 1
-description: "CMPUT 654: Mathematical Foundations of Modern AI"
+description: "CMPUT 654: Mathematical Foundations of Modern AI Systems"
 permalink: /
 ---
 
 <div class="course-kicker">CMPUT 654 · Fall 2026</div>
 
-# Mathematical Foundations of Modern AI
+# Mathematical Foundations of Modern AI Systems
 
 <p class="course-lede">
 This course develops clean mathematical models for the sources of power in modern AI systems. It examines when apparent obstacles become non-obstacles and keeps proved results, empirical evidence, plausible mechanisms, and open questions separate.

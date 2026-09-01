@@ -9,10 +9,10 @@ permalink: /syllabus/
 
 | | |
 |:--|:--|
-| **Course** | CMPUT 654: Mathematical Foundations of Modern AI |
+| **Course** | CMPUT 654: Mathematical Foundations of Modern AI Systems |
 | **Term** | Fall 2026 |
 | **Instructor** | [Csaba Szepesvári](https://sites.ualberta.ca/~szepesva/) |
-| **Format** | Two 90-minute lectures per week for 13 weeks |
+| **Format** | Two 80-minute lectures per week for 13 weeks |
 | **Meeting time** | Tuesday and Thursday, 3:30–4:50pm |
 | **Room** | ED 2-135 |
 | **Office hours** | Arrange by private message on Slack |

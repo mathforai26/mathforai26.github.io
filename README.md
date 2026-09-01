@@ -1,4 +1,4 @@
-# CMPUT 654 — Mathematical Foundations of Modern AI
+# CMPUT 654 — Mathematical Foundations of Modern AI Systems
 
 Source for the Fall 2026 course website.
 
