@@ -221,35 +221,9 @@ diagram:
 The next sections expand the three middle boxes.
 
 \paragraph{Where is position added?}
-Equation~\eqref{eq:input-embedding} describes additive absolute positions.
-They are added once, before the first transformer block, and then carried by
-the residual stream. Other position mechanisms enter the computation
-differently. For example, a layer- and head-specific relative-position bias
-changes the attention calculation to
-\begin{equation}
-A_a=\softmax_{\mathrm{row}}\!\left(
-\frac{Q_aK_a^\top}{\sqrt{d_h}}+M+B_{\ell,a}
-\right),
-\qquad
-(B_{\ell,a})_{ij}=b_{\ell,a}\bigl(\rho(i-j)\bigr).
-\label{eq:relative-position-bias}
-\end{equation}
-Here $\rho$ may clip or bucket the relative displacement $i-j$, and
-$b_{\ell,a}$ assigns a learned scalar to each bucket. T5 uses this form with
-the bias parameters shared across layers and different across heads. ALiBi
-instead uses a fixed, head-dependent linear penalty such as
-$-m_a(i-j)$ for a causal pair $j\leq i$. RoPE applies a position-dependent
-rotation to queries and keys in each attention layer that uses RoPE. These are
-alternative architectural choices; the symbol $P$ in
-\eqref{eq:input-embedding} denotes only additive absolute positions; relative
-bias and RoPE have the separate forms just described.
-In \eqref{eq:relative-position-bias}, rows index query positions and columns
-index key positions, so $i-j$ compares the output position $i$ with the source
-position $j$.
-
-\paragraph{Remark.}
-The relative-displacement calculation for rotary positions will be developed
-separately in the homework.
+In \eqref{eq:input-embedding}, absolute position information is added once,
+before the first transformer block; relative bias and RoPE instead modify
+attention within each block and are described below.
 
 \section{One fully specified decoder block}
 
@@ -352,6 +326,28 @@ $j$.
 The softmax acts row by row, where a row represents one query position and its
 columns represent the available key/value source positions. The causal mask
 makes the attention weight of every future source position exactly zero.
+
+\paragraph{Position mechanisms inside attention.}
+A layer- and head-specific relative-position bias changes the attention
+calculation to
+\begin{equation}
+A_a=\softmax_{\mathrm{row}}\!\left(
+\frac{Q_aK_a^\top}{\sqrt{d_h}}+M+B_{\ell,a}
+\right),
+\qquad
+(B_{\ell,a})_{ij}=b_{\ell,a}\bigl(\rho(i-j)\bigr).
+\label{eq:relative-position-bias}
+\end{equation}
+Here $\rho$ may clip or bucket the relative displacement $i-j$, and
+$b_{\ell,a}$ assigns a learned scalar to each bucket. Rows index query
+positions and columns index key positions, so $i-j$ compares output position
+$i$ with source position $j$. T5 uses this form with the bias parameters
+shared across layers and different across heads. ALiBi uses a fixed,
+head-dependent linear penalty such as $-m_a(i-j)$ for a causal pair $j\leq i$.
+RoPE applies a position-dependent rotation to queries and keys in each
+attention layer that uses RoPE. The relative-displacement calculation for RoPE
+will be developed separately in the homework.
+
 Concatenate the head outputs, apply the output projection, and add the result
 to the residual stream:
 \begin{equation}
