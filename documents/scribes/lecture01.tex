@@ -342,10 +342,10 @@ Concatenate the head outputs and apply the first residual connection:
 G=H^\ell+[O_1\mid\cdots\mid O_h]W^O_\ell,
 \qquad W^O_\ell\in\R^{hd_h\times d}.
 \end{equation}
-The notation $[O_1\mid\cdots\mid O_h]\in\R^{T\times hd_h}$ concatenates the
-\emph{columns}: rows remain sequence positions, while the columns collect the
-features from all heads. Multiplication by $W^O_\ell$ maps those columns back
-to $d$ model features, so $G\in\R^{T\times d}$ can be added to $H^\ell$.
+The block matrix $[O_1\mid\cdots\mid O_h]\in\R^{T\times hd_h}$ has the head
+outputs $O_1,\ldots,O_h$ as its column blocks. Multiplication by $W^O_\ell$
+maps the $hd_h$ head features back to $d$ model features, so
+$G\in\R^{T\times d}$ can be added to $H^\ell$.
 The positionwise feed-forward sublayer and second residual connection give
 \begin{align}
 R&=\operatorname{LayerNorm}_{\ell,2}(G),\\
