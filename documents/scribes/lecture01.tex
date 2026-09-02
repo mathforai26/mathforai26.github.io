@@ -296,19 +296,31 @@ G
 The equations below specify the calculations inside these boxes.
 
 For head $a\in[h]$, let
-\begin{align}
-U&=\operatorname{LayerNorm}_{\ell,1}(H^\ell), \\
+\begin{equation}
+\begin{aligned}
+U&=\operatorname{LayerNorm}_{\ell,1}(H^\ell),
+&\qquad U&\in\R^{T\times d},\\
 Q_a&=UW^Q_{\ell,a},
-&K_a&=UW^K_{\ell,a},
-&V_a&=UW^V_{\ell,a}, \\
+&Q_a&\in\R^{T\times d_h},\\
+K_a&=UW^K_{\ell,a},
+&K_a&\in\R^{T\times d_h},\\
+V_a&=UW^V_{\ell,a},
+&V_a&\in\R^{T\times d_h},\\
 A_a&=\softmax_{\mathrm{row}}\!\left(
 \frac{Q_aK_a^\top}{\sqrt{d_h}}+M\right),
-&O_a&=A_aV_a,
-\end{align}
+&A_a&\in\R^{T\times T},\\
+O_a&=A_aV_a,
+&O_a&\in\R^{T\times d_h}.
+\end{aligned}
+\end{equation}
 where
 \begin{equation}
-W^Q_{\ell,a},W^K_{\ell,a},W^V_{\ell,a}\in\R^{d\times d_h},
-\qquad
+W^Q_{\ell,a}\in\R^{d\times d_h},\qquad
+W^K_{\ell,a}\in\R^{d\times d_h},\qquad
+W^V_{\ell,a}\in\R^{d\times d_h},
+\end{equation}
+and $M\in(\R\cup\{-\infty\})^{T\times T}$ is the causal mask
+\begin{equation}
 M_{ij}=\begin{cases}
 0,&j\leq i,\\
 -\infty,&j>i.
@@ -316,11 +328,11 @@ M_{ij}=\begin{cases}
 \end{equation}
 The matrices $U,Q_a,K_a,V_a$, and $O_a$ all have one row per sequence
 position. The columns of $U$ are model features; the columns of
-$Q_a,K_a,V_a,O_a\in\R^{T\times d_h}$ are head features. The score, mask, and
-attention matrices lie in $\R^{T\times T}$. Their row $i$ refers to query or
-output position $i$, and their column $j$ refers to key/value or source
-position $j$. In particular, $(A_a)_{ij}$ is the weight with which position
-$i$ uses the value at position $j$.
+$Q_a,K_a,V_a,O_a$ are head features. The score and attention matrices lie in
+$\R^{T\times T}$. Their row $i$ refers to query or output position $i$, and
+their column $j$ refers to key/value or source position $j$. In particular,
+$(A_a)_{ij}$ is the weight with which position $i$ uses the value at position
+$j$.
 
 The softmax acts row by row, where a row represents one query position and its
 columns represent the available key/value source positions. The causal mask
