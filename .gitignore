@@ -6,6 +6,9 @@ vendor/
 .DS_Store
 course-design-decisions.md
 lecture-plans/
+homework-plans/
+outputs/
+tmp/
 *.aux
 *.fdb_latexmk
 *.fls

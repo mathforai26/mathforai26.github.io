@@ -1,0 +1,379 @@
+\documentclass[11pt,twoside]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{booktabs}
+\usepackage[inline,shortlabels]{enumitem}
+\usepackage{xcolor}
+\usepackage{microtype}
+\usepackage[colorlinks=true,linkcolor=blue!60!black,urlcolor=blue!60!black,citecolor=blue!60!black]{hyperref}
+
+\definecolor{courseblue}{HTML}{17365D}
+\definecolor{lightblue}{HTML}{EAF2F8}
+
+\newcounter{lecnum}
+\setcounter{lecnum}{1}
+\renewcommand{\thepage}{1--\arabic{page}}
+\renewcommand{\thesection}{1.\arabic{section}}
+\renewcommand{\thesubsection}{1.\arabic{section}.\arabic{subsection}}
+\renewcommand{\theequation}{1.\arabic{equation}}
+
+\newtheorem{theorem}{Theorem}[lecnum]
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{proposition}[theorem]{Proposition}
+\theoremstyle{definition}
+\newtheorem{exercise}[theorem]{Exercise}
+\newtheorem{example}[theorem]{Example}
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+
+\DeclareMathOperator{\softmax}{softmax}
+\DeclareMathOperator{\LN}{LN}
+\newcommand{\R}{\mathbb R}
+\newcommand{\E}{\mathbb E}
+\newcommand{\Pp}{\mathbb P}
+\newcommand{\1}{\mathbb I}
+
+\pagestyle{myheadings}
+\markboth{Lecture 1: Transformers, pretraining, inference, and hardness}
+{Lecture 1: Transformers, pretraining, inference, and hardness}
+
+\begin{document}
+
+\begin{center}
+\fcolorbox{courseblue}{white}{%
+\begin{minipage}{0.92\textwidth}
+\vspace{1mm}
+\textbf{CMPUT 654: Mathematical Foundations of Modern AI Systems}
+\hfill Fall 2026
+
+\vspace{3mm}
+\begin{center}
+{\Large\bfseries Lecture 1: Transformers, pretraining, inference, and a first hardness result}
+
+\vspace{1mm}
+September 1, 2026
+\end{center}
+
+\vspace{2mm}
+\textit{Lecturer: Csaba Szepesv\'ari}
+\hfill
+\textit{Scribe: instructor model note}
+\vspace{1mm}
+\end{minipage}}
+\end{center}
+
+\noindent\textbf{Purpose of this note.}
+This is an example of the expected scribe-note style: identify the lecture's
+question, define the mathematical objects, state claims with their scope, and
+reconstruct the central calculation. It is an exposition, not a transcript.
+
+\medskip
+\noindent\textbf{Delivery note.}
+Administrative material occupied a substantial part of the meeting. The
+lecture reached transformer mechanics, part of the pretraining construction,
+autoregressive inference, and the beginning of the hardness argument. The
+remaining parts of the planned opening map continue on September 3.
+
+\section{A language model as a conditional probability model}
+
+Let the vocabulary have size $V$, and identify token $x_t\in[V]$ with the
+standard basis vector $e_{x_t}\in\{0,1\}^V$. Include a beginning-of-sequence
+token $x_0$. For a length-$T$ token sequence, define the shifted input matrix
+$Z\in\{0,1\}^{T\times V}$ by
+\begin{equation}
+Z_{t,:}=e_{x_{t-1}}^\top,
+\qquad t=1,\ldots,T.
+\end{equation}
+An embedding matrix $E\in\R^{V\times d}$ and a position matrix
+$P\in\R^{T\times d}$ give
+\begin{equation}
+H^0=ZE+P,
+\qquad
+H^0_{t,:}=E_{x_{t-1},:}+P_{t,:}.
+\end{equation}
+The one-hot vector is conceptual: software implements $e_{x_{t-1}}^\top E$ as
+a row lookup. The position term is necessary because attention acting on a set
+of content vectors does not by itself identify their order. Additive learned
+positions, fixed sinusoidal positions, and rotary positions are different ways
+to supply this information.
+
+\section{One fully specified decoder block}
+
+Suppose $H^\ell\in\R^{T\times d}$ enters layer $\ell$. We describe a standard
+pre-normalized decoder block with $h$ attention heads of width $d_h$. For head
+$a\in[h]$, let
+\begin{align}
+U&=\LN_{\ell,1}(H^\ell), \\
+Q_a&=UW^Q_{\ell,a},
+&K_a&=UW^K_{\ell,a},
+&V_a&=UW^V_{\ell,a}, \\
+A_a&=\softmax_{\mathrm{row}}\!\left(
+\frac{Q_aK_a^\top}{\sqrt{d_h}}+M\right),
+&O_a&=A_aV_a,
+\end{align}
+where
+\begin{equation}
+W^Q_{\ell,a},W^K_{\ell,a},W^V_{\ell,a}\in\R^{d\times d_h},
+\qquad
+M_{ij}=\begin{cases}
+0,&j\leq i,\\
+-\infty,&j>i.
+\end{cases}
+\end{equation}
+The rowwise softmax makes every row of $A_a$ a probability vector. The causal
+mask sets the weight of every future position to zero. Concatenate the head
+outputs and apply the first residual connection:
+\begin{equation}
+G=H^\ell+[O_1\mid\cdots\mid O_h]W^O_\ell,
+\qquad W^O_\ell\in\R^{hd_h\times d}.
+\end{equation}
+The feed-forward sublayer acts on each position separately:
+\begin{align}
+R&=\LN_{\ell,2}(G),\\
+H^{\ell+1}
+&=G+
+\phi\!\left(RW^1_\ell+\mathbf 1(b^1_\ell)^\top\right)W^2_\ell
++\mathbf 1(b^2_\ell)^\top,
+\end{align}
+where
+\begin{equation}
+W^1_\ell\in\R^{d\times d_{\rm ff}},
+\quad
+W^2_\ell\in\R^{d_{\rm ff}\times d},
+\quad
+b^1_\ell\in\R^{d_{\rm ff}},
+\quad
+b^2_\ell\in\R^d.
+\end{equation}
+For a concrete pedagogical choice, $\phi(z)=z\Phi(z)$ coordinatewise is the
+GELU activation, with $\Phi$ the standard normal distribution function.
+Layer normalization acts on a row $r\in\R^d$ as
+\begin{equation}
+\LN_{\gamma,\beta}(r)
+=\gamma\odot
+\frac{r-\bar r\mathbf 1}
+{\sqrt{d^{-1}\lVert r-\bar r\mathbf 1\rVert_2^2+\varepsilon}}
++\beta.
+\end{equation}
+Practical models change some of these choices, for example replacing LayerNorm
+by RMSNorm, additive positions by RoPE, or the plain MLP by a gated MLP. The
+equations above specify one complete decoder block; they are not a claim that
+this particular variant is uniquely responsible for modern performance.
+
+\section{The single-token view and pretraining}
+
+After $L$ decoder blocks, the causal mask ensures that row
+$h_t^L=H^L_{t,:}$ depends only on the prefix $x_{<t}$. With
+$W_U\in\R^{d\times V}$ and $b_U\in\R^V$, define logits and the next-token
+distribution by
+\begin{align}
+z_t&=h_t^LW_U+b_U,\\
+p_\theta(x_t=v\mid x_{<t})
+&=\frac{\exp(z_{t,v})}{\sum_{u=1}^V\exp(z_{t,u})}.
+\end{align}
+The loss on the observed token is
+\begin{equation}
+\ell_t(\theta)
+=-\log p_\theta(x_t\mid x_{<t})
+=-z_{t,x_t}+\log\sum_{u=1}^V e^{z_{t,u}}.
+\end{equation}
+Weight tying sets $W_U=E^\top$; it is common, but the probability model does
+not require it. Zooming back out gives the autoregressive factorization
+\begin{equation}
+p_\theta(x_{1:T})
+=\prod_{t=1}^T p_\theta(x_t\mid x_{<t})
+\end{equation}
+and the empirical pretraining objective
+\begin{equation}
+\widehat L_{\rm pre}(\theta)
+=\frac{1}{N_{\rm tok}}\sum_{i,t}
+-\log p_\theta(x_{i,t}\mid x_{i,<t}).
+\end{equation}
+During training, \emph{teacher forcing} supplies the true prefix at every
+position. Consequently, all token losses in a sequence can be evaluated in
+parallel, and the same parameters receive gradients from many positions and
+many sequences. Schematically, an optimizer produces updates
+\begin{equation}
+\theta_{k+1}=\theta_k-\eta_k\widehat g_k.
+\end{equation}
+This specifies the objective and the computational graph. It does not yet
+explain why minimizing the objective produces reusable representations or
+reasoning-like computation; that is a later question in the course.
+
+\section{Inference is a separate algorithmic choice}
+
+At generation time the true next token is unavailable. A sampled decoder uses
+\begin{equation}
+X_t\sim p_\theta(\cdot\mid X_{<t}),
+\end{equation}
+and feeds the sampled token back into the next step. Greedy decoding instead
+uses
+\begin{equation}
+X_t\in\arg\max_v p_\theta(v\mid X_{<t}).
+\end{equation}
+These procedures are attached to the same trained conditional distribution but
+produce different sequence distributions. In particular, greedy decoding need
+not find a maximum-probability complete sequence: the locally best first token
+can lead to prefixes whose continuations all have small probability.
+
+\begin{exercise}[Question raised in lecture]
+Construct a family of length-$T$ conditional distributions for which greedy
+decoding returns a sequence whose probability is exponentially smaller in $T$
+than that of the maximum-probability sequence. Explain why one-token optimality
+of an argmax decision does not justify repeated argmax under a sequence-level
+objective.
+\end{exercise}
+
+\section{A first hardness result: unseen arbitrary labels}
+
+The first mathematical question was:
+
+\begin{quote}
+\textbf{When can examples determine behavior on inputs absent from the data?}
+\end{quote}
+
+Let $\mathcal X$ be finite and let $P$ be a distribution on $\mathcal X$.
+Draw a target $F:\mathcal X\to\{0,1\}$ uniformly from all $2^{|\mathcal X|}$
+labelings. Let
+\begin{equation}
+S=((X_i,F(X_i)))_{i=1}^m,
+\qquad X_i\stackrel{\rm iid}{\sim}P,
+\end{equation}
+and let $A$ be any learner, possibly randomized. For two predictors define
+\begin{equation}
+R_P(f,g)=\E_{X\sim P}[\1\{f(X)\neq g(X)\}].
+\end{equation}
+
+\begin{theorem}[Missing-mass lower bound]
+For every learner $A$,
+\begin{equation}
+\E\bigl[R_P(A(S),F)\bigr]
+\geq
+\frac12\sum_{x\in\mathcal X}P(x)(1-P(x))^m.
+\label{eq:missing-mass}
+\end{equation}
+\end{theorem}
+
+\paragraph{Proof idea.}
+At a point absent from the sample, the corresponding random label remains a
+fair bit even after conditioning on everything the learner observed. The
+probability that $x$ is absent from $m$ independent draws is $(1-P(x))^m$;
+summing half of this missing mass gives the bound.
+
+\begin{proof}
+For $x\in\mathcal X$, let
+$E_x=\{x\notin\{X_1,\ldots,X_m\}\}$. Then
+\begin{align}
+\E[R_P(A(S),F)]
+&=\sum_{x\in\mathcal X}P(x)
+  \Pp(A(S)(x)\neq F(x))\\
+&\geq\sum_{x\in\mathcal X}P(x)
+  \Pp(A(S)(x)\neq F(x),E_x).
+\end{align}
+On $E_x$, the sample contains no information about the independent fair bit
+$F(x)$. Hence
+\begin{equation}
+\Pp(A(S)(x)\neq F(x),E_x)=\frac12\Pp(E_x).
+\label{eq:fair-bit-step}
+\end{equation}
+Also,
+\begin{equation}
+\Pp(E_x)=\prod_{i=1}^m\Pp(X_i\neq x)=(1-P(x))^m.
+\end{equation}
+Substitution gives \eqref{eq:missing-mass}.
+\end{proof}
+
+\begin{exercise}[The formal independence step]
+Prove \eqref{eq:fair-bit-step} formally, including a randomized learner. One
+route is to condition on the sample inputs, all labels $F(z)$ for $z\neq x$,
+and the learner's independent random seed.
+\end{exercise}
+
+\begin{corollary}[Uniform domain]
+If $P$ is uniform on $N$ points, then
+\begin{equation}
+\E[R_P(A(S),F)]
+\geq\frac12\left(1-\frac1N\right)^m.
+\end{equation}
+\end{corollary}
+
+The random target is a proof device, not a claim about natural tasks. Averaging
+over all labelings also gives a deterministic statement.
+
+\begin{corollary}[A fixed hard target exists]
+For every learner $A$, at least one fixed labeling
+$f:\mathcal X\to\{0,1\}$ satisfies
+\begin{equation}
+\E_{S_f,A}[R_P(A(S_f),f)]
+\geq
+\frac12\sum_{x\in\mathcal X}P(x)(1-P(x))^m,
+\end{equation}
+where $S_f=((X_i,f(X_i)))_{i=1}^m$.
+\end{corollary}
+
+\begin{proof}
+Let $g(f)=\E_{S_f,A}[R_P(A(S_f),f)]$. The theorem lower-bounds the average of
+$g(F)$ over uniformly randomized labelings. At least one fixed labeling has
+$g(f)$ at least as large as that average.
+\end{proof}
+
+This proof pattern is the \emph{randomization hammer}: randomize the target,
+prove that every learner has large average error, and extract one deterministic
+hard target. The result says that arbitrary unseen labels require coverage. It
+does not say that structured targets are unlearnable. The positive threshold
+contrast, where one example constrains many unseen points, was deferred to the
+continuation of Lecture 1.
+
+\section{Questions carried forward}
+
+Two concrete questions from the meeting will be developed in homework.
+
+\begin{enumerate}
+\item \textbf{Can position be encoded relatively?}  For sinusoidal encodings,
+a shift is a block rotation of the encoding. RoPE applies those rotations to
+queries and keys so that their dot product contains a rotation indexed by the
+relative displacement. The essential calculation is
+\[
+(R(s)q_s)^\top(R(t)k_t)=q_s^\top R(t-s)k_t.
+\]
+The homework will specify the rotation matrices and ask what this identity does
+and does not imply.
+
+\item \textbf{What is wrong with tokenwise argmax?}  It is optimal for a
+single categorical decision under zero-one loss. Repeating it is generally
+neither sampling from the model nor global optimization of a sequence-level
+objective. A homework construction will make the gap exponential.
+\end{enumerate}
+
+\section{Take-home messages}
+
+\begin{itemize}[leftmargin=*]
+\item A decoder-only transformer defines every next-token conditional through
+a fully specified sequence of embeddings, masked attention, residual blocks,
+and a softmax readout.
+\item Pretraining evaluates log loss at all positions under true prefixes;
+generation feeds model-produced tokens back sequentially.
+\item The learned probability model and the decoding algorithm are distinct
+objects.
+\item No learner can infer independent arbitrary labels at unseen points. The
+lower bound identifies missing task information, not a universal failure of
+learning on structured problems.
+\end{itemize}
+
+\begin{thebibliography}{9}
+\bibitem{vaswani2017}
+A. Vaswani, N. Shazeer, N. Parmar, J. Uszkoreit, L. Jones, A. Gomez,
+L. Kaiser, and I. Polosukhin.
+\newblock Attention Is All You Need.
+\newblock \emph{NeurIPS}, 2017.
+\newblock \url{https://arxiv.org/abs/1706.03762}.
+
+\bibitem{su2021}
+J. Su, Y. Lu, S. Pan, A. Murtadha, B. Wen, and Y. Liu.
+\newblock RoFormer: Enhanced Transformer with Rotary Position Embedding.
+\newblock 2021.
+\newblock \url{https://arxiv.org/abs/2104.09864}.
+\end{thebibliography}
+
+\end{document}

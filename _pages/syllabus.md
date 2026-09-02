@@ -12,7 +12,7 @@ permalink: /syllabus/
 | **Course** | CMPUT 654: Mathematical Foundations of Modern AI Systems |
 | **Term** | Fall 2026, September 1-December 8 |
 | **Instructor** | [Csaba Szepesvári](https://sites.ualberta.ca/~szepesva/) |
-| **Format** | Twenty-six 80-minute topic lectures plus one reserve meeting |
+| **Format** | Twenty-six topic lectures over twenty-seven 80-minute meetings |
 | **Meeting time** | Tuesday and Thursday, 3:30–4:50pm; no classes during Fall Reading Week, November 9–13 |
 | **Room** | ED 2-135 |
 | **Office hours** | Arrange by private message on Slack |
@@ -20,7 +20,7 @@ permalink: /syllabus/
 
 ## Course philosophy
 
-The course is organized around questions and pointed mathematical results. Both positive explanations and limitations matter. We will repeatedly separate:
+The course is organized around questions and pointed mathematical results. Both positive explanations and limitations matter. We will separate:
 
 - what a model can represent;
 - what a learning algorithm can find;
@@ -30,7 +30,7 @@ The course is organized around questions and pointed mathematical results. Both 
 - what additional inference-time computation changes;
 - what has been proved from what has only been observed.
 
-Basic tools such as logistic regression appear because they expose these distinctions cleanly. Current systems appear throughout because the goal is to understand why the modern recipe could work.
+Basic models such as logistic regression appear because they expose these distinctions cleanly. Current systems appear throughout because the goal is to understand why the modern recipe could work.
 
 ## Assessment
 
@@ -54,11 +54,19 @@ Assignments must be typeset using the provided [LaTeX homework template]({{ '/do
 
 Each student will have an individual oral examination of at most 20 minutes during the final-examination period. At least one week beforehand, the instructor will publish a list of approximately 8–12 possible topics. The exam begins with one of those topics and continues with questions testing mathematical understanding, interpretation, and the ability to communicate an argument. It is open notes and open book, without computing devices.
 
-### Scribing / polished lecture note: 10% — provisional format
+### Scribing / polished lecture note: 10%
 
-Each student will prepare one polished note based on a designated lecture, normally due within one week. The note should reconstruct the lecture’s question, mathematical setup, central results and arguments, relevance to modern AI, and the boundary of the conclusions. It should be a useful mathematical exposition, not a transcript.
+Each student will sign up for one lecture and prepare a polished note. The note
+should reconstruct the lecture's question, mathematical setup, central results
+and arguments, relevance to modern AI, and the boundary of the conclusions. It
+should be a useful mathematical exposition, not a transcript.
 
-This component is retained provisionally because it rewards careful mathematical communication and can create a shared set of notes. The number of notes, individual-versus-pair format, length, and revision process will be fixed after enrollment is known. If scribing is removed, the resulting 10% reallocation will be announced before graded work begins.
+The note is due within two calendar days of the lecture: a Tuesday lecture is
+due by the end of Thursday, ideally by the end of Wednesday; a Thursday lecture
+is due by the end of Saturday, ideally by the end of Friday. See the Lecture 1
+model note as a [PDF]({{ '/documents/scribes/lecture01.pdf' | relative_url }})
+or as [LaTeX source]({{ '/documents/scribes/lecture01.tex' | relative_url }}).
+The editable signup sheet will be distributed through Slack.
 
 ### Research-question notes: 10%
 
@@ -66,7 +74,13 @@ Students will develop and refine a research question related to the course. The 
 
 ## Homework schedule and late work
 
-Homework 1 will be released after the second lecture, so students encounter course material before receiving graded work. It and the later assignments will then follow an approximately two-week cycle, with target due weeks 3, 5, 7, 9, 11, and 13. The automatic replacement of the two lowest grades is intended to absorb ordinary illness, overload, and missed work without individual negotiation. Exact late-work and accommodation language will be aligned with University policy before Homework 1 is released.
+Homework 1 will be released after Lecture 2 on September 8, so students
+encounter course material before receiving graded work. It and the later
+assignments will then follow an approximately two-week cycle, with target due
+weeks 3, 5, 7, 9, 11, and 13. The automatic replacement of the two lowest
+grades is intended to absorb ordinary illness, overload, and missed work
+without individual negotiation. Exact late-work and accommodation language
+will be aligned with University policy before Homework 1 is released.
 
 ## Course communication
 
