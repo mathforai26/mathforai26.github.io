@@ -568,17 +568,16 @@ it would consume memory without avoiding future computation.
 
 \section{Context length and a bounded-score limitation}
 
-A deployed model receives a \emph{context window}: the bounded sequence of
-prompt and generated tokens made available to one model call. Its
-\emph{maximum context length} is an upper bound on the size of that window.
-Position handling, training range, cache memory, attention cost, and
-implementation choices can all contribute to this limit. The ability to
-accept $T$ tokens and the ability to use all $T$ tokens effectively are
-distinct capabilities.
+A model call receives a \emph{context window}: the sequence consisting of the
+prompt followed by any tokens generated so far. Practical systems come with a
+\emph{maximum context length}, an upper bound on the number of tokens in the
+context window. Position handling, training range, cache memory, attention
+cost, and implementation choices can all constrain the maximum context
+length. The ability to accept $T$ tokens and the ability to use all $T$ tokens
+effectively are distinct capabilities.
 
-There is also a simple mathematical pressure against sharply selecting one
-position from an increasingly long context. For one query attending to $T$
-keys, write
+Making full use of a long context window can require sharply selecting a
+particular position. In particular, for one query attending to $T$ keys, write
 \begin{equation}
 s_j=\frac{q^\top k_j}{\sqrt{d_h}},
 \qquad
@@ -594,7 +593,8 @@ The conclusion is conditional on bounded scores; score gaps that grow with
 context length evade it.
 
 \paragraph{Entropy language.}
-For a probability vector $\alpha\in\R^T$, its entropy is
+For a probability vector $\alpha\in[0,1]^T$ with
+$\sum_{j=1}^T\alpha_j=1$, its entropy is
 \begin{equation}
 \Hent(\alpha)=-\sum_{j=1}^T\alpha_j\log\alpha_j.
 \end{equation}
@@ -702,8 +702,8 @@ The initially supplied input sequence, and all tokens preceding a particular
 prediction position. A prefix may contain both prompt tokens and tokens
 generated so far.
 \item[Context; context window]
-The information made visible to one model call, and the bounded token sequence
-through which that information is presented to the model.
+The information made visible to one model call, and the token sequence through
+which that information is presented to the model.
 \item[Base alphabet; vocabulary; token]
 The symbols used to represent raw sequences; the finite collection of strings
 made available to the model; and one vocabulary item in a tokenized sequence.
