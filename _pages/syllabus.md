@@ -12,11 +12,11 @@ permalink: /syllabus/
 | **Course** | CMPUT 654: Mathematical Foundations of Modern AI Systems |
 | **Term** | Fall 2026, September 1-December 8 |
 | **Instructor** | [Csaba Szepesvári](https://sites.ualberta.ca/~szepesva/) |
-| **Format** | Twenty-six topic lectures over twenty-seven 80-minute meetings |
+| **Format** | Twenty-seven 80-minute lectures |
 | **Meeting time** | Tuesday and Thursday, 3:30–4:50pm; no classes during Fall Reading Week, November 9–13 |
 | **Room** | ED 2-135 |
 | **Office hours** | Arrange by private message on Slack |
-| **Course communication** | [Course Slack](https://cmput654fall2026.slack.com); join link distributed privately through the university course system |
+| **Course communication** | [Course Slack](https://cmput654fall2026.slack.com); enrolled students receive the join link through course channels, and auditors may use the encoded invitation below |
 
 ## Course philosophy
 
@@ -66,7 +66,8 @@ due by the end of Thursday, ideally by the end of Wednesday; a Thursday lecture
 is due by the end of Saturday, ideally by the end of Friday. See the Lecture 1
 model note as a [PDF]({{ '/documents/scribes/lecture01.pdf' | relative_url }})
 or as [LaTeX source]({{ '/documents/scribes/lecture01.tex' | relative_url }}).
-The editable signup sheet will be distributed through Slack.
+The instructor will also prepare a second model note for Lecture 2. The
+editable signup sheet will be distributed through Slack.
 
 ### Research-question notes: 10%
 
@@ -74,7 +75,7 @@ Students will develop and refine a research question related to the course. The 
 
 ## Homework schedule and late work
 
-Homework 1 will be released after Lecture 2 on September 8, so students
+Homework 1 will be released after Lecture 3 on September 8, so students
 encounter course material before receiving graded work. It and the later
 assignments will then follow an approximately two-week cycle, with target due
 weeks 3, 5, 7, 9, 11, and 13. The automatic replacement of the two lowest
@@ -84,7 +85,16 @@ will be aligned with University policy before Homework 1 is released.
 
 ## Course communication
 
-Routine announcements and discussion will use the [course Slack workspace](https://cmput654fall2026.slack.com). The join link will be distributed privately through the university course system; it will not be posted on this public website. Binding deadlines and course documents will remain on this website or the official submission system.
+Routine announcements and discussion will use the [course Slack workspace](https://cmput654fall2026.slack.com). Enrolled students will receive the join link through course channels. Binding deadlines and course documents will remain on this website or the official submission system.
+
+Auditors may recover the invitation by applying **ROT13** to the letters in the
+following string. Digits and punctuation stay unchanged; ROT13 is its own
+inverse.
+
+`uggcf://wbva.fynpx.pbz/g/pzchg654snyy2026/funerq_vaivgr/mg-48wt3113n-w15Safjc9d9SCpQmSVUO_j?fbhepr=depbqr`
+
+This invitation was generated on September 1, 2026. Slack reports that it
+expires after 30 days; auditors who arrive later should contact the instructor.
 
 ## Collaboration and sources
 
