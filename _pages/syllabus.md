@@ -60,8 +60,10 @@ Each student will sign up for one lecture and prepare a polished note. The note
 should reconstruct the lecture's question, mathematical setup, central results
 and arguments, relevance to modern AI, and the boundary of the conclusions. It
 should be a useful mathematical exposition, not a transcript. End with a short
-annotated references section: for each source, say what it contains and why it
-is relevant to the note.
+**Bibliographic remarks** section in the style of *Bandit Algorithms*: use
+narrative prose to explain the origins of the ideas, how the cited work relates
+to the lecture, and where its scope differs. Follow this with an ordinary
+reference list.
 
 The note is due within two calendar days of the lecture: a Tuesday lecture is
 due by the end of Thursday, ideally by the end of Wednesday; a Thursday lecture

@@ -5,6 +5,7 @@
 \usepackage[inline,shortlabels]{enumitem}
 \usepackage{xcolor}
 \usepackage{microtype}
+\usepackage[square,authoryear]{natbib}
 \usepackage[colorlinks=true,linkcolor=blue!60!black,urlcolor=blue!60!black,citecolor=blue!60!black]{hyperref}
 
 \definecolor{courseblue}{HTML}{17365D}
@@ -434,79 +435,85 @@ decoding rule, or harness. This lecture did not yet explain why learning
 produces useful values of $\theta$.
 \end{itemize}
 
-\section*{Notes and references}
+\section*{Bibliographic remarks}
 
-The descriptions below indicate the role of each reference; they are not a
-reading list of interchangeable transformer surveys.
+The transformer architecture was introduced by \citet{vaswani2017}. Their
+model combined encoder and decoder stacks; the equations in this lecture are a
+causal decoder specialization and use a pre-normalized block. The original
+paper used additive sinusoidal position vectors. Rotary position embeddings
+are due to \citet{su2021}; their position-dependent rotations of queries and
+keys expose relative displacement in the attention score.
+
+The key--value cache is the standard implementation of incremental transformer
+decoding. \citet{shazeer2019} explains why repeatedly loading cached keys and
+values is a central memory cost and proposes multi-query attention to reduce
+it. \citet{dao2022} introduced FlashAttention, which computes exact dense
+attention by tiling and an online softmax. This reduces memory traffic and
+avoids materializing the full attention matrix, but does not remove the
+quadratic arithmetic of exact dense attention. The course returns to this
+distinction in Lecture~27.
+
+The bounded-score calculation left for homework is elementary.
+\citet{chiang2022} study a related length-dependent loss of confidence and show
+that the obstruction depends on architectural details; one of their remedies
+scales attention logits with $\log T$. This is useful context for the homework
+result, which is not a general explanation of long-context failures.
+
+The experiments of \citet{liu2024} vary the position of relevant information
+in multi-document question answering and key--value retrieval, demonstrating
+the distinction between accepting a long context and using it reliably.
+\citet{hong2025} use the term ``context rot'' for performance degradation as
+input length grows across a broader collection of tasks and models. Both works
+study complete trained systems. Their findings are related to the theoretical
+question in this note, but are not consequences of the bounded-score
+calculation.
 
 \begin{thebibliography}{9}
-\bibitem{vaswani2017}
+\bibitem[Vaswani et al.(2017)]{vaswani2017}
 A. Vaswani, N. Shazeer, N. Parmar, J. Uszkoreit, L. Jones, A. Gomez,
 L. Kaiser, and I. Polosukhin.
 \newblock Attention Is All You Need.
 \newblock \emph{NeurIPS}, 2017.
 \newblock \url{https://arxiv.org/abs/1706.03762}.
-\newblock This paper introduced the transformer architecture. Its complexity
-table makes the quadratic sequence-length cost of dense self-attention
-explicit; the architecture in this note is the causal decoder specialization.
 
-\bibitem{su2021}
+\bibitem[Su et al.(2021)]{su2021}
 J. Su, Y. Lu, S. Pan, A. Murtadha, B. Wen, and Y. Liu.
 \newblock RoFormer: Enhanced Transformer with Rotary Position Embedding.
 \newblock 2021.
 \newblock \url{https://arxiv.org/abs/2104.09864}.
-\newblock This is the source for rotary position embeddings and the
-relative-displacement identity mentioned in the note.
 
-\bibitem{shazeer2019}
+\bibitem[Shazeer(2019)]{shazeer2019}
 N. Shazeer.
 \newblock Fast Transformer Decoding: One Write-Head is All You Need.
 \newblock 2019.
 \newblock \url{https://arxiv.org/abs/1911.02150}.
-\newblock This paper explains why loading cached keys and values is a central
-cost of incremental decoding and introduces multi-query attention to reduce
-that cache and its memory traffic.
 
-\bibitem{dao2022}
+\bibitem[Dao et al.(2022)]{dao2022}
 T. Dao, D. Y. Fu, S. Ermon, A. Rudra, and C. R\'e.
 \newblock FlashAttention: Fast and Memory-Efficient Exact Attention with
 IO-Awareness.
 \newblock \emph{NeurIPS}, 2022.
 \newblock \url{https://arxiv.org/abs/2205.14135}.
-\newblock FlashAttention computes exact dense attention by tiling and online
-softmax, reducing memory traffic and avoiding a materialized quadratic
-intermediate. It does not remove the quadratic arithmetic of exact dense
-attention. The course returns to this distinction in Lecture~27.
 
-\bibitem{chiang2022}
+\bibitem[Chiang and Cholak(2022)]{chiang2022}
 D. Chiang and P. Cholak.
 \newblock Overcoming a Theoretical Limitation of Self-Attention.
 \newblock \emph{ACL}, 2022.
 \newblock \url{https://aclanthology.org/2022.acl-long.527/}.
-\newblock This paper studies a related length-dependent loss of confidence and
-shows that the obstruction depends on architectural details. Among its
-remedies is scaling attention logits by $\log T$, the scale needed to keep a
-bounded-score softmax from becoming increasingly diffuse.
 
-\bibitem{liu2024}
+\bibitem[Liu et al.(2024)]{liu2024}
 N. F. Liu, K. Lin, J. Hewitt, A. Paranjape, M. Bevilacqua, F. Petroni,
 and P. Liang.
 \newblock Lost in the Middle: How Language Models Use Long Contexts.
 \newblock \emph{Transactions of the Association for Computational
 Linguistics}, 2024.
 \newblock \url{https://arxiv.org/abs/2307.03172}.
-\newblock The experiments vary the position of relevant information in
-multi-document question answering and key--value retrieval. They show why an
-advertised context window and robust use of that window are different claims.
 
-\bibitem{hong2025}
+\bibitem[Hong et al.(2025)]{hong2025}
 K. Hong, A. Troynikov, and J. Huber.
 \newblock Context Rot: How Increasing Input Tokens Impacts LLM Performance.
 \newblock Chroma technical report, 2025.
 \newblock \url{https://www.trychroma.com/research/context-rot}.
-\newblock This report uses ``context rot'' for empirical degradation as input
-length grows across several tasks and contemporary models. It is cited as
-related evidence, not as a consequence of the bounded-score observation.
 \end{thebibliography}
 
 \end{document}
