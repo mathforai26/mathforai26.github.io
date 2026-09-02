@@ -59,7 +59,9 @@ Each student will have an individual oral examination of at most 20 minutes duri
 Each student will sign up for one lecture and prepare a polished note. The note
 should reconstruct the lecture's question, mathematical setup, central results
 and arguments, relevance to modern AI, and the boundary of the conclusions. It
-should be a useful mathematical exposition, not a transcript.
+should be a useful mathematical exposition, not a transcript. End with a short
+annotated references section: for each source, say what it contains and why it
+is relevant to the note.
 
 The note is due within two calendar days of the lecture: a Tuesday lecture is
 due by the end of Thursday, ideally by the end of Wednesday; a Thursday lecture

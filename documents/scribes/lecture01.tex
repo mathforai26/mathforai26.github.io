@@ -1,7 +1,7 @@
 \documentclass[11pt,twoside]{article}
 
 \usepackage[margin=1in]{geometry}
-\usepackage{amsmath,amssymb,mathtools}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
 \usepackage[inline,shortlabels]{enumitem}
 \usepackage{xcolor}
 \usepackage{microtype}
@@ -12,6 +12,9 @@
 \DeclareMathOperator{\softmax}{softmax}
 \DeclareMathOperator{\LN}{LN}
 \newcommand{\R}{\mathbb R}
+\newcommand{\Hent}{\mathsf H}
+
+\newtheorem{proposition}{Proposition}
 
 \renewcommand{\thepage}{1--\arabic{page}}
 \renewcommand{\thesection}{1.\arabic{section}}
@@ -56,9 +59,11 @@ transcript.
 \noindent\textbf{Delivery note.}
 Administrative material occupied a substantial part of the meeting. The
 technical content was how a decoder transformer performs inference. Training
-was described verbally; no training objective, loss, or gradient equation was
-presented. The motivation for learning and the first learning-theoretic results
-were postponed to Lecture~2.
+was described verbally. The lecture also discussed the quadratic cost of
+attention, key--value caching, maximum context length, and limitations of
+attention on long contexts. No training objective, loss, or gradient equation
+was presented. The motivation for learning and the first learning-theoretic
+results were postponed to Lecture~2.
 
 \section{The inference problem}
 
@@ -182,12 +187,94 @@ whereas greedy decoding chooses
 X_t\in\arg\max_v p_\theta(v\mid X_{<t}).
 \end{equation}
 In either case the selected token is appended and the procedure repeats until
-a stopping rule fires. Implementations cache keys and values from earlier
-positions, so each generation step need not recompute the entire prefix.
+a stopping rule fires.
 
 Greedy decoding is neither sampling from the model nor, in general, global
 optimization of the probability of the complete sequence. A locally most
 probable token can lead to poor later continuations.
+
+\section{Attention cost and the key--value cache}
+
+For one head on a length-$T$ prefix, both $QK^\top$ and the multiplication of
+the resulting attention matrix by $V$ require order $T^2d_h$ arithmetic. A
+straightforward implementation also materializes a $T\times T$ attention
+matrix. The causal mask removes the upper triangle, changing a constant but
+not the quadratic dependence on $T$.
+
+Autoregressive decoding has additional structure. At step $t$ and in each
+layer, only the representation of the new token must be advanced. Let its
+query, key, and value be $q_t,k_t,v_t$. The attention operation for the new row
+is
+\begin{equation}
+\alpha_t
+=\softmax\!\left(\frac{q_tK_{\leq t}^\top}{\sqrt{d_h}}\right),
+\qquad
+o_t=\alpha_tV_{\leq t}.
+\end{equation}
+The earlier keys and values are therefore stored in a \emph{KV cache}. One new
+step uses order $td_h$ attention arithmetic per head and stores order $td_h$
+numbers per head and layer. Summed over a generated sequence of length $T$,
+the dense-attention arithmetic is still quadratic.
+
+\paragraph{Why are queries not cached?}
+The query $q_i$ was used to compute the output at position $i$. A future
+position $t>i$ forms a new query $q_t$ and compares it with the old key $k_i$;
+the resulting weight multiplies the old value $v_i$. Thus future computation
+reuses $k_i$ and $v_i$, but never $q_i$. Caching old queries would consume
+memory without avoiding future computation.
+
+\section{Context length and a bounded-score limitation}
+
+A deployed model has a \emph{maximum context length}: an upper bound on the
+number of prompt and generated tokens available to one model call. Position
+handling, training range, cache memory, attention cost, and implementation
+choices can all contribute to this limit. The ability to accept $T$ tokens does
+not guarantee that the model uses every one of them effectively.
+
+There is also a simple mathematical pressure against sharply selecting one
+position from an increasingly long context. For one query attending to $T$
+keys, write
+\begin{equation}
+s_j=\frac{q^\top k_j}{\sqrt{d_h}},
+\qquad
+\alpha_j=\frac{e^{s_j}}{\sum_{r=1}^T e^{s_r}}.
+\end{equation}
+
+\begin{proposition}[Bounded scores force diffuse attention]
+If $|s_j|\leq B$ for every $j$, then
+\begin{equation}
+\max_{1\leq j\leq T}\alpha_j
+\leq
+\frac{1}{1+(T-1)e^{-2B}}.
+\label{eq:bounded-softmax}
+\end{equation}
+Consequently, for fixed $B$, no individual attention weight stays bounded away
+from zero as $T\to\infty$.
+\end{proposition}
+
+\begin{proof}
+For any $j$, the other $T-1$ exponentials are at least $e^{-B}$, while
+$e^{s_j}\leq e^B$. Hence
+\[
+\alpha_j
+\leq
+\frac{e^B}{e^B+(T-1)e^{-B}},
+\]
+which is \eqref{eq:bounded-softmax}.
+\end{proof}
+
+For example, $\lVert q\rVert_2,\lVert k_j\rVert_2\leq R$ gives
+$B=R^2/\sqrt{d_h}$. The premise can fail: a model can make score gaps grow with
+context length, and multiple heads and layers can implement more complicated
+selection mechanisms. The proposition is a precise limitation under bounded
+scores, not a general proof that transformers cannot use long contexts.
+
+\paragraph{Related empirical phenomenon.}
+The terms \emph{lost in the middle} and \emph{context rot} refer to observed
+failures to use long contexts uniformly or reliably, sometimes well below a
+model's advertised maximum length. These experiments concern complete trained
+systems and task performance. They are related to the question above, but the
+bounded-score proposition alone does not explain them.
 
 \section{What was said about training}
 
@@ -216,6 +303,20 @@ and hence the RoPE identity
 distributions for which repeated tokenwise argmax returns a sequence whose
 probability is exponentially smaller in its length than that of the
 maximum-probability sequence.
+
+\item \textbf{Attention concentration and entropy.}  For a probability vector
+$\alpha\in\mathbb R^T$, define its entropy by
+\[
+\Hent(\alpha)=-\sum_{j=1}^T\alpha_j\log\alpha_j.
+\]
+Entropy is $0$ for a deterministic distribution and at most $\log T$, with
+equality for the uniform distribution. Prove
+\[
+\Hent(\alpha)\geq-\log\max_j\alpha_j
+\geq \log\!\left(1+(T-1)e^{-2B}\right)
+\]
+under the assumptions of Proposition~1. Determine how $B$ must grow with $T$
+if $\max_j\alpha_j$ is to remain at least a fixed constant $c\in(0,1)$.
 \end{enumerate}
 
 \section{Take-home messages}
@@ -229,9 +330,20 @@ relative biases instead modify attention in every layer that uses them.
 \item The learned conditional distribution and the decoding algorithm are
 different objects. Tokenwise argmax does not solve a general sequence-level
 optimization problem.
+\item Dense self-attention has quadratic arithmetic cost in context length.
+A KV cache avoids recomputing old keys and values during generation; old
+queries have no future use.
+\item Maximum context length is an input-capacity limit, not a guarantee of
+uniform recall or reasoning quality. With bounded attention scores, a single
+softmax head cannot remain sharply concentrated as the context grows.
 \item This lecture described inference. It did not yet explain why learning
 produces useful parameters.
 \end{itemize}
+
+\section*{Notes and references}
+
+The descriptions below indicate the role of each reference; they are not a
+reading list of interchangeable transformer surveys.
 
 \begin{thebibliography}{9}
 \bibitem{vaswani2017}
@@ -240,12 +352,67 @@ L. Kaiser, and I. Polosukhin.
 \newblock Attention Is All You Need.
 \newblock \emph{NeurIPS}, 2017.
 \newblock \url{https://arxiv.org/abs/1706.03762}.
+\newblock This paper introduced the transformer architecture. Its complexity
+table makes the quadratic sequence-length cost of dense self-attention
+explicit; the architecture in this note is the causal decoder specialization.
 
 \bibitem{su2021}
 J. Su, Y. Lu, S. Pan, A. Murtadha, B. Wen, and Y. Liu.
 \newblock RoFormer: Enhanced Transformer with Rotary Position Embedding.
 \newblock 2021.
 \newblock \url{https://arxiv.org/abs/2104.09864}.
+\newblock This is the source for rotary position embeddings and the
+relative-displacement identity used in the first homework question.
+
+\bibitem{shazeer2019}
+N. Shazeer.
+\newblock Fast Transformer Decoding: One Write-Head is All You Need.
+\newblock 2019.
+\newblock \url{https://arxiv.org/abs/1911.02150}.
+\newblock This paper explains why loading cached keys and values is a central
+cost of incremental decoding and introduces multi-query attention to reduce
+that cache and its memory traffic.
+
+\bibitem{dao2022}
+T. Dao, D. Y. Fu, S. Ermon, A. Rudra, and C. R\'e.
+\newblock FlashAttention: Fast and Memory-Efficient Exact Attention with
+IO-Awareness.
+\newblock \emph{NeurIPS}, 2022.
+\newblock \url{https://arxiv.org/abs/2205.14135}.
+\newblock FlashAttention computes exact dense attention by tiling and online
+softmax, reducing memory traffic and avoiding a materialized quadratic
+intermediate. It does not remove the quadratic arithmetic of exact dense
+attention. The course returns to this distinction in Lecture~27.
+
+\bibitem{chiang2022}
+D. Chiang and P. Cholak.
+\newblock Overcoming a Theoretical Limitation of Self-Attention.
+\newblock \emph{ACL}, 2022.
+\newblock \url{https://aclanthology.org/2022.acl-long.527/}.
+\newblock This paper studies a related length-dependent loss of confidence and
+shows that the obstruction depends on architectural details. Among its
+remedies is scaling attention logits by $\log T$, matching the scale suggested
+by the entropy exercise above.
+
+\bibitem{liu2024}
+N. F. Liu, K. Lin, J. Hewitt, A. Paranjape, M. Bevilacqua, F. Petroni,
+and P. Liang.
+\newblock Lost in the Middle: How Language Models Use Long Contexts.
+\newblock \emph{Transactions of the Association for Computational
+Linguistics}, 2024.
+\newblock \url{https://arxiv.org/abs/2307.03172}.
+\newblock The experiments vary the position of relevant information in
+multi-document question answering and key--value retrieval. They show why an
+advertised context window and robust use of that window are different claims.
+
+\bibitem{hong2025}
+K. Hong, A. Troynikov, and J. Huber.
+\newblock Context Rot: How Increasing Input Tokens Impacts LLM Performance.
+\newblock Chroma technical report, 2025.
+\newblock \url{https://www.trychroma.com/research/context-rot}.
+\newblock This report uses ``context rot'' for empirical degradation as input
+length grows across several tasks and contemporary models. It is cited as
+related evidence, not as a consequence of Proposition~1.
 \end{thebibliography}
 
 \end{document}
