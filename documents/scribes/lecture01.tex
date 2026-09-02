@@ -57,12 +57,12 @@ transcript.
 \noindent\textbf{Delivery note.}
 Administrative material occupied a substantial part of the meeting. The
 lecture opened with the harness surrounding a language model and then zoomed
-in on how a decoder transformer performs inference. Training was described
-verbally. The lecture also discussed the quadratic cost of attention,
-key--value caching, maximum context length, and limitations of attention on
-long contexts. No training objective, loss, or gradient equation was
-presented. The motivation for learning and the first learning-theoretic results
-were postponed to Lecture~2.
+in on tokenization and how a decoder transformer performs inference. Training
+was described verbally. The lecture also discussed the quadratic cost of
+attention, key--value caching, maximum context length, and limitations of
+attention on long contexts. No training objective, loss, or gradient equation
+was presented. The motivation for learning and the first learning-theoretic
+results were postponed to Lecture~2.
 
 \section{The model inside a harness}
 
@@ -75,24 +75,101 @@ tool outputs. Schematically, one pass through the loop is
 \begin{equation}
 \boxed{\text{task state}}
 \xrightarrow{\text{harness}}
-\boxed{x_{<t}}
-\xrightarrow{\text{model}}
-\boxed{p_\theta(\,\cdot\mid x_{<t})},
+\boxed{s\in\Sigma^*}
+\xrightarrow{\text{tokenizer }\tau}
+\boxed{x_{<t}\in[V]^*},
 \label{eq:harness-to-model}
 \end{equation}
 followed by
 \begin{equation}
+\boxed{x_{<t}}
+\xrightarrow{\text{model}}
 \boxed{p_\theta(\,\cdot\mid x_{<t})}
 \xrightarrow{\text{decoding}}
-\boxed{\text{token or action}}
-\xrightarrow{\text{tool/environment}}
-\boxed{\text{updated task state}}.
+\boxed{\text{next token or action}}.
 \end{equation}
-The tool/environment step can be absent, and a harness can use several model
-calls before returning an answer. The behavior of the complete system can
-therefore depend on the model parameters, the decoding rule, the maintained
-state, the tools, and the control loop. The rest of this note zooms into the
-``model'' box in \eqref{eq:harness-to-model}.
+Output tokens may be detokenized into text or parsed as a tool call. The
+resulting observation updates the task state, and the loop may begin again. A
+harness can use several model calls before returning an answer. The behavior
+of the complete system can therefore depend on the tokenizer, model
+parameters, decoding rule, maintained state, tools, and control loop. The rest
+of this note expands the tokenizer and model boxes.
+
+\section{Tokenization and the modeled sequence}
+
+The word \emph{tokenization} comes from the compiler pipeline. A compiler's
+lexer maps a character stream to tokens such as identifiers, numerals, and
+operators using a language specification. An LLM tokenizer has the same broad
+string-to-sequence interface, but its vocabulary and segmentation rules are
+normally constructed from a text corpus rather than from the grammar of a
+programming language.
+
+Let $\Sigma$ be a finite base alphabet and let
+\begin{equation}
+\mathcal V=\{v_1,\ldots,v_V\}\subset\Sigma^+
+\end{equation}
+be a vocabulary of nonempty strings. A lossless tokenizer maps
+\begin{equation}
+\tau:\Sigma^*\longrightarrow[V]^*,
+\qquad
+\tau(s)=(x_1,\ldots,x_T),
+\qquad
+s=v_{x_1}v_{x_2}\cdots v_{x_T}.
+\label{eq:tokenizer}
+\end{equation}
+Detokenization concatenates the vocabulary strings. Because every vocabulary
+item is nonempty,
+\begin{equation}
+|s|=\sum_{t=1}^T|v_{x_t}|\geq T.
+\label{eq:token-length}
+\end{equation}
+Thus tokenization, understood as segmentation over a fixed base alphabet,
+cannot increase sequence length and decreases it whenever at least one chosen
+token contains more than one base symbol. Normalization, conversion from
+Unicode characters to bytes, and the addition of special tokens may change
+the sequence before or after this segmentation; those are separate operations.
+
+How are the vocabulary and segmentation rule constructed? Two common answers
+illustrate the main ideas.
+\begin{enumerate}[leftmargin=*]
+\item \textbf{Byte-pair encoding (BPE).} Start with base symbols, count adjacent
+token pairs in the training corpus, merge a most frequent pair into a new
+vocabulary item, and repeat until the desired vocabulary size is reached. The
+learned merge order determines the segmentation of new text.
+\item \textbf{Unigram tokenization.} Start with a large collection of candidate
+substrings and probabilities $q(v)$. A segmentation is scored by
+\begin{equation}
+\prod_{t=1}^T q(v_{x_t}),
+\qquad\text{or equivalently}\qquad
+\sum_{t=1}^T\log q(v_{x_t}).
+\end{equation}
+Fit the probabilities to the corpus, remove candidates whose deletion hurts
+the likelihood least, and repeat. At encoding time one may choose a
+highest-scoring segmentation or sample among segmentations.
+\end{enumerate}
+Practical tokenizers may also normalize text, first split it into coarse
+pieces, or begin from bytes to guarantee coverage. Their construction trades
+off sequence length, vocabulary size, coverage, and statistical sharing.
+Tokens often coincide with useful linguistic units, but this is not guaranteed
+and is not the defining objective.
+
+The choice affects both model size and computation. For tokenized length $T$,
+dense attention has a sequence-length contribution of order $T^2$, while the
+embedding and readout matrices contain order $Vd$ parameters and a dense
+readout uses order $Vd$ arithmetic per prediction. A larger vocabulary can
+shorten sequences while making the embedding and readout larger.
+
+Once the tokenizer is fixed, a stochastic language or sequence model specifies
+a stochastic process $(X_t)_{t\geq1}$ whose state space is $[V]$. An
+autoregressive model gives a conditional distribution for the next token after
+every prefix. For a fixed token sequence,
+\begin{equation}
+p_\theta(x_{1:T})
+=\prod_{t=1}^T p_\theta(x_t\mid x_{<t}).
+\label{eq:autoregressive-factorization}
+\end{equation}
+A beginning-of-sequence convention initializes the process; an
+end-of-sequence token can represent variable-length strings.
 
 \section{The inference problem}
 
@@ -139,13 +216,27 @@ diagram:
 The next sections expand the three middle boxes.
 
 \paragraph{Where is position added?}
-Equation~\eqref{eq:input-embedding} describes additive absolute positions. They are added once,
-before the first transformer block; they are not added again in every block.
-Other position mechanisms enter the computation differently. RoPE applies a
-position-dependent rotation to queries and keys in each attention layer that
-uses RoPE. A relative-position bias is likewise added to the attention logits
-in each layer that uses it. These are alternative architectural choices; the
-symbol $P$ in \eqref{eq:input-embedding} does not also stand for RoPE.
+Equation~\eqref{eq:input-embedding} describes additive absolute positions.
+They are added once, before the first transformer block; they are not added
+again in every block. Other position mechanisms enter the computation
+differently. For example, a layer- and head-specific relative-position bias
+changes the attention calculation to
+\begin{equation}
+A_a=\softmax_{\mathrm{row}}\!\left(
+\frac{Q_aK_a^\top}{\sqrt{d_h}}+M+B_{\ell,a}
+\right),
+\qquad
+(B_{\ell,a})_{ij}=b_{\ell,a}\bigl(\rho(i-j)\bigr).
+\label{eq:relative-position-bias}
+\end{equation}
+Here $\rho$ may clip or bucket the relative displacement $i-j$, and
+$b_{\ell,a}$ assigns a learned scalar to each bucket. T5 uses this form with
+the bias parameters shared across layers and different across heads. ALiBi
+instead uses a fixed, head-dependent linear penalty such as
+$-m_a(i-j)$ for a causal pair $j\leq i$. RoPE applies a position-dependent
+rotation to queries and keys in each attention layer that uses RoPE. These are
+alternative architectural choices; the symbol $P$ in
+\eqref{eq:input-embedding} does not also stand for relative bias or RoPE.
 
 \paragraph{Remark.}
 The relative-displacement calculation for rotary positions will be developed
@@ -294,10 +385,18 @@ Greedy decoding is neither sampling from the model nor, in general, global
 optimization of the probability of the complete sequence. A locally most
 probable token can lead to poor later continuations.
 
+There are narrow cases in which greedy decoding is justified. If the system
+must make exactly one token-valued decision and incurs zero--one loss, an
+argmax token is Bayes optimal. Greedy decoding is also harmless when every
+conditional distribution is effectively deterministic, or when a special
+problem has a greedy-choice property. None of these conditions holds in
+general for open-ended generation.
+
 \paragraph{Practical note.}
-Forget greedy decoding as a default generation rule: it is a bad idea. It
-throws away nearly all of the predictive distribution at every step, and a
-locally best token can irreversibly eliminate much better continuations.
+For open-ended multi-token generation, forget greedy decoding as a default:
+it is a bad idea. It throws away nearly all of the predictive distribution at
+every step, and a locally best token can irreversibly eliminate much better
+continuations.
 
 \paragraph{Remark.}
 A quantitative counterexample to repeated tokenwise argmax will be developed
@@ -305,26 +404,50 @@ separately in the homework.
 
 \section{Attention cost and the key--value cache}
 
-For one head on a length-$T$ prefix, both $QK^\top$ and the multiplication of
-the resulting attention matrix by $V$ require order $T^2d_h$ arithmetic. A
-straightforward implementation also materializes a $T\times T$ attention
+Write $h_i^\ell=H^\ell_{i,:}$ for the \emph{layer-position activation}: the
+residual-stream vector at position $i$ after layer $\ell$. Computing the output
+for position $i$ in one causal attention layer compares its query with $i$
+keys. Consequently, a full forward pass on a fixed length-$t$ prefix performs
+\begin{equation}
+\sum_{i=1}^t i=\frac{t(t+1)}2
+\end{equation}
+query--key comparisons per head. Both $QK^\top$ and the multiplication of the
+resulting attention matrix by $V$ therefore require order $t^2d_h$ arithmetic.
+A straightforward implementation also materializes a $t\times t$ attention
 matrix. The causal mask removes the upper triangle, changing a constant but
-not the quadratic dependence on $T$.
+not the quadratic dependence on $t$.
+
+The first full forward pass over a supplied prompt is called \emph{prefill}.
+After prefill, a \emph{decode step} generates one new token and advances only
+its layer-position activations through the network. These two phases have
+different computational profiles.
 
 Autoregressive decoding has additional structure. At step $t$ and in each
-layer, only the representation of the new token must be advanced. Let its
-query, key, and value be $q_t,k_t,v_t$. The attention operation for the new row
-is
+layer, only $h_t^\ell$, the activation of the new token, must be advanced. Let
+its query, key, and value be $q_t,k_t,v_t$. The attention operation for the new
+row is
 \begin{equation}
 \alpha_t
 =\softmax\!\left(\frac{q_tK_{\leq t}^\top}{\sqrt{d_h}}\right),
 \qquad
 o_t=\alpha_tV_{\leq t}.
 \end{equation}
-The earlier keys and values are therefore stored in a \emph{KV cache}. One new
-step uses order $td_h$ attention arithmetic per head and stores order $td_h$
-numbers per head and layer. Summed over a generated sequence of length $T$,
-the dense-attention arithmetic is still quadratic.
+The earlier keys and values are therefore stored in a \emph{KV cache}. One
+cached decode step uses order $td_h$ attention arithmetic per head, and after
+$t$ positions the cache stores order $td_h$ numbers per head and layer.
+
+Without a cache, step $t$ recomputes the complete length-$t$ forward pass,
+including all earlier layer-position activations, so the attention work over
+$T$ generated positions is
+\begin{equation}
+\sum_{t=1}^T\Theta(t^2d_h)=\Theta(T^3d_h).
+\end{equation}
+With the cache, only the new row is computed at each step, and the total is
+\begin{equation}
+\sum_{t=1}^T\Theta(td_h)=\Theta(T^2d_h).
+\end{equation}
+Thus caching changes the asymptotic attention cost of sequential generation.
+A single parallel full-sequence forward pass remains quadratic.
 
 \paragraph{Why are queries not cached?}
 The query $q_i$ was used to compute the output at position $i$. A future
@@ -402,7 +525,11 @@ E,P,W_U,b_U,
 \end{multline}
 With weight tying, $W_U=E^\top$ and is not an independent parameter. Fixed
 position maps and the causal mask $M$ are not learned parameters. An MoE layer
-replaces the dense-MLP entries above by the expert and router parameters.
+replaces the dense-MLP entries above by the expert and router parameters. The
+token vocabulary and the BPE merge list or unigram segmentation model are
+normally constructed before neural-network training and held fixed. They
+determine $V$, the input sequences, and the shapes of $E$ and $W_U$, but they
+are not entries of $\theta$ in this account.
 
 The token prefix, hidden states, queries, keys, values, attention weights,
 logits, and KV cache are computed quantities, not parts of $\theta$. The
@@ -413,36 +540,102 @@ display; specifying the deployed AI system requires additional choices.
 \section{Take-home messages}
 
 \begin{itemize}[leftmargin=*]
-\item A deployed AI system places the conditional language model inside a
-harness that can maintain state, invoke tools, and make repeated model calls.
+\item A deployed AI system places the language model inside a
+``harness'' that constructs context, can maintain state and invoke tools, and
+may make repeated model calls.
+\item A lossless tokenizer segments a sequence over a base alphabet into
+nonempty vocabulary strings. Its token sequence cannot be longer than the
+base-symbol sequence. Vocabulary construction trades shorter sequences against
+larger embedding and readout matrices; it need not recover semantic units.
+\item A stochastic language or sequence model specifies a stochastic process
+whose state space is its vocabulary. An autoregressive model specifies its
+finite-sequence distributions through next-token conditionals.
 \item A decoder transformer maps a prefix to a categorical distribution by
 embedding tokens, applying causally masked attention and positionwise
 transformations, and using a softmax readout.
 \item Absolute position embeddings are added once at the input. RoPE and
-relative biases instead modify attention in every layer that uses them.
+relative-position biases instead modify the attention calculation in every
+layer that uses them.
 \item The learned conditional distribution and the decoding algorithm are
-different objects. Tokenwise argmax does not solve a general sequence-level
-optimization problem.
-\item Dense self-attention has quadratic arithmetic cost in context length.
-A KV cache avoids recomputing old keys and values during generation; old
-queries have no future use.
-\item Maximum context length is an input-capacity limit, not a guarantee of
-uniform recall or reasoning quality. With bounded attention scores, a single
-softmax head cannot remain sharply concentrated as the context grows.
+different objects. An argmax is optimal for a single zero--one-loss decision,
+but repeated tokenwise argmax does not solve a general sequence-level problem
+and is a poor default for open-ended generation.
+\item A full dense-attention pass on a length-$t$ prefix has quadratic
+arithmetic cost. During sequential generation, a KV cache avoids recomputing
+old layer-position activations and changes total attention work from cubic to
+quadratic in the generated length. Old queries have no future use.
+\item Maximum context length is an input-capacity limit. Performance on some
+retrieval and reasoning tasks may deteriorate before the input reaches this
+limit. With bounded attention scores, a single softmax head cannot remain
+sharply concentrated as the context grows.
 \item The parameter vector $\theta$ contains the learned weights of the
 conditional model. It does not contain the current activations, KV cache,
-decoding rule, or harness. This lecture did not yet explain why learning
-produces useful values of $\theta$.
+tokenizer, decoding rule, or harness. This lecture did not yet explain why
+learning produces useful values of $\theta$.
 \end{itemize}
 
+\section{Concepts and terminology}
+
+\begin{description}[style=nextline,leftmargin=1.5em,labelindent=0pt]
+\item[Harness; task state]
+The program surrounding the model, and the information that this program
+maintains between model calls.
+\item[Base alphabet; vocabulary; token]
+The symbols used to represent raw sequences; the finite collection of strings
+made available to the model; and one vocabulary item in a tokenized sequence.
+\item[Tokenizer; detokenizer; BPE; unigram tokenizer]
+The map from a base-symbol string to vocabulary indices, its inverse
+concatenation map, and two corpus-based ways of constructing a vocabulary and
+segmentation rule.
+\item[Stochastic sequence model; autoregressive model]
+A probability law on token sequences, and its specification through
+conditional next-token distributions.
+\item[Embedding; logit; softmax readout]
+The vector assigned to a token, an unnormalized output score, and the map from
+the output scores to a categorical distribution.
+\item[Parameter; activation; layer-position activation; residual stream]
+A learned number shared across inputs; a computed value for the current input;
+and the vector $h_i^\ell$ carried at one sequence position between transformer
+layers.
+\item[Attention head; query; key; value; causal mask]
+One attention calculation, its three projected vectors, and the constraint
+that prevents a position from attending to future tokens.
+\item[Multi-head attention; residual connection; MLP; mixture of experts]
+Parallel attention heads; an identity path around a learned transformation;
+the dense positionwise sublayer; and its sparsely routed expert alternative.
+\item[Absolute position embedding; relative-position bias; RoPE]
+Three different mechanisms for making token order available to attention.
+\item[Decoding rule; sampling; greedy decoding]
+The procedure that turns a next-token distribution into an output token;
+random generation from that distribution; and tokenwise argmax.
+\item[Prefill; decode step; KV cache]
+The initial full-prompt forward pass; one incremental generation step; and the
+stored keys and values that prevent recomputation of old activations.
+\item[Maximum context length; attention entropy]
+The token-capacity ceiling for one model call, and a measure of how diffuse an
+attention distribution is.
+\end{description}
+
 \section*{Bibliographic remarks}
+
+The compiler analogy is literal at the level of the interface: a lexer maps a
+character stream into tokens, although compiler tokens are specified by the
+programming language rather than induced from corpus frequencies; see
+\citet{aho2006}. Modern subword tokenization follows several constructions.
+\citet{sennrich2016} adapted byte-pair encoding by repeatedly merging frequent
+adjacent symbols. \citet{kudo2018} treats a segmentation as a latent choice
+under a unigram model, and \citet{kudorichardson2018} gives the SentencePiece
+system for learning these models directly from raw text.
 
 The transformer architecture was introduced by \citet{vaswani2017}. Their
 model combined encoder and decoder stacks; the equations in this lecture are a
 causal decoder specialization and use a pre-normalized block. The original
 paper used additive sinusoidal position vectors. Rotary position embeddings
 are due to \citet{su2021}; their position-dependent rotations of queries and
-keys expose relative displacement in the attention score.
+keys expose relative displacement in the attention score. The bucketed learned
+relative-position bias in \eqref{eq:relative-position-bias} follows
+\citet{raffel2020}. \citet{press2022} propose ALiBi, which instead adds a fixed
+head-dependent linear penalty based on relative distance.
 
 The key--value cache is the standard implementation of incremental transformer
 decoding. \citet{shazeer2019} explains why repeatedly loading cached keys and
@@ -468,7 +661,32 @@ study complete trained systems. The bounded-score calculation supplies one
 possible mechanism, but does not establish that it causes the observed
 degradation; the extent of any connection is unclear.
 
-\begin{thebibliography}{9}
+\begin{thebibliography}{99}
+\bibitem[Aho et al.(2006)]{aho2006}
+A. V. Aho, M. S. Lam, R. Sethi, and J. D. Ullman.
+\newblock \emph{Compilers: Principles, Techniques, and Tools}.
+\newblock Addison--Wesley, second edition, 2006.
+
+\bibitem[Sennrich et al.(2016)]{sennrich2016}
+R. Sennrich, B. Haddow, and A. Birch.
+\newblock Neural Machine Translation of Rare Words with Subword Units.
+\newblock \emph{ACL}, 2016.
+\newblock \url{https://arxiv.org/abs/1508.07909}.
+
+\bibitem[Kudo(2018)]{kudo2018}
+T. Kudo.
+\newblock Subword Regularization: Improving Neural Network Translation Models
+with Multiple Subword Candidates.
+\newblock \emph{ACL}, 2018.
+\newblock \url{https://arxiv.org/abs/1804.10959}.
+
+\bibitem[Kudo and Richardson(2018)]{kudorichardson2018}
+T. Kudo and J. Richardson.
+\newblock SentencePiece: A Simple and Language Independent Subword Tokenizer
+and Detokenizer for Neural Text Processing.
+\newblock \emph{EMNLP System Demonstrations}, 2018.
+\newblock \url{https://aclanthology.org/D18-2012/}.
+
 \bibitem[Vaswani et al.(2017)]{vaswani2017}
 A. Vaswani, N. Shazeer, N. Parmar, J. Uszkoreit, L. Jones, A. Gomez,
 L. Kaiser, and I. Polosukhin.
@@ -481,6 +699,21 @@ J. Su, Y. Lu, S. Pan, A. Murtadha, B. Wen, and Y. Liu.
 \newblock RoFormer: Enhanced Transformer with Rotary Position Embedding.
 \newblock 2021.
 \newblock \url{https://arxiv.org/abs/2104.09864}.
+
+\bibitem[Raffel et al.(2020)]{raffel2020}
+C. Raffel, N. Shazeer, A. Roberts, K. Lee, S. Narang, M. Matena,
+Y. Zhou, W. Li, and P. J. Liu.
+\newblock Exploring the Limits of Transfer Learning with a Unified
+Text-to-Text Transformer.
+\newblock \emph{Journal of Machine Learning Research}, 21(140):1--67, 2020.
+\newblock \url{https://www.jmlr.org/papers/v21/20-074.html}.
+
+\bibitem[Press et al.(2022)]{press2022}
+O. Press, N. A. Smith, and M. Lewis.
+\newblock Train Short, Test Long: Attention with Linear Biases Enables Input
+Length Extrapolation.
+\newblock \emph{ICLR}, 2022.
+\newblock \url{https://arxiv.org/abs/2108.12409}.
 
 \bibitem[Shazeer(2019)]{shazeer2019}
 N. Shazeer.
