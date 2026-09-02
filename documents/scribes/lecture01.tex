@@ -322,9 +322,10 @@ output position $i$, and their column $j$ refers to key/value or source
 position $j$. In particular, $(A_a)_{ij}$ is the weight with which position
 $i$ uses the value at position $j$.
 
-The softmax acts row by row. The causal mask makes the attention weight of
-every future source position exactly zero. Concatenate the head outputs and
-apply the first residual connection:
+The softmax acts row by row, where a row represents one query position and its
+columns represent the available key/value source positions. The causal mask
+makes the attention weight of every future source position exactly zero.
+Concatenate the head outputs and apply the first residual connection:
 \begin{equation}
 G=H^\ell+[O_1\mid\cdots\mid O_h]W^O_\ell,
 \qquad W^O_\ell\in\R^{hd_h\times d}.
