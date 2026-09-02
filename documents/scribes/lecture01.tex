@@ -88,6 +88,9 @@ followed by
 \xrightarrow{\text{decoding}}
 \boxed{\text{next token or action}}.
 \end{equation}
+The \emph{prompt} is the initial input supplied to a model call. After
+tokenization, the prompt tokens form the initial prefix; generated tokens then
+extend that prefix.
 Output tokens may be detokenized into text or parsed as a tool call. The
 resulting observation updates the task state, and the loop may begin again. A
 harness can use several model calls before returning an answer. The behavior
@@ -171,6 +174,13 @@ depending on the matrix. Board orientation and algebraic storage therefore use
 different axes. We state what the rows and columns index
 whenever a new kind of matrix appears.
 
+Throughout the course, every vector is a column vector. When a matrix stores
+one vector at each position, row $i$ contains the transpose of that vector;
+thus $h_i=(H_{i,:})^\top\in\R^d$ for $H\in\R^{T\times d}$. We write
+$\mathbf 1_n\in\R^n$ for the all-ones column vector. Whenever a matrix
+calculation needs a row-shaped quantity, we write it explicitly as the
+transpose of a column vector.
+
 Let the vocabulary have size $V$, and identify token $x_t\in[V]$ with the
 standard basis vector $e_{x_t}\in\{0,1\}^V$. Include a beginning-of-sequence
 token $x_0$. For $T$ prediction positions, define $Z\in\{0,1\}^{T\times V}$ by
@@ -185,13 +195,15 @@ vectors $P\in\R^{T\times d}$, the input is
 \begin{equation}
 H^0=ZE+P,
 \qquad
-H^0_{t,:}=E_{x_{t-1},:}+P_{t,:}.
+h_t^0=(H^0_{t,:})^\top
+=E^\top e_{x_{t-1}}+P_{t,:}^\top\in\R^d.
 \label{eq:input-embedding}
 \end{equation}
 Rows of $E$ index vocabulary items and columns index the $d$ model features;
-row $v$ is the embedding of token $v$. Rows of $P$ and $H^0$ index positions,
-and their columns index model features. The one-hot notation makes the map
-explicit; an implementation performs a row lookup in $E$.
+the embedding vector of token $v$ is
+$E^\top e_v=(E_{v,:})^\top\in\R^d$. Rows of $P$ and $H^0$ index positions,
+and store the transposes of position and hidden vectors. The one-hot notation
+makes the map explicit; an implementation performs a row lookup in $E$.
 
 The complete inference calculation can be summarized by the following block
 diagram:
@@ -243,19 +255,20 @@ separately in the homework.
 
 Suppose $H^\ell\in\R^{T\times d}$ enters layer $\ell$. The lecture described
 the attention calculation. This note adds the standard multiple-head structure
-as a correction and specifies a pre-normalized block with $h$ heads of width
-$d_h$. In $H^\ell$, row $i$ is
+as a correction and specifies a pre-normalized block with $h$ heads. Usually
+$d_h=d/h$, so $d_h\ll d$ and the concatenated head output has width $hd_h=d$.
+In $H^\ell$, row $i$ is
 the activation at sequence position $i$, and column $r$ is model-feature
 coordinate $r$:
 \begin{equation}
 H^\ell=
 \begin{bmatrix}
-h_1^\ell\\[-1mm]
+(h_1^\ell)^\top\\[-1mm]
 \vdots\\[-1mm]
-h_T^\ell
+(h_T^\ell)^\top
 \end{bmatrix}
 \in\R^{T\times d},
-\qquad h_i^\ell=H^\ell_{i,:}\in\R^{1\times d}.
+\qquad h_i^\ell=(H^\ell_{i,:})^\top\in\R^d.
 \label{eq:row-stacking}
 \end{equation}
 
@@ -270,11 +283,13 @@ $\varepsilon>0$, define
 \begin{equation}
 \operatorname{LayerNorm}_{\ell,m}(u)
 =\gamma_{\ell,m}\odot
-\frac{u-\mu(u)\mathbf 1}{\sqrt{\sigma^2(u)+\varepsilon}}
+\frac{u-\mu(u)\mathbf 1_d}{\sqrt{\sigma^2(u)+\varepsilon}}
 +\beta_{\ell,m},
 \qquad m\in\{1,2\}.
 \end{equation}
-On a matrix, $\operatorname{LayerNorm}_{\ell,m}$ acts row by row: it normalizes
+On a matrix, $\operatorname{LayerNorm}_{\ell,m}$ acts on each stored position:
+the transpose of output row $i$ is
+$\operatorname{LayerNorm}_{\ell,m}((H^\ell_{i,:})^\top)$. Thus it normalizes
 the $d$ feature coordinates at each position independently. This note adds
 layer normalization so that the displayed block is fully specified.
 
@@ -351,8 +366,8 @@ The positionwise feed-forward sublayer and second residual connection give
 R&=\operatorname{LayerNorm}_{\ell,2}(G),\\
 H^{\ell+1}
 &=G+
-\phi\!\left(RW^1_\ell+\mathbf 1(b^1_\ell)^\top\right)W^2_\ell
-+\mathbf 1(b^2_\ell)^\top,
+\phi\!\left(RW^1_\ell+\mathbf 1_T(b^1_\ell)^\top\right)W^2_\ell
++\mathbf 1_T(b^2_\ell)^\top,
 \end{align}
 with
 \begin{equation}
@@ -363,15 +378,15 @@ b^1_\ell\in\R^{d_{\rm ff}},\quad b^2_\ell\in\R^d.
 Here $R\in\R^{T\times d}$ still has positions in rows. The product
 $RW^1_\ell\in\R^{T\times d_{\rm ff}}$ replaces the model-feature columns by
 feed-forward-unit columns, and multiplication by $W^2_\ell$ returns to $d$
-model-feature columns. The vector $\mathbf 1\in\R^T$ copies each bias into
+model-feature columns. The all-ones vector $\mathbf 1_T$ copies each bias into
 every position row.
 For example, $\phi(z)=z\Phi(z)$ coordinatewise is GELU, where $\Phi$ is the
 standard normal cumulative distribution function.
 
 The lecture also mentioned \emph{mixture-of-experts} layers. They replace the
 single dense feed-forward map by expert maps $f_1,\ldots,f_m$ and a router. For
-one position row $r\in\R^{1\times d}$, with each $f_e(r)\in\R^{1\times d}$, a
-sparse version has the form
+one position activation $r\in\R^d$, let each expert be a map
+$f_e:\R^d\to\R^d$. A sparse version has the form
 \begin{equation}
 f_{\rm MoE}(r)
 =\sum_{e\in S(r)}\rho_e(r)f_e(r),
@@ -400,33 +415,34 @@ H^L=
 \label{eq:block-composition}
 \end{equation}
 The notation hides the attention, residual, normalization, and MLP or MoE
-calculations while preserving which state enters each block and which mask it
-uses. Appendix~\ref{app:transformer-arrangements} uses it to compare
-decoder-only, encoder-only, and encoder--decoder transformers.
+calculations while preserving the input state and attention mask of each
+block. Appendix~\ref{app:transformer-arrangements} applies the block-function
+notation to compare decoder-only, encoder-only, and encoder--decoder
+transformers.
 
-The key invariant is causal dependence: after $L$ blocks, row
-$h_t^L=H^L_{t,:}$ depends only on $x_{<t}$.
+The key invariant is causal dependence: after $L$ blocks, the column vector
+$h_t^L=(H^L_{t,:})^\top$ depends only on $x_{<t}$.
 
 \section{From a hidden vector to the next-token distribution}
 
-Let $W_U\in\R^{d\times V}$ and $b_U\in\R^V$. The final row is converted to
-logits and then to probabilities:
+Let $W_U\in\R^{V\times d}$ and $b_U\in\R^V$. The final hidden vector is
+converted to logits and then to probabilities:
 \begin{align}
-z_t&=h_t^LW_U+b_U,\\
+z_t&=W_Uh_t^L+b_U\in\R^V,\\
 p_\theta(x_t=v\mid x_{<t})
 &=\frac{\exp(z_{t,v})}{\sum_{u=1}^V\exp(z_{t,u})}.
 \end{align}
-The row vector $h_t^L\in\R^{1\times d}$ has one entry per model feature.
-Rows of $W_U$ index those model features and columns index vocabulary items.
-Consequently, $z_t\in\R^{1\times V}$ has one logit in each vocabulary column,
-and the softmax turns those columns into next-token probabilities.
-Weight tying, the common optional choice $W_U=E^\top$, reuses the input
+The column vector $h_t^L\in\R^d$ has one entry per model feature. Rows of
+$W_U$ index vocabulary items and columns index model features. Consequently,
+$z_t\in\R^V$ has one logit for each vocabulary item, and the softmax turns
+these logits into next-token probabilities. Weight tying, the common optional
+choice $W_U=E$, reuses the input
 embedding matrix at the readout.
 
 The single-token path is therefore
 \begin{equation}
 e_{x_{t-1}}
-\longrightarrow E_{x_{t-1},:}
+\longrightarrow E^\top e_{x_{t-1}}
 \longrightarrow h_t^L
 \longrightarrow z_t
 \longrightarrow p_\theta(\,\cdot\mid x_{<t}).
@@ -461,7 +477,7 @@ general for open-ended generation.
 \paragraph{Practical note.}
 For open-ended multi-token generation, forget greedy decoding as a default:
 it is a bad idea. It throws away nearly all of the predictive distribution at
-every step, and a locally best token can irreversibly eliminate much better
+every step, because a locally best token can irreversibly eliminate much better
 continuations.
 
 \paragraph{Remark.}
@@ -470,21 +486,24 @@ separately in the homework.
 
 \section{Attention cost and the key--value cache}
 
-Write $h_i^\ell=H^\ell_{i,:}$ for the \emph{layer-position activation}: the
-residual-stream vector at position $i$ after layer $\ell$. Computing the output
-for position $i$ in one causal attention layer compares its query with $i$
-keys. Consequently, a full forward pass on a fixed length-$t$ prefix performs
+Let $h_i^\ell=(H^\ell_{i,:})^\top\in\R^d$ denote the \emph{layer-position
+activation} at position $i$ after layer $\ell$. Computing the output for
+position $i$ in one causal attention layer compares its query with $i$ keys.
+Consequently, a full forward pass on a fixed length-$t$ prefix performs
 \begin{equation}
 \sum_{i=1}^t i=\frac{t(t+1)}2
 \end{equation}
 query--key comparisons per head. Both $QK^\top$ and the multiplication of the
 resulting attention matrix by $V$ therefore require order $t^2d_h$ arithmetic.
 A straightforward implementation also materializes a $t\times t$ attention
-matrix. The causal mask removes the upper triangle, lowering the constant
-while preserving quadratic dependence on $t$. The constant is relevant
-during training: a bidirectional head has $t^2$ query--key pairs, whereas a
-causal head has only $t(t+1)/2$ permitted pairs. A kernel that skips the masked
-triangle can save nearly half of the score and attention--value arithmetic.
+matrix. The causal mask makes the upper triangle irrelevant while preserving
+quadratic dependence on $t$. A kernel that skips this triangle processes
+$t(t+1)/2$ permitted query--key pairs, compared with $t^2$ pairs for a
+bidirectional head. The saving applies whenever all sequence positions are
+processed together, including training, prompt prefill, and full-sequence
+scoring. Bidirectional attention has no masked triangle to skip. A
+triangular-aware kernel can therefore save nearly half of the score and
+attention--value arithmetic.
 The whole-block saving is smaller because projections, normalization, and the
 MLP or MoE remain. A kernel that first computes the full square matrix and
 masks it afterward realizes no arithmetic saving.
@@ -496,18 +515,18 @@ different computational profiles.
 
 Autoregressive decoding has additional structure. At step $t$ and in each
 layer, only $h_t^\ell$, the activation of the new token, must be advanced. Let
-its query, key, and value be $q_t,k_t,v_t$. The attention operation for the new
-row is
+$q_t,k_t,v_t\in\R^{d_h}$ be its query, key, and value vectors, with the layer
+and head indices suppressed. The attention operation for the new position is
 \begin{equation}
 \alpha_t
-=\softmax\!\left(\frac{q_tK_{\leq t}^\top}{\sqrt{d_h}}\right),
+=\softmax\!\left(\frac{K_{\leq t}q_t}{\sqrt{d_h}}\right)\in\R^t,
 \qquad
-o_t=\alpha_tV_{\leq t}.
+o_t=V_{\leq t}^\top\alpha_t\in\R^{d_h}.
 \end{equation}
-Here $q_t\in\R^{1\times d_h}$ is the new-position row,
-$K_{\leq t},V_{\leq t}\in\R^{t\times d_h}$ have cached positions in rows and
-head coordinates in columns, $\alpha_t\in\R^{1\times t}$ has one weight per
-cached source position, and $o_t\in\R^{1\times d_h}$ is the new output row.
+The matrices $K_{\leq t},V_{\leq t}\in\R^{t\times d_h}$ store
+$k_1^\top,\ldots,k_t^\top$ and $v_1^\top,\ldots,v_t^\top$ in their rows.
+Thus $\alpha_t$ has one weight per cached source position, and $o_t$ is the
+new output vector.
 The earlier keys and values are therefore stored in a \emph{KV cache}. One
 cached decode step uses order $td_h$ attention arithmetic per head, and after
 $t$ positions the cache stores order $td_h$ numbers per head and layer.
@@ -579,14 +598,16 @@ Training was described only in words. The system is shown many text prefixes
 together with the tokens that actually followed them. Its predictions are
 compared with those next tokens, and the shared weights are modified to improve
 the predictions across the data. This initial large-scale training stage,
-usually conducted on a broad corpus, is called \emph{pretraining}. Subsequent
-training that adapts the pretrained model to instructions, tasks, preferences,
-or other desired behavior is called \emph{post-training}; supervised
-fine-tuning is one possible post-training method. During \emph{inference}, the
-resulting parameters are held fixed while the model calls described in this
-note compute predictions. Lecture~3 will express the pretraining description
-using probabilistic models, log loss, maximum likelihood, KL divergence, and
-compression.
+usually conducted on a broad corpus, is called \emph{pretraining}.
+\emph{Fine-tuning} names the operation of continuing parameter training from
+an existing checkpoint. \emph{Post-training} names the stage after
+pretraining and may contain several fine-tuning procedures, including
+supervised instruction tuning and preference- or reward-based optimization.
+A supervised fine-tuning stage after pretraining is both fine-tuning and
+post-training. During \emph{inference}, the resulting parameters are held
+fixed while the model calls described in this note compute predictions.
+Lecture~3 will express the pretraining description using probabilistic models,
+log loss, maximum likelihood, KL divergence, and compression.
 
 \section{What exactly is contained in the parameter vector?}
 
@@ -603,7 +624,7 @@ E,P,W_U,b_U,
 \gamma_{\ell,2},\beta_{\ell,2}\}_{\ell}
 \Bigr).
 \end{multline}
-With weight tying, $E$ determines $W_U=E^\top$. Fixed position maps and the
+With weight tying, $E$ determines $W_U=E$. Fixed position maps and the
 causal mask $M$ lie outside the learned parameters. An MoE layer
 replaces the dense-MLP entries above by the expert and router parameters. The
 token vocabulary and segmentation rules are normally constructed before
@@ -657,16 +678,6 @@ learning can produce useful values of $\theta$.
 \end{itemize}
 
 \section{Glossary}
-
-\noindent\textit{Inclusion rule.}
-The glossary records a term when this note gives it a technical meaning that
-is needed to follow the lecture or is likely to recur later in the course. It
-also records persistent notation and diagram conventions. It omits ordinary
-mathematical words, symbols, implementation details, named models, and terms
-appearing only in optional background. Terms are still defined at first use in
-the main text; this section is a recap.
-
-\medskip
 \begin{description}[style=nextline,leftmargin=1.5em,labelindent=0pt]
 \item[Harness; task state]
 The program surrounding the model, and the information that this program
@@ -687,14 +698,17 @@ concatenation map.
 \item[Sequence orientation; matrix layout]
 Positions run left to right in the board diagrams. In the equations, positions
 are stacked as rows and the columns index coordinates such as vocabulary items
-or learned features.
-\item[Stochastic sequence model; autoregressive model]
-A probability law on token sequences, and its specification through
-conditional next-token distributions.
+or learned features. Every vector is a column vector; a matrix row that stores
+a vector contains its transpose.
+\item[Stochastic process; stochastic sequence model; autoregressive model]
+A jointly distributed collection of random variables indexed by time; its
+specialization to vocabulary-valued random variables; and a specification of
+its finite-sequence distributions through conditional next-token
+distributions.
 \item[Pretraining; post-training; fine-tuning]
-Initial large-scale fitting on broad data; subsequent training that adapts the
-pretrained model's behavior; and continued training from existing parameters
-for a narrower purpose. Fine-tuning is one possible form of post-training.
+Initial large-scale fitting on broad data; the stage of training that follows
+pretraining; and continued parameter training from an existing checkpoint. A
+post-training pipeline may contain several fine-tuning procedures.
 \item[Inference; generation]
 Computation with the model parameters held fixed, and repeated next-token
 inference and decoding that produce a continuation.

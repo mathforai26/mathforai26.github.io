@@ -60,15 +60,26 @@ Each student will sign up for one lecture and prepare a polished note. The note
 should reconstruct the lecture's question, mathematical setup, central results
 and arguments, relevance to modern AI, and the boundary of the conclusions. It
 should be a useful mathematical exposition, not a transcript. Near the end,
-include a compact **Concepts and terminology** section collecting the important
-new vocabulary introduced in the lecture. Whenever a matrix or tensor is
-introduced, state what its rows, columns, and any additional axes index. If a
-diagram uses a different spatial orientation from the algebraic convention,
+include a compact **Glossary** collecting the important new vocabulary
+introduced in the lecture. Include a term when the note gives it a technical
+meaning needed to follow the lecture or when the term is likely to recur later
+in the course. Persistent notation and diagram conventions also belong in the
+glossary; ordinary mathematical words, implementation details, named models,
+libraries, and terms confined to optional background can be omitted. Define
+terms at first use in the main text; the glossary is a recap.
+
+Throughout the course, every vector is a column vector. If a matrix stores one
+vector per position, its rows contain the transposes of those vectors. Write
+every row-shaped vector explicitly as a transpose. Whenever a matrix or tensor
+is introduced, state what its rows, columns, and any additional axes index. If
+a diagram uses a different spatial orientation from the algebraic convention,
 make that difference explicit. End with a short
 **Bibliographic remarks** section in the style of *Bandit Algorithms*: use
 narrative prose to explain the origins of the ideas, how the cited work relates
 to the lecture, and where its scope differs. Follow this with an ordinary
 reference list.
+
+Start from the [LaTeX scribe template]({{ '/documents/misc_files/scribe_template.tex' | relative_url }}).
 
 The note is due within two calendar days of the lecture: a Tuesday lecture is
 due by the end of Thursday, ideally by the end of Wednesday; a Thursday lecture

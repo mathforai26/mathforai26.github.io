@@ -1,0 +1,105 @@
+\documentclass[11pt,twoside]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage[inline,shortlabels]{enumitem}
+\usepackage{xcolor}
+\usepackage{microtype}
+\usepackage[square,authoryear]{natbib}
+\usepackage[colorlinks=true,linkcolor=blue!60!black,
+  urlcolor=blue!60!black,citecolor=blue!60!black]{hyperref}
+
+\definecolor{courseblue}{HTML}{17365D}
+\newcommand{\R}{\mathbb R}
+\newcommand{\lecturenumber}{N}
+
+\renewcommand{\thepage}{\lecturenumber--\arabic{page}}
+\renewcommand{\thesection}{\lecturenumber.\arabic{section}}
+\renewcommand{\theequation}{\lecturenumber.\arabic{equation}}
+
+\pagestyle{myheadings}
+\markboth{Lecture \lecturenumber: Lecture title}
+{Lecture \lecturenumber: Lecture title}
+
+% Course-wide notation convention:
+% Every vector is a column vector. If a matrix stores one vector per position,
+% row i contains the transpose of that vector. Write every row-shaped vector
+% explicitly as the transpose of a column vector.
+
+\begin{document}
+
+\begin{center}
+\fcolorbox{courseblue}{white}{%
+\begin{minipage}{0.92\textwidth}
+\vspace{1mm}
+\textbf{CMPUT 654: Mathematical Foundations of Modern AI Systems}
+\hfill Fall 2026
+
+\vspace{3mm}
+\begin{center}
+{\Large\bfseries Lecture \lecturenumber: Lecture title}
+
+\vspace{1mm}
+Lecture date
+\end{center}
+
+\vspace{2mm}
+\textit{Lecturer: Csaba Szepesv\'ari}
+\hfill
+\textit{Scribe: Student name}
+\vspace{1mm}
+\end{minipage}}
+\end{center}
+
+% Organize the body around the lecture's mathematical development. Replace
+% the sample headings below with headings appropriate to the lecture.
+
+\section{Main question and setup}
+
+State the question developed in the lecture. Define every mathematical object
+before using it. For each matrix or tensor, state what every axis indexes.
+
+\section{Central result or calculation}
+
+State the main result or calculation precisely and reconstruct its argument.
+Use additional sections when the lecture contains several substantial blocks.
+
+\section{Interpretation}
+
+Explain what the mathematics says about the AI systems discussed in the
+lecture.
+
+\section{Take-home messages}
+
+\begin{itemize}[leftmargin=*]
+\item Record the main mathematical and conceptual conclusions compactly.
+\end{itemize}
+
+\section{Glossary}
+
+% Include a term when the note gives it a technical meaning needed to follow
+% the lecture or when the term is likely to recur later in the course. Include
+% persistent notation and diagram conventions. Ordinary mathematical words,
+% implementation details, named models, libraries, and terms confined to
+% optional background can be omitted. Define every term at first use in the
+% main text; the glossary is a recap.
+
+\begin{description}[style=nextline,leftmargin=1.5em,labelindent=0pt]
+\item[Term]
+Definition in the sense used in the lecture.
+\end{description}
+
+\section*{Bibliographic remarks}
+
+Explain the origin or significance of each cited reference and its connection
+to the material developed above.
+
+\begin{thebibliography}{99}
+\bibitem[Author(Year)]{reference-key}
+Author.
+\newblock Title.
+\newblock Venue, year.
+\newblock \url{https://example.com}.
+\end{thebibliography}
+
+\end{document}
