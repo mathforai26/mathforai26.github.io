@@ -13,8 +13,6 @@
 \newcommand{\R}{\mathbb R}
 \newcommand{\Hent}{\mathsf H}
 
-\newtheorem{proposition}{Proposition}
-
 \renewcommand{\thepage}{1--\arabic{page}}
 \renewcommand{\thesection}{1.\arabic{section}}
 \renewcommand{\theequation}{1.\arabic{equation}}
@@ -287,34 +285,15 @@ s_j=\frac{q^\top k_j}{\sqrt{d_h}},
 \alpha_j=\frac{e^{s_j}}{\sum_{r=1}^T e^{s_r}}.
 \end{equation}
 
-\begin{proposition}[Bounded scores force diffuse attention]
-If $|s_j|\leq B$ for every $j$, then
-\begin{equation}
-\max_{1\leq j\leq T}\alpha_j
-\leq
-\frac{1}{1+(T-1)e^{-2B}}.
-\label{eq:bounded-softmax}
-\end{equation}
-Consequently, for fixed $B$, no individual attention weight stays bounded away
-from zero as $T\to\infty$.
-\end{proposition}
+If the scores remain in a fixed bounded range as $T$ grows, no individual
+softmax weight can remain sharply concentrated. A quantitative upper bound,
+its proof, and the corresponding entropy consequence will be developed
+separately in the homework.
 
-\begin{proof}
-For any $j$, the other $T-1$ exponentials are at least $e^{-B}$, while
-$e^{s_j}\leq e^B$. Hence
-\[
-\alpha_j
-\leq
-\frac{e^B}{e^B+(T-1)e^{-B}},
-\]
-which is \eqref{eq:bounded-softmax}.
-\end{proof}
-
-For example, $\lVert q\rVert_2,\lVert k_j\rVert_2\leq R$ gives
-$B=R^2/\sqrt{d_h}$. The premise can fail: a model can make score gaps grow with
+The bounded-score premise can fail: a model can make score gaps grow with
 context length, and multiple heads and layers can implement more complicated
-selection mechanisms. The proposition is a precise limitation under bounded
-scores, not a general proof that transformers cannot use long contexts.
+selection mechanisms. Thus the observation does not by itself show that
+transformers cannot use long contexts.
 
 \paragraph{Entropy language.}
 For a probability vector $\alpha\in\R^T$, its entropy is
@@ -323,15 +302,14 @@ For a probability vector $\alpha\in\R^T$, its entropy is
 \end{equation}
 It is $0$ for a deterministic distribution and $\log T$ for the uniform
 distribution. Thus small entropy describes concentrated attention and large
-entropy describes diffuse attention. A quantitative entropy consequence of
-Proposition~1 will be developed separately in the homework.
+entropy describes diffuse attention.
 
 \paragraph{Related empirical phenomenon.}
 The terms \emph{lost in the middle} and \emph{context rot} refer to observed
 failures to use long contexts uniformly or reliably, sometimes well below a
 model's advertised maximum length. These experiments concern complete trained
 systems and task performance. They are related to the question above, but the
-bounded-score proposition alone does not explain them.
+bounded-score observation alone does not explain them.
 
 \section{What was said about training}
 
@@ -435,7 +413,7 @@ K. Hong, A. Troynikov, and J. Huber.
 \newblock \url{https://www.trychroma.com/research/context-rot}.
 \newblock This report uses ``context rot'' for empirical degradation as input
 length grows across several tasks and contemporary models. It is cited as
-related evidence, not as a consequence of Proposition~1.
+related evidence, not as a consequence of the bounded-score observation.
 \end{thebibliography}
 
 \end{document}
