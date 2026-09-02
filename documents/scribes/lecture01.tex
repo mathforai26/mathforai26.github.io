@@ -682,6 +682,39 @@ highest-scoring segmentation or sample among segmentations
 \citep{kudo2018,kudorichardson2018}.
 \end{enumerate}
 
+\section{Supplement: codebases for experiments}
+\label{app:experimental-codebases}
+
+This appendix was not covered in the lecture. Each entry supports a different
+kind of experiment; students are not expected to install all of them.
+\begin{description}[style=nextline,leftmargin=1.5em,labelindent=0pt]
+\item[NumPy RASP-L]
+A small reference implementation for writing and testing causal RASP-L
+sequence programs: \url{https://github.com/apple/ml-np-rasp}.
+\item[RASP and Tracr]
+The original RASP interpreter displays selectors and intermediate sequence
+operations. Tracr compiles a subset of RASP into concrete transformer weights:
+\url{https://github.com/tech-srl/RASP} and
+\url{https://github.com/google-deepmind/tracr}.
+\item[nanochat]
+A compact end-to-end codebase containing tokenization, pretraining,
+fine-tuning, evaluation, and inference. It includes small CPU and
+Apple-Silicon configurations, although training a capable language model still
+requires substantial computation: \url{https://github.com/karpathy/nanochat}.
+\item[Hugging Face Transformers]
+A broad model-definition and checkpoint ecosystem, useful for loading models
+and comparing tokenizers, architectures, and generation rules:
+\url{https://github.com/huggingface/transformers}.
+\item[TransformerLens]
+An inspection library for GPT-style models, useful for recording activations
+and attention patterns or intervening inside a forward pass:
+\url{https://github.com/TransformerLensOrg/TransformerLens}.
+\item[llama.cpp]
+A local inference implementation that makes tokenization, quantization,
+decoding, and key--value-cache behavior accessible to experiments:
+\url{https://github.com/ggml-org/llama.cpp}.
+\end{description}
+
 \section*{Bibliographic remarks}
 
 The compiler analogy is literal at the level of the interface: a lexer maps a
@@ -695,6 +728,18 @@ The transformer architecture was introduced by \citet{vaswani2017}. Their
 model combined encoder and decoder stacks; the equations in this lecture are a
 causal decoder specialization and use a pre-normalized block.
 
+Three early pretraining recipes made the architectural alternatives concrete.
+The original GPT work paired a causal decoder language model with
+task-specific supervised fine-tuning \citep{radford2018}. BERT instead
+pretrained a bidirectional encoder with a masked-token objective and then
+fine-tuned its representations \citep{devlin2019}. T5 retained the
+encoder--decoder architecture and expressed many tasks through one text-to-text
+interface \citep{raffel2020}. GPT-3 later demonstrated that a sufficiently
+large causal language model could use task descriptions and examples supplied
+in its context, without a gradient update at test time \citep{brown2020}.
+These are historically important successful recipes; they do not establish
+that one of the three architectural forms uniformly dominates the others.
+
 The original encoder--decoder split was designed for conditional
 sequence-to-sequence tasks such as translation. A fully visible encoder turns
 the complete source sequence into a memory; a causal decoder processes the
@@ -703,12 +748,46 @@ that memory. In the causal decoder-only model described here, source or prompt
 and continuation occupy one sequence and pass through one shared stack. This
 is a natural fit when raw text has no privileged source--target split, and it
 gives pretraining, prompting, and continuation a homogeneous implementation.
-It is not a general computational dominance result: encoder--decoder models
-retain a strong inductive bias for translation and other fixed conditional
-tasks. Indeed, the controlled comparison by \citet{raffel2020} found their
-encoder--decoder model strongest at roughly matched computation and explains
+There is also a concrete attention-cost advantage when the encoder is
+bidirectional and the decoder-only model is causal. For source length $S$ and
+target length $T$, compare one bidirectional encoder attention layer followed
+by one causal decoder attention layer and cross-attention, with one causal
+decoder-only attention layer on the concatenated source and target. The
+numbers of query--key scores are
+\begin{align}
+N_{\rm enc\text{-}dec}
+&=S^2+\frac{T(T+1)}2+ST,\\
+N_{\rm dec\text{-}only}
+&=\frac{(S+T)(S+T+1)}2
+=\frac{S(S+1)}2+\frac{T(T+1)}2+ST.
+\end{align}
+The decoder-only layer saves $S(S-1)/2$ source--source scores: the upper
+triangle used by the bidirectional encoder is absent from causal attention.
+An implementation realizes this saving only when its causal-attention kernel
+avoids computing masked scores. This score count does not settle a whole-model
+comparison because depth, width, parameter count, projections, feed-forward
+layers, and implementation also matter. Encoder--decoder models retain a
+strong inductive bias for translation and other fixed conditional tasks. In
+the controlled comparison by \citet{raffel2020}, the encoder--decoder model
+was strongest at roughly matched total computation; the paper also explains
 why parameter count and computation cannot both be matched by merely changing
 the number of layers.
+
+Key--value caching also applies to encoder--decoder inference. The encoder
+output is computed once for a fixed source. Each decoder layer can cache the
+key and value projections of that source for cross-attention, while its causal
+self-attention cache grows with the generated target. At a decode step only
+the current queries are needed; old queries do not participate in future
+attention calculations.
+
+Recent publicly released model families usually preserve the causal
+decoder-only interface while changing the surrounding recipe and internal
+details. Llama~3 is a dense example \citep{grattafiori2024}, Mistral~7B uses
+grouped-query and sliding-window attention \citep{jiang2023}, and DeepSeek-V3
+uses a mixture-of-experts architecture \citep{deepseek2024}. The careful term
+is \emph{open-weight}: releasing numerical weights does not by itself release
+the training data and code or grant every freedom conventionally associated
+with open-source software.
 
 The original paper used additive sinusoidal position vectors. Rotary position embeddings
 are due to \citet{su2021}; their position-dependent rotations of queries and
@@ -718,9 +797,22 @@ relative-position bias in \eqref{eq:relative-position-bias} follows
 head-dependent linear penalty based on relative distance.
 
 The key--value cache is the standard implementation of incremental transformer
-decoding. \citet{shazeer2019} explains why repeatedly loading cached keys and
-values is a central memory cost and proposes multi-query attention to reduce
-it. \citet{dao2022} introduced FlashAttention, which computes exact dense
+decoding. \citet{shazeer2019} identified repeatedly loading cached keys and
+values as a memory-bandwidth bottleneck. In ordinary multi-head attention,
+each of $H$ query heads has its own key and value head. Multi-query attention
+keeps the $H$ query heads but shares one key head and one value head, reducing
+the per-layer cache from $2tH d_h$ to $2t d_h$ scalars at prefix length $t$.
+This targets decoding, where the old keys and values must be read repeatedly;
+it does not give the analogous factor-$H$ reduction in prefill arithmetic.
+Shazeer's experiments found a large decoding-speed improvement with a small
+quality loss. Grouped-query attention interpolates between the two designs by
+using $G$ shared key--value groups, giving a cache of $2tGd_h$ scalars
+\citep{ainslie2023}; its use in Mistral~7B and Llama~3 makes the idea part of
+modern practice. Thus the
+Shazeer reference matters both historically and as the origin of a current
+KV-cache tradeoff.
+
+\citet{dao2022} introduced FlashAttention, which computes exact dense
 attention by tiling and an online softmax. This reduces memory traffic and
 avoids materializing the full attention matrix, but does not remove the
 quadratic arithmetic of exact dense attention. The course returns to this
@@ -740,6 +832,18 @@ input length grows across a broader collection of tasks and models. Both works
 study complete trained systems. The bounded-score calculation supplies one
 possible mechanism, but does not establish that it causes the observed
 degradation; the extent of any connection is unclear.
+
+RASP is a small language for writing sequence computations using operations
+chosen to resemble transformer primitives. \citet{weiss2021} use it to make
+attention-based constructions explicit. \citet{zhou2024} introduce RASP-L for
+causal decoder-only transformers and propose that short RASP-L programs help
+predict which algorithmic tasks a trained transformer will learn in a
+length-generalizing way. This is a conjectural empirical organizing principle,
+not a theorem that gradient training recovers every short program. The papers
+are particularly useful because they force a proposed computation to be
+written as specific comparisons, causal selections, aggregations, and
+position operations. The NumPy implementation and Tracr compiler are listed
+in Appendix~\ref{app:experimental-codebases}.
 
 \begin{thebibliography}{99}
 \bibitem[Aho et al.(2006)]{aho2006}
@@ -774,6 +878,43 @@ L. Kaiser, and I. Polosukhin.
 \newblock \emph{NeurIPS}, 2017.
 \newblock \url{https://arxiv.org/abs/1706.03762}.
 
+\bibitem[Radford et al.(2018)]{radford2018}
+A. Radford, K. Narasimhan, T. Salimans, and I. Sutskever.
+\newblock Improving Language Understanding by Generative Pre-Training.
+\newblock OpenAI technical report, 2018.
+\newblock \url{https://cdn.openai.com/research-covers/language-unsupervised/language_understanding_paper.pdf}.
+
+\bibitem[Devlin et al.(2019)]{devlin2019}
+J. Devlin, M.-W. Chang, K. Lee, and K. Toutanova.
+\newblock BERT: Pre-training of Deep Bidirectional Transformers for Language
+Understanding.
+\newblock \emph{NAACL}, 2019.
+\newblock \url{https://arxiv.org/abs/1810.04805}.
+
+\bibitem[Brown et al.(2020)]{brown2020}
+T. B. Brown et al.
+\newblock Language Models are Few-Shot Learners.
+\newblock \emph{NeurIPS}, 2020.
+\newblock \url{https://arxiv.org/abs/2005.14165}.
+
+\bibitem[Grattafiori et al.(2024)]{grattafiori2024}
+A. Grattafiori et al.
+\newblock The Llama 3 Herd of Models.
+\newblock 2024.
+\newblock \url{https://arxiv.org/abs/2407.21783}.
+
+\bibitem[Jiang et al.(2023)]{jiang2023}
+A. Q. Jiang et al.
+\newblock Mistral 7B.
+\newblock 2023.
+\newblock \url{https://arxiv.org/abs/2310.06825}.
+
+\bibitem[DeepSeek-AI(2024)]{deepseek2024}
+DeepSeek-AI.
+\newblock DeepSeek-V3 Technical Report.
+\newblock 2024.
+\newblock \url{https://arxiv.org/abs/2412.19437}.
+
 \bibitem[Su et al.(2021)]{su2021}
 J. Su, Y. Lu, S. Pan, A. Murtadha, B. Wen, and Y. Liu.
 \newblock RoFormer: Enhanced Transformer with Rotary Position Embedding.
@@ -801,6 +942,14 @@ N. Shazeer.
 \newblock 2019.
 \newblock \url{https://arxiv.org/abs/1911.02150}.
 
+\bibitem[Ainslie et al.(2023)]{ainslie2023}
+J. Ainslie, J. Lee-Thorp, M. de Jong, Y. Zemlyanskiy, F. Lebr\'on,
+and S. Sanghai.
+\newblock GQA: Training Generalized Multi-Query Transformer Models from
+Multi-Head Checkpoints.
+\newblock \emph{EMNLP}, 2023.
+\newblock \url{https://arxiv.org/abs/2305.13245}.
+
 \bibitem[Dao et al.(2022)]{dao2022}
 T. Dao, D. Y. Fu, S. Ermon, A. Rudra, and C. R\'e.
 \newblock FlashAttention: Fast and Memory-Efficient Exact Attention with
@@ -827,6 +976,20 @@ K. Hong, A. Troynikov, and J. Huber.
 \newblock Context Rot: How Increasing Input Tokens Impacts LLM Performance.
 \newblock Chroma technical report, 2025.
 \newblock \url{https://www.trychroma.com/research/context-rot}.
+
+\bibitem[Weiss et al.(2021)]{weiss2021}
+G. Weiss, Y. Goldberg, and E. Yahav.
+\newblock Thinking Like Transformers.
+\newblock \emph{ICML}, 2021.
+\newblock \url{https://proceedings.mlr.press/v139/weiss21a.html}.
+
+\bibitem[Zhou et al.(2024)]{zhou2024}
+H. Zhou, A. Bradley, E. Littwin, N. Razin, O. Saremi, J. Susskind,
+S. Bengio, and P. Nakkiran.
+\newblock What Algorithms Can Transformers Learn? A Study in Length
+Generalization.
+\newblock \emph{ICLR}, 2024.
+\newblock \url{https://arxiv.org/abs/2310.16028}.
 \end{thebibliography}
 
 \end{document}
