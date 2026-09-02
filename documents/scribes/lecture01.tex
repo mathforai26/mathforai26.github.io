@@ -231,6 +231,11 @@ Greedy decoding is neither sampling from the model nor, in general, global
 optimization of the probability of the complete sequence. A locally most
 probable token can lead to poor later continuations.
 
+\paragraph{Practical note.}
+Forget greedy decoding as a default generation rule: it is a bad idea. It
+throws away nearly all of the predictive distribution at every step, and a
+locally best token can irreversibly eliminate much better continuations.
+
 \paragraph{Remark.}
 A quantitative counterexample to repeated tokenwise argmax will be developed
 separately in the homework.
