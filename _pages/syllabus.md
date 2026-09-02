@@ -73,7 +73,9 @@ vector per position, its rows contain the transposes of those vectors. Write
 every row-shaped vector explicitly as a transpose. Whenever a matrix or tensor
 is introduced, state what its rows, columns, and any additional axes index. If
 a diagram uses a different spatial orientation from the algebraic convention,
-make that difference explicit. End with a short
+make that difference explicit. Let equations carry transparent algebraic
+operations. Use prose to explain purpose, structural meaning, design choices,
+and consequences. End with a short
 **Bibliographic remarks** section in the style of *Bandit Algorithms*: use
 narrative prose to explain the origins of the ideas, how the cited work relates
 to the lecture, and where its scope differs. Follow this with an ordinary

@@ -352,7 +352,8 @@ $j$.
 The softmax acts row by row, where a row represents one query position and its
 columns represent the available key/value source positions. The causal mask
 makes the attention weight of every future source position exactly zero.
-Concatenate the head outputs and apply the first residual connection:
+Concatenate the head outputs, apply the output projection, and add the result
+to the residual stream:
 \begin{equation}
 G=H^\ell+[O_1\mid\cdots\mid O_h]W^O_\ell,
 \qquad W^O_\ell\in\R^{hd_h\times d}.
@@ -361,7 +362,11 @@ The block matrix $[O_1\mid\cdots\mid O_h]\in\R^{T\times hd_h}$ has the head
 outputs $O_1,\ldots,O_h$ as its column blocks. Multiplication by $W^O_\ell$
 maps the $hd_h$ head features back to $d$ model features, so
 $G\in\R^{T\times d}$ can be added to $H^\ell$.
-The positionwise feed-forward sublayer and second residual connection give
+
+Let $\phi:\R\to\R$ be a scalar activation function. For any matrix $A$, we
+use $\phi(A)$ for its entrywise extension,
+$(\phi(A))_{ij}=\phi(A_{ij})$. The second sublayer normalizes $G$, applies the
+positionwise feed-forward map, and adds its output to $G$:
 \begin{align}
 R&=\operatorname{LayerNorm}_{\ell,2}(G),\\
 H^{\ell+1}
@@ -375,13 +380,9 @@ W^1_\ell\in\R^{d\times d_{\rm ff}},\quad
 W^2_\ell\in\R^{d_{\rm ff}\times d},\quad
 b^1_\ell\in\R^{d_{\rm ff}},\quad b^2_\ell\in\R^d.
 \end{equation}
-Here $R\in\R^{T\times d}$ still has positions in rows. The product
-$RW^1_\ell\in\R^{T\times d_{\rm ff}}$ replaces the model-feature columns by
-feed-forward-unit columns, and multiplication by $W^2_\ell$ returns to $d$
-model-feature columns. The all-ones vector $\mathbf 1_T$ copies each bias into
-every position row.
-For example, $\phi(z)=z\Phi(z)$ coordinatewise is GELU, where $\Phi$ is the
-standard normal cumulative distribution function.
+Common choices include $\operatorname{ReLU}(z)=\max\{0,z\}$ and
+$\operatorname{GELU}(z)=z\Phi(z)$, where $\Phi$ is the standard normal
+cumulative distribution function.
 
 The lecture also mentioned \emph{mixture-of-experts} layers. They replace the
 single dense feed-forward map by expert maps $f_1,\ldots,f_m$ and a router. For
@@ -395,9 +396,9 @@ where $S(r)$ is a small router-selected subset of experts and the router
 weights $\rho_e(r)$ are normalized over that subset. This replacement changes
 the positionwise sublayer; the attention calculation remains unchanged.
 
-Practical models also change normalization, use gated MLPs, reorganize
-attention heads, and handle positions differently. The equations specify one
-complete pedagogical block; modern designs instantiate many variants.
+Transformer architectures vary in their normalization, feed-forward
+architecture, organization of attention heads, and position mechanism. The
+equations above define one concrete pre-normalized decoder block.
 
 For comparisons in which these internal details would obscure the structure,
 write
@@ -422,6 +423,21 @@ transformers.
 
 The key invariant is causal dependence: after $L$ blocks, the column vector
 $h_t^L=(H^L_{t,:})^\top$ depends only on $x_{<t}$.
+
+\paragraph{Remark (SwiGLU).}
+A common gated feed-forward variant is SwiGLU. For a column activation
+$r\in\R^d$ and a hidden width $m$, let
+\begin{equation}
+f_{\rm SwiGLU}(r)
+=W_o\!\left(
+\operatorname{swish}(W_g r)\odot (W_v r)
+\right),
+\qquad
+\operatorname{swish}(z)=\frac{z}{1+e^{-z}},
+\end{equation}
+where $W_g,W_v\in\R^{m\times d}$, $W_o\in\R^{d\times m}$, and the scalar
+function acts coordinatewise. The elementwise product creates
+input-dependent gating between two learned representations of $r$.
 
 \section{From a hidden vector to the next-token distribution}
 
@@ -497,16 +513,16 @@ query--key comparisons per head. Both $QK^\top$ and the multiplication of the
 resulting attention matrix by $V$ therefore require order $t^2d_h$ arithmetic.
 A straightforward implementation also materializes a $t\times t$ attention
 matrix. The causal mask makes the upper triangle irrelevant while preserving
-quadratic dependence on $t$. A kernel that skips this triangle processes
-$t(t+1)/2$ permitted query--key pairs, compared with $t^2$ pairs for a
-bidirectional head. The saving applies whenever all sequence positions are
-processed together, including training, prompt prefill, and full-sequence
-scoring. Bidirectional attention has no masked triangle to skip. A
-triangular-aware kernel can therefore save nearly half of the score and
+quadratic dependence on $t$. An attention implementation that skips this
+triangle processes $t(t+1)/2$ permitted query--key pairs, compared with $t^2$
+pairs for a bidirectional head. The saving applies whenever all sequence
+positions are processed together, including training, prompt prefill, and
+full-sequence scoring. Bidirectional attention has no masked triangle to skip.
+Such an implementation can therefore save nearly half of the score and
 attention--value arithmetic.
 The whole-block saving is smaller because projections, normalization, and the
-MLP or MoE remain. A kernel that first computes the full square matrix and
-masks it afterward realizes no arithmetic saving.
+MLP or MoE remain. An implementation that first computes the full square
+matrix and masks it afterward realizes no arithmetic saving.
 
 The first full forward pass over a supplied prompt is called \emph{prefill}.
 After prefill, a \emph{decode step} generates one new token and advances only
@@ -542,7 +558,6 @@ With the cache, only the new row is computed at each step, and the total is
 \sum_{t=1}^T\Theta(td_h)=\Theta(T^2d_h).
 \end{equation}
 Thus caching changes the asymptotic attention cost of sequential generation.
-A single parallel full-sequence forward pass remains quadratic.
 
 \paragraph{Why are queries not cached?}
 The query $q_i$ was used to compute the output at position $i$. A future
@@ -662,11 +677,11 @@ different objects. An argmax is optimal for a single zero--one-loss decision.
 Repeated tokenwise argmax generally fails to optimize a sequence-level
 objective and is a poor default for open-ended generation.
 \item A full dense-attention pass on a length-$t$ prefix has quadratic
-arithmetic cost. A causal kernel can skip nearly half the attention pairs used
-by bidirectional attention at the same length. During sequential generation, a
-KV cache avoids recomputing old layer-position activations and changes total
-attention work from cubic to quadratic in the generated length. Old queries
-have no future use.
+arithmetic cost. An implementation of causal attention can skip nearly half
+the attention pairs used by bidirectional attention at the same length. During
+sequential generation, a KV cache avoids recomputing old layer-position
+activations and changes total attention work from cubic to quadratic in the
+generated length. Old queries have no future use.
 \item Maximum context length is an input-capacity limit. Performance on some
 retrieval and reasoning tasks may deteriorate before the input reaches this
 limit. With bounded attention scores, a single softmax head cannot remain
@@ -733,6 +748,10 @@ transformer blocks.
 Normalization across the feature coordinates at one sequence position,
 followed by learned coordinatewise scaling and shifting; and a transformer
 block that applies this normalization before each learned sublayer.
+\item[ReLU; GELU; SwiGLU]
+Two scalar activation functions applied coordinatewise, and a gated
+feed-forward map formed from two learned projections and their coordinatewise
+product.
 \item[Attention head; query; key; value]
 One attention calculation; the vector specifying what an output position
 seeks; the vector against which it is matched at a source position; and the
@@ -857,9 +876,9 @@ N_{\rm full}(n)=n^2
 N_{\rm causal}(n)=\frac{n(n+1)}2
 \label{eq:full-causal-score-count}
 \end{equation}
-query--key pairs. A causal kernel that skips the upper triangle therefore uses
-approximately half the pairwise attention arithmetic at large $n$. Projection
-and feed-forward costs remain unchanged.
+query--key pairs. An implementation that skips the upper triangle therefore
+uses approximately half the pairwise attention arithmetic at large $n$.
+Projection and feed-forward costs remain unchanged.
 
 For source length $S$ and target length $T$, the corresponding pair counts for
 $L_E$ encoder blocks and $L_D$ encoder--decoder blocks are
@@ -942,6 +961,12 @@ SentencePiece system of \citet{kudorichardson2018}.
 The transformer architecture was introduced by \citet{vaswani2017}. Their
 model combined encoder and decoder stacks; the equations in this lecture are a
 causal decoder specialization and use a pre-normalized block.
+
+The SwiGLU feed-forward variant was introduced by \citet{shazeer2020}. It uses
+two hidden projections and coordinatewise gating; the paper also explains how
+to adjust the hidden width when comparing its parameter and operation counts
+with an ordinary two-matrix feed-forward layer. SwiGLU is used, for example,
+in the Llama~3 architecture \citep{grattafiori2024}.
 
 Three early pretraining recipes made the architectural alternatives concrete.
 The original GPT work paired a causal decoder language model with
@@ -1106,6 +1131,12 @@ N. Shazeer.
 \newblock Fast Transformer Decoding: One Write-Head is All You Need.
 \newblock 2019.
 \newblock \url{https://arxiv.org/abs/1911.02150}.
+
+\bibitem[Shazeer(2020)]{shazeer2020}
+N. Shazeer.
+\newblock GLU Variants Improve Transformer.
+\newblock 2020.
+\newblock \url{https://arxiv.org/abs/2002.05202}.
 
 \bibitem[Ainslie et al.(2023)]{ainslie2023}
 J. Ainslie, J. Lee-Thorp, M. de Jong, Y. Zemlyanskiy, F. Lebr\'on,
