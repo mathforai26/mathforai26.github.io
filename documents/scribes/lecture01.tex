@@ -693,8 +693,24 @@ SentencePiece system of \citet{kudorichardson2018}.
 
 The transformer architecture was introduced by \citet{vaswani2017}. Their
 model combined encoder and decoder stacks; the equations in this lecture are a
-causal decoder specialization and use a pre-normalized block. The original
-paper used additive sinusoidal position vectors. Rotary position embeddings
+causal decoder specialization and use a pre-normalized block.
+
+The original encoder--decoder split was designed for conditional
+sequence-to-sequence tasks such as translation. A fully visible encoder turns
+the complete source sequence into a memory; a causal decoder processes the
+target generated so far and uses a separate cross-attention sublayer to read
+that memory. In the causal decoder-only model described here, source or prompt
+and continuation occupy one sequence and pass through one shared stack. This
+is a natural fit when raw text has no privileged source--target split, and it
+gives pretraining, prompting, and continuation a homogeneous implementation.
+It is not a general computational dominance result: encoder--decoder models
+retain a strong inductive bias for translation and other fixed conditional
+tasks. Indeed, the controlled comparison by \citet{raffel2020} found their
+encoder--decoder model strongest at roughly matched computation and explains
+why parameter count and computation cannot both be matched by merely changing
+the number of layers.
+
+The original paper used additive sinusoidal position vectors. Rotary position embeddings
 are due to \citet{su2021}; their position-dependent rotations of queries and
 keys expose relative displacement in the attention score. The bucketed learned
 relative-position bias in \eqref{eq:relative-position-bias} follows
