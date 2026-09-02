@@ -129,35 +129,12 @@ token contains more than one base symbol. Normalization, conversion from
 Unicode characters to bytes, and the addition of special tokens may change
 the sequence before or after this segmentation; those are separate operations.
 
-How are the vocabulary and segmentation rule constructed? Two common answers
-illustrate the main ideas.
-\begin{enumerate}[leftmargin=*]
-\item \textbf{Byte-pair encoding (BPE).} Start with base symbols, count adjacent
-token pairs in the training corpus, merge a most frequent pair into a new
-vocabulary item, and repeat until the desired vocabulary size is reached. The
-learned merge order determines the segmentation of new text.
-\item \textbf{Unigram tokenization.} Start with a large collection of candidate
-substrings and probabilities $q(v)$. A segmentation is scored by
-\begin{equation}
-\prod_{t=1}^T q(v_{x_t}),
-\qquad\text{or equivalently}\qquad
-\sum_{t=1}^T\log q(v_{x_t}).
-\end{equation}
-Fit the probabilities to the corpus, remove candidates whose deletion hurts
-the likelihood least, and repeat. At encoding time one may choose a
-highest-scoring segmentation or sample among segmentations.
-\end{enumerate}
 Practical tokenizers may also normalize text, first split it into coarse
-pieces, or begin from bytes to guarantee coverage. Their construction trades
-off sequence length, vocabulary size, coverage, and statistical sharing.
-Tokens often coincide with useful linguistic units, but this is not guaranteed
-and is not the defining objective.
-
-The choice affects both model size and computation. For tokenized length $T$,
-dense attention has a sequence-length contribution of order $T^2$, while the
-embedding and readout matrices contain order $Vd$ parameters and a dense
-readout uses order $Vd$ arithmetic per prediction. A larger vocabulary can
-shorten sequences while making the embedding and readout larger.
+pieces, or begin from bytes to guarantee coverage. Tokens often coincide with
+useful linguistic units, but this is not guaranteed and is not the defining
+objective. Appendix~\ref{app:tokenizer-construction} gives optional background
+on how tokenizers may be constructed; those details were not part of the
+lecture.
 
 Once the tokenizer is fixed, a stochastic language or sequence model specifies
 a stochastic process $(X_t)_{t\geq1}$ whose state space is $[V]$. An
@@ -526,10 +503,10 @@ E,P,W_U,b_U,
 With weight tying, $W_U=E^\top$ and is not an independent parameter. Fixed
 position maps and the causal mask $M$ are not learned parameters. An MoE layer
 replaces the dense-MLP entries above by the expert and router parameters. The
-token vocabulary and the BPE merge list or unigram segmentation model are
-normally constructed before neural-network training and held fixed. They
-determine $V$, the input sequences, and the shapes of $E$ and $W_U$, but they
-are not entries of $\theta$ in this account.
+token vocabulary and segmentation rules are normally constructed before
+neural-network training and held fixed. They determine $V$, the input
+sequences, and the shapes of $E$ and $W_U$, but they are not entries of
+$\theta$ in this account.
 
 The token prefix, hidden states, queries, keys, values, attention weights,
 logits, and KV cache are computed quantities, not parts of $\theta$. The
@@ -545,8 +522,8 @@ display; specifying the deployed AI system requires additional choices.
 may make repeated model calls.
 \item A lossless tokenizer segments a sequence over a base alphabet into
 nonempty vocabulary strings. Its token sequence cannot be longer than the
-base-symbol sequence. Vocabulary construction trades shorter sequences against
-larger embedding and readout matrices; it need not recover semantic units.
+base-symbol sequence and is shorter whenever a selected token contains several
+base symbols. Tokens need not be semantic units.
 \item A stochastic language or sequence model specifies a stochastic process
 whose state space is its vocabulary. An autoregressive model specifies its
 finite-sequence distributions through next-token conditionals.
@@ -583,10 +560,9 @@ maintains between model calls.
 \item[Base alphabet; vocabulary; token]
 The symbols used to represent raw sequences; the finite collection of strings
 made available to the model; and one vocabulary item in a tokenized sequence.
-\item[Tokenizer; detokenizer; BPE; unigram tokenizer]
-The map from a base-symbol string to vocabulary indices, its inverse
-concatenation map, and two corpus-based ways of constructing a vocabulary and
-segmentation rule.
+\item[Tokenizer; detokenizer]
+The map from a base-symbol string to vocabulary indices, and its inverse
+concatenation map.
 \item[Stochastic sequence model; autoregressive model]
 A probability law on token sequences, and its specification through
 conditional next-token distributions.
@@ -616,16 +592,41 @@ The token-capacity ceiling for one model call, and a measure of how diffuse an
 attention distribution is.
 \end{description}
 
+\appendix
+\section{Supplement: how tokenizers are constructed}
+\label{app:tokenizer-construction}
+
+This appendix was not covered in the lecture. It records optional background,
+separate from the lecture narrative reconstructed above.
+
+Two common corpus-based constructions illustrate the main ideas.
+\begin{enumerate}[leftmargin=*]
+\item \textbf{Byte-pair encoding (BPE).} Start with base symbols, count adjacent
+token pairs in the training corpus, merge a most frequent pair into a new
+vocabulary item, and repeat until the desired vocabulary size is reached. The
+learned merge order determines the segmentation of new text
+\citep{sennrich2016}.
+\item \textbf{Unigram tokenization.} Start with a large collection of candidate
+substrings and probabilities $q(v)$. A segmentation is scored by
+\begin{equation}
+\prod_{t=1}^T q(v_{x_t}),
+\qquad\text{or equivalently}\qquad
+\sum_{t=1}^T\log q(v_{x_t}).
+\end{equation}
+Fit the probabilities to the corpus, remove candidates whose deletion hurts
+the likelihood least, and repeat. At encoding time one may choose a
+highest-scoring segmentation or sample among segmentations
+\citep{kudo2018,kudorichardson2018}.
+\end{enumerate}
+
 \section*{Bibliographic remarks}
 
 The compiler analogy is literal at the level of the interface: a lexer maps a
 character stream into tokens, although compiler tokens are specified by the
 programming language rather than induced from corpus frequencies; see
-\citet{aho2006}. Modern subword tokenization follows several constructions.
-\citet{sennrich2016} adapted byte-pair encoding by repeatedly merging frequent
-adjacent symbols. \citet{kudo2018} treats a segmentation as a latent choice
-under a unigram model, and \citet{kudorichardson2018} gives the SentencePiece
-system for learning these models directly from raw text.
+\citet{aho2006}. The supplementary appendix describes the BPE construction of
+\citet{sennrich2016}, the unigram formulation of \citet{kudo2018}, and the
+SentencePiece system of \citet{kudorichardson2018}.
 
 The transformer architecture was introduced by \citet{vaswani2017}. Their
 model combined encoder and decoder stacks; the equations in this lecture are a
