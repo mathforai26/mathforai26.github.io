@@ -540,8 +540,14 @@ bounded-score observation alone does not explain them.
 Training was described only in words. The system is shown many text prefixes
 together with the tokens that actually followed them. Its predictions are
 compared with those next tokens, and the shared weights are modified to improve
-the predictions across the data. Lecture~3 will express this description using
-probabilistic models, log loss, maximum likelihood, KL divergence, and
+the predictions across the data. This initial large-scale training stage,
+usually conducted on a broad corpus, is called \emph{pretraining}. Subsequent
+training that adapts the pretrained model to instructions, tasks, preferences,
+or other desired behavior is called \emph{post-training}; supervised
+fine-tuning is one possible post-training method. During \emph{inference}, the
+resulting parameters are held fixed while the model calls described in this
+note compute predictions. Lecture~3 will express the pretraining description
+using probabilistic models, log loss, maximum likelihood, KL divergence, and
 compression.
 
 \section{What exactly is contained in the parameter vector?}
@@ -612,10 +618,23 @@ learning produces useful values of $\theta$.
 
 \section{Glossary}
 
+\noindent\textit{Inclusion rule.}
+The glossary records a term when this note gives it a technical meaning that
+is needed to follow the lecture or is likely to recur later in the course. It
+also records persistent notation and diagram conventions. It does not list
+every mathematical word, symbol, implementation detail, named model, or term
+that appears only in optional background. Terms are still defined at first use
+in the main text; this section is a recap.
+
+\medskip
 \begin{description}[style=nextline,leftmargin=1.5em,labelindent=0pt]
 \item[Harness; task state]
 The program surrounding the model, and the information that this program
 maintains between model calls.
+\item[Prompt; prefix; context]
+The initially supplied input sequence; all tokens preceding a particular
+prediction position; and the information made visible to one model call. A
+prefix may contain both prompt tokens and tokens generated so far.
 \item[Base alphabet; vocabulary; token]
 The symbols used to represent raw sequences; the finite collection of strings
 made available to the model; and one vocabulary item in a tokenized sequence.
@@ -629,16 +648,44 @@ or learned features.
 \item[Stochastic sequence model; autoregressive model]
 A probability law on token sequences, and its specification through
 conditional next-token distributions.
+\item[Pretraining; post-training; fine-tuning]
+Initial large-scale fitting on broad data; subsequent training that adapts the
+pretrained model's behavior; and continued training from existing parameters
+for a narrower purpose. Fine-tuning is one possible form of post-training.
+\item[Inference; generation]
+Computation with the model parameters held fixed, and repeated next-token
+inference and decoding that produce a continuation.
+\item[Decoder-only transformer; encoder--decoder transformer]
+A causal transformer that places prompt and continuation in one sequence and
+one stack; and a two-stack architecture in which a decoder separately reads
+the representation produced by an encoder.
+\item[Self-attention; cross-attention; transformer block]
+Attention whose queries, keys, and values come from one sequence; attention
+whose decoder queries read keys and values derived from encoder output; and
+one repeated attention-plus-positionwise-transformation layer.
 \item[Embedding; logit; softmax readout]
 The vector assigned to a token, an unnormalized output score, and the map from
 the output scores to a categorical distribution.
 \item[Parameter; activation; layer-position activation; residual stream]
-A learned number shared across inputs; a computed value for the current input;
-and the vector $h_i^\ell$ carried at one sequence position between transformer
-layers.
-\item[Attention head; query; key; value; causal mask]
-One attention calculation, its three projected vectors, and the constraint
-that prevents a position from attending to future tokens.
+A learned quantity shared across inputs; a value computed for the current
+input; the vector $h_i^\ell$ at position $i$ after layer $\ell$; and the
+collection of positionwise vectors carried through and updated by the
+transformer blocks.
+\item[Layer normalization; pre-normalized block]
+Normalization across the feature coordinates at one sequence position,
+followed by learned coordinatewise scaling and shifting; and a transformer
+block that applies this normalization before each learned sublayer.
+\item[Attention head; query; key; value]
+One attention calculation; the vector specifying what an output position
+seeks; the vector against which it is matched at a source position; and the
+source vector combined into the output.
+\item[Attention score; attention weight]
+The scaled query--key inner product before normalization; its row-softmax
+coefficient after applying biases and masks.
+\item[Causal mask; prefix causality]
+The constraint that gives future source positions zero attention weight; and
+the resulting property that an output at position $i$ cannot depend on tokens
+at later positions.
 \item[Multi-head attention; residual connection; MLP; mixture of experts]
 Parallel attention heads; an identity path around a learned transformation;
 the dense positionwise sublayer; and its sparsely routed expert alternative.
@@ -653,6 +700,10 @@ stored keys and values that prevent recomputation of old activations.
 \item[Maximum context length; attention entropy]
 The token-capacity ceiling for one model call, and a measure of how diffuse an
 attention distribution is.
+\item[Lost in the middle; context rot]
+Names for empirical deterioration in a trained system's use of information as
+its location or the total input length changes, potentially well below the
+maximum context length.
 \end{description}
 
 \appendix
