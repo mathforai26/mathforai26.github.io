@@ -10,7 +10,6 @@
 \definecolor{courseblue}{HTML}{17365D}
 
 \DeclareMathOperator{\softmax}{softmax}
-\DeclareMathOperator{\LN}{LN}
 \newcommand{\R}{\mathbb R}
 \newcommand{\Hent}{\mathsf H}
 
@@ -44,7 +43,7 @@ September 1, 2026
 \vspace{2mm}
 \textit{Lecturer: Csaba Szepesv\'ari}
 \hfill
-\textit{Scribe: instructor model note}
+\textit{Note prepared by: Csaba Szepesv\'ari}
 \vspace{1mm}
 \end{minipage}}
 \end{center}
@@ -102,13 +101,39 @@ uses RoPE. A relative-position bias is likewise added to the attention logits
 in each layer that uses it. These are alternative architectural choices; the
 symbol $P$ in (1.3) does not also stand for RoPE.
 
+\paragraph{Remark.}
+The relative-displacement calculation for rotary positions will be developed
+separately in the homework.
+
 \section{One fully specified decoder block}
 
-Suppose $H^\ell\in\R^{T\times d}$ enters layer $\ell$. Consider a
-pre-normalized block with $h$ attention heads of width $d_h$. For head
-$a\in[h]$, let
+Suppose $H^\ell\in\R^{T\times d}$ enters layer $\ell$. The lecture described
+the attention calculation but did not state that a standard transformer uses
+multiple attention heads. We include that correction here and specify a
+pre-normalized block with $h$ heads of width $d_h$.
+
+First define the normalization map. For $u\in\R^d$, let
+\begin{equation}
+\mu(u)=\frac1d\sum_{r=1}^d u_r,
+\qquad
+\sigma^2(u)=\frac1d\sum_{r=1}^d(u_r-\mu(u))^2,
+\end{equation}
+and, for learned $\gamma_{\ell,m},\beta_{\ell,m}\in\R^d$ and fixed
+$\varepsilon>0$, define
+\begin{equation}
+\operatorname{LayerNorm}_{\ell,m}(u)
+=\gamma_{\ell,m}\odot
+\frac{u-\mu(u)\mathbf 1}{\sqrt{\sigma^2(u)+\varepsilon}}
++\beta_{\ell,m},
+\qquad m\in\{1,2\}.
+\end{equation}
+On a matrix, $\operatorname{LayerNorm}_{\ell,m}$ acts row by row. Layer
+normalization was not discussed in the lecture; it is included so that the
+displayed block is fully specified.
+
+For head $a\in[h]$, let
 \begin{align}
-U&=\LN_{\ell,1}(H^\ell), \\
+U&=\operatorname{LayerNorm}_{\ell,1}(H^\ell), \\
 Q_a&=UW^Q_{\ell,a},
 &K_a&=UW^K_{\ell,a},
 &V_a&=UW^V_{\ell,a}, \\
@@ -134,7 +159,7 @@ G=H^\ell+[O_1\mid\cdots\mid O_h]W^O_\ell,
 \end{equation}
 The positionwise feed-forward sublayer and second residual connection give
 \begin{align}
-R&=\LN_{\ell,2}(G),\\
+R&=\operatorname{LayerNorm}_{\ell,2}(G),\\
 H^{\ell+1}
 &=G+
 \phi\!\left(RW^1_\ell+\mathbf 1(b^1_\ell)^\top\right)W^2_\ell
@@ -146,10 +171,23 @@ W^1_\ell\in\R^{d\times d_{\rm ff}},\quad
 W^2_\ell\in\R^{d_{\rm ff}\times d},\quad
 b^1_\ell\in\R^{d_{\rm ff}},\quad b^2_\ell\in\R^d.
 \end{equation}
-For example, $\phi(z)=z\Phi(z)$ coordinatewise is GELU. Practical models
-change normalization, gated MLPs, attention-head organization, and position
-handling. The equations specify one complete pedagogical block, not the unique
-modern design.
+For example, $\phi(z)=z\Phi(z)$ coordinatewise is GELU, where $\Phi$ is the
+standard normal cumulative distribution function.
+
+The lecture also mentioned \emph{mixture-of-experts} layers. They replace the
+single dense feed-forward map by expert maps $f_1,\ldots,f_m$ and a router. For
+a token representation $r$, a sparse version has the form
+\begin{equation}
+f_{\rm MoE}(r)
+=\sum_{e\in S(r)}\rho_e(r)f_e(r),
+\end{equation}
+where $S(r)$ is a small router-selected subset of experts and the router
+weights $\rho_e(r)$ are normalized over that subset. This replacement changes
+the positionwise sublayer, not the attention calculation.
+
+Practical models also change normalization, use gated MLPs, reorganize
+attention heads, and handle positions differently. The equations specify one
+complete pedagogical block, not the unique modern design.
 
 The key invariant is causal dependence: after $L$ blocks, row
 $h_t^L=H^L_{t,:}$ depends only on $x_{<t}$.
@@ -192,6 +230,10 @@ a stopping rule fires.
 Greedy decoding is neither sampling from the model nor, in general, global
 optimization of the probability of the complete sequence. A locally most
 probable token can lead to poor later continuations.
+
+\paragraph{Remark.}
+A quantitative counterexample to repeated tokenwise argmax will be developed
+separately in the homework.
 
 \section{Attention cost and the key--value cache}
 
@@ -269,6 +311,16 @@ context length, and multiple heads and layers can implement more complicated
 selection mechanisms. The proposition is a precise limitation under bounded
 scores, not a general proof that transformers cannot use long contexts.
 
+\paragraph{Entropy language.}
+For a probability vector $\alpha\in\R^T$, its entropy is
+\begin{equation}
+\Hent(\alpha)=-\sum_{j=1}^T\alpha_j\log\alpha_j.
+\end{equation}
+It is $0$ for a deterministic distribution and $\log T$ for the uniform
+distribution. Thus small entropy describes concentrated attention and large
+entropy describes diffuse attention. A quantitative entropy consequence of
+Proposition~1 will be developed separately in the homework.
+
 \paragraph{Related empirical phenomenon.}
 The terms \emph{lost in the middle} and \emph{context rot} refer to observed
 failures to use long contexts uniformly or reliably, sometimes well below a
@@ -284,40 +336,6 @@ compared with those next tokens, and the shared weights are modified to improve
 the predictions across the data. Lecture~3 will express this description using
 probabilistic models, log loss, maximum likelihood, KL divergence, and
 compression.
-
-\section{Questions carried into homework}
-
-\begin{enumerate}[leftmargin=*]
-\item \textbf{Relative position.}  For block-rotation matrices $\mathcal R(t)$,
-prove
-\[
-\mathcal R(s)^\top\mathcal R(t)=\mathcal R(t-s)
-\]
-and hence the RoPE identity
-\[
-(\mathcal R(s)q_s)^\top(\mathcal R(t)k_t)
-=q_s^\top\mathcal R(t-s)k_t.
-\]
-
-\item \textbf{Greedy decoding.}  Construct a family of conditional
-distributions for which repeated tokenwise argmax returns a sequence whose
-probability is exponentially smaller in its length than that of the
-maximum-probability sequence.
-
-\item \textbf{Attention concentration and entropy.}  For a probability vector
-$\alpha\in\mathbb R^T$, define its entropy by
-\[
-\Hent(\alpha)=-\sum_{j=1}^T\alpha_j\log\alpha_j.
-\]
-Entropy is $0$ for a deterministic distribution and at most $\log T$, with
-equality for the uniform distribution. Prove
-\[
-\Hent(\alpha)\geq-\log\max_j\alpha_j
-\geq \log\!\left(1+(T-1)e^{-2B}\right)
-\]
-under the assumptions of Proposition~1. Determine how $B$ must grow with $T$
-if $\max_j\alpha_j$ is to remain at least a fixed constant $c\in(0,1)$.
-\end{enumerate}
 
 \section{Take-home messages}
 
@@ -362,7 +380,7 @@ J. Su, Y. Lu, S. Pan, A. Murtadha, B. Wen, and Y. Liu.
 \newblock 2021.
 \newblock \url{https://arxiv.org/abs/2104.09864}.
 \newblock This is the source for rotary position embeddings and the
-relative-displacement identity used in the first homework question.
+relative-displacement identity mentioned in the note.
 
 \bibitem{shazeer2019}
 N. Shazeer.
@@ -391,8 +409,8 @@ D. Chiang and P. Cholak.
 \newblock \url{https://aclanthology.org/2022.acl-long.527/}.
 \newblock This paper studies a related length-dependent loss of confidence and
 shows that the obstruction depends on architectural details. Among its
-remedies is scaling attention logits by $\log T$, matching the scale suggested
-by the entropy exercise above.
+remedies is scaling attention logits by $\log T$, the scale needed to keep a
+bounded-score softmax from becoming increasingly diffuse.
 
 \bibitem{liu2024}
 N. F. Liu, K. Lin, J. Hewitt, A. Paranjape, M. Bevilacqua, F. Petroni,
