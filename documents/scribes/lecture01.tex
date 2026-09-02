@@ -55,12 +55,43 @@ transcript.
 \medskip
 \noindent\textbf{Delivery note.}
 Administrative material occupied a substantial part of the meeting. The
-technical content was how a decoder transformer performs inference. Training
-was described verbally. The lecture also discussed the quadratic cost of
-attention, key--value caching, maximum context length, and limitations of
-attention on long contexts. No training objective, loss, or gradient equation
-was presented. The motivation for learning and the first learning-theoretic
-results were postponed to Lecture~2.
+lecture opened with the harness surrounding a language model and then zoomed
+in on how a decoder transformer performs inference. Training was described
+verbally. The lecture also discussed the quadratic cost of attention,
+key--value caching, maximum context length, and limitations of attention on
+long contexts. No training objective, loss, or gradient equation was
+presented. The motivation for learning and the first learning-theoretic results
+were postponed to Lecture~2.
+
+\section{The model inside a harness}
+
+A deployed AI system is generally larger than one call to a neural network. A
+\emph{harness} is the surrounding program that constructs the model's context,
+calls the model, interprets the result, optionally invokes tools, records the
+new observation, and decides whether to call the model again. It may provide
+instructions, conversation history, retrieved documents, external memory, or
+tool outputs. Schematically, one pass through the loop is
+\begin{equation}
+\boxed{\text{task state}}
+\xrightarrow{\text{harness}}
+\boxed{x_{<t}}
+\xrightarrow{\text{model}}
+\boxed{p_\theta(\,\cdot\mid x_{<t})},
+\label{eq:harness-to-model}
+\end{equation}
+followed by
+\begin{equation}
+\boxed{p_\theta(\,\cdot\mid x_{<t})}
+\xrightarrow{\text{decoding}}
+\boxed{\text{token or action}}
+\xrightarrow{\text{tool/environment}}
+\boxed{\text{updated task state}}.
+\end{equation}
+The tool/environment step can be absent, and a harness can use several model
+calls before returning an answer. The behavior of the complete system can
+therefore depend on the model parameters, the decoding rule, the maintained
+state, the tools, and the control loop. The rest of this note zooms into the
+``model'' box in \eqref{eq:harness-to-model}.
 
 \section{The inference problem}
 
@@ -86,18 +117,34 @@ vectors $P\in\R^{T\times d}$, the input is
 H^0=ZE+P,
 \qquad
 H^0_{t,:}=E_{x_{t-1},:}+P_{t,:}.
+\label{eq:input-embedding}
 \end{equation}
 The one-hot notation makes the map explicit; an implementation performs a row
 lookup in $E$.
 
+The complete inference calculation can be summarized by the following block
+diagram:
+\begin{equation}
+\boxed{x_{<t}}
+\longrightarrow
+\boxed{ZE+P}
+\longrightarrow
+\boxed{H^1\longrightarrow\cdots\longrightarrow H^L}
+\longrightarrow
+\boxed{z_t}
+\longrightarrow
+\boxed{p_\theta(\,\cdot\mid x_{<t})}.
+\end{equation}
+The next sections expand the three middle boxes.
+
 \paragraph{Where is position added?}
-Equation (1.3) describes additive absolute positions. They are added once,
+Equation~\eqref{eq:input-embedding} describes additive absolute positions. They are added once,
 before the first transformer block; they are not added again in every block.
 Other position mechanisms enter the computation differently. RoPE applies a
 position-dependent rotation to queries and keys in each attention layer that
 uses RoPE. A relative-position bias is likewise added to the attention logits
 in each layer that uses it. These are alternative architectural choices; the
-symbol $P$ in (1.3) does not also stand for RoPE.
+symbol $P$ in \eqref{eq:input-embedding} does not also stand for RoPE.
 
 \paragraph{Remark.}
 The relative-displacement calculation for rotary positions will be developed
@@ -128,6 +175,23 @@ $\varepsilon>0$, define
 On a matrix, $\operatorname{LayerNorm}_{\ell,m}$ acts row by row. Layer
 normalization was not discussed in the lecture; it is included so that the
 displayed block is fully specified.
+
+At the block-diagram level, a pre-normalized decoder layer performs two
+residual calculations:
+\begin{align}
+H^\ell
+&\longrightarrow
+\boxed{\operatorname{LayerNorm}\longrightarrow
+       \text{masked multi-head attention}}
+\xrightarrow{\ +H^\ell\ }G,
+\label{eq:attention-block-diagram}\\
+G
+&\longrightarrow
+\boxed{\operatorname{LayerNorm}\longrightarrow\text{MLP or MoE}}
+\xrightarrow{\ +G\ }H^{\ell+1}.
+\label{eq:mlp-block-diagram}
+\end{align}
+The equations below specify the calculations inside these boxes.
 
 For head $a\in[h]$, let
 \begin{align}
@@ -320,9 +384,36 @@ the predictions across the data. Lecture~3 will express this description using
 probabilistic models, log loss, maximum likelihood, KL divergence, and
 compression.
 
+\section{What exactly is contained in the parameter vector?}
+
+The symbol $\theta$ collects the trainable numerical parameters of the
+conditional model. For the particular architecture displayed in this note,
+and assuming that the additive position vectors are learned, one explicit
+accounting is
+\begin{multline}
+\theta=\Bigl(
+E,P,W_U,b_U,
+\{W^Q_{\ell,a},W^K_{\ell,a},W^V_{\ell,a}\}_{\ell,a},\\
+\{W^O_\ell,W^1_\ell,W^2_\ell,b^1_\ell,b^2_\ell,
+\gamma_{\ell,1},\beta_{\ell,1},
+\gamma_{\ell,2},\beta_{\ell,2}\}_{\ell}
+\Bigr).
+\end{multline}
+With weight tying, $W_U=E^\top$ and is not an independent parameter. Fixed
+position maps and the causal mask $M$ are not learned parameters. An MoE layer
+replaces the dense-MLP entries above by the expert and router parameters.
+
+The token prefix, hidden states, queries, keys, values, attention weights,
+logits, and KV cache are computed quantities, not parts of $\theta$. The
+decoding rule and the surrounding harness are also outside $\theta$. Thus
+training the model means choosing the shared numerical parameters in this
+display; specifying the deployed AI system requires additional choices.
+
 \section{Take-home messages}
 
 \begin{itemize}[leftmargin=*]
+\item A deployed AI system places the conditional language model inside a
+harness that can maintain state, invoke tools, and make repeated model calls.
 \item A decoder transformer maps a prefix to a categorical distribution by
 embedding tokens, applying causally masked attention and positionwise
 transformations, and using a softmax readout.
@@ -337,8 +428,10 @@ queries have no future use.
 \item Maximum context length is an input-capacity limit, not a guarantee of
 uniform recall or reasoning quality. With bounded attention scores, a single
 softmax head cannot remain sharply concentrated as the context grows.
-\item This lecture described inference. It did not yet explain why learning
-produces useful parameters.
+\item The parameter vector $\theta$ contains the learned weights of the
+conditional model. It does not contain the current activations, KV cache,
+decoding rule, or harness. This lecture did not yet explain why learning
+produces useful values of $\theta$.
 \end{itemize}
 
 \section*{Notes and references}
