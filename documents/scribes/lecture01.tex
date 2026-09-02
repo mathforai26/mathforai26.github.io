@@ -205,25 +205,36 @@ $E^\top e_v=(E_{v,:})^\top\in\R^d$. Rows of $P$ and $H^0$ index positions,
 and store the transposes of position and hidden vectors. The one-hot notation
 makes the map explicit; an implementation performs a row lookup in $E$.
 
-The complete inference calculation can be summarized by the following block
+The transformer forward calculation can be summarized by the following block
 diagram:
 \begin{equation}
 \boxed{x_{<t}}
 \longrightarrow
-\boxed{ZE+P}
+\boxed{H^0=ZE+P}
 \longrightarrow
 \boxed{H^1\longrightarrow\cdots\longrightarrow H^L}
 \longrightarrow
+\boxed{h_t^L}
+\longrightarrow
 \boxed{z_t}
 \longrightarrow
-\boxed{p_\theta(\,\cdot\mid x_{<t})}.
+\boxed{p_t}.
 \end{equation}
-The next sections expand the three middle boxes.
+Here $H^0,\ldots,H^L\in\R^{T\times d}$ are activation matrices,
+$h_t^L=(H^L_{t,:})^\top\in\R^d$ is the final activation at position $t$,
+$z_t\in\R^V$ is the logit vector, and
+\begin{equation}
+p_t:=p_\theta(\,\cdot\mid x_{<t})\in\Delta_V,
+\qquad
+\Delta_V:=\left\{p\in[0,1]^V:\sum_{v=1}^V p_v=1\right\},
+\end{equation}
+is the next-token probability vector. A decoding rule selects $x_t\in[V]$
+from $p_t$. The next sections expand this calculation.
 
 \paragraph{Where is position added?}
 In \eqref{eq:input-embedding}, absolute position information is added once,
 before the first transformer block; relative bias and RoPE instead modify
-attention within each block and are described below.
+attention (to be described in the next section) within each block.
 
 \section{One fully specified decoder block}
 
@@ -441,7 +452,7 @@ Let $W_U\in\R^{V\times d}$ and $b_U\in\R^V$. The final hidden vector is
 converted to logits and then to probabilities:
 \begin{align}
 z_t&=W_Uh_t^L+b_U\in\R^V,\\
-p_\theta(x_t=v\mid x_{<t})
+p_{t,v}:=p_\theta(x_t=v\mid x_{<t})
 &=\frac{\exp(z_{t,v})}{\sum_{u=1}^V\exp(z_{t,u})}.
 \end{align}
 The column vector $h_t^L\in\R^d$ has one entry per model feature. Rows of
@@ -457,7 +468,7 @@ e_{x_{t-1}}
 \longrightarrow E^\top e_{x_{t-1}}
 \longrightarrow h_t^L
 \longrightarrow z_t
-\longrightarrow p_\theta(\,\cdot\mid x_{<t}).
+\longrightarrow p_t.
 \end{equation}
 The contextual vector $h_t^L$ also depends on the earlier tokens through the
 masked attention blocks.
