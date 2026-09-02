@@ -159,6 +159,18 @@ An inference algorithm selects $x_t$ from this distribution, appends it to the
 prefix, and repeats. Thus the model and the rule used to decode from it are
 distinct objects.
 
+\paragraph{Orientation convention.}
+On the board, the sequence was drawn from left to right:
+\begin{equation}
+\boxed{x_0}\quad \boxed{x_1}\quad\cdots\quad\boxed{x_{T-1}}.
+\end{equation}
+In the matrix equations below, each position is instead represented by one
+\emph{row}, and positions are stacked from top to bottom. Columns hold
+vocabulary coordinates, model features, head features, or source positions,
+depending on the matrix. Thus the orientation of a board diagram is not the
+storage convention of the equations. We state what the rows and columns index
+whenever a new kind of matrix appears.
+
 Let the vocabulary have size $V$, and identify token $x_t\in[V]$ with the
 standard basis vector $e_{x_t}\in\{0,1\}^V$. Include a beginning-of-sequence
 token $x_0$. For $T$ prediction positions, define $Z\in\{0,1\}^{T\times V}$ by
@@ -166,6 +178,8 @@ token $x_0$. For $T$ prediction positions, define $Z\in\{0,1\}^{T\times V}$ by
 Z_{t,:}=e_{x_{t-1}}^\top,
 \qquad t=1,\ldots,T.
 \end{equation}
+Rows of $Z$ index sequence positions and columns index vocabulary items:
+$Z_{t,v}=1$ precisely when $x_{t-1}=v$.
 With an embedding matrix $E\in\R^{V\times d}$ and additive absolute-position
 vectors $P\in\R^{T\times d}$, the input is
 \begin{equation}
@@ -174,8 +188,10 @@ H^0=ZE+P,
 H^0_{t,:}=E_{x_{t-1},:}+P_{t,:}.
 \label{eq:input-embedding}
 \end{equation}
-The one-hot notation makes the map explicit; an implementation performs a row
-lookup in $E$.
+Rows of $E$ index vocabulary items and columns index the $d$ model features;
+row $v$ is the embedding of token $v$. Rows of $P$ and $H^0$ index positions,
+and their columns index model features. The one-hot notation makes the map
+explicit; an implementation performs a row lookup in $E$.
 
 The complete inference calculation can be summarized by the following block
 diagram:
@@ -214,6 +230,9 @@ $-m_a(i-j)$ for a causal pair $j\leq i$. RoPE applies a position-dependent
 rotation to queries and keys in each attention layer that uses RoPE. These are
 alternative architectural choices; the symbol $P$ in
 \eqref{eq:input-embedding} does not also stand for relative bias or RoPE.
+In \eqref{eq:relative-position-bias}, rows index query positions and columns
+index key positions, so $i-j$ compares the output position $i$ with the source
+position $j$.
 
 \paragraph{Remark.}
 The relative-displacement calculation for rotary positions will be developed
@@ -224,7 +243,20 @@ separately in the homework.
 Suppose $H^\ell\in\R^{T\times d}$ enters layer $\ell$. The lecture described
 the attention calculation but did not state that a standard transformer uses
 multiple attention heads. We include that correction here and specify a
-pre-normalized block with $h$ heads of width $d_h$.
+pre-normalized block with $h$ heads of width $d_h$. In $H^\ell$, row $i$ is
+the activation at sequence position $i$, and column $r$ is model-feature
+coordinate $r$:
+\begin{equation}
+H^\ell=
+\begin{bmatrix}
+h_1^\ell\\[-1mm]
+\vdots\\[-1mm]
+h_T^\ell
+\end{bmatrix}
+\in\R^{T\times d},
+\qquad h_i^\ell=H^\ell_{i,:}\in\R^{1\times d}.
+\label{eq:row-stacking}
+\end{equation}
 
 First define the normalization map. For $u\in\R^d$, let
 \begin{equation}
@@ -241,9 +273,10 @@ $\varepsilon>0$, define
 +\beta_{\ell,m},
 \qquad m\in\{1,2\}.
 \end{equation}
-On a matrix, $\operatorname{LayerNorm}_{\ell,m}$ acts row by row. Layer
-normalization was not discussed in the lecture; it is included so that the
-displayed block is fully specified.
+On a matrix, $\operatorname{LayerNorm}_{\ell,m}$ acts row by row: it normalizes
+the $d$ feature coordinates at each position independently. Layer normalization
+was not discussed in the lecture; it is included so that the displayed block
+is fully specified.
 
 At the block-diagram level, a pre-normalized decoder layer performs two
 residual calculations:
@@ -281,13 +314,25 @@ M_{ij}=\begin{cases}
 -\infty,&j>i.
 \end{cases}
 \end{equation}
+The matrices $U,Q_a,K_a,V_a$, and $O_a$ all have one row per sequence
+position. The columns of $U$ are model features; the columns of
+$Q_a,K_a,V_a,O_a\in\R^{T\times d_h}$ are head features. The score, mask, and
+attention matrices lie in $\R^{T\times T}$. Their row $i$ refers to query or
+output position $i$, and their column $j$ refers to key/value or source
+position $j$. In particular, $(A_a)_{ij}$ is the weight with which position
+$i$ uses the value at position $j$.
+
 The softmax acts row by row. The causal mask makes the attention weight of
-every future position exactly zero. Concatenate the head outputs and apply the
-first residual connection:
+every future source position exactly zero. Concatenate the head outputs and
+apply the first residual connection:
 \begin{equation}
 G=H^\ell+[O_1\mid\cdots\mid O_h]W^O_\ell,
 \qquad W^O_\ell\in\R^{hd_h\times d}.
 \end{equation}
+The notation $[O_1\mid\cdots\mid O_h]\in\R^{T\times hd_h}$ concatenates the
+\emph{columns}: rows remain sequence positions, while the columns collect the
+features from all heads. Multiplication by $W^O_\ell$ maps those columns back
+to $d$ model features, so $G\in\R^{T\times d}$ can be added to $H^\ell$.
 The positionwise feed-forward sublayer and second residual connection give
 \begin{align}
 R&=\operatorname{LayerNorm}_{\ell,2}(G),\\
@@ -302,12 +347,18 @@ W^1_\ell\in\R^{d\times d_{\rm ff}},\quad
 W^2_\ell\in\R^{d_{\rm ff}\times d},\quad
 b^1_\ell\in\R^{d_{\rm ff}},\quad b^2_\ell\in\R^d.
 \end{equation}
+Here $R\in\R^{T\times d}$ still has positions in rows. The product
+$RW^1_\ell\in\R^{T\times d_{\rm ff}}$ replaces the model-feature columns by
+feed-forward-unit columns, and multiplication by $W^2_\ell$ returns to $d$
+model-feature columns. The vector $\mathbf 1\in\R^T$ copies each bias into
+every position row.
 For example, $\phi(z)=z\Phi(z)$ coordinatewise is GELU, where $\Phi$ is the
 standard normal cumulative distribution function.
 
 The lecture also mentioned \emph{mixture-of-experts} layers. They replace the
 single dense feed-forward map by expert maps $f_1,\ldots,f_m$ and a router. For
-a token representation $r$, a sparse version has the form
+one position row $r\in\R^{1\times d}$, with each $f_e(r)\in\R^{1\times d}$, a
+sparse version has the form
 \begin{equation}
 f_{\rm MoE}(r)
 =\sum_{e\in S(r)}\rho_e(r)f_e(r),
@@ -332,6 +383,10 @@ z_t&=h_t^LW_U+b_U,\\
 p_\theta(x_t=v\mid x_{<t})
 &=\frac{\exp(z_{t,v})}{\sum_{u=1}^V\exp(z_{t,u})}.
 \end{align}
+The row vector $h_t^L\in\R^{1\times d}$ has one entry per model feature.
+Rows of $W_U$ index those model features and columns index vocabulary items.
+Consequently, $z_t\in\R^{1\times V}$ has one logit in each vocabulary column,
+and the softmax turns those columns into next-token probabilities.
 Weight tying sets $W_U=E^\top$; it is common but not logically required.
 
 The single-token path is therefore
@@ -409,6 +464,10 @@ row is
 \qquad
 o_t=\alpha_tV_{\leq t}.
 \end{equation}
+Here $q_t\in\R^{1\times d_h}$ is the new-position row,
+$K_{\leq t},V_{\leq t}\in\R^{t\times d_h}$ have cached positions in rows and
+head coordinates in columns, $\alpha_t\in\R^{1\times t}$ has one weight per
+cached source position, and $o_t\in\R^{1\times d_h}$ is the new output row.
 The earlier keys and values are therefore stored in a \emph{KV cache}. One
 cached decode step uses order $td_h$ attention arithmetic per head, and after
 $t$ positions the cache stores order $td_h$ numbers per head and layer.
@@ -563,6 +622,10 @@ made available to the model; and one vocabulary item in a tokenized sequence.
 \item[Tokenizer; detokenizer]
 The map from a base-symbol string to vocabulary indices, and its inverse
 concatenation map.
+\item[Sequence orientation; matrix layout]
+Positions run left to right in the board diagrams. In the equations, positions
+are stacked as rows and the columns index coordinates such as vocabulary items
+or learned features.
 \item[Stochastic sequence model; autoregressive model]
 A probability law on token sequences, and its specification through
 conditional next-token distributions.

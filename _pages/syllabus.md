@@ -61,7 +61,10 @@ should reconstruct the lecture's question, mathematical setup, central results
 and arguments, relevance to modern AI, and the boundary of the conclusions. It
 should be a useful mathematical exposition, not a transcript. Near the end,
 include a compact **Concepts and terminology** section collecting the important
-new vocabulary introduced in the lecture. End with a short
+new vocabulary introduced in the lecture. Whenever a matrix or tensor is
+introduced, state what its rows, columns, and any additional axes index. If a
+diagram uses a different spatial orientation from the algebraic convention,
+make that difference explicit. End with a short
 **Bibliographic remarks** section in the style of *Bandit Algorithms*: use
 narrative prose to explain the origins of the ideas, how the cited work relates
 to the lecture, and where its scope differs. Follow this with an ordinary
