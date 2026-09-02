@@ -50,8 +50,8 @@ September 1, 2026
 \noindent\textbf{Purpose of this note.}
 This is an example of the expected scribe-note style: record what happened in
 the lecture, define the mathematical objects precisely, and distinguish the
-main calculation from explanatory remarks. It is an exposition, not a
-transcript.
+main calculation from explanatory remarks. It reconstructs and organizes the
+lecture's mathematical content.
 
 \medskip
 \noindent\textbf{Delivery note.}
@@ -100,9 +100,9 @@ of this note expands the tokenizer and model boxes.
 The word \emph{tokenization} comes from the compiler pipeline. A compiler's
 lexer maps a character stream to tokens such as identifiers, numerals, and
 operators using a language specification. An LLM tokenizer has the same broad
-string-to-sequence interface, but its vocabulary and segmentation rules are
-normally constructed from a text corpus rather than from the grammar of a
-programming language.
+string-to-sequence interface. Corpus data normally determines its vocabulary
+and segmentation rules; a programming-language specification determines a
+compiler's lexer.
 
 Let $\Sigma$ be a finite base alphabet and let
 \begin{equation}
@@ -130,11 +130,11 @@ Unicode characters to bytes, and the addition of special tokens may change
 the sequence before or after this segmentation; those are separate operations.
 
 Practical tokenizers may also normalize text, first split it into coarse
-pieces, or begin from bytes to guarantee coverage. Tokens often coincide with
-useful linguistic units, but this is not guaranteed and is not the defining
-objective. Appendix~\ref{app:tokenizer-construction} gives optional background
-on how tokenizers may be constructed; those details were not part of the
-lecture.
+pieces, or begin from bytes to guarantee coverage. Some tokens coincide with
+useful linguistic units; corpus-based construction also produces fragments
+whose boundaries lack semantic significance.
+Appendix~\ref{app:tokenizer-construction} gives optional background on how
+tokenizers may be constructed, added after the lecture.
 
 Once the tokenizer is fixed, a stochastic language or sequence model specifies
 a stochastic process $(X_t)_{t\geq1}$ whose state space is $[V]$. An
@@ -167,8 +167,8 @@ On the board, the sequence was drawn from left to right:
 In the matrix equations below, each position is instead represented by one
 \emph{row}, and positions are stacked from top to bottom. Columns hold
 vocabulary coordinates, model features, head features, or source positions,
-depending on the matrix. Thus the orientation of a board diagram is not the
-storage convention of the equations. We state what the rows and columns index
+depending on the matrix. Board orientation and algebraic storage therefore use
+different axes. We state what the rows and columns index
 whenever a new kind of matrix appears.
 
 Let the vocabulary have size $V$, and identify token $x_t\in[V]$ with the
@@ -210,8 +210,8 @@ The next sections expand the three middle boxes.
 
 \paragraph{Where is position added?}
 Equation~\eqref{eq:input-embedding} describes additive absolute positions.
-They are added once, before the first transformer block; they are not added
-again in every block. Other position mechanisms enter the computation
+They are added once, before the first transformer block, and then carried by
+the residual stream. Other position mechanisms enter the computation
 differently. For example, a layer- and head-specific relative-position bias
 changes the attention calculation to
 \begin{equation}
@@ -229,7 +229,8 @@ instead uses a fixed, head-dependent linear penalty such as
 $-m_a(i-j)$ for a causal pair $j\leq i$. RoPE applies a position-dependent
 rotation to queries and keys in each attention layer that uses RoPE. These are
 alternative architectural choices; the symbol $P$ in
-\eqref{eq:input-embedding} does not also stand for relative bias or RoPE.
+\eqref{eq:input-embedding} denotes only additive absolute positions; relative
+bias and RoPE have the separate forms just described.
 In \eqref{eq:relative-position-bias}, rows index query positions and columns
 index key positions, so $i-j$ compares the output position $i$ with the source
 position $j$.
@@ -241,9 +242,9 @@ separately in the homework.
 \section{One fully specified decoder block}
 
 Suppose $H^\ell\in\R^{T\times d}$ enters layer $\ell$. The lecture described
-the attention calculation but did not state that a standard transformer uses
-multiple attention heads. We include that correction here and specify a
-pre-normalized block with $h$ heads of width $d_h$. In $H^\ell$, row $i$ is
+the attention calculation. This note adds the standard multiple-head structure
+as a correction and specifies a pre-normalized block with $h$ heads of width
+$d_h$. In $H^\ell$, row $i$ is
 the activation at sequence position $i$, and column $r$ is model-feature
 coordinate $r$:
 \begin{equation}
@@ -274,9 +275,8 @@ $\varepsilon>0$, define
 \qquad m\in\{1,2\}.
 \end{equation}
 On a matrix, $\operatorname{LayerNorm}_{\ell,m}$ acts row by row: it normalizes
-the $d$ feature coordinates at each position independently. Layer normalization
-was not discussed in the lecture; it is included so that the displayed block
-is fully specified.
+the $d$ feature coordinates at each position independently. This note adds
+layer normalization so that the displayed block is fully specified.
 
 At the block-diagram level, a pre-normalized decoder layer performs two
 residual calculations:
@@ -365,11 +365,31 @@ f_{\rm MoE}(r)
 \end{equation}
 where $S(r)$ is a small router-selected subset of experts and the router
 weights $\rho_e(r)$ are normalized over that subset. This replacement changes
-the positionwise sublayer, not the attention calculation.
+the positionwise sublayer; the attention calculation remains unchanged.
 
 Practical models also change normalization, use gated MLPs, reorganize
 attention heads, and handle positions differently. The equations specify one
-complete pedagogical block, not the unique modern design.
+complete pedagogical block; modern designs instantiate many variants.
+
+For comparisons in which these internal details would obscure the structure,
+write
+\begin{equation}
+\mathcal B_{\ell,M}:\R^{T\times d}\longrightarrow\R^{T\times d},
+\qquad
+H^{\ell+1}=\mathcal B_{\ell,M}(H^\ell),
+\label{eq:block-function}
+\end{equation}
+for the entire layer just specified, with attention mask $M$ and the learned
+parameters of layer $\ell$. Thus a stack of $L$ blocks is the composition
+\begin{equation}
+H^L=
+\bigl(\mathcal B_{L-1,M}\circ\cdots\circ\mathcal B_{0,M}\bigr)(H^0).
+\label{eq:block-composition}
+\end{equation}
+The notation hides the attention, residual, normalization, and MLP or MoE
+calculations while preserving which state enters each block and which mask it
+uses. Appendix~\ref{app:transformer-arrangements} uses it to compare
+decoder-only, encoder-only, and encoder--decoder transformers.
 
 The key invariant is causal dependence: after $L$ blocks, row
 $h_t^L=H^L_{t,:}$ depends only on $x_{<t}$.
@@ -387,7 +407,8 @@ The row vector $h_t^L\in\R^{1\times d}$ has one entry per model feature.
 Rows of $W_U$ index those model features and columns index vocabulary items.
 Consequently, $z_t\in\R^{1\times V}$ has one logit in each vocabulary column,
 and the softmax turns those columns into next-token probabilities.
-Weight tying sets $W_U=E^\top$; it is common but not logically required.
+Weight tying, the common optional choice $W_U=E^\top$, reuses the input
+embedding matrix at the readout.
 
 The single-token path is therefore
 \begin{equation}
@@ -446,8 +467,14 @@ keys. Consequently, a full forward pass on a fixed length-$t$ prefix performs
 query--key comparisons per head. Both $QK^\top$ and the multiplication of the
 resulting attention matrix by $V$ therefore require order $t^2d_h$ arithmetic.
 A straightforward implementation also materializes a $t\times t$ attention
-matrix. The causal mask removes the upper triangle, changing a constant but
-not the quadratic dependence on $t$.
+matrix. The causal mask removes the upper triangle, lowering the constant
+while preserving quadratic dependence on $t$. The constant is relevant
+during training: a bidirectional head has $t^2$ query--key pairs, whereas a
+causal head has only $t(t+1)/2$ permitted pairs. A kernel that skips the masked
+triangle can save nearly half of the score and attention--value arithmetic.
+The whole-block saving is smaller because projections, normalization, and the
+MLP or MoE remain. A kernel that first computes the full square matrix and
+masks it afterward realizes no arithmetic saving.
 
 The first full forward pass over a supplied prompt is called \emph{prefill}.
 After prefill, a \emph{decode step} generates one new token and advances only
@@ -489,16 +516,18 @@ A single parallel full-sequence forward pass remains quadratic.
 The query $q_i$ was used to compute the output at position $i$. A future
 position $t>i$ forms a new query $q_t$ and compares it with the old key $k_i$;
 the resulting weight multiplies the old value $v_i$. Thus future computation
-reuses $k_i$ and $v_i$, but never $q_i$. Caching old queries would consume
-memory without avoiding future computation.
+reuses $k_i$ and $v_i$. The old query $q_i$ has completed its role, so caching
+it would consume memory without avoiding future computation.
 
 \section{Context length and a bounded-score limitation}
 
-A deployed model has a \emph{maximum context length}: an upper bound on the
-number of prompt and generated tokens available to one model call. Position
-handling, training range, cache memory, attention cost, and implementation
-choices can all contribute to this limit. The ability to accept $T$ tokens does
-not guarantee that the model uses every one of them effectively.
+A deployed model receives a \emph{context window}: the bounded sequence of
+prompt and generated tokens made available to one model call. Its
+\emph{maximum context length} is an upper bound on the size of that window.
+Position handling, training range, cache memory, attention cost, and
+implementation choices can all contribute to this limit. The ability to
+accept $T$ tokens and the ability to use all $T$ tokens effectively are
+distinct capabilities.
 
 There is also a simple mathematical pressure against sharply selecting one
 position from an increasingly long context. For one query attending to $T$
@@ -514,10 +543,8 @@ softmax weight can remain sharply concentrated. A quantitative upper bound,
 its proof, and the corresponding entropy consequence will be developed
 separately in the homework.
 
-The bounded-score premise can fail: a model can make score gaps grow with
-context length, and multiple heads and layers can implement more complicated
-selection mechanisms. Thus the observation does not by itself show that
-transformers cannot use long contexts.
+The conclusion is conditional on bounded scores; score gaps that grow with
+context length evade it.
 
 \paragraph{Entropy language.}
 For a probability vector $\alpha\in\R^T$, its entropy is
@@ -531,9 +558,7 @@ entropy describes diffuse attention.
 \paragraph{Related empirical phenomenon.}
 The terms \emph{lost in the middle} and \emph{context rot} refer to observed
 failures to use long contexts uniformly or reliably, sometimes well below a
-model's advertised maximum length. These experiments concern complete trained
-systems and task performance. They are related to the question above, but the
-bounded-score observation alone does not explain them.
+model's advertised maximum length.
 
 \section{What was said about training}
 
@@ -565,16 +590,16 @@ E,P,W_U,b_U,
 \gamma_{\ell,2},\beta_{\ell,2}\}_{\ell}
 \Bigr).
 \end{multline}
-With weight tying, $W_U=E^\top$ and is not an independent parameter. Fixed
-position maps and the causal mask $M$ are not learned parameters. An MoE layer
+With weight tying, $E$ determines $W_U=E^\top$. Fixed position maps and the
+causal mask $M$ lie outside the learned parameters. An MoE layer
 replaces the dense-MLP entries above by the expert and router parameters. The
 token vocabulary and segmentation rules are normally constructed before
 neural-network training and held fixed. They determine $V$, the input
-sequences, and the shapes of $E$ and $W_U$, but they are not entries of
-$\theta$ in this account.
+sequences, and the shapes of $E$ and $W_U$ while remaining outside $\theta$ in
+this account.
 
 The token prefix, hidden states, queries, keys, values, attention weights,
-logits, and KV cache are computed quantities, not parts of $\theta$. The
+logits, and KV cache are computed quantities outside $\theta$. The
 decoding rule and the surrounding harness are also outside $\theta$. Thus
 training the model means choosing the shared numerical parameters in this
 display; specifying the deployed AI system requires additional choices.
@@ -588,7 +613,7 @@ may make repeated model calls.
 \item A lossless tokenizer segments a sequence over a base alphabet into
 nonempty vocabulary strings. Its token sequence cannot be longer than the
 base-symbol sequence and is shorter whenever a selected token contains several
-base symbols. Tokens need not be semantic units.
+base symbols. Tokens may lack semantic meaning.
 \item A stochastic language or sequence model specifies a stochastic process
 whose state space is its vocabulary. An autoregressive model specifies its
 finite-sequence distributions through next-token conditionals.
@@ -599,21 +624,23 @@ transformations, and using a softmax readout.
 relative-position biases instead modify the attention calculation in every
 layer that uses them.
 \item The learned conditional distribution and the decoding algorithm are
-different objects. An argmax is optimal for a single zero--one-loss decision,
-but repeated tokenwise argmax does not solve a general sequence-level problem
-and is a poor default for open-ended generation.
+different objects. An argmax is optimal for a single zero--one-loss decision.
+Repeated tokenwise argmax generally fails to optimize a sequence-level
+objective and is a poor default for open-ended generation.
 \item A full dense-attention pass on a length-$t$ prefix has quadratic
-arithmetic cost. During sequential generation, a KV cache avoids recomputing
-old layer-position activations and changes total attention work from cubic to
-quadratic in the generated length. Old queries have no future use.
+arithmetic cost. A causal kernel can skip nearly half the attention pairs used
+by bidirectional attention at the same length. During sequential generation, a
+KV cache avoids recomputing old layer-position activations and changes total
+attention work from cubic to quadratic in the generated length. Old queries
+have no future use.
 \item Maximum context length is an input-capacity limit. Performance on some
 retrieval and reasoning tasks may deteriorate before the input reaches this
 limit. With bounded attention scores, a single softmax head cannot remain
 sharply concentrated as the context grows.
 \item The parameter vector $\theta$ contains the learned weights of the
-conditional model. It does not contain the current activations, KV cache,
-tokenizer, decoding rule, or harness. This lecture did not yet explain why
-learning produces useful values of $\theta$.
+conditional model. The current activations, KV cache, tokenizer, decoding rule,
+and harness lie outside $\theta$. Lecture~2 takes up the question of why
+learning can produce useful values of $\theta$.
 \end{itemize}
 
 \section{Glossary}
@@ -621,20 +648,23 @@ learning produces useful values of $\theta$.
 \noindent\textit{Inclusion rule.}
 The glossary records a term when this note gives it a technical meaning that
 is needed to follow the lecture or is likely to recur later in the course. It
-also records persistent notation and diagram conventions. It does not list
-every mathematical word, symbol, implementation detail, named model, or term
-that appears only in optional background. Terms are still defined at first use
-in the main text; this section is a recap.
+also records persistent notation and diagram conventions. It omits ordinary
+mathematical words, symbols, implementation details, named models, and terms
+appearing only in optional background. Terms are still defined at first use in
+the main text; this section is a recap.
 
 \medskip
 \begin{description}[style=nextline,leftmargin=1.5em,labelindent=0pt]
 \item[Harness; task state]
 The program surrounding the model, and the information that this program
 maintains between model calls.
-\item[Prompt; prefix; context]
-The initially supplied input sequence; all tokens preceding a particular
-prediction position; and the information made visible to one model call. A
-prefix may contain both prompt tokens and tokens generated so far.
+\item[Prompt; prefix]
+The initially supplied input sequence, and all tokens preceding a particular
+prediction position. A prefix may contain both prompt tokens and tokens
+generated so far.
+\item[Context; context window]
+The information made visible to one model call, and the bounded token sequence
+through which that information is presented to the model.
 \item[Base alphabet; vocabulary; token]
 The symbols used to represent raw sequences; the finite collection of strings
 made available to the model; and one vocabulary item in a tokenized sequence.
@@ -655,10 +685,11 @@ for a narrower purpose. Fine-tuning is one possible form of post-training.
 \item[Inference; generation]
 Computation with the model parameters held fixed, and repeated next-token
 inference and decoding that produce a continuation.
-\item[Decoder-only transformer; encoder--decoder transformer]
-A causal transformer that places prompt and continuation in one sequence and
-one stack; and a two-stack architecture in which a decoder separately reads
-the representation produced by an encoder.
+\item[Encoder-only; decoder-only; encoder--decoder transformer]
+A bidirectional stack that produces contextual representations of an input; a
+causal stack that places prompt and continuation in one sequence; and a
+two-stack architecture in which a causal decoder separately reads the
+representation produced by a bidirectional encoder.
 \item[Self-attention; cross-attention; transformer block]
 Attention whose queries, keys, and values come from one sequence; attention
 whose decoder queries read keys and values derived from encoder output; and
@@ -697,9 +728,10 @@ random generation from that distribution; and tokenwise argmax.
 \item[Prefill; decode step; KV cache]
 The initial full-prompt forward pass; one incremental generation step; and the
 stored keys and values that prevent recomputation of old activations.
-\item[Maximum context length; attention entropy]
-The token-capacity ceiling for one model call, and a measure of how diffuse an
-attention distribution is.
+\item[Maximum context length]
+The token-capacity ceiling for the context window of one model call.
+\item[Attention entropy]
+A measure of how diffuse an attention distribution is.
 \item[Lost in the middle; context rot]
 Names for empirical deterioration in a trained system's use of information as
 its location or the total input length changes, potentially well below the
@@ -710,8 +742,8 @@ maximum context length.
 \section{Supplement: how tokenizers are constructed}
 \label{app:tokenizer-construction}
 
-This appendix was not covered in the lecture. It records optional background,
-separate from the lecture narrative reconstructed above.
+This appendix adds optional background after the lecture, separate from the
+lecture narrative reconstructed above.
 
 Two common corpus-based constructions illustrate the main ideas.
 \begin{enumerate}[leftmargin=*]
@@ -733,11 +765,116 @@ highest-scoring segmentation or sample among segmentations
 \citep{kudo2018,kudorichardson2018}.
 \end{enumerate}
 
+\section{Supplement: a modular view of transformer arrangements}
+\label{app:transformer-arrangements}
+
+This supplement expands an in-class question. The lecture itself developed the
+causal decoder-only calculation. The block-function notation in
+\eqref{eq:block-function} makes the three standard arrangements concise.
+
+Let $M_{\rm full}=0$ permit every position to attend to every other position,
+and let $M_{\rm causal}$ be the triangular mask defined earlier. An
+\emph{encoder-only} transformer processes a source sequence through
+bidirectional blocks:
+\begin{equation}
+E^0=\operatorname{Embed}_{\rm src}(x_{1:S}),
+\qquad
+E^{\ell+1}=\mathcal B^{\rm enc}_{\ell,M_{\rm full}}(E^\ell),
+\quad \ell=0,\ldots,L_E-1.
+\label{eq:encoder-stack}
+\end{equation}
+Every source position can interact with every other source position in each
+block.
+
+A \emph{decoder-only} transformer instead composes causal blocks on one
+sequence:
+\begin{equation}
+H^0=\operatorname{Embed}(x_{1:T}),
+\qquad
+H^{\ell+1}=\mathcal B^{\rm dec}_{\ell,M_{\rm causal}}(H^\ell),
+\quad \ell=0,\ldots,L-1.
+\label{eq:decoder-only-stack}
+\end{equation}
+At every depth, the activation at position $i$ depends only on positions
+$1,\ldots,i$.
+
+An \emph{encoder--decoder} transformer maintains two distinct streams. First
+it computes the bidirectional source memory $E^{L_E}$ using
+\eqref{eq:encoder-stack}. The target stream begins from its own embeddings
+$D^0=\operatorname{Embed}_{\rm tgt}(y_{<t})$. A decoder block then performs
+three residual sublayers:
+\begin{align}
+G^r
+&=D^r+\operatorname{SelfAttn}^r_{M_{\rm causal}}
+  \bigl(\operatorname{LayerNorm}(D^r)\bigr),\nonumber\\
+J^r
+&=G^r+\operatorname{CrossAttn}^r
+  \bigl(\operatorname{LayerNorm}(G^r),E^{L_E}\bigr),\nonumber\\
+D^{r+1}
+&=J^r+\operatorname{FF}^r
+  \bigl(\operatorname{LayerNorm}(J^r)\bigr).
+\label{eq:encoder-decoder-block}
+\end{align}
+Self-attention forms queries, keys, and values from the target stream.
+Cross-attention forms queries from the target stream and keys and values from
+the encoder memory. The multi-head projections inside these operators are the
+same kind as those written out in Section~1.4. Thus the construction uses two
+stacks with separate parameters and activations: a bidirectional source stack
+and a causal target stack that reads the completed source memory.
+
+The masks give a concrete training-cost distinction. For a length-$n$
+sequence, one bidirectional self-attention head permits
+\begin{equation}
+N_{\rm full}(n)=n^2
+\qquad\text{and}\qquad
+N_{\rm causal}(n)=\frac{n(n+1)}2
+\label{eq:full-causal-score-count}
+\end{equation}
+query--key pairs. A causal kernel that skips the upper triangle therefore uses
+approximately half the pairwise attention arithmetic at large $n$. Projection
+and feed-forward costs remain unchanged.
+
+For source length $S$ and target length $T$, the corresponding pair counts for
+$L_E$ encoder blocks and $L_D$ encoder--decoder blocks are
+\begin{equation}
+N_{\rm enc\text{-}dec}
+=L_ES^2+L_D\left(\frac{T(T+1)}2+ST\right).
+\label{eq:encoder-decoder-score-count}
+\end{equation}
+The three terms come from bidirectional source self-attention, causal target
+self-attention, and target-to-source cross-attention. A decoder-only stack of
+$L$ blocks on the concatenated source and target has
+\begin{equation}
+N_{\rm dec\text{-}only}
+=L\frac{(S+T)(S+T+1)}2.
+\label{eq:decoder-only-score-count}
+\end{equation}
+These formulas count attention pairs; comparing complete architectures also
+requires the depths, widths, parameter counts, projections, feed-forward
+layers, and hardware kernels.
+
+For ordinary next-token pretraining, a decoder-only stack also matches the
+objective directly: each position supplies a prediction target and raw text
+requires no source--target split. Encoder--decoder pretraining instead defines
+a source and target, for example through span corruption. The attention saving
+and homogeneous training/generation interface give concrete computational and
+engineering reasons for the popularity of causal decoder-only models.
+Architecture and objective interact in empirical comparisons. In the
+controlled comparisons of \citet{raffel2020}, encoder--decoder models were
+strongest at approximately matched computation in their setting.
+
+Encoder--decoder generation also supports key--value caching. The encoder
+memory is computed once for a fixed source. Each decoder layer can cache the
+key and value projections of that memory for cross-attention while growing a
+separate causal self-attention cache for the generated target. Each new decode
+step forms only the current queries.
+
 \section{Supplement: codebases for experiments}
 \label{app:experimental-codebases}
 
-This appendix was not covered in the lecture. Each entry supports a different
-kind of experiment; students are not expected to install all of them.
+This appendix adds experimental resources after the lecture. Each entry
+supports a different kind of experiment; the list serves as a menu for
+selective use.
 \begin{description}[style=nextline,leftmargin=1.5em,labelindent=0pt]
 \item[NumPy RASP-L]
 A small reference implementation for writing and testing causal RASP-L
@@ -769,8 +906,8 @@ decoding, and key--value-cache behavior accessible to experiments:
 \section*{Bibliographic remarks}
 
 The compiler analogy is literal at the level of the interface: a lexer maps a
-character stream into tokens, although compiler tokens are specified by the
-programming language rather than induced from corpus frequencies; see
+character stream into tokens. A programming-language specification determines
+compiler tokens; corpus frequencies help determine LLM tokens. See
 \citet{aho2006}. The supplementary appendix describes the BPE construction of
 \citet{sennrich2016}, the unigram formulation of \citet{kudo2018}, and the
 SentencePiece system of \citet{kudorichardson2018}.
@@ -788,57 +925,22 @@ encoder--decoder architecture and expressed many tasks through one text-to-text
 interface \citep{raffel2020}. GPT-3 later demonstrated that a sufficiently
 large causal language model could use task descriptions and examples supplied
 in its context, without a gradient update at test time \citep{brown2020}.
-These are historically important successful recipes; they do not establish
-that one of the three architectural forms uniformly dominates the others.
+These are historically important successful recipes.
 
-The original encoder--decoder split was designed for conditional
-sequence-to-sequence tasks such as translation. A fully visible encoder turns
-the complete source sequence into a memory; a causal decoder processes the
-target generated so far and uses a separate cross-attention sublayer to read
-that memory. In the causal decoder-only model described here, source or prompt
-and continuation occupy one sequence and pass through one shared stack. This
-is a natural fit when raw text has no privileged source--target split, and it
-gives pretraining, prompting, and continuation a homogeneous implementation.
-There is also a concrete attention-cost advantage when the encoder is
-bidirectional and the decoder-only model is causal. For source length $S$ and
-target length $T$, compare one bidirectional encoder attention layer followed
-by one causal decoder attention layer and cross-attention, with one causal
-decoder-only attention layer on the concatenated source and target. The
-numbers of query--key scores are
-\begin{align}
-N_{\rm enc\text{-}dec}
-&=S^2+\frac{T(T+1)}2+ST,\\
-N_{\rm dec\text{-}only}
-&=\frac{(S+T)(S+T+1)}2
-=\frac{S(S+1)}2+\frac{T(T+1)}2+ST.
-\end{align}
-The decoder-only layer saves $S(S-1)/2$ source--source scores: the upper
-triangle used by the bidirectional encoder is absent from causal attention.
-An implementation realizes this saving only when its causal-attention kernel
-avoids computing masked scores. This score count does not settle a whole-model
-comparison because depth, width, parameter count, projections, feed-forward
-layers, and implementation also matter. Encoder--decoder models retain a
-strong inductive bias for translation and other fixed conditional tasks. In
-the controlled comparison by \citet{raffel2020}, the encoder--decoder model
-was strongest at roughly matched total computation; the paper also explains
-why parameter count and computation cannot both be matched by merely changing
-the number of layers.
-
-Key--value caching also applies to encoder--decoder inference. The encoder
-output is computed once for a fixed source. Each decoder layer can cache the
-key and value projections of that source for cross-attention, while its causal
-self-attention cache grows with the generated target. At a decode step only
-the current queries are needed; old queries do not participate in future
-attention calculations.
+The modular definitions in Appendix~\ref{app:transformer-arrangements} follow
+the encoder--decoder construction of \citet{vaswani2017} and the architectural
+comparisons of \citet{raffel2020}. The latter explain why parameter count and
+computation cannot both be matched by changing depth alone and report the
+strongest performance from an encoder--decoder model at approximately matched
+computation in their setting.
 
 Recent publicly released model families usually preserve the causal
 decoder-only interface while changing the surrounding recipe and internal
 details. Llama~3 is a dense example \citep{grattafiori2024}, Mistral~7B uses
 grouped-query and sliding-window attention \citep{jiang2023}, and DeepSeek-V3
-uses a mixture-of-experts architecture \citep{deepseek2024}. The careful term
-is \emph{open-weight}: releasing numerical weights does not by itself release
-the training data and code or grant every freedom conventionally associated
-with open-source software.
+uses a mixture-of-experts architecture \citep{deepseek2024}. The term
+\emph{open-weight} asserts release of the numerical weights; training data,
+code, and licensing freedoms require separate verification.
 
 The original paper used additive sinusoidal position vectors. Rotary position embeddings
 are due to \citet{su2021}; their position-dependent rotations of queries and
@@ -847,54 +949,39 @@ relative-position bias in \eqref{eq:relative-position-bias} follows
 \citet{raffel2020}. \citet{press2022} propose ALiBi, which instead adds a fixed
 head-dependent linear penalty based on relative distance.
 
-The key--value cache is the standard implementation of incremental transformer
-decoding. \citet{shazeer2019} identified repeatedly loading cached keys and
-values as a memory-bandwidth bottleneck. In ordinary multi-head attention,
-each of $H$ query heads has its own key and value head. Multi-query attention
-keeps the $H$ query heads but shares one key head and one value head, reducing
-the per-layer cache from $2tH d_h$ to $2t d_h$ scalars at prefix length $t$.
-This targets decoding, where the old keys and values must be read repeatedly;
-it does not give the analogous factor-$H$ reduction in prefill arithmetic.
-Shazeer's experiments found a large decoding-speed improvement with a small
-quality loss. Grouped-query attention interpolates between the two designs by
-using $G$ shared key--value groups, giving a cache of $2tGd_h$ scalars
-\citep{ainslie2023}; its use in Mistral~7B and Llama~3 makes the idea part of
-modern practice. Thus the
-Shazeer reference matters both historically and as the origin of a current
-KV-cache tradeoff.
+\citet{shazeer2019} identified KV-cache bandwidth as a decoding bottleneck and
+introduced multi-query attention: multiple query heads share the same key and
+value heads. This reduces cached key--value data and the traffic required to
+read it. Grouped-query attention, introduced by \citet{ainslie2023}, provides
+an intermediate degree of sharing.
 
 \citet{dao2022} introduced FlashAttention, which computes exact dense
 attention by tiling and an online softmax. This reduces memory traffic and
-avoids materializing the full attention matrix, but does not remove the
-quadratic arithmetic of exact dense attention. The course returns to this
+avoids materializing the full attention matrix while retaining the quadratic
+arithmetic of exact dense attention. The course returns to this
 distinction in Lecture~27.
 
 The bounded-score calculation left for homework is elementary.
 \citet{chiang2022} study a related length-dependent loss of confidence and show
 that the obstruction depends on architectural details; one of their remedies
 scales attention logits with $\log T$. This is useful context for the homework
-result, which is not a general explanation of long-context failures.
+result.
 
-The experiments of \citet{liu2024} vary the position of relevant information
-in multi-document question answering and key--value retrieval, demonstrating
-the distinction between accepting a long context and using it reliably.
+On the empirical capabilities of trained models across context-window lengths
+and locations of relevant information, \citet{liu2024} vary the position of
+relevant information in multi-document question answering and key--value
+retrieval, demonstrating the distinction between accepting a long context and
+using it reliably.
 \citet{hong2025} use the term ``context rot'' for performance degradation as
-input length grows across a broader collection of tasks and models. Both works
-study complete trained systems. The bounded-score calculation supplies one
-possible mechanism, but does not establish that it causes the observed
-degradation; the extent of any connection is unclear.
+input length grows across a broader collection of tasks and models.
 
-RASP is a small language for writing sequence computations using operations
-chosen to resemble transformer primitives. \citet{weiss2021} use it to make
-attention-based constructions explicit. \citet{zhou2024} introduce RASP-L for
-causal decoder-only transformers and propose that short RASP-L programs help
-predict which algorithmic tasks a trained transformer will learn in a
-length-generalizing way. This is a conjectural empirical organizing principle,
-not a theorem that gradient training recovers every short program. The papers
-are particularly useful because they force a proposed computation to be
-written as specific comparisons, causal selections, aggregations, and
-position operations. The NumPy implementation and Tracr compiler are listed
-in Appendix~\ref{app:experimental-codebases}.
+The RASP language used in Appendix~\ref{app:experimental-codebases} was
+introduced by \citet{weiss2021} to make attention-based sequence constructions
+explicit. \citet{zhou2024} introduced RASP-L for causal decoder-only
+transformers and proposed short-program length as an empirical predictor of
+algorithmic learnability and length generalization. The two formalisms force
+proposed computations to specify their comparisons, causal selections,
+aggregations, and position operations.
 
 \begin{thebibliography}{99}
 \bibitem[Aho et al.(2006)]{aho2006}
