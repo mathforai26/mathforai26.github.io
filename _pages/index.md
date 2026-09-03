@@ -33,4 +33,4 @@ This course develops clean mathematical models for the sources of power in moder
   </div>
 </div>
 
-Start with the [syllabus]({% link _pages/syllabus.md %}), see the dated [course schedule]({% link _pages/schedule.md %}), or review the [coursework]({% link _pages/coursework.md %}) and [research-question note]({% link _pages/research-question.md %}).
+Start with the [syllabus]({% link _pages/syllabus.md %}), see the dated [course schedule]({% link _pages/schedule.md %}), or review the [coursework]({% link _pages/coursework.md %}) and [research-question note]({% link _pages/research-question.md %}). Registered students use the [Canvas course](https://canvas.ualberta.ca/courses/37231) for submissions and grades.

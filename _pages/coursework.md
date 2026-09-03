@@ -38,7 +38,7 @@ A typical two-week assignment will have about four substantial problems, usually
 
 ## Submission format
 
-Use the [homework LaTeX template]({{ '/documents/misc_files/homework_template.tex' | relative_url }}). Submit each graded homework through Canvas as a ZIP archive named `hwNN-ccid.zip`, where `NN` is the two-digit homework number and `ccid` is your University of Alberta CCID. For example: `hw01-jsmith.zip`.
+Use the [homework LaTeX template]({{ '/documents/misc_files/homework_template.tex' | relative_url }}). Submit each graded homework through the [Canvas course](https://canvas.ualberta.ca/courses/37231) as a ZIP archive named `hwNN-ccid.zip`, where `NN` is the two-digit homework number and `ccid` is your University of Alberta CCID. For example: `hw01-jsmith.zip`.
 
 The archive must contain a single top-level directory named `hwNN-ccid`. This directory must contain at least:
 
