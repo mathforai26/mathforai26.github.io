@@ -9,11 +9,11 @@ permalink: /coursework/
 
 ## Assignment calendar
 
-Calendar dates and submission links will be added once the meeting schedule is confirmed.
+Homework materials and submission links are added as assignments are released.
 
 | Work | Weight | Target deadline | Materials |
 |:--|--:|:--|:--|
-| Homework 0: mathematical readiness | 0% | End of Week 1 | [PDF]({{ '/documents/assignments/assignment0.pdf' | relative_url }}) · [LaTeX]({{ '/documents/assignments/assignment0.tex' | relative_url }}) |
+| Homework 0: mathematical readiness | 0% | Sun, Sep 6, 11:59 p.m. | [PDF]({{ '/documents/assignments/assignment0.pdf' | relative_url }}) · [LaTeX]({{ '/documents/assignments/assignment0.tex' | relative_url }}) · [Submit on Canvas](https://canvas.ualberta.ca/courses/37231/assignments/812892) |
 | Homework 1 | 10% | End of Week 3 | To be posted |
 | Homework 2 | 10% | End of Week 5 | To be posted |
 | Research-question first draft | Part of 10% | End of Week 6 | [Template]({{ '/documents/misc_files/research_question_template.tex' | relative_url }}) |
@@ -38,7 +38,7 @@ A typical two-week assignment will have about four substantial problems, usually
 
 ## Submission format
 
-Use the [homework LaTeX template]({{ '/documents/misc_files/homework_template.tex' | relative_url }}). Submit each graded homework through the [Canvas course](https://canvas.ualberta.ca/courses/37231) as a ZIP archive named `hwNN-ccid.zip`, where `NN` is the two-digit homework number and `ccid` is your University of Alberta CCID. For example: `hw01-jsmith.zip`.
+Use the [homework LaTeX template]({{ '/documents/misc_files/homework_template.tex' | relative_url }}). Submit each graded homework through [Canvas Assignments](https://canvas.ualberta.ca/courses/37231/assignments) as a ZIP archive named `hwNN-ccid.zip`, where `NN` is the two-digit homework number and `ccid` is your University of Alberta CCID. For example: `hw01-jsmith.zip`.
 
 The archive must contain a single top-level directory named `hwNN-ccid`. This directory must contain at least:
 
@@ -52,3 +52,5 @@ Your name and CCID must appear on the first page of the PDF. Identify collaborat
 ## Homework 0
 
 Homework 0 is not graded. It tests proof writing, probability, linear algebra, optimization, and comfort with abstraction. Attempt it during the first week without looking for outside solutions. If substantial parts remain inaccessible after reviewing the relevant prerequisites, speak with the instructor promptly and decide whether the course is a good match.
+
+[Submit Homework 0 on Canvas](https://canvas.ualberta.ca/courses/37231/assignments/812892) by Sunday, September 6, at 11:59 p.m. Use `hw00` in the submission naming convention above.
