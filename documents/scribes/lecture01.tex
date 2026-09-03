@@ -703,9 +703,12 @@ learning can produce useful values of $\theta$.
 \item[Harness; task state]
 The program surrounding the model, and the information that this program
 maintains between model calls.
-\item[Prompt; prefix]
-The initially supplied input sequence, and all tokens preceding a particular
-prediction position. A prefix may contain both prompt tokens and tokens
+\item[Prompt]
+The initial input supplied to a model call. In the text-only setting, it is a
+string that tokenization converts into the initial token sequence.
+\item[Prefix]
+The token sequence $x_{<t}$ conditioning the prediction at position $t$.
+During generation, it consists of the tokenized prompt followed by the tokens
 generated so far.
 \item[Context; context window]
 The information made visible to one model call, and the token sequence through
