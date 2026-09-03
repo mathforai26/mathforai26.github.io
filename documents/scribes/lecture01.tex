@@ -498,7 +498,7 @@ problem has a greedy-choice property. None of these conditions holds in
 general for open-ended generation.
 
 \paragraph{Practical note.}
-For open-ended multi-token generation, forget greedy decoding as a default:
+For open-ended multi-token generation, forget greedy decoding:
 it is a bad idea. It throws away nearly all of the predictive distribution at
 every step, because a locally best token can irreversibly eliminate much better
 continuations.
