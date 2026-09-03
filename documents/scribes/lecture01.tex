@@ -3,12 +3,21 @@
 \usepackage[margin=1in]{geometry}
 \usepackage{amsmath,amssymb,amsthm,mathtools}
 \usepackage[inline,shortlabels]{enumitem}
+\usepackage{graphicx}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,calc,decorations.pathreplacing,positioning}
 \usepackage{xcolor}
 \usepackage{microtype}
 \usepackage[square,authoryear]{natbib}
 \usepackage[colorlinks=true,linkcolor=blue!60!black,urlcolor=blue!60!black,citecolor=blue!60!black]{hyperref}
 
 \definecolor{courseblue}{HTML}{17365D}
+\definecolor{diagramaccent}{HTML}{087FB5}
+\definecolor{diagramshell}{HTML}{F1F3F5}
+\definecolor{diagramgpt}{HTML}{BFD8E8}
+\definecolor{diagramllama}{HTML}{AFB5BA}
+\definecolor{diagramdark}{HTML}{52697C}
+\definecolor{diagraminset}{HTML}{F7F9FA}
 
 \DeclareMathOperator{\softmax}{softmax}
 \newcommand{\R}{\mathbb R}
@@ -278,6 +287,19 @@ $\operatorname{LayerNorm}_{\ell,m}((H^\ell_{i,:})^\top)$. Thus it normalizes
 the $d$ feature coordinates at each position independently. This note adds
 layer normalization so that the displayed block is fully specified.
 
+Llama~3 uses \emph{root-mean-square layer normalization} (RMSNorm). For a
+position activation $u\in\R^d$, define
+\begin{equation}
+\operatorname{RMSNorm}_{\ell,m}(u)
+=\gamma^{\rm rms}_{\ell,m}\odot
+\frac{u}{\sqrt{d^{-1}\sum_{r=1}^d u_r^2+\varepsilon}},
+\qquad \gamma^{\rm rms}_{\ell,m}\in\R^d.
+\label{eq:rmsnorm}
+\end{equation}
+RMSNorm rescales each position by the root mean square of its feature
+coordinates. It leaves the feature mean uncentered and, in Llama~3, uses a
+learned coordinatewise scale without an additive bias.
+
 At the block-diagram level, a pre-normalized decoder layer performs two
 residual calculations:
 \begin{align}
@@ -312,6 +334,7 @@ A_a&=\softmax_{\mathrm{row}}\!\left(
 O_a&=A_aV_a,
 &O_a&\in\R^{T\times d_h}.
 \end{aligned}
+\label{eq:self-attention-heads}
 \end{equation}
 where
 \begin{equation}
@@ -359,11 +382,18 @@ RoPE applies a position-dependent rotation to queries and keys in each
 attention layer that uses RoPE. The relative-displacement calculation for RoPE
 will be developed separately in the homework.
 
-Concatenate the head outputs, apply the output projection, and add the result
-to the residual stream:
+Write $O_a(U,M)$ for the output of head $a$ produced by
+\eqref{eq:self-attention-heads} from normalized input $U$ and mask $M$. Define
+the complete multi-head self-attention map by concatenating the head outputs
+and applying the output projection:
 \begin{equation}
-G=H^\ell+[O_1\mid\cdots\mid O_h]W^O_\ell,
-\qquad W^O_\ell\in\R^{hd_h\times d}.
+\begin{aligned}
+\operatorname{SelfAttn}^{\ell}_{M}(U)
+&:= [O_1(U,M)\mid\cdots\mid O_h(U,M)]W^O_\ell,
+&\quad W^O_\ell&\in\R^{hd_h\times d},\\
+G&=H^\ell+\operatorname{SelfAttn}^{\ell}_{M}(U).
+\end{aligned}
+\label{eq:self-attention-map}
 \end{equation}
 The block matrix $[O_1\mid\cdots\mid O_h]\in\R^{T\times hd_h}$ has the head
 outputs $O_1,\ldots,O_h$ as its column blocks. Multiplication by $W^O_\ell$
@@ -372,14 +402,16 @@ $G\in\R^{T\times d}$ can be added to $H^\ell$.
 
 Let $\phi:\R\to\R$ be a scalar activation function. For any matrix $A$, we
 use $\phi(A)$ for its entrywise extension,
-$(\phi(A))_{ij}=\phi(A_{ij})$. The second sublayer normalizes $G$, applies the
-positionwise feed-forward map, and adds its output to $G$:
+$(\phi(A))_{ij}=\phi(A_{ij})$. Define the positionwise feed-forward map and
+its residual update by
 \begin{align}
-R&=\operatorname{LayerNorm}_{\ell,2}(G),\\
-H^{\ell+1}
-&=G+
+R&=\operatorname{LayerNorm}_{\ell,2}(G),\nonumber\\
+\operatorname{FF}^{\ell}(R)
+&:=
 \phi\!\left(RW^1_\ell+\mathbf 1_T(b^1_\ell)^\top\right)W^2_\ell
-+\mathbf 1_T(b^2_\ell)^\top,
++\mathbf 1_T(b^2_\ell)^\top,\nonumber\\
+H^{\ell+1}&=G+\operatorname{FF}^{\ell}(R).
+\label{eq:feed-forward-map}
 \end{align}
 with
 \begin{equation}
@@ -407,6 +439,257 @@ Transformer architectures vary in their normalization, feed-forward
 architecture, organization of attention heads, and position mechanism. The
 equations above define one concrete pre-normalized decoder block.
 
+Figures~\ref{fig:gpt2xl} and~\ref{fig:llama3} instantiate this common
+calculation for two dense decoder-only models. They display the complete
+residual paths and the placement of normalization, position information,
+attention, dropout, and feed-forward maps. The numerical labels are
+architectural dimensions, not activation shapes for one particular input
+sequence.
+
+\tikzset{
+  archflow/.style={->,line width=0.9pt,>=Latex},
+  archskip/.style={->,line width=0.9pt,>=Latex,black!85},
+  archleader/.style={densely dotted,line width=1.05pt,diagramdark},
+  archbox/.style={draw=black!80,line width=0.75pt,rounded corners=3pt,
+    fill=white,minimum height=6.2mm,text width=42mm,align=center,
+    inner xsep=2mm,inner ysep=0.7mm,font=\sffamily\small},
+  archblockbox/.style={archbox,text width=37mm},
+  archsmallbox/.style={archbox,text width=31mm,minimum height=6mm},
+  archattention/.style={archblockbox,fill=diagramdark,text=white,
+    minimum height=9.2mm},
+  archmodule/.style={archblockbox,fill=white!65!diagramgpt},
+  archadd/.style={circle,draw=black!80,line width=0.8pt,fill=white,
+    inner sep=0pt,minimum size=5.6mm,font=\sffamily\bfseries\large},
+  archmult/.style={archadd,minimum size=7mm},
+  archfact/.style={align=left,text width=43mm,font=\sffamily\small},
+  archcount/.style={font=\sffamily\bfseries\Large,diagramaccent},
+  archtitle/.style={font=\sffamily\bfseries\Huge}
+}
+
+\begin{figure}[p]
+\centering
+\resizebox{0.98\textwidth}{!}{%
+\begin{tikzpicture}[font=\sffamily]
+  \filldraw[rounded corners=12pt,fill=diagramshell,draw=black!70,line width=0.9pt]
+    (0.95,1.15) rectangle (9.45,18.75);
+  \filldraw[rounded corners=11pt,fill=diagramgpt,draw=diagramdark,
+    line width=0.9pt] (2.80,4.70) rectangle (8.15,15.48);
+
+  \node[archtitle] at (5.35,19.55) {GPT-2 XL (1.5B)};
+
+  \node[archsmallbox] (ginput) at (5.35,0.55) {tokenized text};
+  \node[font=\ttfamily\small] at (5.35,-0.55) {Every effort moves you};
+  \node[archbox] (gembed) at (5.35,1.95) {token embedding layer};
+  \node[archbox] (gpos) at (5.35,2.95) {positional embedding layer};
+  \node[archbox] (gdrop0) at (5.35,4.05) {dropout};
+
+  \node[archblockbox] (gln1) at (5.35,5.45) {LayerNorm 1};
+  \node[archattention] (gatt) at (5.35,6.95)
+    {masked multi-head attention};
+  \node[archblockbox] (gdrop1) at (5.35,8.45) {dropout};
+  \node[archadd] (gadd1) at (5.35,9.51) {$+$};
+  \node[archblockbox] (gln2) at (5.35,11.05) {LayerNorm 2};
+  \node[archmodule] (gffn) at (5.35,12.55) {feed-forward module};
+  \node[archblockbox] (gdrop2) at (5.35,14.05) {dropout};
+  \node[archadd] (gadd2) at (5.35,15.35) {$+$};
+
+  \node[archbox] (gfinal) at (5.35,16.55) {final LayerNorm};
+  \node[archbox] (gout) at (5.35,17.75) {linear output layer};
+
+  \draw[archflow] (5.35,-0.30) -- (ginput.south);
+  \draw[archflow] (ginput) -- (gembed);
+  \draw[archflow] (gembed) -- (gpos);
+  \draw[archflow] (gpos) -- (gdrop0);
+  \draw[archflow] (gln1) -- (gatt);
+  \draw[archflow] (gatt) -- (gdrop1);
+  \draw[archflow] (gdrop1) -- (gadd1);
+  \coordinate (gblockin) at (5.35,4.88);
+  \coordinate (gbranch1) at ($(gadd1.north)!0.5!(gln2.south)$);
+  \draw[archskip] (gblockin) -- (7.80,4.88)
+    -- (7.80,9.51) -- (gadd1.east);
+  \draw[archskip] (gbranch1) -- (7.80,10.29)
+    -- (7.80,15.35) -- (gadd2.east);
+  \draw[archflow] (gdrop0) -- (gln1);
+  \draw[archflow] (gadd1) -- (gln2);
+  \draw[archflow] (gln2) -- (gffn);
+  \draw[archflow] (gffn) -- (gdrop2);
+  \draw[archflow] (gdrop2) -- (gadd2);
+  \draw[archflow] (gadd2) -- (gfinal);
+  \draw[archflow] (gfinal) -- (gout);
+  \draw[archflow] (gout) -- (5.35,18.50)
+    node[midway,left,font=\sffamily\small] {logits $z_t\in\R^{50{,}257}$};
+
+  \node[rotate=30,inner sep=0pt] at (2.33,5.05)
+    {\scalebox{1.30}[2.10]{\Huge$\boldsymbol{\lbrace}$}};
+  \node[archcount,anchor=east] at (2.38,4.30)
+    {\textbf{48}\,\(\boldsymbol{\times}\)};
+
+  \filldraw[rounded corners=9pt,fill=diagraminset,draw=diagramdark,
+    dash pattern=on 2.5pt off 2pt,line width=0.9pt]
+    (10.35,10.35) rectangle (15.80,15.85);
+  \node[archsmallbox] (gff1) at (13.08,11.25) {linear layer};
+  \node[archsmallbox] (ggelu) at (13.08,12.75) {GELU activation};
+  \node[archsmallbox] (gff2) at (13.08,14.25) {linear layer};
+  \draw[archflow] (gff1) -- (ggelu);
+  \draw[archflow] (ggelu) -- (gff2);
+  \draw[archleader] (gffn.east) -- (10.35,12.55);
+
+  \node[archfact,anchor=west] (gvocab) at (10.15,18.15)
+    {\textbf{Vocabulary size of }
+     {\color{diagramaccent}\bfseries 50,257}};
+  \draw[archleader] (gout.north east) -- (gvocab.west);
+
+  \node[archfact,anchor=west] (gheads) at (10.15,7.85)
+    {{\color{diagramaccent}\bfseries 25} \textbf{heads}};
+  \draw[archleader] (gatt.east) -- (gheads.west);
+
+  \node[archfact,anchor=north] (gwidthff) at (13.08,9.45)
+    {\textbf{Hidden layer}\\
+     \textbf{dimension of }{\color{diagramaccent}\bfseries 6,400}};
+  \draw[archleader] (gff1.south) -- (gwidthff.north);
+
+  \node[archfact,anchor=west,text width=50mm] (gcontext) at (10.15,3.35)
+    {\textbf{Supported context}\\
+     \textbf{length of }{\color{diagramaccent}\bfseries 1,024}\\
+     \textbf{tokens with}\\
+     \textbf{absolute position}\\
+     \textbf{embeddings}};
+  \draw[archleader] (gpos.east) -- (gcontext.west);
+
+  \node[archfact,anchor=west] (gwidth) at (10.15,1.55)
+    {\textbf{Embedding}\\
+     \textbf{dimension of }{\color{diagramaccent}\bfseries 1,600}};
+  \draw[archleader] (gembed.east) -- (gwidth.west);
+
+  \node[archfact,anchor=east,text width=31mm] (gcontextshort) at (0.95,2.15)
+    {\textbf{Supported}\\
+     \textbf{context length}\\
+     \textbf{of }{\color{diagramaccent}\bfseries 1024}\textbf{ tokens}};
+  \draw[archleader] (gcontextshort.east) -- (gpos.west);
+\end{tikzpicture}%
+}
+\caption{The GPT-2 XL decoder stack. The central blue region is one
+pre-normalized transformer block, repeated 48 times; the two side paths are
+its residual connections. The inset expands the feed-forward module into its
+two linear maps and GELU activation. The drawing is an independent LaTeX
+rendering of the architecture and dimensions catalogued by
+\citet{raschka2026gallery}.}
+\label{fig:gpt2xl}
+\end{figure}
+
+\begin{figure}[p]
+\centering
+\resizebox{0.98\textwidth}{!}{%
+\begin{tikzpicture}[font=\sffamily]
+  \filldraw[rounded corners=12pt,fill=diagramshell,draw=black!70,line width=0.9pt]
+    (1.35,1.15) rectangle (9.55,18.10);
+  \filldraw[rounded corners=11pt,fill=diagramllama,draw=black!65,
+    line width=0.9pt] (3.00,3.40) rectangle (8.25,13.65);
+
+  \node[archtitle,diagramaccent] at (5.60,18.95) {Llama 3 (8B)};
+
+  \node[archsmallbox] (linput) at (5.60,0.55) {tokenized text};
+  \node[font=\ttfamily\small] at (5.60,-0.55) {sample input text};
+  \node[archbox] (lembed) at (5.60,2.15) {token embedding layer};
+
+  \node[archblockbox] (lrms1) at (5.60,4.45) {RMSNorm 1};
+  \node[archattention] (lgqa) at (5.60,6.10)
+    {masked grouped-query attention};
+  \node[archadd] (ladd1) at (5.60,7.45) {$+$};
+  \node[archblockbox] (lrms2) at (5.60,9.25) {RMSNorm 2};
+  \node[archmodule,fill=white!50!diagramllama] (lffn) at (5.60,10.90)
+    {feed-forward module};
+  \node[archadd] (ladd2) at (5.60,12.60) {$+$};
+
+  \node[archbox] (lfinal) at (5.60,15.05) {final RMSNorm};
+  \node[archbox] (lout) at (5.60,16.40) {linear output layer};
+  \node[archsmallbox] (lrope) at (0.70,6.10) {RoPE};
+
+  \draw[archflow] (5.60,-0.30) -- (linput.south);
+  \draw[archflow] (linput) -- (lembed);
+  \draw[archflow] (lrms1) -- (lgqa);
+  \draw[archflow] (lrope) -- (lgqa.west);
+  \draw[archflow] (lgqa) -- (ladd1);
+  \coordinate (lblockin) at ($(lembed.north)!0.68!(lrms1.south)$);
+  \coordinate (lbranch1) at ($(ladd1.north)!0.5!(lrms2.south)$);
+  \draw[archskip] (lblockin) -- (8.00,3.60)
+    -- (8.00,7.45) -- (ladd1.east);
+  \draw[archskip] (lbranch1) -- (8.00,8.36)
+    -- (8.00,12.60) -- (ladd2.east);
+  \draw[archflow] (lembed) -- (lrms1);
+  \draw[archflow] (ladd1) -- (lrms2);
+  \draw[archflow] (lrms2) -- (lffn);
+  \draw[archflow] (lffn) -- (ladd2);
+  \draw[archflow] (ladd2) -- (lfinal);
+  \draw[archflow] (lfinal) -- (lout);
+  \draw[archflow] (lout) -- (5.60,17.85)
+    node[midway,left,font=\sffamily\small] {logits $z_t\in\R^{128{,}256}$};
+
+  \node[rotate=30,inner sep=0pt] at (2.66,3.95)
+    {\scalebox{1.30}[2.10]{\Huge$\boldsymbol{\lbrace}$}};
+  \node[archcount,anchor=east] at (2.68,3.30)
+    {\textbf{32}\,\(\boldsymbol{\times}\)};
+
+  \filldraw[rounded corners=9pt,fill=diagraminset,draw=diagramdark,
+    dash pattern=on 2.5pt off 2pt,line width=0.9pt]
+    (10.10,9.50) rectangle (15.95,15.20);
+  \coordinate (lffinput) at (13.00,9.85);
+  \node[archsmallbox,text width=21mm] (lgate) at (11.65,10.80)
+    {linear layer};
+  \node[archsmallbox,text width=21mm] (lvalue) at (14.45,10.80)
+    {linear layer};
+  \node[archsmallbox,text width=25mm] (lsilu) at (11.65,12.35)
+    {SiLU activation};
+  \node[archmult] (lmult) at (13.15,13.45) {$\times$};
+  \node[archsmallbox] (lproj) at (13.15,14.40) {linear layer};
+  \draw[line width=0.9pt] (13.00,9.52) -- (lffinput);
+  \draw[archflow] (lffinput) -| (lgate.south);
+  \draw[archflow] (lffinput) -| (lvalue.south);
+  \draw[archflow] (lgate) -- (lsilu);
+  \draw[archflow] (lsilu.north) |- (lmult.west);
+  \draw[archflow] (lvalue.north) |- (lmult.east);
+  \draw[archflow] (lmult) -- (lproj);
+  \draw[archleader] (lffn.east) -- (10.10,10.90);
+
+  \node[anchor=west,align=left,font=\sffamily\small] (lvocab) at (10.10,17.15)
+    {\textbf{Vocabulary size of }
+     {\color{diagramaccent}\bfseries 128k}\\[-0.3ex]
+     \textbf{(128,256)}};
+  \draw[archleader] (lout.north east) -- (lvocab.west);
+
+  \node[archfact,anchor=west] (lheads) at (10.10,7.10)
+    {{\color{diagramaccent}\bfseries 32} \textbf{heads}};
+  \draw[archleader] (lgqa.east) -- (lheads.west);
+
+  \node[archfact,anchor=north west,text width=33mm] (lwidthff) at (10.55,8.75)
+    {\textbf{Hidden layer}\\
+     \textbf{dimension of }{\color{diagramaccent}\bfseries 14,336}};
+  \draw[archleader] ($(lgate.south west)+(0.15,0)$)
+    -- (lwidthff.north west);
+
+  \node[archfact,anchor=east,text width=31mm] (lcontext) at (1.25,3.15)
+    {\textbf{Supported}\\
+     \textbf{context length}\\
+     \textbf{of }{\color{diagramaccent}\bfseries 8192}\textbf{ tokens}};
+  \draw[archleader] (lcontext.north) -- (lrope.south);
+
+  \node[archfact,anchor=west] (lwidth) at (10.10,2.15)
+    {\textbf{Embedding}\\
+     \textbf{dimension of }{\color{diagramaccent}\bfseries 4,096}};
+  \draw[archleader] (lembed.east) -- (lwidth.west);
+\end{tikzpicture}%
+}
+\caption{The Llama~3 8B decoder stack. The central gray region is one
+pre-normalized transformer block, repeated 32 times. RoPE modifies the query
+and key vectors inside grouped-query attention. The inset shows both SwiGLU
+branches, their coordinatewise product, and the output projection. The 32
+attention heads are query heads, grouped over 8 key/value heads. The drawing is
+an independent LaTeX rendering of the architecture and dimensions catalogued
+by \citet{raschka2026gallery} and checked against \citet{grattafiori2024}.}
+\label{fig:llama3}
+\end{figure}
+\clearpage
+
 For comparisons in which these internal details would obscure the structure,
 write
 \begin{equation}
@@ -424,9 +707,9 @@ H^L=
 \end{equation}
 The notation hides the attention, residual, normalization, and MLP or MoE
 calculations while preserving the input state and attention mask of each
-block. Appendix~\ref{app:transformer-arrangements} applies the block-function
-notation to compare decoder-only, encoder-only, and encoder--decoder
-transformers.
+block. Appendix~\ref{app:transformer-arrangements} uses this notation to
+compare three transformer architecture types: encoder-only, decoder-only, and
+encoder--decoder.
 
 The key invariant is causal dependence: after $L$ blocks, the column vector
 $h_t^L=(H^L_{t,:})^\top$ depends only on $x_{<t}$.
@@ -821,17 +1104,97 @@ highest-scoring segmentation or sample among segmentations
 \citep{kudo2018,kudorichardson2018}.
 \end{enumerate}
 
-\section{Supplement: a modular view of transformer arrangements}
+\section{Supplement: three transformer architecture types}
 \label{app:transformer-arrangements}
 
-This supplement expands an in-class question. The lecture itself developed the
-causal decoder-only calculation. The block-function notation in
-\eqref{eq:block-function} makes the three standard arrangements concise.
+This supplement compares three ways to connect transformer blocks to input and
+output sequences. The central question is information flow: which tokens are
+available simultaneously, and which tokens must be generated from left to
+right?
 
-Let $M_{\rm full}=0$ permit every position to attend to every other position,
-and let $M_{\rm causal}$ be the triangular mask defined earlier. An
-\emph{encoder-only} transformer processes a source sequence through
-bidirectional blocks:
+Let $x_{1:S}=(x_1,\ldots,x_S)$ denote a source sequence. In an
+encoder--decoder model, let $y_{1:T}=(y_1,\ldots,y_T)$ denote the target
+sequence. Before the model generates target token $y_t$, it has access to the
+target prefix
+\begin{equation}
+y_{<t}:=(y_0,y_1,\ldots,y_{t-1}),
+\label{eq:target-prefix}
+\end{equation}
+where $y_0$ is a beginning-of-target token. During teacher-forced training, the
+shifted inputs $y_0,\ldots,y_{T-1}$ produce predictions for
+$y_1,\ldots,y_T$ in parallel under a causal mask. The notation
+$\operatorname{Embed}_{\rm src}$ and $\operatorname{Embed}_{\rm tgt}$ refers
+to the token-and-position embedding construction in
+\eqref{eq:input-embedding}; the two subscripts indicate separately learned
+embedding parameters.
+
+\begin{figure}[ht]
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}[
+  typepanel/.style={draw=black!65,rounded corners=8pt,fill=diagramshell,
+    line width=0.8pt},
+  typebox/.style={draw=black!75,rounded corners=3pt,fill=white,
+    text width=29mm,minimum height=7mm,align=center,font=\sffamily\footnotesize},
+  typesmall/.style={typebox,text width=21mm,minimum height=6.5mm},
+  typeflow/.style={->,>=Latex,line width=0.9pt,shorten <=1.2pt,
+    shorten >=1.8pt},
+  typetitle/.style={font=\sffamily\bfseries\large}
+]
+  \filldraw[typepanel] (0,0) rectangle (4.55,4.25);
+  \node[typetitle] at (2.28,3.88) {Encoder-only};
+  \node[typebox] (encin) at (2.28,0.55) {source tokens $x_{1:S}$};
+  \node[typebox,fill=diagramgpt] (encstack) at (2.28,1.90)
+    {encoder stack\\full self-attention};
+  \node[typebox] (encout) at (2.28,3.12) {contextual source states};
+  \draw[typeflow] (encin) -- (encstack);
+  \draw[typeflow] (encstack) -- (encout);
+
+  \begin{scope}[xshift=5.05cm]
+    \filldraw[typepanel] (0,0) rectangle (4.55,4.25);
+    \node[typetitle] at (2.28,3.88) {Decoder-only};
+    \node[typebox] (decin) at (2.28,0.55) {single-sequence prefix $x_{<t}$};
+    \node[typebox,fill=white!45!diagramllama] (decstack) at (2.28,1.90)
+      {decoder stack\\causal self-attention};
+    \node[typebox] (decout) at (2.28,3.12)
+      {distribution for next token $x_t$};
+    \draw[typeflow] (decin) -- (decstack);
+    \draw[typeflow] (decstack) -- (decout);
+  \end{scope}
+
+  \begin{scope}[xshift=10.10cm]
+    \filldraw[typepanel] (0,0) rectangle (5.55,4.25);
+    \node[typetitle] at (2.78,3.88) {Encoder--decoder};
+    \node[typesmall] (srcin) at (1.25,0.52) {source $x_{1:S}$};
+    \node[typesmall,fill=diagramgpt] (srcenc) at (1.25,1.66)
+      {encoder\\full attention};
+    \node[typesmall] (memory) at (1.25,2.92) {source memory};
+    \node[typesmall] (tgtin) at (4.25,0.52) {target prefix $y_{<t}$};
+    \node[typesmall,fill=white!45!diagramllama] (tgtdec) at (4.25,1.66)
+      {decoder\\causal + cross-attention};
+    \node[typesmall] (tgtout) at (4.25,2.92)
+      {distribution for target token $y_t$};
+    \draw[typeflow] (srcin) -- (srcenc);
+    \draw[typeflow] (srcenc) -- (memory);
+    \draw[typeflow] (tgtin) -- (tgtdec);
+    \draw[typeflow] (tgtdec) -- (tgtout);
+    \draw[typeflow,diagramaccent] (memory.east) -- ++(0.35,0)
+      |- (tgtdec.west);
+  \end{scope}
+\end{tikzpicture}%
+}
+\caption{Information flow in three transformer architecture types.
+Encoder-only models contextualize a fixed input. Decoder-only models predict
+the continuation of one causal sequence. Encoder--decoder models first encode
+the complete source and then generate a target that can attend to that source
+memory.}
+\label{fig:transformer-types}
+\end{figure}
+
+\paragraph{Encoder-only.}
+An encoder-only model constructs a contextual representation of a fixed input.
+Let $M_{\rm full}=0$ allow every position to attend to every other position.
+The encoder stack is
 \begin{equation}
 E^0=\operatorname{Embed}_{\rm src}(x_{1:S}),
 \qquad
@@ -839,11 +1202,13 @@ E^{\ell+1}=\mathcal B^{\rm enc}_{\ell,M_{\rm full}}(E^\ell),
 \quad \ell=0,\ldots,L_E-1.
 \label{eq:encoder-stack}
 \end{equation}
-Every source position can interact with every other source position in each
-block.
+Thus every row of $E^{L_E}\in\R^{S\times d}$ can contain information from the
+entire source sequence. A task-specific readout converts these contextual
+states into predictions.
 
-A \emph{decoder-only} transformer instead composes causal blocks on one
-sequence:
+\paragraph{Decoder-only.}
+A decoder-only model represents a single sequence and predicts its
+continuation. With the triangular mask $M_{\rm causal}$ from Section~1.4,
 \begin{equation}
 H^0=\operatorname{Embed}(x_{1:T}),
 \qquad
@@ -851,79 +1216,110 @@ H^{\ell+1}=\mathcal B^{\rm dec}_{\ell,M_{\rm causal}}(H^\ell),
 \quad \ell=0,\ldots,L-1.
 \label{eq:decoder-only-stack}
 \end{equation}
-At every depth, the activation at position $i$ depends only on positions
-$1,\ldots,i$.
+At every depth, the state at position $i$ depends only on tokens at positions
+$1,\ldots,i$. A prompt and its continuation therefore occupy one causal token
+stream.
 
-An \emph{encoder--decoder} transformer maintains two distinct streams. First
-it computes the bidirectional source memory $E^{L_E}$ using
-\eqref{eq:encoder-stack}. The target stream begins from its own embeddings
-$D^0=\operatorname{Embed}_{\rm tgt}(y_{<t})$. A decoder block then performs
-three residual sublayers:
+\paragraph{Encoder--decoder.}
+An encoder--decoder model is designed for generating a target sequence
+conditioned on a separately supplied source sequence. The encoder first
+computes $E^{L_E}$ using \eqref{eq:encoder-stack}. This matrix is the
+\emph{source memory}: it contains one contextual state for each source
+position and remains fixed while the target is generated. The target decoder
+starts from
+\begin{equation}
+D^0=\operatorname{Embed}_{\rm tgt}(y_{<t}).
+\end{equation}
+
+The compact equations below use three explicitly defined maps. The map
+$\operatorname{SelfAttn}^r_M(U)$ is the multi-head self-attention map defined
+in \eqref{eq:self-attention-map}; it forms queries, keys, and values from the
+same matrix $U$ and applies mask $M$. The map $\operatorname{FF}^r(U)$ is the
+positionwise feed-forward map in \eqref{eq:feed-forward-map}. Cross-attention
+uses target states for queries and source-memory states for keys and values.
+For target states $U\in\R^{m\times d}$ and source memory
+$E\in\R^{S\times d}$, one cross-attention head has
+\begin{equation}
+\begin{aligned}
+Q_a&=UW^{Q,\rm cross}_{r,a},
+&K_a&=EW^{K,\rm cross}_{r,a},
+&V_a&=EW^{V,\rm cross}_{r,a},\\
+A_a&=\softmax_{\rm row}\!\left(\frac{Q_aK_a^\top}{\sqrt{d_h}}\right),
+&O_a&=A_aV_a.
+\end{aligned}
+\label{eq:cross-attention-head}
+\end{equation}
+The map $\operatorname{CrossAttn}^r(U,E)$ concatenates the head outputs
+$O_a$ and applies the cross-attention output projection, exactly as in
+\eqref{eq:self-attention-map}. Each self-attention, cross-attention, and
+feed-forward sublayer has its own learned parameters. Let
+$\operatorname{LN}_{r,1}$, $\operatorname{LN}_{r,2}$, and
+$\operatorname{LN}_{r,3}$ denote their three separate rowwise normalization
+maps. The decoder block at depth $r$ is then
 \begin{align}
 G^r
 &=D^r+\operatorname{SelfAttn}^r_{M_{\rm causal}}
-  \bigl(\operatorname{LayerNorm}(D^r)\bigr),\nonumber\\
+  \bigl(\operatorname{LN}_{r,1}(D^r)\bigr),\nonumber\\
 J^r
 &=G^r+\operatorname{CrossAttn}^r
-  \bigl(\operatorname{LayerNorm}(G^r),E^{L_E}\bigr),\nonumber\\
+  \bigl(\operatorname{LN}_{r,2}(G^r),E^{L_E}\bigr),\nonumber\\
 D^{r+1}
 &=J^r+\operatorname{FF}^r
-  \bigl(\operatorname{LayerNorm}(J^r)\bigr).
+  \bigl(\operatorname{LN}_{r,3}(J^r)\bigr).
 \label{eq:encoder-decoder-block}
 \end{align}
-Self-attention forms queries, keys, and values from the target stream.
-Cross-attention forms queries from the target stream and keys and values from
-the encoder memory. The multi-head projections inside these operators are the
-same kind as those written out in Section~1.4. Thus the construction uses two
-stacks with separate parameters and activations: a bidirectional source stack
-and a causal target stack that reads the completed source memory.
+The first line mixes information among available target-prefix positions. The
+second line retrieves information from any source position. The third line
+applies the feed-forward map independently at each target position. Each line
+adds the sublayer output back to its input through a residual connection.
 
-The masks give a concrete training-cost distinction. For a length-$n$
-sequence, one bidirectional self-attention head permits
+\paragraph{What changes computationally?}
+For a length-$n$ sequence, one full-attention head has $n^2$ permitted
+query--key pairs, whereas one causal head has only the lower-triangular pairs:
 \begin{equation}
-N_{\rm full}(n)=n^2
-\qquad\text{and}\qquad
-N_{\rm causal}(n)=\frac{n(n+1)}2
+N_{\rm full}(n)=n^2,
+\qquad
+N_{\rm causal}(n)=\frac{n(n+1)}2.
 \label{eq:full-causal-score-count}
 \end{equation}
-query--key pairs. An implementation that skips the upper triangle therefore
-uses approximately half the pairwise attention arithmetic at large $n$.
-Projection and feed-forward costs remain unchanged.
+A triangular attention kernel can avoid computing the masked upper triangle.
+These expressions count attention pairs per head; they do not include linear
+projections or feed-forward computation.
 
-For source length $S$ and target length $T$, the corresponding pair counts for
-$L_E$ encoder blocks and $L_D$ encoder--decoder blocks are
+For source length $S$ and target length $T$, $L_E$ encoder blocks and $L_D$
+encoder--decoder blocks permit
 \begin{equation}
 N_{\rm enc\text{-}dec}
-=L_ES^2+L_D\left(\frac{T(T+1)}2+ST\right).
+=L_ES^2+L_D\frac{T(T+1)}2+L_DST.
 \label{eq:encoder-decoder-score-count}
 \end{equation}
-The three terms come from bidirectional source self-attention, causal target
-self-attention, and target-to-source cross-attention. A decoder-only stack of
-$L$ blocks on the concatenated source and target has
+The three terms count source self-attention, causal target self-attention, and
+target-to-source cross-attention, respectively. A fully causal decoder-only
+stack of $L$ blocks on a concatenated source and target permits
 \begin{equation}
 N_{\rm dec\text{-}only}
 =L\frac{(S+T)(S+T+1)}2.
 \label{eq:decoder-only-score-count}
 \end{equation}
-These formulas count attention pairs; comparing complete architectures also
-requires the depths, widths, parameter counts, projections, feed-forward
-layers, and hardware kernels.
+Complete runtime comparisons also depend on model depths, widths, head counts,
+parameter counts, feed-forward layers, and the available hardware kernels.
 
-For ordinary next-token pretraining, a decoder-only stack also matches the
-objective directly: each position supplies a prediction target and raw text
-requires no source--target split. Encoder--decoder pretraining instead defines
-a source and target, for example through span corruption. The attention saving
-and homogeneous training/generation interface give concrete computational and
-engineering reasons for the popularity of causal decoder-only models.
-Architecture and objective interact in empirical comparisons. In the
-controlled comparisons of \citet{raffel2020}, encoder--decoder models were
-strongest at approximately matched computation in their setting.
+\paragraph{Why are decoder-only models common for language modeling?}
+Next-token pretraining on raw text supplies a prediction target at every
+position and requires no separate source--target split. Training and generation
+also use the same single-sequence interface. These properties simplify
+large-scale training and serving. Encoder--decoder models provide a different
+advantage for conditional generation: every target token can use a
+bidirectionally encoded source. In the controlled comparisons of
+\citet{raffel2020}, the encoder--decoder architecture was strongest at
+approximately matched computation in their setting.
 
-Encoder--decoder generation also supports key--value caching. The encoder
-memory is computed once for a fixed source. Each decoder layer can cache the
-key and value projections of that memory for cross-attention while growing a
-separate causal self-attention cache for the generated target. Each new decode
-step forms only the current queries.
+\paragraph{Generation and caching.}
+During encoder--decoder generation, the encoder computes the source memory once.
+Each decoder layer caches the key and value projections of that fixed memory
+for cross-attention. It separately grows a causal self-attention cache for the
+generated target. At step $t$, the model forms new queries for the current
+target position and reuses both caches.
 
 \section{Supplement: codebases for experiments}
 \label{app:experimental-codebases}
@@ -1003,6 +1399,9 @@ grouped-query and sliding-window attention \citep{jiang2023}, and DeepSeek-V3
 uses a mixture-of-experts architecture \citep{deepseek2024}. The term
 \emph{open-weight} asserts release of the numerical weights; training data,
 code, and licensing freedoms require separate verification.
+For a maintained visual catalogue of model-level architecture diagrams,
+configuration links, and compact fact sheets, see the LLM Architecture Gallery
+of \citet{raschka2026gallery}.
 
 The original paper used additive sinusoidal position vectors. Rotary position embeddings
 are due to \citet{su2021}; their position-dependent rotations of queries and
@@ -1102,6 +1501,12 @@ A. Grattafiori et al.
 \newblock The Llama 3 Herd of Models.
 \newblock 2024.
 \newblock \url{https://arxiv.org/abs/2407.21783}.
+
+\bibitem[Raschka(2026)]{raschka2026gallery}
+S. Raschka.
+\newblock LLM Architecture Gallery.
+\newblock Maintained online reference, accessed September 3, 2026.
+\newblock \url{https://sebastianraschka.com/llm-architecture-gallery/}.
 
 \bibitem[Jiang et al.(2023)]{jiang2023}
 A. Q. Jiang et al.
