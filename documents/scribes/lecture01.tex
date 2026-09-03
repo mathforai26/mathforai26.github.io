@@ -1137,49 +1137,50 @@ embedding parameters.
   typebox/.style={draw=black!75,rounded corners=3pt,fill=white,
     text width=29mm,minimum height=7mm,align=center,font=\sffamily\footnotesize},
   typesmall/.style={typebox,text width=21mm,minimum height=6.5mm},
-  typeflow/.style={->,>=Latex,line width=0.9pt,shorten <=1.2pt,
-    shorten >=1.8pt},
+  typeflow/.style={->,>=Latex,line width=0.9pt,shorten <=2pt,
+    shorten >=0.8pt},
   typetitle/.style={font=\sffamily\bfseries\large}
 ]
-  \filldraw[typepanel] (0,0) rectangle (4.55,5.00);
-  \node[typetitle] at (2.28,4.62) {Encoder-only};
+  \filldraw[typepanel] (0,0) rectangle (4.55,5.65);
+  \node[typetitle] at (2.28,5.25) {Encoder-only};
   \node[typebox] (encin) at (2.28,0.65) {source tokens $x_{1:S}$};
-  \node[typebox,fill=diagramgpt] (encstack) at (2.28,2.20)
+  \node[typebox,fill=diagramgpt] (encstack) at (2.28,2.50)
     {encoder stack\\full self-attention};
-  \node[typebox] (encout) at (2.28,3.65) {contextual source states};
+  \node[typebox] (encout) at (2.28,4.20) {contextual source states};
   \draw[typeflow] (encin) -- (encstack);
   \draw[typeflow] (encstack) -- (encout);
 
   \begin{scope}[xshift=5.05cm]
-    \filldraw[typepanel] (0,0) rectangle (4.55,5.00);
-    \node[typetitle] at (2.28,4.62) {Decoder-only};
+    \filldraw[typepanel] (0,0) rectangle (4.55,5.65);
+    \node[typetitle] at (2.28,5.25) {Decoder-only};
     \node[typebox] (decin) at (2.28,0.65) {single-sequence prefix $x_{<t}$};
-    \node[typebox,fill=white!45!diagramllama] (decstack) at (2.28,2.20)
+    \node[typebox,fill=white!45!diagramllama] (decstack) at (2.28,2.50)
       {decoder stack\\causal self-attention};
-    \node[typebox] (decout) at (2.28,3.65)
+    \node[typebox] (decout) at (2.28,4.20)
       {distribution for next token $x_t$};
     \draw[typeflow] (decin) -- (decstack);
     \draw[typeflow] (decstack) -- (decout);
   \end{scope}
 
   \begin{scope}[xshift=10.10cm]
-    \filldraw[typepanel] (0,0) rectangle (5.55,5.00);
-    \node[typetitle] at (2.78,4.62) {Encoder--decoder};
-    \node[typesmall] (srcin) at (1.25,0.65) {source $x_{1:S}$};
-    \node[typesmall,fill=diagramgpt] (srcenc) at (1.25,2.20)
+    \filldraw[typepanel] (0,0) rectangle (5.95,5.65);
+    \node[typetitle] at (2.98,5.25) {Encoder--decoder};
+    \node[typesmall] (srcin) at (1.30,0.65) {source $x_{1:S}$};
+    \node[typesmall,fill=diagramgpt] (srcenc) at (1.30,2.50)
       {encoder\\full attention};
-    \node[typesmall] (memory) at (1.25,3.65) {source memory};
-    \node[typesmall] (tgtin) at (4.25,0.65) {target prefix $y_{<t}$};
-    \node[typesmall,fill=white!45!diagramllama] (tgtdec) at (4.25,2.20)
+    \node[typesmall] (memory) at (1.30,4.20) {source memory};
+    \node[typesmall] (tgtin) at (4.65,0.65) {target prefix $y_{<t}$};
+    \node[typesmall,fill=white!45!diagramllama] (tgtdec) at (4.65,2.50)
       {decoder\\causal + cross-attention};
-    \node[typesmall] (tgtout) at (4.25,3.65)
+    \node[typesmall] (tgtout) at (4.65,4.20)
       {distribution for target token $y_t$};
     \draw[typeflow] (srcin) -- (srcenc);
     \draw[typeflow] (srcenc) -- (memory);
     \draw[typeflow] (tgtin) -- (tgtdec);
     \draw[typeflow] (tgtdec) -- (tgtout);
-    \draw[typeflow,diagramaccent] (memory.east) -- ++(0.35,0)
-      |- (tgtdec.west);
+    \coordinate (crosschannel) at ($(memory.east)!0.5!(tgtdec.west)$);
+    \draw[typeflow,diagramaccent] (memory.east)
+      -- (crosschannel |- memory.east) |- (tgtdec.west);
   \end{scope}
 \end{tikzpicture}%
 }
