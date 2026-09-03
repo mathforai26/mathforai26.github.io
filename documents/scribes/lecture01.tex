@@ -1107,10 +1107,12 @@ highest-scoring segmentation or sample among segmentations
 \section{Supplement: three transformer architecture types}
 \label{app:transformer-arrangements}
 
-This supplement compares three ways to connect transformer blocks to input and
-output sequences. The central question is information flow: which tokens are
-available simultaneously, and which tokens must be generated from left to
-right?
+An encoder--decoder model is a probabilistic string-to-string map: each input
+string determines a distribution over output strings. A decoder-only language
+model is a probability distribution over strings. This supplement compares
+these models, together with encoder-only models, through their information
+flow: which tokens are available simultaneously, and which tokens must be
+generated from left to right?
 
 Let $x_{1:S}=(x_1,\ldots,x_S)$ denote a source sequence. In an
 encoder--decoder model, let $y_{1:T}=(y_1,\ldots,y_T)$ denote the target
