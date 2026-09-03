@@ -387,7 +387,7 @@ W^1_\ell\in\R^{d\times d_{\rm ff}},\quad
 W^2_\ell\in\R^{d_{\rm ff}\times d},\quad
 b^1_\ell\in\R^{d_{\rm ff}},\quad b^2_\ell\in\R^d.
 \end{equation}
-Common choices include $\operatorname{ReLU}(z)=\max\{0,z\}$ and
+Common choices for $\phi$ include $\operatorname{ReLU}(z)=\max\{0,z\}$ and
 $\operatorname{GELU}(z)=z\Phi(z)$, where $\Phi$ is the standard normal
 cumulative distribution function.
 
@@ -442,9 +442,10 @@ f_{\rm SwiGLU}(r)
 \qquad
 \operatorname{swish}(z)=\frac{z}{1+e^{-z}},
 \end{equation}
-where $W_g,W_v\in\R^{m\times d}$, $W_o\in\R^{d\times m}$, and the scalar
-function acts coordinatewise. The elementwise product creates
-input-dependent gating between two learned representations of $r$.
+where $W_g,W_v\in\R^{m\times d}$ and $W_o\in\R^{d\times m}$. The scalar
+function acts coordinatewise, and $\odot$ denotes coordinatewise
+multiplication: $(a\odot b)_i=a_i b_i$. This product creates input-dependent
+gating between two learned representations of $r$.
 
 \section{From a hidden vector to the next-token distribution}
 
