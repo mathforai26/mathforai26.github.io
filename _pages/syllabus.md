@@ -48,7 +48,7 @@ There will be six equally weighted homework assignments, approximately one every
 
 The lowest two homework grades will be replaced by 80/100, with no request or explanation required, unless those grades already exceed 80/100. A zero for an unsubmitted assignment is eligible for this replacement. After the replacements, the six equally weighted grades determine the 60% homework component.
 
-Assignments must be typeset using the provided [LaTeX homework template]({{ '/documents/misc_files/homework_template.tex' | relative_url }}) and submitted as a single PDF. Exact deadlines and the submission system will be posted on the [coursework page]({% link _pages/coursework.md %}).
+Assignments must be typeset using the provided [LaTeX homework template]({{ '/documents/misc_files/homework_template.tex' | relative_url }}) and submitted through Canvas as standardized ZIP archives containing the PDF, LaTeX source, and any supporting files. The naming convention and other submission details appear on the [coursework page]({% link _pages/coursework.md %}).
 
 ### Final oral examination: 20%
 
