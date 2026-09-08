@@ -1,3 +1,14 @@
 url: ""
 theme: just-the-docs
 local_sandboxing: true
+
+# Instructor-only lecture plans are included through local symlinks. Exclude
+# the private checkout itself to avoid rendering a second copy.
+exclude:
+  - course-design-decisions.md
+  - instructor-materials
+  - README.md
+  - startlocalservice
+  - tmp
+  - outputs
+  - vendor

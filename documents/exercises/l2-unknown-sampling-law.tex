@@ -1,0 +1,27 @@
+% Shared exercise chunk: l2-unknown-sampling-law
+\begin{exercisechunk}
+\item \textbf{Two meanings of ``the learner does not know $Q$.''}
+\label[exercise]{ex:unknown-sampling-law}
+Assume $N\ge 2$ and $m\ge 1$, and compare
+\begin{equation}
+\min_{\cA}\max_{Q\in\cQ}\max_f R_Q(\cA,f)
+\label{eq:absolute-distribution-free}
+\end{equation}
+with the requirement
+\begin{equation}
+\cA\in
+\bigcap_{Q\in\cQ}
+\operatorname*{arg\,min}_{\cB}\max_f R_Q(\cB,f).
+\label{eq:simultaneous-optimality}
+\end{equation}
+\begin{enumerate}[(a)]
+\item Show that the value of \cref{eq:absolute-distribution-free} is $1/2$.
+\item Show that a learner that always predicts with a fair coin is optimal for
+\cref{eq:absolute-distribution-free}, even though it ignores revealed labels.
+\item Show that \cref{eq:simultaneous-optimality} forces the learner to return
+the revealed label at every seen test index and to make an unbiased prediction
+at every unseen test index, for every consistent labeled sample.
+\item Does the learner in part~(b) satisfy \cref{eq:simultaneous-optimality}?
+Give a sampling law witnessing your answer.
+\end{enumerate}
+\end{exercisechunk}

@@ -1,0 +1,54 @@
+% Student-facing draft, also the standard for model solutions.
+% Kept separate for possible inclusion in future homework instructions.
+\paragraph{Writing mathematical solutions.}
+Write so that a reader can verify each step without having to reconstruct
+missing calculations. Prefer formulae to extended prose: organize proofs
+around explicit equalities, inequalities, and logical implications, with
+short explanations of why the steps are valid.
+\begin{enumerate}[leftmargin=*]
+\item \textbf{Answer and justify.} Address every assigned part, including
+yes/no questions. State the answer and support it with a calculation, proof,
+or counterexample, as appropriate.
+\item \textbf{Supply the reason at the point of use.} When a step needs
+justification, give it: a short clause or an intermediate equality is often
+enough. Write out the calculation instead of narrating its steps in words.
+Show the identities and matrix operations being used. For example,
+if a rotated vector has norm one, explain that the original vector is unit
+length and that the rotation preserves norm.
+\item \textbf{Connect to the lecture.} Identify the definition, equation,
+theorem, or earlier exercise you use. State how its quantities correspond
+to yours and check its assumptions. You may use established results without
+reproving them unless the exercise asks for their proof.
+\item \textbf{Make notation and randomness explicit.} Define new symbols
+and say which quantities are fixed and which are random. Define all random
+quantities jointly on a probability space, or specify their joint law and
+independence assumptions, before using $\P$. Each probability expression must
+then have an unambiguous meaning from the notation itself; do not append a
+sentence saying which randomness the probability is ``over.'' Use
+$\mathbb E[\cdot]$ and explain in words what is being averaged. Identify
+conditioning events and justify any independence used; conditioning does
+not automatically preserve independence. Omit zero-probability conditioning
+cases from averages or explain why their assigned values do not matter.
+\item \textbf{Define mathematical objects explicitly.} Specify sets,
+events, conditions, and index ranges before using descriptive labels.
+Avoid prose placeholders such as ``some index violates the bound.''
+For example, define $E_h=\{Z_h>t\}$ for $h\in[H]$ before writing
+$\mathbb P(\bigcup_{h=1}^H E_h)\le\sum_{h=1}^H\mathbb P(E_h)$.
+Display the set inclusions or other implications used in the argument.
+\item \textbf{Check the scope of the argument.} Use the stated assumptions
+and cover the allowed boundary and equality cases. Distinguish a claim for
+one fixed input from a simultaneous or uniform guarantee. For an asymptotic
+claim, state what grows and what is held fixed.
+\item \textbf{Prove the kind of claim requested.} An upper bound on error gives a
+sufficient guarantee; it does not by itself prove necessity. To establish
+an optimum, prove a bound for every allowed choice and give a choice that
+attains it. Verify that a construction or counterexample satisfies the
+assumptions, and respect which information each decision may use.
+\item \textbf{Explain limiting operations.} When exchanging sums,
+expectations, integrals, or limits, give the applicable reason, such as a
+finite sum, nonnegative summands, or a named theorem whose hypotheses hold.
+\item \textbf{End with the requested conclusion.} Relate the calculation
+back to the question and, when useful, state its conceptual implication in
+one sentence. Distinguish exact values, bounds, and approximations. If an
+argument is incomplete, identify the gap explicitly.
+\end{enumerate}

@@ -5,8 +5,9 @@ _site/
 vendor/
 .DS_Store
 course-design-decisions.md
-lecture-plans/
-homework-plans/
+/lecture-plans
+/homework-plans
+instructor-materials/
 outputs/
 tmp/
 *.aux
@@ -15,3 +16,4 @@ tmp/
 *.log
 *.out
 *.synctex.gz
+__pycache__/

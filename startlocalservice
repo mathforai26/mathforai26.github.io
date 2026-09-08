@@ -9,4 +9,4 @@ export BUNDLE_PATH="$course_root/vendor/bundle"
 export BUNDLE_APP_CONFIG="$course_root/.bundle"
 export GEM_HOME="$course_root/vendor/bundle/ruby/3.0.0"
 
-bundle exec jekyll serve --config _config.yml,_config_local.yml
+bundle exec jekyll serve --config _config.yml,_config_local.yml --port 4100

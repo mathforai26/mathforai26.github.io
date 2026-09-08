@@ -52,7 +52,26 @@ Assignments must be typeset using the provided [LaTeX homework template]({{ '/do
 
 ### Final oral examination: 20%
 
-Each student will have an individual oral examination of at most 20 minutes during the final-examination period. At least one week beforehand, the instructor will publish a list of approximately 8–12 possible topics. The exam begins with one of those topics and continues with questions testing mathematical understanding, interpretation, and the ability to communicate an argument. It is open notes and open book, without computing devices.
+Each student will have an individual oral examination during the
+final-examination period. The total examination time will be between 30 and 60
+minutes, with approximately 30 minutes as the usual target. At least one week
+beforehand, the instructor will publish a pool of approximately 8–12 possible
+questions. At the beginning of the examination, the student will draw one
+question at random from this pool.
+
+The student will have 10 minutes to prepare. During this period, the student may
+consult any amount of their own handwritten notes. Printed materials and
+electronic devices are not permitted. The student may prepare a separate
+handwritten exam note of unrestricted length.
+
+The student will then present the answer at the board. During the presentation,
+the student may consult only the exam note produced during the preparation
+period; the original handwritten notes may no longer be used. The exam note
+will not be collected. The instructor will ask follow-up questions throughout
+the presentation to check and clarify the student's understanding. Grading will
+be based on the correctness and depth of that understanding, the clarity and
+organization of the explanations, the appropriate use of mathematical
+formalism, and the student's responses to follow-up questions.
 
 ### Scribing / polished lecture note: 10%
 
@@ -86,7 +105,7 @@ Start from the [LaTeX scribe template]({{ '/documents/misc_files/scribe_template
 The note is due within two calendar days of the lecture: a Tuesday lecture is
 due by the end of Thursday, ideally by the end of Wednesday; a Thursday lecture
 is due by the end of Saturday, ideally by the end of Friday. See the Lecture 1
-model note as a [PDF]({{ '/documents/scribes/lecture01.pdf' | relative_url }})
+model note as a [PDF]({{ '/documents/scribes/lecture01.pdf' | relative_url }}) <small>(compiled {{ site.data.pdf_builds.lecture01 }})</small>
 or as [LaTeX source]({{ '/documents/scribes/lecture01.tex' | relative_url }}).
 The instructor will also prepare a second model note for Lecture 2. The
 editable signup sheet will be distributed through Slack.

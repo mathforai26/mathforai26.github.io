@@ -1,0 +1,16 @@
+% Shared exercise chunk: l2-random-seed
+\begin{exercisechunk}
+\item \textbf{One random seed is enough.}
+\label[exercise]{ex:random-seed}
+For each training sample $s \in \cS:= ([N]\times \{0,1\})^m$,
+let $Q_s$ be a probability distribution on
+$\cF:=\{0,1\}^{[N]}$.
+\begin{enumerate}[label=(\alph*),leftmargin=*]
+\item Let $W$ be uniformly distributed on $[0,1]$.
+Construct a map $\cA : \cS \times [0,1] \to \cF$ such that
+for every fixed $s\in \cS$, $\cA(s,W)$ has distribution $Q_s$.
+\item \emph{Optional technical check.} Give the finite sets $\cS$ and
+$\cF$ their discrete $\sigma$-algebras and give $[0,1]$ its Borel
+$\sigma$-algebra. Show that $\cA$ is measurable.
+\end{enumerate}
+\end{exercisechunk}

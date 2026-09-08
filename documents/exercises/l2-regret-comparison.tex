@@ -1,0 +1,41 @@
+% Shared exercise chunk: l2-regret-comparison
+\begin{exercisechunk}
+\item \textbf{Two choices of regret.}
+\label[exercise]{ex:regret-comparison}
+Assume $N\ge2$ and $m\ge1$. Compare \cref{eq:minimax-regret-q} with
+\[
+\min_{\cA}\max_{Q\in\cQ,\,f\in\{0,1\}^{[N]}}
+\left\{R_Q(\cA,f)-\min_{\cA'}R_Q(\cA',f)\right\}.
+\]
+\begin{enumerate}[(a)]
+\item Compute the benchmark $\min_{\cA'}R_Q(\cA',f)$ for each $(Q,f)$,
+and hence the value of this criterion. Give a comparator $\cA'$ attaining
+the benchmark, specifying it as a map from a sample and seed to a predictor.
+The target $f$ is not an input to that map.
+
+\item Both criteria have the form
+\[
+\min_{\cA}\max_\theta
+\left\{\ell(\cA,\theta)-\min_{\cA'}\ell(\cA',\theta)\right\}.
+\]
+Identify the environment $\theta$ and loss $\ell$ in each case. What
+information can the choice of comparator depend on? Which unknown quantities
+must that comparator still handle uniformly?
+
+\item Compare the minimizing learners:
+\begin{enumerate}[label=(\roman*),leftmargin=*,beginpenalty=10000]
+\item Show that, for a fixed $Q$, the two criteria have the same minimizing
+learners.
+\item Does this remain true after maximizing over $Q$?
+For the learner that always predicts with a fair coin and for $\cAmem$,
+compute worst-case risk and both regrets under each of the following laws:
+$X_1=\cdots=X_m=1$ with $X=1$, and with $X=2$. Use these calculations
+to establish whether each learner minimizes each criterion.
+\end{enumerate}
+
+\item Which criterion would you use to measure performance relative to an
+oracle that knows the target? Which would you use to require an optimal
+worst-case guarantee for every sampling law? Identify the matching formula
+in each case.
+\end{enumerate}
+\end{exercisechunk}

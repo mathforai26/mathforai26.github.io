@@ -1,0 +1,20 @@
+% Shared exercise chunk: l2-sample-size-bounds
+\begin{exercisechunk}
+\item \textbf{Elementary sample-size bounds.}
+\label[exercise]{ex:sample-size-bounds}
+\begin{enumerate}[(a)]
+\item Prove $1-u\le e^{-u}$ for $u\ge0$.
+\emph{Hint: differentiate $e^{-u}-(1-u)$.}
+\item Prove \emph{Bernoulli's inequality}, $(1-u)^m\ge1-mu$, for
+$u\in[0,1]$ and integers $m\ge0$, by induction.
+\item Generalize part (b): for $p_1,\ldots,p_m\in[0,1]$, prove
+\[
+\prod_{i=1}^m(1-p_i)\ge 1-\sum_{i=1}^m p_i.
+\]
+Explain how this inequality follows from the union bound when $p_i$ is the
+probability of an event and the events are independent.
+\item Use these inequalities to show that $m\ge N\log5$ is sufficient,
+and $m\ge0.8N$ is necessary, for the uniform-boxes minimax risk to be at
+most $0.1$.
+\end{enumerate}
+\end{exercisechunk}

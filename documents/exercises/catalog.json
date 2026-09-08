@@ -1,0 +1,153 @@
+[
+  {
+    "id": "l1-rope",
+    "lecture": 1,
+    "number": 1,
+    "file": "l1-rope.tex"
+  },
+  {
+    "id": "l1-greedy-decoding",
+    "lecture": 1,
+    "reference_lectures": [2],
+    "number": 2,
+    "file": "l1-greedy-decoding.tex"
+  },
+  {
+    "id": "l1-bounded-attention",
+    "lecture": 1,
+    "number": 3,
+    "file": "l1-bounded-attention.tex"
+  },
+  {
+    "id": "l2-random-seed",
+    "lecture": 2,
+    "number": 1,
+    "file": "l2-random-seed.tex"
+  },
+  {
+    "id": "l2-coin-flip-map",
+    "lecture": 2,
+    "number": 2,
+    "file": "l2-coin-flip-map.tex"
+  },
+  {
+    "id": "l2-repeated-experiments",
+    "lecture": 2,
+    "number": 3,
+    "file": "l2-repeated-experiments.tex"
+  },
+  {
+    "id": "l2-unseen-probability",
+    "lecture": 2,
+    "number": 4,
+    "file": "l2-unseen-probability.tex"
+  },
+  {
+    "id": "l2-sample-size-bounds",
+    "lecture": 2,
+    "number": 5,
+    "file": "l2-sample-size-bounds.tex"
+  },
+  {
+    "id": "l2-complete-boxes-proof",
+    "lecture": 2,
+    "number": 6,
+    "file": "l2-complete-boxes-proof.tex"
+  },
+  {
+    "id": "l2-threshold-expectation",
+    "lecture": 2,
+    "number": 7,
+    "file": "l2-threshold-expectation.tex"
+  },
+  {
+    "id": "l2-data-coverage",
+    "lecture": 2,
+    "number": 8,
+    "file": "l2-data-coverage.tex"
+  },
+  {
+    "id": "l2-threshold-sampling",
+    "lecture": 2,
+    "number": 9,
+    "file": "l2-threshold-sampling.tex"
+  },
+  {
+    "id": "l2-finite-class-consistency",
+    "lecture": 2,
+    "number": 10,
+    "file": "l2-finite-class-consistency.tex"
+  },
+  {
+    "id": "l2-transduction",
+    "lecture": 2,
+    "number": 11,
+    "file": "l2-transduction.tex"
+  },
+  {
+    "id": "l2-deterministic-minimax",
+    "lecture": 2,
+    "number": 12,
+    "file": "l2-deterministic-minimax.tex"
+  },
+  {
+    "id": "l2-one-bit-decisions",
+    "lecture": 2,
+    "number": 13,
+    "file": "l2-one-bit-decisions.tex"
+  },
+  {
+    "id": "l2-unknown-sampling-law",
+    "lecture": 2,
+    "number": 14,
+    "file": "l2-unknown-sampling-law.tex"
+  },
+  {
+    "id": "l2-minimax-regret-q",
+    "lecture": 2,
+    "number": 15,
+    "file": "l2-minimax-regret-q.tex"
+  },
+  {
+    "id": "l2-regret-comparison",
+    "lecture": 2,
+    "number": 16,
+    "file": "l2-regret-comparison.tex"
+  },
+  {
+    "id": "l2-risk-versus-regret",
+    "lecture": 2,
+    "number": 17,
+    "file": "l2-risk-versus-regret.tex"
+  },
+  {
+    "id": "l2-probability-rules",
+    "lecture": 2,
+    "number": 18,
+    "file": "l2-probability-rules.tex"
+  },
+  {
+    "id": "l2-bayes-not-minimax",
+    "lecture": 2,
+    "number": 19,
+    "file": "l2-bayes-not-minimax.tex"
+  },
+  {
+    "id": "l2-prior-structure",
+    "lecture": 2,
+    "number": 20,
+    "file": "l2-prior-structure.tex"
+  },
+  {
+    "id": "l3-probabilistic-classification",
+    "lecture": 3,
+    "number": 1,
+    "file": "l3-probabilistic-classification.tex"
+  },
+  {
+    "id": "l3-fresh-test-evaluation",
+    "lecture": 3,
+    "number": 2,
+    "file": "l3-fresh-test-evaluation.tex"
+  }
+]
