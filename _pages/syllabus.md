@@ -100,10 +100,9 @@ Students will develop and refine a research question related to the course. The 
 Homework 1 will be released after Lecture 3 on September 8, so students
 encounter course material before receiving graded work. It and the later
 assignments will then follow an approximately two-week cycle, with target due
-weeks 3, 5, 7, 9, 11, and 13. The automatic replacement of the two lowest
-grades is intended to absorb ordinary illness, overload, and missed work
-without individual negotiation. Exact late-work and accommodation language
-will be aligned with University policy before Homework 1 is released.
+weeks 3, 5, 7, 9, 11, and 13. Late homework is not accepted. The automatic
+replacement of the two lowest grades covers ordinary illness, overload, and
+missed work without individual negotiation.
 
 ## Course communication
 

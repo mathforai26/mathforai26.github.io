@@ -1,0 +1,97 @@
+\documentclass[11pt,twoside]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage[inline,shortlabels]{enumitem}
+\usepackage{xcolor}
+\usepackage{microtype}
+
+% Build identity: keep this block in future lecture notes as well.
+% The timestamp is fixed at compilation start and appears on every page.
+\usepackage[showseconds=false,showzone=true]{datetime2}
+\DTMsetup{datesep=-,datetimesep={\space},timezonesep={\space UTC}}
+\usepackage{eso-pic}
+\AddToShipoutPictureBG{%
+  \AtPageLowerLeft{%
+    \put(\LenToUnit{0.5\paperwidth},\LenToUnit{0.5in}){%
+      \makebox(0,0){\normalfont\footnotesize\color{black!60}Compiled: \DTMnow}%
+    }%
+  }%
+}
+
+\usepackage[colorlinks=true,linkcolor=blue!60!black,
+  urlcolor=blue!60!black]{hyperref}
+\usepackage[nameinlink,capitalize]{cleveref}
+\crefname{exercise}{Exercise}{Exercises}
+\Crefname{exercise}{Exercise}{Exercises}
+
+\definecolor{courseblue}{HTML}{17365D}
+
+\newcommand{\I}{\mathbb I}
+\newcommand{\E}{\mathbb E}
+\renewcommand{\P}{\mathbb P}
+\newcommand{\R}{\mathbb R}
+\makeatletter
+\@for\@letter:=A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z\do{%
+  \expandafter\edef\csname c\@letter\endcsname{\noexpand\mathcal{\@letter}}}
+\makeatother
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+
+\renewcommand{\thepage}{3--\arabic{page}}
+\renewcommand{\thesection}{3.\arabic{section}}
+\renewcommand{\theequation}{3.\arabic{equation}}
+
+\pagestyle{myheadings}
+\markboth{Lecture 3: Probabilistic models, log loss, and compression}
+{Lecture 3: Probabilistic models, log loss, and compression}
+
+\usepackage{../exercises/course-exercises}
+
+\begin{document}
+
+\begin{center}
+\fcolorbox{courseblue}{white}{%
+\begin{minipage}{0.92\textwidth}
+\vspace{1mm}
+\textbf{CMPUT 654: Mathematical Foundations of Modern AI Systems}
+\hfill Fall 2026
+
+\vspace{3mm}
+\begin{center}
+{\Large\bfseries Lecture 3: Probabilistic models, log loss, and compression}
+
+\vspace{1mm}
+September 8, 2026
+\end{center}
+
+\vspace{2mm}
+\textit{Lecturer: Csaba Szepesv\'ari}
+\hfill
+\textit{Scribe: Student name}
+\vspace{1mm}
+\end{minipage}}
+\end{center}
+
+% Add the scribe note above the exercises. A useful initial structure is:
+% \section{Probabilistic prediction and log loss}
+% \section{Maximum likelihood and cross-entropy}
+% \section{KL divergence and compression}
+% \section{Take-home messages}
+% \section{Glossary}
+% \section*{Bibliographic remarks}
+
+\section{Exercises}
+
+\exerciseinstructions
+\setcounter{courseexercise}{0}
+\input{../exercises/l3-probabilistic-classification.tex}
+\input{../exercises/l3-fresh-test-evaluation.tex}
+
+\end{document}

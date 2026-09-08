@@ -1,0 +1,74 @@
+% Shared exercise chunk: l3-probabilistic-classification
+\begin{exercisechunk}
+\item \textbf{Classification from probabilistic prediction.}
+\label[exercise]{ex:probabilistic-classification}
+Let $(X,Y)$ have an arbitrary distribution on $\cX\times\{0,1\}$, where
+$\cX$ is finite. For every $x$ with $\P(X=x)>0$, define
+\[
+\eta(x)=\P(Y=1\mid X=x).
+\]
+At the remaining inputs, $\eta(x)$ may be defined arbitrarily. For a decision
+$a\in\{0,1\}$ and an $x$ with $\P(X=x)>0$, define the conditional risk
+\[
+r_x(a)=\P(a\ne Y\mid X=x).
+\]
+For a classifier $h:\cX\to\{0,1\}$, define its risk by
+\[
+R_{01}(h)=\P(h(X)\ne Y).
+\]
+A classifier is \emph{Bayes-optimal} if it minimizes $R_{01}$ over all
+classifiers $h:\cX\to\{0,1\}$. The minimum value
+\[
+R_{01}^*=\min_{h:\cX\to\{0,1\}}R_{01}(h)
+\]
+is the \emph{Bayes risk}.
+\begin{enumerate}[(a)]
+\item Compute $r_x(0)$ and $r_x(1)$. Show that
+\[
+h^*(x)=\I\{\eta(x)\ge1/2\}
+\]
+is Bayes-optimal and that the Bayes risk is
+\[
+R_{01}^*=\mathbb E[\min\{\eta(X),1-\eta(X)\}].
+\]
+\item Prove the exact excess-risk identity
+\[
+R_{01}(h)-R_{01}^*
+=\mathbb E\left[
+|2\eta(X)-1|\I\{h(X)\ne h^*(X)\}
+\right].
+\]
+\item Let $q:\cX\to(0,1)$ be a probabilistic
+predictor, and define
+\[
+L_{\log}(q)
+=\mathbb E[-Y\log q(X)-(1-Y)\log(1-q(X))].
+\]
+Let $L_{\log}^*=L_{\log}(\eta)$, with the usual conventions at
+$\eta(x)\in\{0,1\}$, and let $h_q(x)=\I\{q(x)\ge1/2\}$. Prove
+\[
+R_{01}(h_q)-R_{01}^*
+\le \sqrt{2\bigl(L_{\log}(q)-L_{\log}^*\bigr)}.
+\]
+\item \emph{Optional extension.} Construct a family of probabilistic
+predictors whose induced
+classifiers $h_q$ are Bayes-optimal but whose excess log loss tends to
+infinity.
+\end{enumerate}
+
+\emph{Hint for (c):} You may use Pinsker's inequality for Bernoulli
+distributions:
+\[
+|p-q|\le
+\sqrt{\frac12\left(
+p\log\frac pq+(1-p)\log\frac{1-p}{1-q}
+\right)}.
+\]
+
+\paragraph{What this exercise is meant to teach.}
+A probabilistic predictor and a classifier answer different questions. The
+excess classification risk weights a wrong decision by twice the distance of
+$\eta(x)$ from the decision boundary $1/2$. Small excess log loss controls
+excess classification risk, but Bayes-optimal classification does not imply
+accurate probabilities or small log loss.
+\end{exercisechunk}

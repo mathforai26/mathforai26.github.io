@@ -1,0 +1,19 @@
+\NeedsTeXFormat{LaTeX2e}
+% Shared exercise formatting; loaded from both relative and bundle-local paths.
+\RequirePackage{enumitem}
+\newcommand{\exerciseinstructions}{%
+  \par\noindent\textbf{General instructions.}
+  Justify every answer, including yes/no answers, even when the question
+  does not explicitly ask for a justification.\par\medskip}
+\newcounter{courseexercise}
+\newenvironment{exercisechunk}
+  {\begin{enumerate}[leftmargin=*,itemsep=0.7em,topsep=0.4em,
+     start=\numexpr\value{courseexercise}+1\relax]}
+  {\setcounter{courseexercise}{\value{enumi}}\end{enumerate}}
+\newenvironment{hints}
+  {\par\addvspace{0.2cm}\noindent\textsc{Hints}\enspace\ignorespaces}
+  {\par\addvspace{0.2cm}}
+\newenvironment{exercisesolution}
+  {\par\medskip\noindent\textbf{Solution}\par\nobreak\smallskip}
+  {\par\medskip}
+\newcommand{\missingsolution}[1]{\par\noindent\textbf{UNFINISHED SOLUTION:} #1\par}

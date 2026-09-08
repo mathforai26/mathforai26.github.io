@@ -1,0 +1,56 @@
+% Shared exercise chunk: l3-fresh-test-evaluation
+\begin{exercisechunk}
+\item \textbf{Evaluation on a fresh test set.}
+\label[exercise]{ex:fresh-test-evaluation}
+Let $\cX$ be finite. Let $D=((X_i,Y_i))_{i=1}^m$ be an i.i.d. test sample
+from a distribution on $\cX\times\{0,1\}$, and let $(X,Y)$ be an independent
+draw from the same distribution. For a classifier $h:\cX\to\{0,1\}$, define
+\[
+R(h)=\P(h(X)\ne Y),
+\qquad
+\widehat R_D(h)=\frac1m\sum_{i=1}^m\I\{h(X_i)\ne Y_i\}.
+\]
+\begin{enumerate}[(a)]
+\item Show that every classifier $h:\cX\to\{0,1\}$ satisfies, for every
+$\epsilon>0$,
+\[
+\P\bigl(|\widehat R_D(h)-R(h)|>\epsilon\bigr)
+\le 2e^{-2m\epsilon^2}.
+\]
+\item Fix a finite set $\cH=\{h_1,\ldots,h_K\}$ of classifiers. Use the
+union bound to prove
+\[
+\P\left(\max_{h\in\cH}|\widehat R_D(h)-R(h)|>\epsilon\right)
+\le 2K e^{-2m\epsilon^2}.
+\]
+Give a sufficient sample size for the displayed maximum to be at most
+$\epsilon$ with probability at least $1-\delta$.
+
+\item
+Let $f: (\cX\times \{0,1\})^m \to \cH$ and let
+$\widehat h=f(D)$.
+Show that
+ \[
+\P\left(
+\left|\widehat R_D(\widehat h)-R(\widehat h)\right|>\epsilon
+\right)
+\le 2K e^{-2m\epsilon^2}.
+\]
+
+\item
+The previous part uses a simultaneous guarantee over all classifiers that the
+selection rule may return. Show what can happen without such a guarantee: a
+classifier defined using the test sample can have
+zero test error but large population risk.
+In particular, consider the following:
+Let $\cX=[N]$, let $X$ be uniform on $[N]$, and let $Y=1$
+almost surely. Define the following function of the sample $D$:
+\[
+h_D(x)=\I\{x\in\{X_1,\ldots,X_m\}\}.
+\]
+Compute $\widehat R_D(h_D)$ and $R(h_D)$. Show that $N\ge2m$ implies
+$R(h_D)\ge1/2$, and explain why this does not contradict part~(a) or part~(b).
+\end{enumerate}
+\emph{Hint for (a):} Apply Hoeffding's inequality to the independent random
+variables $\I\{h(X_i)\ne Y_i\}$.
+\end{exercisechunk}

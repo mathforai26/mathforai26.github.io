@@ -14,7 +14,7 @@ Homework materials and submission links are added as assignments are released.
 | Work | Weight | Target deadline | Materials |
 |:--|--:|:--|:--|
 | Homework 0: mathematical readiness | 0% | Sun, Sep 6, 11:59 p.m. | [PDF]({{ '/documents/assignments/assignment0.pdf' | relative_url }}) · [LaTeX]({{ '/documents/assignments/assignment0.tex' | relative_url }}) · [Submit on Canvas](https://canvas.ualberta.ca/courses/37231/assignments/812892) |
-| Homework 1 | 10% | End of Week 3 | To be posted |
+| Homework 1: prediction, generalization, and evaluation | 10% | Fri, Sep 18, 11:59 p.m. | [PDF]({{ '/documents/assignments/assignment1.pdf' | relative_url }}) · [LaTeX source bundle]({{ '/documents/assignments/assignment1-source.zip' | relative_url }}) · [Submit on Canvas](https://canvas.ualberta.ca/courses/37231/assignments/814320) |
 | Homework 2 | 10% | End of Week 5 | To be posted |
 | Research-question first draft | Part of 10% | End of Week 6 | [Template]({{ '/documents/misc_files/research_question_template.tex' | relative_url }}) |
 | Homework 3 | 10% | End of Week 7 | To be posted |
@@ -25,6 +25,8 @@ Homework materials and submission links are added as assignments are released.
 | Final oral exam | 20% | Final-examination period | Topic list posted at least one week before |
 
 The raw weights shown for the six homeworks are each 10 percentage points. The two-lowest-grade replacement described in the [syllabus]({% link _pages/syllabus.md %}) is applied before the homework component is calculated.
+
+Late homework is not accepted. The two-lowest-grade replacement covers ordinary illness, overload, and missed work.
 
 ## What homework is for
 
@@ -54,3 +56,7 @@ Your name and CCID must appear on the first page of the PDF. Identify collaborat
 Homework 0 is not graded. It tests proof writing, probability, linear algebra, optimization, and comfort with abstraction. Attempt it during the first week without looking for outside solutions. If substantial parts remain inaccessible after reviewing the relevant prerequisites, speak with the instructor promptly and decide whether the course is a good match.
 
 [Submit Homework 0 on Canvas](https://canvas.ualberta.ca/courses/37231/assignments/812892) by Sunday, September 6, at 11:59 p.m. Use `hw00` in the submission naming convention above.
+
+## Homework 1
+
+[Homework 1]({{ '/documents/assignments/assignment1.pdf' | relative_url }}) is due Friday, September 18, at 11:59 p.m. It is worth 100 points and 10% of the course grade. The assignment identifies the required parts and the optional, ungraded extensions. A [self-contained LaTeX source bundle]({{ '/documents/assignments/assignment1-source.zip' | relative_url }}) is also available. [Submit Homework 1 on Canvas](https://canvas.ualberta.ca/courses/37231/assignments/814320).
