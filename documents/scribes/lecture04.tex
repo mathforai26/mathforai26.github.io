@@ -8,14 +8,13 @@
 \usepackage{xcolor}
 \usepackage{microtype}
 
-% Build identity: the compilation timestamp appears on every page.
-\usepackage[showseconds=false,showzone=true]{datetime2}
-\DTMsetup{datesep=-,datetimesep={\space},timezonesep={\space UTC}}
+% Revision date: maintained by scripts/build_lecture_notes.py. Keep this command.
+\newcommand{\lecturerevised}{2026-09-14 10:41 UTC-06:00}
 \usepackage{eso-pic}
 \AddToShipoutPictureBG{%
   \AtPageLowerLeft{%
     \put(\LenToUnit{0.5\paperwidth},\LenToUnit{0.5in}){%
-      \makebox(0,0){\normalfont\footnotesize\color{black!60}Compiled: \DTMnow}%
+      \makebox(0,0){\normalfont\footnotesize\color{black!60}Last revised: \lecturerevised}%
     }%
   }%
 }

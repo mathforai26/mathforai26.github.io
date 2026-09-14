@@ -133,15 +133,18 @@ and the rendered pages, including transitions between sections.
 
 - Publish completed student-facing notes as both PDF and LaTeX source. Put
   **Lecture notes: PDF · LaTeX** directly beneath the corresponding lecture's
-  description on the course schedule, with the PDF's compilation time. Use
+  description on the course schedule, with the PDF's **Last revised** date. Use
   this label consistently; the coursework column is for coursework milestones.
 - Use `_includes/lecture-notes.html` for schedule links, for example
   `{% include lecture-notes.html lecture="lecture01" %}`. Add links when the
   files are published. Publish the source's shared exercise dependencies too.
-- Build the notes and synchronize `_data/pdf_builds.json` with
-  `python3 scripts/build_lecture_notes.py` (or `--sync-only` for already
-  compiled PDFs). Publish each PDF, its matching source and dependencies,
-  and its timestamp together.
+- Retain the template's `\lecturerevised` command in new notes. Build with
+  `python3 scripts/build_lecture_notes.py`; it records changes to each lecture
+  and its actual source dependencies in `_data/lecture_revisions.json`.
+  The PDF and website show the same last revision date. Unchanged rebuilds,
+  copies, and checkouts must preserve it. Use `--sync-only` to verify existing
+  files; changed sources require a rebuild. Publish each PDF, its matching
+  source and dependencies, and its revision record together.
 - Build and inspect the schedule before deployment. After deployment finishes,
   verify the live schedule, both links for every updated lecture, and that
   the served files and displayed timestamps match the intended release.

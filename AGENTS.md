@@ -16,6 +16,7 @@
   Rebuild the affected PDFs and verify references, endnote links, and layout.
   The endnotes follow the bibliographical notes and reference list.
 - Follow the writing standards' publication rules for completed student-facing
-  notes: put PDF and LaTeX links with the compilation time beneath each lecture
-  on the schedule. Publish matching files and dependencies, wait for deployment,
-  and verify the live page and downloads before reporting them as published.
+  notes: put PDF and LaTeX links with the last revision date beneath each lecture
+  on the schedule. Use the lecture builder to keep the PDF and website dates
+  consistent; unchanged source content must retain its date. Publish matching
+  files and dependencies, wait for deployment, and verify the live page and downloads before reporting them as published.
