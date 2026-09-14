@@ -1,0 +1,3899 @@
+\documentclass[11pt,twoside]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{thmtools}
+\usepackage[inline,shortlabels]{enumitem}
+\usepackage{booktabs}
+\usepackage{xcolor}
+\usepackage{microtype}
+
+% Build identity: the compilation timestamp appears on every page.
+\usepackage[showseconds=false,showzone=true]{datetime2}
+\DTMsetup{datesep=-,datetimesep={\space},timezonesep={\space UTC}}
+\usepackage{eso-pic}
+\AddToShipoutPictureBG{%
+  \AtPageLowerLeft{%
+    \put(\LenToUnit{0.5\paperwidth},\LenToUnit{0.5in}){%
+      \makebox(0,0){\normalfont\footnotesize\color{black!60}Compiled: \DTMnow}%
+    }%
+  }%
+}
+\usepackage[square,authoryear]{natbib}
+\usepackage{xr-hyper}
+\usepackage[colorlinks=true,linkcolor=blue!60!black,
+  urlcolor=blue!60!black,citecolor=blue!60!black]{hyperref}
+\externaldocument[lecture3-]{lecture03}
+\usepackage[nameinlink,capitalize]{cleveref}
+\hypersetup{pdftitle={Lecture 4: Sequence modeling, generation, and memory},
+  pdfauthor={Csaba Szepesvari}}
+\crefname{exercise}{Exercise}{Exercises}
+\Crefname{exercise}{Exercise}{Exercises}
+
+% Short refinements that may be skipped on a first reading.
+\usepackage{enotez}
+\DeclareInstance{enotez-list}{lecture}{list}{format=\normalsize,number={#1.}}
+\setenotez{list-name=Endnotes,list-style=lecture,backref=true}
+\crefname{endnote}{Endnote}{Endnotes}
+\Crefname{endnote}{Endnote}{Endnotes}
+
+\definecolor{courseblue}{HTML}{17365D}
+\newcommand{\R}{\mathbb R}
+\newcommand{\E}{\mathbb E}
+\newcommand{\I}{\mathbb I}
+\renewcommand{\P}{\mathbb P}
+\newcommand{\KL}{D}
+\newcommand{\TV}{\mathrm{TV}}
+\newcommand{\kl}{\mathrm{kl}}
+\newcommand{\tv}[1]{\lVert #1\rVert_{\mathrm{TV}}}
+\newcommand{\suppmark}{\texorpdfstring{\textsuperscript{*}}{*}}
+\DeclareMathOperator{\diag}{diag}
+\DeclareMathOperator{\rank}{rank}
+\makeatletter
+\@for\@letter:=A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z\do{%
+  \expandafter\edef\csname c\@letter\endcsname{\noexpand\mathcal{\@letter}}}
+\makeatother
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{example}[theorem]{Example}
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+\renewcommand{\thepage}{4--\arabic{page}}
+\renewcommand{\thesection}{4.\arabic{section}}
+\renewcommand{\theequation}{4.\arabic{equation}}
+\pagestyle{myheadings}
+\markboth{Lecture 4: Sequence modeling, generation, and memory}
+{Lecture 4: Sequence modeling, generation, and memory}
+\usepackage{../exercises/course-exercises}
+
+\begin{document}
+
+\begin{center}
+\fcolorbox{courseblue}{white}{%
+\begin{minipage}{0.92\textwidth}
+\vspace{1mm}
+\textbf{CMPUT 654: Mathematical Foundations of Modern AI Systems}
+\hfill Fall 2026
+\vspace{3mm}
+\begin{center}
+{\Large\bfseries Lecture 4: Sequence modeling, generation, and memory}
+\vspace{1mm}
+
+September 10, 2026
+\end{center}
+\vspace{2mm}
+\textit{Lecturer: Csaba Szepesv\'ari}
+\hfill
+\textit{Note prepared by: Csaba Szepesv\'ari}
+\vspace{1mm}
+\end{minipage}}
+\end{center}
+
+\noindent\textbf{About these lecture notes.}
+We know how to fit a sequence model by next-token prediction. We now ask
+whether fitting successful examples makes the model generate successful
+sequences. The answer depends on how prediction errors affect later
+generation, what cost we care about, and what structure the model preserves.
+This leads from log loss to error recovery, reverse KL, and models with
+explicit memory.
+
+\medskip
+\noindent\textbf{Scope relative to class.}
+Further questions and ideas arose while preparing these notes, so they
+extend and refine the discussion from the lecture.
+The lecture developed the positive-data fitting question, the binary
+error-propagation example, stability of Markov models, and the
+concentration-dependent reverse-KL bound. It then introduced state-space
+models, latent likelihoods, the discrete-to-vector representation, and
+the system-identification approach of regression followed by factorization.
+The meeting ended before Cayley--Hamilton and the detailed LDS results.
+The notes group the cost bounds first, then use exact fixed-KL cost
+intervals to develop two laws attaining the cost bounds. We reuse these
+laws when interpreting normalized loss, comparing fitting objectives,
+and introducing recovery. Repeated errors, parity, and the explicit
+modulus calculations are developed in exercises.
+A further section asks how parameter sharing affects learning as
+sequence length grows. The fitting and structural choices follow.
+Headings ending in a superscript asterisk\suppmark{} mark supplementary
+material: sharper comparisons
+between likelihood and cost, a finite-sample fitting guarantee, and the
+LDS results. The exercises retain the calculations and proofs left to
+students. Longer proofs, a statistical obstruction to reverse-KL fitting,
+and the variational discussion are in the appendices.
+
+\medskip
+\noindent\textbf{Notation and reading guide.}
+Tokens are \(X_t\in[N]\); \(Z_t=e_{X_t}\) denotes their vector encoding.
+Later, \(Z_t\) also allows general real-vector observations.
+Hidden states are \(S_t\).
+A vector $x\in \R^d$ is a column vector.
+For indices \(a\le b\), write \(X_{a:b}=(X_a,\ldots,X_b)\) and
+\(X_{<t}=X_{1:t-1}\); lowercase \(x_{a:b}\) denotes a realized sequence.
+For a symbol \(u\), \(u^k=(u,\ldots,u)\) is the length-\(k\) constant
+sequence, so \(0^T=(0,\ldots,0)\), and juxtaposition denotes
+concatenation, as in \(10^{T-1}=(1,0,\ldots,0)\).
+Sequence notation is useful because the same object has two roles: it is an
+ordered tuple in \([N]^T\), and it is a time-indexed function on \([T]\).
+We use tuple notation when order and prefixes matter, and ordinary vector
+notation when applying linear algebra.
+For a sequence cost \(c: [N]^T\to \R\) and a distribution \(P\) over
+\([N]^T\), \(\E_P[c]\) abbreviates \(\E[c(X_{1:T})]\) for
+\(X_{1:T}\sim P\). Thus
+\[
+  \E_P[c]=\sum_{x_{1:T}}P(x_{1:T})c(x_{1:T}).
+\]
+By default, in what follows, \(P\) is the data law and \(Q\), or \(Q_\theta\), is
+a model law.
+We use \(\kappa\) for a KL value or budget, \(s\) for a cost-discrepancy
+value or budget, and \(\eta\) for per-token accuracy, including the
+optimization tolerance introduced in \cref{sec:likelihood-pitfall}.
+Logarithms are natural. Read through \cref{sec:take-home}; the supplementary
+material can be read separately. Numbered endnotes collect short refinements
+that may be skipped on a first reading.
+
+\section{From next-token prediction to useful generation}
+\label{sec:prediction-generation}
+
+Lecture~1 described transformers as maps from token prefixes to
+next-token distributions. Lecture~2 asked what structure allows learning
+to generalize. Lecture~3 explained why log loss is a natural objective for
+probability estimation. Pretraining brings these ideas together: shared
+parameters are fitted to predict tokens across many sequences and contexts.
+The prediction problem supplies a scalable way to learn from data.
+
+Throughout the discrete discussion, sequences have fixed length \(T\)
+over a finite vocabulary \([N]\), and costs are real-valued. The finite
+space \([N]^T\) simplifies the arguments: every cost is bounded, and
+expectations are finite sums. Many results hold more generally;
+\cref{app:finiteness} explains where finiteness is used and what can
+replace it. It is also easy to extend the results to allow variable length
+sequences as outlines in Lecture 1. For simplicity, we restrict our attention
+to the fixed length case.
+
+Let \(X^{(1)}_{1:T},\ldots,X^{(n)}_{1:T}\) be independent training sequences
+from \(P\), a distribution over $[N]^T$.
+Their tokens may have arbitrary dependence within each sequence.
+Empirical log-loss minimization chooses
+\begin{equation}
+  \widehat\theta\in\arg\min_\theta
+  \frac1n\sum_{i=1}^n-\log Q_\theta(X^{(i)}_{1:T}).
+  \label{eq:empirical-likelihood}
+\end{equation}
+
+The chain rule of probabilities gives that for every $x_{1:T}\in [N]^T$,
+\begin{equation}
+  Q_\theta(x_{1:T})
+  =\prod_{t=1}^T Q_\theta(x_t\mid x_{<t}),
+  \qquad x_{<t}=(x_1,\ldots,x_{t-1}).
+  \label{eq:probability-chain}
+\end{equation}
+Every sequence law has this factorization. We call it the
+\emph{autoregressive factorization}; restrictions on the conditional
+predictors, such as a transformer architecture or a finite context window,
+specify the model class. Taking logarithms in
+\cref{eq:probability-chain} and plugging in $X_{1:T}$ in place of
+$x_{1:T}$ gives
+\begin{equation}
+  -\log Q_\theta(X_{1:T})
+  =\sum_{t=1}^T-\log Q_\theta(X_t\mid X_{<t}).
+  \label{eq:next-token-loss}
+\end{equation}
+Consequently, next-token log-loss minimization, the workhorse of language model training,
+ is sequence maximum likelihood.
+
+When evaluating \cref{eq:next-token-loss}, the predictor receives the
+observed prefix, including the observed next input.
+This is \emph{teacher forcing}:
+the student's cost is measured at the
+teacher's data. The metaphore comes from viewing the problem as a teacher generating
+data that a student needs to use to learn.
+During generation, the
+next input is instead sampled from the model:
+\begin{equation}
+  \widetilde X_t\sim
+  Q_\theta(\,\cdot\mid\widetilde X_{<t}).
+  \label{eq:generation}
+\end{equation}
+The resulting sequence has joint law \(Q_\theta\). The same factorization
+supports both likelihood evaluation and sampling.
+
+
+As explained earlier,
+the parameter $\widehat \theta$ from
+\cref{eq:empirical-likelihood} is
+maximum likelihood parameter estimate:
+minimizing the negative log of a product
+maximizes that product, which, under independence, is the probability assigned to the data.
+For a fresh sequence \(X_{1:T}\) with law \(P\),
+the log-loss identity from Lecture~3 and the decomposition in
+\cref{eq:next-token-loss} give
+\begin{equation}
+  \begin{aligned}
+  \E[-\log Q_\theta(X_{1:T})]
+  &=H(P)+\KL(P, Q_\theta),\\
+  \KL(P, Q_\theta)
+  &=\sum_{t=1}^T\E\!\left[
+    \KL\bigl(P(\,\cdot\mid X_{<t})
+       , Q_\theta(\,\cdot\mid X_{<t})\bigr)\right].
+  \end{aligned}
+  \label{eq:population-kl}
+\end{equation}
+The entropy term is independent of \(\theta\). Thus the population
+objective minimizes KL; the empirical objective estimates it from data.
+The second identity is the \emph{KL chain rule}: sequence KL is the
+sum of the expected conditional KLs. \Cref{ex:kl-chain} asks for its
+derivation.
+
+
+
+
+
+In ML/statistics we distinguish between data and model laws.
+This leads to the following definition:
+\begin{definition}[Forward and reverse KL]
+When  \(P\) is a data law and \(Q\) is a model law, we call
+$\KL(P, Q)$ the \emph{forward KL}, while
+$\KL(Q, P)$ is called the \emph{reverse KL}.
+\end{definition}
+With our finite spaces, we have
+\[
+  \begin{aligned}
+  \KL(P, Q)&=\sum_xP(x)\log\frac{P(x)}{Q(x)}
+    &&\text{(the \emph{forward KL})},\\
+  \KL(Q, P)&=\sum_xQ(x)\log\frac{Q(x)}{P(x)}
+    &&\text{(the \emph{reverse KL})}.
+  \end{aligned}
+\]
+Note that above a zero numerator contributes zero;
+a positive numerator with zero denominator contributes \(+\infty\).\endnote{\textbf{Conventions at zero.}
+These conventions are the continuous extensions of the nonzero formula and
+express the infinite log loss incurred when a positive-probability outcome is
+assigned probability zero; Lecture~3, \cref{lecture3-ex:proper-regrets}(e),
+verifies both limits.}
+The names refer to the roles of \(P,Q\): forward KL averages under the
+data law, whereas reverse KL averages under the generated law.
+
+As explained, $\widehat\theta$, is expected to approximately minimize $\KL(P, Q_\theta)$ in $\theta$.
+The discrepancy $\KL(P, Q_{\widehat\theta})- \inf_{\theta}\KL(P, Q_\theta)$
+describes the effect of using a finite dataset in the lack of access to $P$ (and a reliable way of minimizing $\KL(P, Q_\theta)$).
+Recall from Lecture 2 that this is expected to be controlled when $n$ is large and things are ``sufficiently nice''.
+As such, we leave this question alone in this lecture and instead ask, would it be even
+beneficial (and to what degree) if we could find a model $Q$ with a small population KL?
+
+
+\subsection{A task specifies which generations are useful}
+
+A prompt asks the model to continue in a particular way. Mathematically,
+\emph{prompting} uses a conditional distribution
+\(Q_\theta(\,\cdot\mid u)\), where \(u\) is the supplied prompt
+(we omit the full formal description of the setup, but here $u$
+is also a sequence in the typical language model training setting).
+For a mathematics task, a useful continuation might be a correct solution;
+for a knowledge question, an accurate answer. A \emph{cost}
+\(c(u,x_{1:T})\) assigns a numerical value to the generated response.
+Given a test-prompt distribution \(\nu\),
+the expected cost of a model $Q_\theta$ is
+\begin{equation}
+  \mathcal J(\theta)=
+  \E[c(U,\widetilde X_{1:T})],
+  \qquad U\sim\nu,\quad
+  \widetilde X_{1:T}\mid U\sim Q_\theta(\,\cdot\mid U).
+  \label{eq:prompt-cost}
+\end{equation}
+A model's quality then is determined by $\mathcal J(\theta)$.
+The cost function is thus $c: [N]^T \to \R$.
+In what follows, without loss of generality,
+we assume that
+it is nonnegative valued.
+Sometimes (especially in RL) the task is formulated with rewards.
+These formulations are equivalent:
+Maximizing expected reward is equivalent to minimizing its negative.
+
+A common approach to get a small-cost model
+is to collect low-cost (or even zero-cost) prompt--response pairs,
+and then find a model that minimizes the empirical log-loss, aiming to
+``mimick'' the responses in the training data.
+Formally, solve
+\begin{equation}
+  \widehat\theta\in\arg\min_\theta
+  \frac1n\sum_{i=1}^n\sum_{t=1}^T
+  -\log Q_\theta(X^{(i)}_t\mid U^{(i)},X^{(i)}_{<t}).
+  \label{eq:finetuning}
+\end{equation}
+In training large language models, often incremental methods are used, such
+as some form of gradient descent.
+Lectures~9--11 return to how gradient-based optimization selects among fitted
+solutions and when local gradients lead to global convergence.
+When this is the case, typically people start gradient descent with
+a parameter $\theta_0$ which is obtained during \emph{pre-training} (as outlined in Lecture 1).
+Then, with the data as above, people continue gradient descent
+from $\theta_0$ with the data as above.
+This practice is called  \emph{fine-tuning} by likelihood on \emph{positive examples}
+(starting from a pretrained model parameters).
+The data is called ``positive'' because it will contain completed proofs (in math problems)
+or, more generally, answered deemed correct,
+with no examples in the data of incorrect responses.
+
+For simplicity, in this lecture we do not consider the ``continuing'' aspect
+of the fine-tuning and will ask the equation whether minimizing log-loss
+with positive data will produce low-cost answers to new prompts.
+To isolate the connection between fitting and task performance, we set the
+prompts aside; keeping the prompts (conditioning) around would introduce
+extra notation, but otherwise, in general, changes nothing. There is one
+exception to this which will be noted when it arises.
+
+With this, let is turn to formulating the specific question studied next.
+Let \(P\) be the law of positive sequences, \(Q\) the
+fitted law, and \(c\) the cost. One should generally think that \(\E_P[c]=0\);
+the results will aim at this case but will be more general.
+Recall from \cref{eq:population-kl} that the population log loss is
+\[
+ \E_P[-\log Q]=H(P)+\KL(P, Q).
+\]
+As explained earlier, one should think about log-loss minimization, or
+likelihood fitting as seeking a model $Q$ that with small $\KL(P, Q)$.
+Yet, the task calls
+for small generated cost \(\E_Q[c]\).
+Suppose fitting gives us \(\KL(P, Q)\le\kappa\).
+The basic question we ask is how large can \(\E_Q[c]\) be?
+In other words, is controlling KL this way sufficient to control generation
+cost? To what degree? What are the strengths and weaknesses of this approach?
+Naturally, we will continue with asking whether there is anything better.
+
+\section{How does KL control the task cost?}
+\label{sec:kl-cost}
+
+Define the \emph{cost discrepancy}
+\[
+ d_c(P,Q)=|\E_P[c]-\E_Q[c]|
+\]
+to measure the change in expected cost from the data law to the model law.
+For cost-free data laws,
+thank to the assumption that $c\ge 0$,
+\(d_c(P,Q)=\E_Q[c]\), so a bound on this
+discrepancy answers our question.
+
+We will compare four ways to turn KL control into cost control, starting with simpler
+and moving to more elaborate results.
+We will compare the resulting bounds, and ask which of them are sharp and when.
+A supplementary subsection asks for both the smallest and largest cost
+discrepancies at a fixed KL, relating these to moduli of continuity.
+We then compute these intervals in binary examples to see how differently
+models with the same likelihood can behave.
+
+\subsection{Use the cost range}
+
+Recall the definition of the total variation distance between probability laws:
+In what follows we fix a finite set $\cX$ as the domain of the cost and the probability distributions $P$ and $Q$.
+\begin{definition}[Total variation]
+For laws \(P,Q\) over a finite set $\cX$, their
+\emph{total-variation distance} is
+\begin{equation}
+  \tv{P-Q}
+  =\sup_{A\subseteq\mathcal X}|P(A)-Q(A)|
+  =\frac12\sum_{x\in\mathcal X}|P(x)-Q(x)|.
+  \label{eq:tv}
+\end{equation}
+\end{definition}
+Lecture~3 explains why the same formula is a norm on signed measures and a
+metric on probability laws, and contrasts both with a pseudometric.
+\begin{proposition}[Total variation controls bounded costs]
+\label{prop:tv-cost}
+If \(0\le c(x)\le C_{\max}\) for every \(x\in \cX\), then
+\begin{equation}
+  |\E_Q[c]-\E_P[c]|
+  \le C_{\max}\tv{P-Q}.
+  \label{eq:tv-cost}
+\end{equation}
+\end{proposition}
+
+This is Lecture~3, \cref{lecture3-ex:pinsker}(c), after scaling the cost by
+\(C_{\max}\). The exercise proves it from the positive and negative parts of
+the signed measure \(Q-P\).
+
+This bound is exact when maximizing over costs with the specified range:
+\(c(x)=C_{\max}\I\{Q(x)>P(x)\}\) attains equality.
+Thus TV measures the largest expected-cost discrepancy among such costs.
+
+Pinsker's inequality from Lecture~3 now gives
+\begin{equation}
+  \E_Q[c]\le
+  \E_P[c]+C_{\max}\sqrt{\frac{\KL(P, Q)}2}.
+  \label{eq:pinsker-cost}
+\end{equation}
+For any bounded cost, sufficiently small KL therefore
+gives sufficiently small cost discrepancy.
+If \(\E_P[c]=0\), a sufficient condition for
+\(\E_Q[c]\le s\) is
+\[
+  \KL(P, Q)\le 2(s/C_{\max})^2.
+\]
+Both the square-root dependence and its constant are necessary for
+general bounded costs.
+\begin{example}[A locally sharp fair-coin comparison]
+\label{exmp:fair-coin}
+Let $\cX=\{0,1\}$,
+\[
+ P=\operatorname{Bernoulli}(1/2),\qquad
+ Q=\operatorname{Bernoulli}(1/2+\delta),\qquad c(x)=x.
+\]
+As \(\delta\to0\),
+\[
+ d_c(P,Q)=|\delta|,\qquad
+ \KL(P, Q)=2\delta^2+O(\delta^4).
+\]
+Pinsker's bound divided by the actual discrepancy tends to one: it is
+\emph{locally sharp}.
+\end{example}
+For a count of token errors, \(C_{\max}=T\),
+so the horizon also enters the conversion.
+
+Recall that we are interested in the case when $\E_P c=0$ or small, while $c\ge 0$.
+Can we improve this bound using this information?
+
+\subsection{Successful data give a sharper bound\suppmark}
+
+Let us start with the case when $\E_P c=0$.
+
+
+
+
+Then, the following result applies:
+
+\begin{proposition}[Forward KL and zero-cost data]
+\label{prop:positive-data}
+If \(0\le c\le C_{\max}\), \(\E_P[c]=0\)
+then
+\begin{equation}
+ \E_Q[c]\le C_{\max}(1-e^{-\KL(P, Q)})
+ \le C_{\max}\KL(P, Q).
+ \label{eq:positive-data-bound}
+\end{equation}
+\end{proposition}
+This is an improvement over \cref{eq:pinsker-cost}
+when $\KL(P, Q)\le 1/2$ and the gap between them grows as the KL between $P$ and $Q$ approaches zero.
+For small KL, exploiting successful data replaces the
+square-root dependence from Pinsker by linear dependence.
+
+
+Recording only whether an event occurred can only decrease KL. For an event certain under \(P\), this gives a lower bound on its probability under \(Q\).
+Recall that for $p,q\in [0,1]$, $\kl(p,q)$ denotes the KL between the Bernoulli distributions with parameters $p$ and $q$.
+\begin{proposition}[From distribution KL to event probability KL]
+Let $P,Q$ be distributions over the finite domain $\cX$.
+Then, for any $A\subset \cX$,
+\[
+\kl(P(A),Q(A))\le \KL(P, Q)\,.
+\]
+In particular, if $P(A)=1$ then
+\[
+Q(A) \ge e^{-\KL(P, Q)}\,.
+\]
+\end{proposition}
+\begin{proof}
+Consider the transformation that maps
+any $x\in \cX$ to $1$ if $x\in A$ and to $0$ otherwise (this is just the indicator if $A$).
+Apply the data processing inequality with this deterministic transformation to get the first inequality.
+Indeed, the push-forward of $P$ ($Q$) under $\I_A$ is the Bernoulli distribution
+with parameter $P(A)$ (respectively, $Q(A)$).
+To get the second inequality, note that if $P(A)=1$, $\kl(P(A),Q(A)) = \log \frac{P(A)}{Q(A)}$.
+Rearrangement then gives the second inequality. The general data-processing
+statement and its log-sum proof appear in Lecture~3,
+\cref{lecture3-prop:kl-data-processing,lecture3-ex:pinsker}.
+\end{proof}
+With this we can return to the proof of \cref{prop:positive-data}.
+\begin{proof}[Proof of \cref{prop:positive-data}]
+Let \(A=\{x:c(x)=0\}\). Note that since $c\ge 0$ and $\E_P[c]=0$, $P(c=0)=P(A)=1$.
+Now, by algebra, using the result of the previous proposition and since $1-e^{-u}\le u$ for $u\ge 0$,
+\[
+\E_Q \, c
+\le
+C_{\max} Q(A^c)
+=
+C_{\max} (1-Q(A)) \le C_{\max}(1-e^{-\KL(P, Q)})
+\le C_{\max} \KL(P, Q)
+\,. \qedhere
+\]
+\end{proof}
+
+The bound is sharp:
+Let $c$ take on values of $0$ and $C_{\max}$, but otherwise be arbitrary.
+Let $P$ be as in the proposition.
+Let $R$ be any probability distribution supported on
+$\{c>0\} = \{ c = C_{\max} \}$.
+For any \(0<a<1\), choosing $Q = (1-a) P + a R$, we have
+$\KL(P, Q)=-\log(1-a)$
+and
+$\E_Q[c]=aC_{\max}$.
+Hence, indeed
+\[
+ \E_Q[c]=aC_{\max} = C_{\max} (1- e^{-\KL(P, Q)})\,.
+\]
+Thus, equality holds in the first bound of
+\cref{eq:positive-data-bound}.
+
+\subsection{Concentration and the direction of KL}
+\label{sec:cost-concentration}
+Our next result strengthens the bound we obtained
+using Pinsker inequality when
+the costs under $P$ concentrate around their mean,
+but the price is switching from forward to reverse KL:
+
+\begin{restatable}[Cost control from exponential moments]{proposition}{entropycost}
+\label{prop:entropy-cost}
+Let $P,Q$ be distributions over a finite set $\cX$ and let $c:\cX \to \R$. Then.
+\begin{equation}
+ \E_Q[c]-\E_P[c]
+ \le\inf_{\lambda>0}
+ \frac{\KL(Q, P)
+       +\log\E_P[e^{\lambda(c-\E_P[c])}]}{\lambda}.
+ \label{eq:entropy-cost}
+\end{equation}
+\end{restatable}
+
+This reduces cost control to bounding an exponential moment and
+optimizing one positive scalar. The exponential-tilting proof is in
+\cref{app:reverse-proof}. A quadratic bound on that logarithmic
+moment function gives a particularly simple answer.
+
+\begin{definition}[Subgaussian cost]
+The cost \(c\) is \emph{\(v^2\)-subgaussian under \(P\)}, for \(v\ge0\),
+if
+\begin{equation}
+ \log\E_P\!\left[
+ e^{\lambda(c-\E_P[c])}\right]
+ \le\frac{\lambda^2v^2}{2}
+ \quad\text{for every }\lambda\in\R.
+ \label{eq:subgaussian}
+\end{equation}
+\end{definition}
+
+Here \(v\) measures a scale of fluctuations; \(v^2\) is the variance
+proxy
+We write \(v_P(c)\) for the \emph{optimal variance proxy},
+which is also known
+as the subgaussian constant of $c$ under $P$:
+\[
+ v_P(c)=\min\left\{a\ge0:
+   \log\E_P[e^{\lambda(c-\E_P[c])}]
+   \le\frac{\lambda^2a}{2}\ \text{for every }\lambda\in\R\right\}.
+\]
+The minimum is attained; a constant cost has \(v_P(c)=0\).\endnote{\textbf{Variance proxy and variance.}
+How does the optimal proxy compare with the variance? Write
+\(\sigma_P(c)^2=\E_P[(c-\E_P[c])^2]\). Then
+\[
+ \sigma_P(c)^2\le v_P(c)\le\frac{C_{\max}^2}{4}
+ \qquad\text{when }0\le c\le C_{\max}.
+\]
+The lower bound follows by expanding \cref{eq:subgaussian} at
+\(\lambda=0\); the upper bound is Hoeffding's lemma.
+Thus \(\sqrt{v_P(c)}\), the subgaussian fluctuation scale, lies between
+\(\sigma_P(c)\) and \(C_{\max}/2\).
+For rare errors the proxy can greatly exceed the variance;
+\cref{app:bound-comparison} gives a Bernoulli example.
+The bounds and existence of the minimum are proved in
+\cref{app:optimal-proxy}.}
+
+
+\begin{theorem}[Reverse KL and cost concentration]
+\label{thm:reverse-cost}
+Suppose \(c\) satisfies \cref{eq:subgaussian}.
+Then, interpreting $0\cdot \infty = \infty$, we have
+\begin{equation}
+ |\E_Q[c]-\E_P[c]|
+ \le v\sqrt{2\KL(Q, P)}.
+ \label{eq:reverse-cost}
+\end{equation}
+\end{theorem}
+\begin{proof}
+Substituting \cref{eq:subgaussian} into \cref{eq:entropy-cost} gives
+\[
+ \inf_{\lambda>0}
+ \left(\frac{\KL(Q, P)}{\lambda}+\frac{\lambda v^2}{2}\right)
+ =v\sqrt{2\KL(Q, P)}.
+\]
+Applying the same argument to \(-c\) bounds the other direction.
+\end{proof}
+
+Interchanging \(P,Q\) and using the optimal proxies \(v_P(c),v_Q(c)\)
+gives
+\begin{equation}
+ d_c(P,Q)\le
+ \sqrt{2\min\{v_Q(c)\KL(P, Q),\,
+                 v_P(c)\KL(Q, P)\}}.
+ \label{eq:two-concentration-directions}
+\end{equation}
+While the forward KL term refines the bound coming from
+Pinsker's inequality (i.e., \cref{eq:pinsker-cost}),
+when besides that $P$ is supported on zero-cost sequences
+no cost information is available while fitting $Q$,
+the usefulness of this refinement is limited: $v_Q(c)$ may be as large
+as $C_{\max}^2/4$ and remains uncontrolled.
+
+The reverse KL part of the bound
+is more promising in that $v_P(c)$ is
+something we expect to be small.
+In particular, when $P(c=0)=1$, as noted beforehand,
+$v_P(c)=0$. However, this immediately reveals a limitation:
+The bound tells us that for such $P$ and $c$,
+the costs under $P$ and $Q$ either
+match perfectly (when $\KL(Q, P)<\infty$)
+or if the costs are different then $\KL(Q, P)=\infty$.
+This foreshadows the difficulty of controlling reverse KL,
+which we will discuss later.
+
+\subsection{Use the variability of the data's cost\suppmark}
+\label{sec:variance-comparison}
+
+Can we use cost variation under \(P\) while keeping forward KL,
+the quantity likelihood fitting controls?
+As it turns out, the answer is yes. The proof of this is slightly more complicated
+than the previous ones.
+The proof centers the cost under \(P\), expands \(Q-P\) in powers of
+\(\sqrt Q-\sqrt P\), and uses Cauchy--Schwarz to obtain a variance
+term instead of an exponential-moment bound.
+Write \(\sigma_P(c)^2=\E_P[(c-\E_P[c])^2]\) for the variance of the cost.
+
+\begin{restatable}[Cost variance and forward KL]{proposition}{forwardvariance}
+\label{prop:forward-variance}
+If \(0\le c\le C_{\max}\) and \(\KL(P, Q)<\infty\), then
+\begin{equation}
+ d_c(P,Q)\le2\sigma_P(c)\sqrt{\KL(P, Q)}
+             +C_{\max}\KL(P, Q).
+ \label{eq:forward-variance}
+\end{equation}
+\end{restatable}
+\Cref{app:hellinger} gives the proof.
+
+The combination of a variance-dependent square-root term and a
+range-dependent linear term is called \emph{Bernstein form}.
+The square-root term uses the data's cost variation rather than its
+full range.
+When \(\sigma_P(c)=0\), this term vanishes, leaving a bound
+linear in KL.
+Note that this bound extends
+the zero-cost data bound \cref{eq:positive-data-bound}.
+Indeed, when $c\equiv 0$,
+$\sigma_P(c)=0$ and we get back
+\cref{eq:positive-data-bound}.
+The additive term accounts for changes in cost on outcomes
+to which \(Q\) assigns probability, including outcomes absent under \(P\).
+
+The variance-sensitive and subgaussian bounds are useful in different
+regimes. In \cref{exmp:fair-coin}, this bound is asymptotic to
+\(\sqrt2|\delta|\), while Pinsker and the subgaussian bound are
+asymptotic to the actual discrepancy \(|\delta|\).
+For rare errors, the variance-sensitive bound can instead give the
+correct order while the subgaussian bound is much larger;
+\cref{app:bound-comparison} works out both comparisons.
+
+\subsection{The play of cost when forward KL is controlled}
+\label{sec:discrepancy-comparison}
+
+A sharp upper bound tells us how large the cost discrepancy can be.
+To understand how much a KL value tells us about task performance, we
+need both the smallest and the largest cost discrepancies compatible
+with that value. The binary examples below will give exact intervals:
+at the same KL, some generators have much smaller cost than others.
+Calculating these fixed-KL intervals reveals the ambiguity that remains
+even after the upper bounds have been made sharp.
+If the interval is large, we can conclude that KL on its own
+does allow a ``large play''.
+\emph{Knowing how large the play is exactly what allows us to think
+about whether it is worthwhile to go beyond controlling KL.}
+The rest of this section develops these ideas and connects them
+to standard concepts in mathematics.
+
+Fix the data law \(P\) and cost \(c\), and let \(Q\) range over all
+probability laws on \(\cX\). Define the two endpoints
+\begin{equation}
+ \begin{split}
+ f_P(\kappa)&=\min_{Q:\,\KL(P, Q)=\kappa}d_c(P,Q),\\
+ g_P(\kappa)&=\max_{Q:\,\KL(P, Q)=\kappa}d_c(P,Q).
+ \end{split}
+ \label{eq:fixed-kl-endpoints}
+\end{equation}
+Here KL levels range over the attainable values in \([0,+\infty]\).
+The extrema exist in our finite setting; \cref{app:finiteness}
+gives the compactness argument. These are the sharp bounds in
+\[
+ f_P\bigl(\KL(P, Q)\bigr)
+ \le d_c(P,Q)\le
+ g_P\bigl(\KL(P, Q)\bigr).
+\]
+The preceding inequalities studied the upper endpoint. The lower
+endpoint answers an equally relevant question: \emph{how small could
+the cost discrepancy be at this same KL?} A large gap between the
+endpoints means that likelihood alone leaves substantial uncertainty
+about task performance.
+Conversely, a small gap means no such wiggle room,
+which would mean that controlling KL alone could be sufficient
+to get a good control on the task cost.
+
+\paragraph{From fixed values to error budgets.}
+Usually we know an upper bound on a discrepancy, rather than its exact
+value. The corresponding sharp conversion functions are called
+\emph{moduli of continuity}. At the fixed reference \(P\), define
+\begin{equation}
+ \omega_{D\to c}(\kappa;P)
+ =\sup_{Q:\,\KL(P, Q)\le\kappa}d_c(P,Q).
+ \label{eq:cost-modulus}
+\end{equation}
+This is the modulus of continuity of the cost discrepancy with respect to KL. It asks:
+\emph{how large can the cost discrepancy be when KL is at most \(\kappa\)?}
+In the other direction, define
+\begin{equation}
+ \omega_{c\to D}(s;P)
+ =\sup_{Q:\,d_c(P,Q)\le s}\KL(P, Q).
+ \label{eq:kl-modulus}
+\end{equation}
+This is the modulus of continuity of KL with respect to cost discrepancy. It asks:
+\emph{how large can KL be when the cost discrepancy is at most \(s\)?}
+The arrows specify which discrepancy controls the other; both formulas
+use forward KL, \(\KL(P, Q)\).
+
+\begin{proposition}[The sharp conversions from fixed-KL endpoints]
+\label{prop:endpoints-moduli}
+For the fixed \(P,c\),
+\begin{equation}
+ \begin{split}
+ \omega_{D\to c}(\kappa;P)&=\sup_{\kappa'\le\kappa}g_P(\kappa'),\\
+ \omega_{c\to D}(s;P)&=\sup\{\kappa:f_P(\kappa)\le s\}.
+ \end{split}
+ \label{eq:endpoints-moduli}
+\end{equation}
+Both moduli are nondecreasing. They are the smallest nondecreasing
+functions giving, respectively, the bounds
+\[
+ d_c(P,Q)\le\omega_{D\to c}\bigl(\KL(P, Q);P\bigr),
+ \qquad
+ \KL(P, Q)\le\omega_{c\to D}\bigl(d_c(P,Q);P\bigr).
+\]
+\end{proposition}
+
+\begin{proof}
+At KL level \(\kappa\), the largest cost discrepancy is \(g_P(\kappa)\),
+and some cost discrepancy is at most \(s\) exactly when
+\(f_P(\kappa)\le s\).
+Taking the indicated suprema proves \cref{eq:endpoints-moduli}.
+Increasing either budget enlarges its feasible set, proving
+monotonicity. If a nondecreasing function \(g\) satisfies
+\(d_c(P,Q)\le g(\KL(P, Q))\), then every \(Q\) with KL at most
+\(\kappa\) has discrepancy at most \(g(\kappa)\). Taking the supremum proves
+\(\omega_{D\to c}(\kappa;P)\le g(\kappa)\). The other direction is identical.
+\end{proof}
+
+Thus the upper endpoints determine the \(D\to c\) modulus, while the
+lower endpoints determine the \(c\to D\) modulus. In particular, if
+\(g_P\) is nondecreasing, it already equals \(\omega_{D\to c}\).
+An increasing lower bound can be read in the opposite direction by
+inverting it.
+
+\begin{proposition}[Inverting a lower bound]
+\label{prop:lower-bound-inversion}
+Suppose \(f:[0,+\infty]\to[0,+\infty]\) is strictly increasing and
+\(f(\KL(P, Q))\le d_c(P,Q)\) for every \(Q\). Then
+\[
+ \omega_{c\to D}(f(\kappa);P)\le\kappa.
+\]
+If some \(Q\) has \(\KL(P, Q)=\kappa\) and \(d_c(P,Q)=f(\kappa)\),
+equality holds. In particular, when the sharp lower endpoint \(f_P\)
+is strictly increasing,
+\(\omega_{c\to D}(s;P)=f_P^{-1}(s)\) for \(s\) in its range.
+\end{proposition}
+
+\begin{proof}
+If \(d_c(P,Q)\le f(\kappa)\), then
+\(f(\KL(P, Q))\le f(\kappa)\). Strict increase gives
+\(\KL(P, Q)\le\kappa\). A law attaining the lower bound at \(\kappa\)
+also attains this KL budget, proving equality.
+\end{proof}
+
+This explains why we care about the converse modulus: it describes
+the lower-bound side of the same comparison. A small lower endpoint
+and a large upper endpoint allow models of very different task quality
+to have exactly the same KL. The examples below will compute both
+endpoints and exhibit such models.
+
+\paragraph{Uniform comparisons over data laws.}
+If the reference law is unknown, we may want a conversion valid for
+every \(P\) in a class \(\mathcal P\). The \emph{uniform moduli} are
+\[
+ \omega^{\mathcal P}_{D\to c}(\kappa)
+   =\sup_{P\in\mathcal P}\omega_{D\to c}(\kappa;P),
+ \qquad
+ \omega^{\mathcal P}_{c\to D}(s)
+   =\sup_{P\in\mathcal P}\omega_{c\to D}(s;P).
+\]
+Enlarging \(\mathcal P\) can only increase these worst-case conversion
+bounds. For example, with \(0\le c\le C_{\max}\), take
+\(\mathcal P_\sigma=\{P:\sigma_P(c)\le\sigma\}\).
+\Cref{prop:forward-variance} gives
+\[
+ \omega^{\mathcal P_\sigma}_{D\to c}(\kappa)
+ \le 2\sigma\sqrt\kappa+C_{\max}\kappa.
+\]
+This reformulates the earlier sharpness question: among all data laws
+whose cost variance is at most \(\sigma^2\), how much can cost change
+under a KL budget \(\kappa\)? Throughout, \(Q\) still ranges over all laws.
+
+\paragraph{The norm-comparison analogy.}
+For two norms on \(\R^d\), sharp bounds
+\(\alpha\|z\|_a\le\|z\|_b\le\beta\|z\|_a\) place
+\(\|z\|_b\) between \(\alpha r\) and \(\beta r\) when
+\(\|z\|_a=r\). The ratio \(\beta/\alpha\) measures the
+multiplicative spread at this fixed input norm.
+For norms the sharp budget conversion is linear in the budget \(r\):
+substituting \(z=ru\) gives
+\[
+ \sup_{\|z\|_a\le r}\|z\|_b
+ =r\sup_{\|u\|_a\le1}\|u\|_b
+ \qquad(r>0).
+\]
+Norms scale linearly under multiplication, which forces this form.
+Our cost--KL conversions instead involve functions such as
+\(\sqrt\kappa\) and \(1-e^{-\kappa}\). The shared question is how tightly
+one measurement determines another. Equivalence of finite-dimensional
+norms also gives a positive lower endpoint when the fixed input norm is
+positive. The examples below show that the cost discrepancy can instead
+be zero at positive KL. \Cref{app:moduli-analysis}
+explains the terminology's connection to continuity and approximation.
+
+We can ask the same questions for other probability metrics, such as
+TV: which cost discrepancies are compatible with a fixed distance,
+and what are the sharp conversion functions? The next section will
+examine TV alongside KL.
+
+\section{Examples of task cost control at fixed KL}
+\label{sec:binary}
+We now use point-mass data distributions to illustrate how tightly
+fixing forward KL controls task cost. Upper bounds alone leave open
+whether the smallest and largest compatible costs are close; here we
+characterize the entire interval and show that they need not be.
+For small \(\kappa\), its width is approximately \(\kappa\) times the
+off-data cost span, so whether it is large depends on the attainable
+\(\kappa\), discussed in the next section.
+
+\subsection{The case of point-mass data distributions}
+\label{sec:fixed-kl-interval}
+
+We first calculate the full interval of expected costs at a fixed
+forward KL for data concentrated on a single successful outcome.
+Write \(P=\delta_{x^\star}\), where \(c(x^\star)=0\).
+The KL constraint fixes \(Q(x^\star)\); we can choose how to
+distribute the remaining probability.
+
+\begin{proposition}[Cost interval for a point-mass reference]
+\label{prop:point-mass-cost-interval}
+Let \(\cX\) have at least two elements, fix \(x^\star\in\cX\), and
+let \(c:\cX\to\R\) satisfy \(c(x^\star)=0\).
+For \(P=\delta_{x^\star}\) and \(\kappa\ge0\),
+\begin{equation}
+ \{\E_Q[c]:\KL(P, Q)=\kappa\}
+ =(1-e^{-\kappa})
+ \left[\min_{x\ne x^\star}c(x),\,
+       \max_{x\ne x^\star}c(x)\right].
+ \label{eq:point-mass-cost-interval}
+\end{equation}
+The endpoints are attained by placing all probability outside
+\(x^\star\) on a minimizing or maximizing outcome, respectively.
+\end{proposition}
+
+\begin{proof}
+By algebra, the KL constraint is \(-\log Q(x^\star)=\kappa\). Thus every
+admissible law has the form
+\begin{equation}
+ Q=e^{-\kappa}\delta_{x^\star}+(1-e^{-\kappa})R,
+ \qquad R(x^\star)=0.
+ \label{eq:point-mass-mixture}
+\end{equation}
+Since $c(x^\star)=0$, we have
+$\E_Q[c]=(1-e^{-\kappa})\E_R[c]$,
+where we are free to choose $R$ subject to $R(x^\star)=0$.
+Point masses \(R\) at a cost minimizer or maximizer give the two
+endpoints. Mixtures of these point masses give every intermediate value.
+\end{proof}
+
+In words, the result states that
+KL fixes the mass \(1-e^{-\kappa}\) assigned away from the demonstrated
+outcome; its average cost can be anywhere between the smallest and
+largest costs available there.
+
+We note in passing that total variation records the same mass:
+\[
+ \tv{P-Q}=1-Q(x^\star)=1-e^{-\kappa}.
+\]
+Thus all models in the interval also have the same TV.
+The width of the cost interval tells us exactly how much task performance
+can vary while both distributional discrepancies remain unchanged.
+
+\subsection{Sequence examples: incorrect steps and final answers}
+\label{sec:binary-intervals}
+
+We now ask how models with the same sequence KL can differ in two
+assessments of a generated solution: its number of incorrect steps
+and the correctness of its final answer. Applying
+\cref{prop:point-mass-cost-interval} to each cost gives the exact
+range of possible performance.
+
+Now take \(\cX=\{0,1\}^T\), with \(T\ge2\), and set
+\(x^\star=0^T\).
+Think of this as a simplified model of generating a solution to a
+mathematical problem.
+For example, let a one record an error in a $T$-step argument, and let
+the final bit record whether the derived answer is incorrect.
+With this, there are two natural assessments of a derivation $x_{1:T}\in \{0,1\}^T$:
+\begin{equation}
+ c_{\mathrm{cnt}}(x_{1:T})=\sum_{t=1}^T x_t,\qquad
+ c_{\mathrm{fin}}(x_{1:T})=x_T.
+ \label{eq:binary-cost}
+\end{equation}
+The \emph{error count} \(c_{\mathrm{cnt}}\) measures how many steps are wrong. The
+\emph{terminal cost} \(c_{\mathrm{fin}}\) measures whether the final
+answer is wrong; earlier mistakes matter only through their effect
+on that answer.
+Under $P=\delta_{0^T}$, the data distribution has zero cost under
+either assessment.
+
+\begin{proposition}[Error count at fixed KL]
+\label{prop:binary-moduli}
+For \(P=\delta_{0^T}\) and every \(\kappa\ge0\),
+\begin{equation}
+ \{\E_Q[c_{\mathrm{cnt}}]:\KL(P, Q)=\kappa\}
+ =[1-e^{-\kappa},\,T(1-e^{-\kappa})],
+ \label{eq:binary-kl-level}
+\end{equation}
+where \(Q\) ranges over all laws on \(\{0,1\}^T\).
+\end{proposition}
+
+\begin{proof}
+Outside \(0^T\), the smallest count is \(1\), attained at (say)
+\(10^{T-1}\), and the largest is \(T\), attained at \(1^T\).
+Apply \cref{prop:point-mass-cost-interval}.
+\end{proof}
+
+At any positive KL, the largest possible expected count is \(T\)
+times the smallest. Even a sharp upper bound leaves this entire
+factor-\(T\) spread. A model that makes just one mistake on each
+erroneous sequence and a model that makes \(T\) mistakes can have
+exactly the same likelihood.
+
+For terminal cost, an erroneous sequence can still end with a correct
+answer. This changes the lower endpoint to zero.
+
+\begin{proposition}[Terminal error at fixed KL]
+\label{prop:terminal-moduli}
+For \(P=\delta_{0^T}\), \(T\ge2\), and every \(\kappa\ge0\),
+\begin{equation}
+ \{\E_Q[c_{\mathrm{fin}}]:\KL(P, Q)=\kappa\}
+ =[0,\,1-e^{-\kappa}],
+ \label{eq:terminal-kl-level}
+\end{equation}
+where \(Q\) ranges over all laws on \(\{0,1\}^T\).
+\end{proposition}
+
+\begin{proof}
+Outside \(0^T\), terminal cost has minimum \(0\), attained at
+\(10^{T-1}\), and maximum \(1\), attained at \(1^T\).
+Apply \cref{prop:point-mass-cost-interval}.
+\end{proof}
+
+At the same KL, one generator can always give the correct final answer,
+while another has error probability \(1-e^{-\kappa}\). Here the cost
+range is fixed at \([0,1]\), independently of the horizon.
+
+The interval widths are governed by $1-e^{-\kappa}$, which approaches
+one for large $\kappa$. For small \(\kappa\),
+\[
+ 1-e^{-\kappa}=\kappa+O(\kappa^2)\sim\kappa.
+\]
+The expected count therefore ranges from approximately \(\kappa\)
+to \(T\kappa\), and final-answer error ranges from zero to approximately
+\(\kappa\). Small sequence KL gives small terminal error, but models
+with that same KL can differ throughout the permitted interval.
+At \(\kappa=1\), that interval extends from zero to approximately
+\(0.632\). Whether such a guarantee is useful depends on the task's
+required accuracy.
+
+\subsection{Attaining the cost bounds: recovery or persistence}
+\label{sec:endpoint-generators}
+We now construct two sequence laws that attain the lower and upper cost
+bounds in the preceding subsection. The construction in the proof of
+\cref{prop:point-mass-cost-interval} suggests taking
+\begin{equation}
+ \begin{split}
+ Q_-&=e^{-\kappa}\delta_{0^T}
+       +(1-e^{-\kappa})\delta_{10^{T-1}},\\
+ Q_+&=e^{-\kappa}\delta_{0^T}
+       +(1-e^{-\kappa})\delta_{1^T}.
+ \end{split}
+ \label{eq:endpoint-generators}
+\end{equation}
+The law $Q_{-}$ attains the lowest cost, while $Q_{+}$ attains the
+highest cost for both cost functions considered in the preceding
+subsection, among all laws $Q$ with
+$\KL(\delta_{0^T}, Q)=\kappa$.
+
+Generation under these laws has a similar form.
+Both start with \(X_1\sim\operatorname{Bernoulli}(1-e^{-\kappa})\).
+Under \(Q_-\), one continues with \(X_{t+1}=0\); under \(Q_+\),
+one continues with \(X_{t+1}=X_t\).
+
+Under both laws, only the last bit is needed to generate the next one.
+This is the Markov property:
+
+\begin{definition}[Markov process]
+A finite-state discrete-time \emph{stochastic process}
+is a collection of random variables $(X_t)_{t=1}^T$ taking values in a
+finite set $\cX$. It has the \emph{Markov property}, and is called a
+\emph{Markov process}, if for every $t<T$ there is a map
+$K_t:\cX^2\to[0,1]$ satisfying
+$\sum_{y\in\cX}K_t(x,y)=1$ for every $x\in\cX$, such that, for every
+$y\in\cX$, $\P$-almost surely,
+\[
+  \P(X_{t+1}=y\mid X_1,\ldots,X_t)=K_t(X_t,y)\,.
+\]
+The rule \(K_t\) is called the process's \emph{transition kernel}.
+If the same kernel \(K\) is used at every time, the process is
+\emph{time-homogeneous}.
+\end{definition}
+After identifying $\cX$ with $[d]$, we can represent $K_t$ by a
+$d\times d$ nonnegative matrix whose $(i,j)$th entry is $K_t(i,j)$
+and whose rows sum to one.
+
+Both laws can be generated by time-homogeneous Markov processes. The
+following table gives one choice of transition kernel for each law,
+specified by $Q(X_{t+1}=1\mid X_t=x)$, along with the resulting costs:
+\begin{center}
+\begin{tabular}{lcc}
+\toprule
+ & \(Q_-\) & \(Q_+\)\\
+\midrule
+\(Q(X_{t+1}=1\mid X_t=x)\) & \(0\) & \(x\)\\
+Expected error count & \(1-e^{-\kappa}\) & \(T(1-e^{-\kappa})\)\\
+Final-answer error & \(0\) & \(1-e^{-\kappa}\)\\
+\bottomrule
+\end{tabular}
+\end{center}
+We can interpret the generation law of $Q_-$ as recovering from an
+initial error, and that of $Q_+$ as persisting that error.
+
+By the preceding results, the intervals also determine both moduli of
+continuity introduced in
+\cref{sec:discrepancy-comparison}. \Cref{ex:discrepancy-comparison}
+asks for these conversions and their interpretation: small expected
+error count forces small KL here, while perfect final answers permit
+arbitrarily large KL.
+In addition, \cref{ex:binary-count} compares the
+Pinsker and exact-TV bounds in a variant with an error opportunity
+at every step; the additional calculations make the same distinction
+between sharpening a guarantee and choosing a better generator.
+
+\section{How does sequence length affect KL control?}
+\label{sec:growing-horizon}
+
+Increasing the length of the training sequences gives us more
+observations, but fitting longer sequences requires predicting more
+tokens. Does the additional information compensate for the additional
+predictions? We compare cases where new positions reuse unknown
+parameters with cases where they introduce additional unknown parameters,
+then return to the resulting task-cost ranges.
+
+Fix a data law \(P\) and a model class \(\mathcal Q\) over infinite
+token sequences. Write \(P_{1:T},Q_{1:T}\) for their length-\(T\)
+prefix laws. At each length \(T\), a learner receives \(n\) independent
+training sequences \(X^{(1)}_{1:T},\ldots,X^{(n)}_{1:T}\) and fits
+a model \(\widehat Q^{(n,T)}\), a law over infinite token sequences.
+Define the \emph{expected sequence KL for $n$ training sequences of
+length $T$} as
+\begin{equation}
+ \kappa_n(T)=\E\!\left[
+ \KL(P_{1:T},\widehat Q_{1:T}^{(n,T)})\right].
+ \label{eq:expected-sequence-kl}
+\end{equation}
+The expectation averages over the training sample with law
+\(P_{1:T}^{\otimes n}\) and any learner randomness.
+The fitted model can change with both \(n\) and \(T\).
+We suppress the superscript \((n,T)\) when the training sample size
+and length are clear, writing \(\widehat Q=\widehat Q^{(n,T)}\).
+Subscripts such as \(1:T\) indicate the prefix being evaluated.
+Unless specified otherwise, we keep \(n\) fixed as \(T\) increases.
+
+For a fixed prediction task, additional training observations cannot
+worsen the best attainable statistical accuracy: a learner can ignore
+them. In particular, from \(n\) longer sequences it can keep only the
+shorter prefixes and run its original procedure. Here we also enlarge
+the prediction task. For an unchanged model \(Q\), the KL chain rule
+in \cref{eq:population-kl} gives
+\[
+ \KL(P_{1:T}, Q_{1:T})
+ \le \KL(P_{1:T+1}, Q_{1:T+1}).
+\]
+Learning from the additional observations can improve the fitted
+model. We ask whether that improvement compensates for the new
+prediction terms.
+
+For models fitted by iterative optimization, exploiting better
+statistical accuracy also calls for a sufficiently small optimization
+error. Thus the appropriate fitting tolerance depends on both the
+amount of data and the sequence length.
+\Cref{sec:finite-class-fitting} makes this balance explicit.
+
+\subsection{Repeated parameters and new parameters}
+\label{sec:parameter-sharing}
+
+A simple estimation problem exhibits both possibilities. First suppose
+all tokens are independent \(\operatorname{Bernoulli}(p)\) variables.
+This defines $P$.
+Estimate their common parameter using the smoothed frequency
+\[
+ \widehat p=
+ \frac{1+\sum_{i=1}^n\sum_{t=1}^T X_t^{(i)}}{nT+2}.
+\]
+(Smoothing avoids the infinite expected KL of the
+ordinary empirical frequency; see \cref{ex:sharing}.)
+The fitted model $\widehat Q^{(n,T)}$ is
+the independent Bernoulli bit model with parameter \(\widehat p\).
+For fixed \(p\in(0,1)\), the large-sample calculation gives
+\begin{equation}
+ \E[(\widehat p-p)^2]\sim\frac{p(1-p)}{nT},
+ \qquad
+ \kappa_n(T)=T\,\E[\kl(p,\widehat p)]
+ \longrightarrow\frac1{2n}
+ \quad(T\to\infty).
+ \label{eq:shared-bernoulli}
+\end{equation}
+\cref{ex:sharing} asks you to prove this and gives hints on the calculation.
+Note that each new
+position supplies another observation of the same unknown parameter.
+The gain in estimation accuracy compensates for the longer prediction
+task, giving $\lim_{T\to\infty}\kappa_n(T)=1/(2n)$.
+
+At the other extreme, let the tokens be independent with unrelated
+parameters \(p_t\). In particular, for $t\ge 1$,
+$X_t$ is Bernoulli with parameter $p_t$.
+Estimate each \(p_t\) separately from the \(n\)
+training sequences, using
+\[
+ \widehat p_t=\frac{1+\sum_{i=1}^n X_t^{(i)}}{n+2}.
+\]
+Each parameter still receives only \(n\) observations. For fixed \(n\),
+each estimation risk remains positive; if \(p_t\in[a,1-a]\) for a
+fixed \(0<a<1/2\), their sum grows linearly with \(T\).
+The large-\(n\) calculation identifies the leading coefficient:
+for fixed \(T\) and \(p_1,\ldots,p_T\in(0,1)\),
+\begin{equation}
+ \kappa_n(T)=\sum_{t=1}^T\E[\kl(p_t,\widehat p_t)]
+ \sim\frac{T}{2n}
+ \quad(n\to\infty).
+ \label{eq:unshared-bernoulli}
+\end{equation}
+Thus the leading estimation cost grows with the number of positions.
+The calculation describes the same fitting method in two model
+classes: one shared parameter versus one parameter per position.
+
+\paragraph{Partial sharing.}
+Fix a known partition \(G_1,G_2,\ldots\) of the positive integer
+positions, ordered by first occurrence. Tokens are independent, with
+\(\P(X_t=1)=p_j\) for \(t\in G_j\).
+Let \(d(T)\) be the number of groups represented among the first \(T\)
+positions, and let \(m_j=|G_j\cap[T]|\). Pool all observations belonging
+to the same group and fit independent bits with the estimated probabilities
+\begin{equation}
+ \widehat p_j=
+ \frac{1+\sum_{i=1}^n\sum_{t\in G_j\cap[T]}X_t^{(i)}}{nm_j+2}.
+ \label{eq:pooled-frequency}
+\end{equation}
+The resulting sequence KL grows with the number of unknown parameters:
+each contributes approximately \(1/(2n)\).
+
+\begin{restatable}[Sequence KL under parameter sharing]{proposition}{sharingrisk}
+\label{prop:sharing-kl}
+In the grouped independent-bit model, fit each probability by the pooled
+smoothed frequency from \(n\) independent length-\(T\) training sequences.
+Fix \(0<a<1/2\) and suppose \(p_j\in[a,1-a]\). Then
+\begin{equation}
+ \kappa_n(T)\asymp_a\frac{d(T)}n,\qquad n,T\ge1.
+ \label{eq:sharing-rate}
+\end{equation}
+Here \(\asymp_a\) means upper and lower bounds by positive constant
+multiples, with constants depending only on \(a\).
+If \(n\min_{1\le j\le d(T)}m_j\to\infty\), then more precisely
+\begin{equation}
+ \kappa_n(T)\sim\frac{d(T)}{2n}.
+ \label{eq:sharing-leading}
+\end{equation}
+\end{restatable}
+
+Each independently estimated parameter therefore contributes approximately
+\(1/(2n)\), regardless of how many positions use it.
+To see the cancellation, group \(j\) supplies \(nm_j\) training
+observations and contributes \(m_j\) terms to the test-sequence KL:
+\[
+ \kappa_n(T)=\sum_{j=1}^{d(T)}m_j\,\E[\kl(p_j,\widehat p_j)]
+ \approx\sum_{j=1}^{d(T)}m_j\frac1{2nm_j}
+ =\frac{d(T)}{2n}.
+\]
+The condition in the proposition says that every pooled sample size
+becomes large, so this approximation is accurate across all groups.
+\Cref{ex:sharing} develops the proof;
+\cref{app:growing-horizon} gives the proof.
+
+The two extremes are \(d(T)=1\) and \(d(T)=T\).
+Intermediate sharing patterns give intermediate growth of the
+estimation cost. For example, using one new parameter for each
+successive block of lengths \(1,2,3,\ldots\) gives
+\(d(T)\) of order \(\sqrt T\).
+A fixed finite collection of known candidate models offers another
+possibility: exact identification can become sufficiently reliable
+that \(\kappa_n(T)\) tends to zero (even with $n$ fixed).
+\Cref{ex:bernoulli-identification} asks for this calculation with
+two Bernoulli candidates.
+
+These comparisons keep the number of independent sequences \(n\)
+fixed, allowing the training-token budget \(nT\) to grow.
+If instead we fix \(L=nT\), write
+\(\kappa'_L(T):=\kappa_{L/T}(T)\). In the fully shared model,
+substituting \(n=L/T\) and \(d(T)=1\) into \cref{eq:sharing-leading}
+gives
+\begin{equation}
+ \kappa'_L(T)\sim\frac{1}{2(L/T)}=\frac{T}{2L}
+ \qquad(L\to\infty).
+ \label{eq:fixed-token-sharing}
+\end{equation}
+Thus, at a fixed large training-token budget, increasing \(T\)
+worsens expected sequence KL, which grows approximately linearly.
+\Cref{ex:sharing-horizon} also asks for the unshared comparison.
+
+For the class with \(p_j\in[a,1-a]\), the order \(d(T)/n\) is also
+\emph{minimax optimal}: no learner improves its worst-case dependence
+on \(n\) and \(d(T)\); see the \hyperref[note:sharing-minimax]{bibliographical notes}.
+
+\begin{restatable}[Learning rates and task-cost intervals]{proposition}{sharingfullcost}
+\label{prop:sharing-full-cost}
+For any \(d\) with \(1\le d(T)\le T\), there exist a data law,
+terminal and counting costs, and estimator families such that, for all
+\(n\ge1,T\ge2\), the estimators have common expected sequence KL
+\(\kappa_n(T)\asymp d(T)/n\) and their expected costs range over exactly
+\[
+ \left[0,1-e^{-\kappa_n(T)/2}\right]
+ \quad\text{and}\quad
+ \left[1-e^{-\kappa_n(T)/2},T(1-e^{-\kappa_n(T)/2})\right],
+\]
+respectively.
+\end{restatable}
+To get this result,
+combine the grouped Bernoulli construction with \cref{sec:binary},
+using tokens \(X_t=(U_t,V_t)\), with costs computed from \(V_{1:T}\).
+\Cref{ex:sharing-costs} develops the proof.
+
+\paragraph{What should we expect for transformers?}
+In a mathematical solution, many steps apply familiar rules, while
+later steps may require combining definitions and intermediate results
+across a long prefix. The statistical question is how much useful
+sharing training discovers. The computational question is whether
+the architecture can carry out the required combinations with its
+available depth, width, and memory.
+The Bernoulli examples isolate the statistical benefit when the sharing
+pattern is known. \Cref{ex:copying-context} studies a separate
+obstruction: a short copying rule whose required memory grows.
+
+For mathematical reasoning, a plausible working hypothesis is
+substantial reuse together with additional demands as problems grow.
+The grouped model gives one way to quantify that hypothesis; the
+number \(d(T)\) counts its independently estimated probabilities.
+Which sharing is useful and executable in a transformer is a question
+about the task and the learned computation.
+\Cref{ex:positionwise-loss} studies a missed parity dependency as an
+exercise in model-class restrictions and optimization accuracy.
+Lecture~18 develops the statistical horizon comparison further.
+
+\subsection{The pitfalls of reporting per-token log loss}
+\label{sec:late-predictions}
+
+As sequence length grows, log loss per token can vanish while
+final-answer error stays constant. For the all-zero law \(P\) and
+persistent generator \(Q_+\) from \cref{eq:endpoint-generators},
+with fixed \(\kappa>0\),
+\begin{equation}
+ \frac{\KL(P_{1:T},(Q_+)_{1:T})}{T}
+ =\frac{\kappa}{T}\longrightarrow0,
+ \qquad
+ \E_{(Q_+)_{1:T}}[c_{\mathrm{fin}}]=1-e^{-\kappa}.
+ \label{eq:endpoint-normalization}
+\end{equation}
+The lower per-token loss comes entirely from dividing the same
+sequence loss by a larger \(T\).
+When comparing different sequence lengths, lower per-token log loss
+alone is therefore insufficient evidence of better final-answer accuracy.
+
+\section{How should we fit a model for good task performance?}
+\label{sec:better-control}
+
+At a given likelihood-fitting accuracy, generated cost can still depend
+strongly on how the model behaves after errors. We can improve this
+behavior in two ways: evaluate consequences that distinguish the models,
+or impose structure on error propagation. Direct task feedback and
+further-ahead prediction will distinguish $Q_-$ and $Q_+$:
+\(Q_-\) returns to zero after its random first bit, while \(Q_+\)
+copies that bit forever (\cref{eq:endpoint-generators}).
+A recovery constraint will improve \(Q_+\) without changing its
+likelihood on the data.
+We first make precise what fitting accuracy means, then develop these
+two approaches and ask which information should persist through recovery.
+
+\subsection{Likelihood fitting at finite accuracy}
+\label{sec:likelihood-pitfall}
+
+The natural unit for our optimization objective is loss per predicted
+token. For \(n\) observed sequences, define empirical \emph{per-token}
+log loss
+\[
+ \widehat L(Q)=\frac1{nT}\sum_{i=1}^n\sum_{t=1}^T
+ -\log Q(X_t^{(i)}\mid X_{<t}^{(i)}).
+\]
+This averages the losses of the \(nT\) prediction tasks.
+We consider this normalization despite the earlier warning
+in \cref{sec:late-predictions},
+because log-loss is conventionally reported per token.\endnote{\textbf{Unequal response lengths.}
+For response \(y_i\) to prompt \(u_i\), let \(T_i\) count its predicted
+tokens and put \(\ell_i(Q)=-\log Q(y_i\mid u_i)\).
+Two averaging conventions are
+\[
+ \widehat L_{\rm token}(Q)=\frac{\sum_i\ell_i(Q)}{\sum_iT_i},
+ \qquad
+ \widehat L_{\rm response}(Q)=\frac1n\sum_i\frac{\ell_i(Q)}{T_i}.
+\]
+The first weights predicted tokens equally; the second weights each
+response's average loss equally. Prompt and padding tokens excluded from
+the loss are also excluded from \(T_i\). Both conventions reduce to the
+formula in \cref{sec:likelihood-pitfall} when every \(T_i=T\).
+Both are used in supervised fine-tuning; see the
+\hyperref[note:sft-normalization]{bibliographical notes}.}
+We express a target optimization accuracy as
+\begin{equation}
+ \widehat L(\widehat Q)\le\min_{Q\in\mathcal Q}\widehat L(Q)+\eta,
+ \qquad \eta\ge0.
+ \label{eq:approximate-fit}
+\end{equation}
+The \emph{optimization tolerance} \(\eta\) bounds the remaining gap to
+the best empirical fit in the class. Certifying such a gap requires
+an optimization analysis; here we ask what achieving it buys us.
+Multiplying by \(T\) gives the corresponding per-sequence tolerance
+\(T\eta\). Maintaining a fixed per-sequence tolerance as \(T\)
+increases would require increasingly accurate per-token optimization.
+
+Increasing the number of examples creates a second reason for finer
+accuracy: to retain a decreasing statistical error, the optimization
+contribution should stay on that same scale.
+More examples can supply more gradient updates within a single pass,
+so a smaller tolerance may be reached without increasing the number
+of passes over the data.
+
+For all-zero data and a class containing \(P=\delta_{0^T}\), the
+minimum empirical loss is zero. In this example the gap is simply the
+observed loss, and its effect on final-answer accuracy is exact.
+
+\begin{proposition}[Different task costs at the same optimization tolerance]
+\label{prop:endpoint-optimization}
+Let \(T\ge2\). Take the laws \(Q_-,Q_+\) in \cref{eq:endpoint-generators} with
+\(\kappa=T\eta\), and let the model class contain \(P,Q_-,Q_+\).
+For every sample of \(n\) sequences from \(P=\delta_{0^T}\),
+\begin{equation}
+ \begin{gathered}
+ \widehat L(P)=0,\qquad
+ \widehat L(Q_-)=\widehat L(Q_+)=\eta,\\
+ \E_{Q_-}[c_{\mathrm{fin}}]=0,\qquad
+ \E_{Q_+}[c_{\mathrm{fin}}]=1-e^{-T\eta}.
+ \end{gathered}
+ \label{eq:endpoint-optimization}
+\end{equation}
+Both generators satisfy \cref{eq:approximate-fit}.
+\end{proposition}
+
+\begin{proof}
+Each data sequence is \(0^T\). Both generators assign it probability
+\(e^{-T\eta}\), so their loss per token is \(\eta\).
+Their terminal costs follow from \cref{eq:endpoint-generators}.
+\end{proof}
+
+For small \(T\eta\), the permitted final-answer error is approximately
+\(T\eta\). For example, \(\eta=10^{-3}\) and \(T=1000\) permit
+anything from zero terminal error to about \(0.632\).
+More demonstrations of \(0^T\) leave this choice unchanged.
+
+If the class consists of \(Q_-,Q_+\) at a fixed \(\kappa>0\), then
+the data law \(P\) is outside the class. Both generators minimize
+empirical and population log loss, yet their terminal costs are zero
+and \(1-e^{-\kappa}\). Thus approximation error can also leave a
+consequential choice between equally fitted models.
+\Cref{ex:fitting-support} develops this comparison with repeated
+errors, and \cref{ex:positionwise-loss} studies a missed dependency
+in a parity task.
+
+\subsection{What does finite-sample likelihood fitting guarantee?\suppmark}
+\label{sec:finite-class-fitting}
+
+Likelihood fitting still gives a positive statistical guarantee.
+The following result states it directly in terms of generated cost,
+with the optimization tolerance retained.
+
+\begin{restatable}[Approximate maximum likelihood controls cost]{theorem}{finitemle}
+\label{thm:finite-mle}
+Let \(\mathcal Q\) be a finite class containing \(P\), and observe
+\(n\) independent sequences with law \(P\).
+Let \(0\le c\le C_{\max}\).
+Suppose \(\widehat Q\in\mathcal Q\) satisfies
+\cref{eq:approximate-fit} for \(\eta\ge0\).
+For \(0<\delta<1\), put
+\[
+ b=\frac{2\log(|\mathcal Q|/\delta)}n+T\eta.
+\]
+With probability at least \(1-\delta\),
+\begin{equation}
+ d_c(P,\widehat Q)\le2\sigma_P(c)\sqrt b+C_{\max}b.
+ \label{eq:finite-mle}
+\end{equation}
+In particular, if \(\E_P[c]=0\), then
+\(\E_{\widehat Q}[c]\le C_{\max}b\).
+\end{restatable}
+
+The proof is in \cref{app:finite-mle}.
+For zero-cost data and \(0\le c\le1\), the theorem separates the two
+contributions to its guarantee:
+\begin{equation}
+ \E_{\widehat Q}[c]\le
+ \underbrace{\frac{2\log(|\mathcal Q|/\delta)}n}_{\text{statistical contribution}}
+ +\underbrace{T\eta}_{\text{optimization contribution}}.
+ \label{eq:finite-mle-zero-cost}
+\end{equation}
+At fixed model class and confidence level, the first term decreases
+as \(1/n\). \emph{Optimizing to statistical accuracy} means keeping
+the optimization contribution on the scale of that statistical term.
+For example, it suffices to choose
+\begin{equation}
+ \eta\le\frac{2\log(|\mathcal Q|/\delta)}{nT}.
+ \label{eq:statistical-accuracy}
+\end{equation}
+Substitution into \cref{eq:finite-mle-zero-cost} gives
+\(\E_{\widehat Q}[c]\le4\log(|\mathcal Q|/\delta)/n\), with probability
+at least \(1-\delta\).
+Even at fixed sequence length, retaining this statistical rate calls
+for a decreasing per-token tolerance as the number of examples grows.
+For a fixed target cost \(s\), it is enough to make
+\(2\log(|\mathcal Q|/\delta)/n+T\eta\le s\).
+
+A fixed tolerance leaves the term \(T\eta\) in the guarantee as
+\(n\) grows.
+\Cref{prop:endpoint-optimization} gives final-answer error
+\(1-e^{-T\eta}\sim T\eta\) when \(T\eta\) is small. Thus the
+optimization contribution has the correct leading order in this example,
+even with infinitely many demonstrations and a fixed cost range.
+
+Lecture~18 develops this comparison for imitation learning.
+The comparison in \cref{sec:growing-horizon} fixes infinite-sequence
+models and varies the length of the observed prefixes. Its Bernoulli
+examples isolate parameter sharing; the present finite-class theorem
+also accounts for optimization tolerance. The number of sequences
+and the token budget specify different learning comparisons.
+
+We now give additional objectives that distinguish generators within
+the accuracy permitted by likelihood fitting.
+
+\subsection{Evaluate consequences of generation}
+\label{sec:generation-objectives}
+
+\paragraph{Direct cost feedback.}
+An evaluator for the task can compare the models through what they
+generate. On the terminal task, it assigns \(Q_-\) expected cost zero
+and \(Q_+\) expected cost \(1-e^{-\kappa}\). This directly supplies
+the distinction that their identical likelihoods leave unresolved.
+If cost can be evaluated on new generations, the objective is
+\begin{equation}
+ \min_\theta\E_{Q_\theta}[c].
+ \label{eq:direct-cost}
+\end{equation}
+The additional information is an assessment of generated sequences,
+including ones absent from the demonstrations. Lecture~19 develops
+reinforcement learning with this feedback, including the policy-gradient
+method for optimizing such an objective. Lectures~20--21 study preference
+feedback and optimization with learned evaluators.
+
+\paragraph{Predict further ahead.}
+\label{sec:multistep}
+
+The existing demonstrations can also distinguish $Q_-$ and $Q_+$
+through a different prediction question. Both have sequence log loss
+\(\kappa\) on \(0^T\), but predicting its final token from the empty
+prefix gives
+\begin{equation}
+ -\log Q_-(X_T=0)=0,\qquad
+ -\log Q_+(X_T=0)=\kappa.
+ \label{eq:endpoint-multistep}
+\end{equation}
+This loss prefers the model that recovers. The target is observed in the
+demonstration; predicting it without the intervening tokens evaluates
+the model's longer consequences.
+
+A further-ahead prediction loss asks the model to predict \(X_{t+k}\)
+from \(X_{\le t}\), before the intervening tokens are supplied.
+One possible objective adds
+\begin{equation}
+  \mathcal L_k(\theta)
+  =-\sum_{t=0}^{T-k}
+  \log Q_\theta(X_{t+k}\mid X_{\le t})
+  \label{eq:multistep-loss}
+\end{equation}
+to next-token loss. This evaluates a longer consequence of the model's
+conditional probabilities.
+
+For a general autoregressive model, however,
+\begin{equation}
+\begin{split}
+ Q_\theta(X_{t+k}=a\mid x_{\le t})
+ =\sum_{y_{1:k-1}\in[N]^{k-1}}
+ &\left[\prod_{j=1}^{k-1}
+ Q_\theta(y_j\mid x_{\le t},y_{<j})\right]\\
+ &{}\cdot Q_\theta(a\mid x_{\le t},y_{1:k-1}).
+\end{split}
+\label{eq:multistep-marginal}
+\end{equation}
+The intervening tokens are unobserved in this prediction problem.
+Naive evaluation enumerates \(N^{k-1}\) possibilities.
+Using the intervening \emph{observed} tokens would return to a
+one-step conditional. A separate prediction head can be fitted directly
+to the observed input--target pairs, but requiring it to match the
+marginal in \cref{eq:multistep-marginal} brings back this computation.
+\Cref{ex:multistep} compares naive enumeration with the savings
+available from Markov structure.
+
+\paragraph{Fit reverse KL.}
+\label{sec:reverse-kl}
+
+Reverse KL uses concentration of the cost under \(P\) to control
+generated cost (\cref{thm:reverse-cost}). To assess it as a fitting
+objective, we ask which generators it accepts and what information
+is needed to evaluate it.
+
+Forward KL averages conditional discrepancies at data prefixes.
+Reversing its arguments averages them at generated prefixes:
+\begin{equation}
+ \KL(Q, P)
+ =\sum_{t=1}^T\E\!\left[
+ \KL\bigl(Q(\,\cdot\mid\widetilde X_{<t})
+       , P(\,\cdot\mid\widetilde X_{<t})\bigr)\right],
+ \qquad \widetilde X_{1:T}\sim Q.
+ \label{eq:reverse-chain}
+\end{equation}
+The generator's own erroneous histories now contribute.
+
+\paragraph{Successful generation and the data's support.}
+For \(P=\delta_{0^T}\), every law with finite reverse KL equals \(P\).
+In particular, at \(\kappa>0\), the two laws satisfy
+\[
+ \E_{Q_-}[c_{\mathrm{fin}}]=0,\qquad
+ \KL(Q_-, P)=\KL(Q_+, P)=+\infty.
+\]
+Reverse KL excludes both the persistent error and the successful
+recovery path \(10^{T-1}\). It requires staying within the support
+of the demonstrated distribution; direct task feedback accepts any
+successful sequence.
+
+This support requirement can still allow many successful generators.
+Let \(P\) be uniform on a set \(\mathcal A\) of \(M\) zero-cost
+sequences. Every \(Q\) supported on \(\mathcal A\) satisfies
+\[
+ \KL(Q, P)=\log M-H(Q)\le\log M,\qquad \E_Q[c]=0.
+\]
+A generator that always selects one demonstrated solution has zero
+task cost, even though it does not reproduce the data frequencies.
+
+\paragraph{What the two directions distinguish.}
+Reverse KL penalizes implausible generated behavior; forward KL penalizes
+missing data-supported behavior. Two constructions make the distinction
+precise.
+
+\begin{proposition}[Adding bad outcomes and omitting good ones]
+\label{prop:kl-directions}
+Let \(P,R\) be probability laws on the finite domain \(\cX\).
+\begin{enumerate}[(i)]
+\item For \(0<\varepsilon<1\), the mixture
+\(Q=(1-\varepsilon)P+\varepsilon R\) satisfies
+\begin{equation}
+  \KL(P, Q)\le-\log(1-\varepsilon),\qquad
+  \E_Q[c]=(1-\varepsilon)\E_P[c]
+                 +\varepsilon\E_R[c].
+  \label{eq:kl-contamination}
+\end{equation}
+\item For an event \(B\subset\cX\) with \(0<P(B)<1\), define the
+conditional law \(Q=P(\,\cdot\mid B)\) on the same domain by
+\[
+ Q(x):=\frac{P(x)\I\{x\in B\}}{P(B)},\qquad x\in\cX.
+\]
+Then
+\begin{equation}
+  \KL(Q, P)=-\log P(B),\qquad
+  \KL(P, Q)=+\infty.
+  \label{eq:kl-omission}
+\end{equation}
+\end{enumerate}
+\end{proposition}
+
+\begin{proof}
+For (i), \(Q(x)\ge(1-\varepsilon)P(x)\) bounds each log ratio
+under \(P\); expectation is linear in the law. For (ii), write
+\[
+ P=P(B)Q+(1-P(B))P(\,\cdot\mid B^c).
+\]
+The components have disjoint supports, so the sharpness calculation
+following \cref{prop:positive-data} gives \(\KL(Q,P)=-\log P(B)\).
+Also, \(Q(B^c)=0<P(B^c)\), so \(\KL(P,Q)=+\infty\).
+\end{proof}
+
+In (i), the forward-KL bound is independent of how costly the added
+outcomes are. If the data have zero cost and \(R\) always incurs cost
+\(C_{\max}\), the generated cost is \(\varepsilon C_{\max}\).
+In (ii), discarding half the data probability costs only \(\log2\)
+in reverse KL. Thus a moderate reverse KL can coexist with substantial
+loss of coverage. For the present zero-cost task, discarding successful outputs
+can preserve perfect task performance. A requirement to reproduce
+those outputs would need to be part of the task objective.
+
+\paragraph{The information needed for reverse-KL fitting.}
+What information would let us minimize this discrepancy?
+
+Controlling reverse KL poses an additional learning problem:
+\begin{equation}
+ \KL(Q_\theta, P)
+ =\E_{Q_\theta}[\log Q_\theta-\log P].
+ \label{eq:reverse-objective}
+\end{equation}
+Generating a sequence lets us evaluate its model probability.
+Its probability under the unknown data law is another matter.
+Using only the empirical data law would give infinite reverse KL to
+every generator that assigns positive mass outside the training set.
+Target-density or density-ratio estimation requires further assumptions
+about how the data generalize.
+
+There is also a statistical difficulty hidden in the support condition.
+Without prompts, replaying complete observed sequences gives a law
+supported on \(P\). With externally supplied prompts \(U\sim\mu\), the
+model must answer new prompts as well. If the correct answer is a
+deterministic bit \(f(U)\), finite reverse KL requires answering correctly
+at \emph{every} prompt of positive \(\mu\)-probability.
+
+\paragraph{Rare prompts can make support recovery expensive.\suppmark}
+Consider two known candidate answer rules that disagree on prompts of
+total probability \(\alpha\). From \(n\) independent demonstrations,
+the smallest worst-case probability of returning a model with infinite
+reverse KL is exactly
+\[
+ \frac12(1-\alpha)^n.
+\]
+Until a distinguishing prompt occurs, the data give no information about
+which rule is correct. In contrast, a predictor that randomizes equally
+between the two answers on those prompts has forward KL
+\(\alpha\log2\) and error probability \(\alpha/2\).
+\Cref{app:conditional-support} states and proves this result, including
+an example with \(\alpha=2^{-m}\) on prompts containing \(2m\) bits.
+Thus even a two-model class can require exponentially many random
+demonstrations to meet the reverse-KL support requirement.
+
+\Cref{app:variational} explains how variational methods exploit a
+target density known up to normalization, and how a known cost can be
+used to define such a target.
+
+\subsection{Recovery at unchanged likelihood}
+\label{sec:stability}
+
+Recovery limits how errors affect later generation. If the model's
+transitions contract discrepancies between state distributions by a
+factor \(\rho<1\), the discrepancy at the next step is at most \(\rho\)
+times the current discrepancy plus the new prediction error. Repeated
+errors therefore contribute a geometric sum, giving a bound at every
+time. We first establish this bound, then illustrate how recovery can
+improve task performance at unchanged likelihood.
+
+\paragraph{A general error-propagation bound.}
+For a law \(\mu\) and kernel \(K\), write
+\[
+ (\mu K)(y)=\sum_x\mu(x)K(x,y).
+\]
+Let \(P,Q\) be Markov laws with kernels \(K_t,\widehat K_t\), respectively,
+for the transition from time \(t\) to time \(t+1\). Their marginal laws
+\(\mu_t=P(X_t\in\cdot)\) and \(\nu_t=Q(X_t\in\cdot)\) obey
+\(\mu_{t+1}=\mu_tK_t\) and \(\nu_{t+1}=\nu_t\widehat K_t\).
+
+\begin{theorem}[Local error and forgetting]
+\label{thm:markov-stability}
+Suppose that, for \(1\le t<T\), the fitted kernels satisfy
+\begin{equation}
+ \tv{\alpha\widehat K_t-\beta\widehat K_t}
+ \le\rho\tv{\alpha-\beta}
+ \quad\text{for all laws }\alpha,\beta,\qquad 0\le\rho\le1,
+ \label{eq:markov-contraction}
+\end{equation}
+and their local errors under the true process satisfy
+\begin{equation}
+ \sum_x\mu_t(x)\tv{K_t(x,\cdot)-\widehat K_t(x,\cdot)}
+ \le\varepsilon_{t+1}.
+ \label{eq:markov-local-error}
+\end{equation}
+Then \(e_t=\tv{\mu_t-\nu_t}\) satisfies
+\begin{equation}
+ \begin{split}
+ e_{t+1}&\le\rho e_t+\varepsilon_{t+1},\\
+ e_T&\le\rho^{T-1}e_1+
+       \sum_{t=2}^T\rho^{T-t}\varepsilon_t.
+ \end{split}
+ \label{eq:stability-recursion}
+\end{equation}
+If \(\rho<1\), \(e_1\le\varepsilon\), and
+\(\varepsilon_t\le\varepsilon\) for all \(2\le t\le T\), then
+\(e_t\le\varepsilon/(1-\rho)\) at every time. Consequently, every
+\(f:\cX\to[0,1]\) satisfies
+\begin{equation}
+ \max_{1\le t\le T}
+ \left|\E_P[f(X_t)]-\E_Q[f(X_t)]\right|
+ \le\frac{\varepsilon}{1-\rho}.
+ \label{eq:frequency-control}
+\end{equation}
+\end{theorem}
+
+\begin{proof}
+Insert \(\mu_t\widehat K_t\) between the two next-state laws:
+\[
+ \tv{\mu_tK_t-\nu_t\widehat K_t}
+ \le \tv{\mu_tK_t-\mu_t\widehat K_t}
+      +\tv{\mu_t\widehat K_t-\nu_t\widehat K_t}
+ \le\varepsilon_{t+1}+\rho e_t.
+\]
+Iteration gives \cref{eq:stability-recursion}. Under the uniform
+error bounds, \(e_t\le\varepsilon\sum_{j=0}^{t-1}\rho^j
+\le\varepsilon/(1-\rho)\). Apply \cref{prop:tv-cost} to \(f\) at
+each time and take the maximum.
+\end{proof}
+
+The factor \(\rho^{T-t}\) measures how much the subsequent transitions
+attenuate an error introduced at time \(t\). An initial error can
+decay for \(T-1\) steps; a final prediction error contributes without
+attenuation. Repeated local errors contribute a geometric sum.
+
+For a finite-state kernel, the smallest possible contraction factor is
+\begin{equation}
+ \rho(\widehat K)
+ =\max_{x,x'}\tv{\widehat K(x,\cdot)-\widehat K(x',\cdot)}.
+ \label{eq:dobrushin}
+\end{equation}
+\Cref{ex:stability} proves this characterization.
+
+\paragraph{Recovery in the binary example.}
+We now improve the persistent law \(Q_+\) by giving
+each error a chance to be corrected. This changes the generated cost
+while leaving its likelihood on the data unchanged.
+
+Fix \(P=\delta_{0^T}\) and \(\kappa\ge0\). Let \(Q_r\) use the same
+first-bit distribution as $Q_-$ and $Q_+$, followed by
+\[
+ \begin{gathered}
+ Q_r(X_1=1)=1-e^{-\kappa},\\
+ Q_r(X_{t+1}=1\mid X_t=0)=0,\qquad
+ Q_r(X_{t+1}=0\mid X_t=1)=r,\quad 1\le t<T,
+ \end{gathered}
+\]
+where \(0\le r\le1\). Once an error is corrected, all later bits
+are zero. The choices \(r=0\) and \(r=1\) give \(Q_+\) and \(Q_-\),
+respectively.
+
+\begin{proposition}[Recovery reduces cost at unchanged likelihood]
+\label{prop:recovery}
+For this family and \(T\ge2\),
+\begin{equation}
+ \KL(P, Q_r)=\kappa,\qquad
+ \E_{Q_r}[c_{\mathrm{fin}}]
+ =(1-e^{-\kappa})(1-r)^{T-1}.
+ \label{eq:endpoint-recovery}
+\end{equation}
+For \(r>0\),
+\begin{equation}
+ \E_{Q_r}[c_{\mathrm{cnt}}]
+ =(1-e^{-\kappa})\frac{1-(1-r)^T}{r}
+ \le\frac{1-e^{-\kappa}}r.
+ \label{eq:endpoint-recovery-count}
+\end{equation}
+At \(r=0\), the expected count is \(T(1-e^{-\kappa})\).
+\end{proposition}
+
+\begin{proof}
+The all-zero path has probability \(e^{-\kappa}\), independently
+of \(r\). Also,
+\[
+ Q_r(X_t=1)=(1-e^{-\kappa})(1-r)^{t-1},
+\]
+since the first bit must be wrong and each subsequent correction
+must fail. Taking \(t=T\) gives terminal error; summing over \(t\)
+gives the expected count.
+\end{proof}
+
+At a fixed positive recovery probability, terminal error decays
+geometrically and expected error count stays bounded as the horizon
+grows. An erroneous run has geometric duration with mean \(1/r\)
+before truncation at the horizon. Likelihood evaluates
+the probability of the initial error; the recovery rule determines
+how costly that error becomes.
+
+For \(Q_r\), the two rows differ by \(1-r\), so its kernels
+after the first token have contraction factor \(1-r\).
+The initial discrepancy is \(e_1=1-e^{-\kappa}\), and all subsequent
+local errors under \(P\) are zero. The theorem therefore gives
+\[
+ e_T\le(1-r)^{T-1}(1-e^{-\kappa}),
+\]
+which is exactly the terminal cost in \cref{eq:endpoint-recovery}.
+\Cref{ex:stability} adds fresh errors at every step and computes the
+resulting long-run error level. The next question is how to obtain
+recovery while retaining information the task needs.
+
+\subsection{What should be forgotten?}
+\label{sec:selective-memory}
+
+Random resets give a simple mathematical way to enforce forgetting.
+For any kernel \(K\) and reset law \(\pi_{\rm reset}\), the kernel
+\[
+ K_r(x,\cdot)=(1-r)K(x,\cdot)+r\pi_{\rm reset}(\cdot)
+\]
+has contraction factor at most \(1-r\).
+A reset makes the two initial states use the same distribution.
+But forgetting everything can erase exactly the information a task needs.
+A proof generator must retain the theorem being proved and useful facts
+established earlier.
+
+Limited context and contraction are different properties. The rule
+\(X_{t+1}=X_t\) uses only one token of context and preserves its initial
+bit forever. During generation, recent tokens can keep transmitting old
+information. Restricting a transformer's accessible prefix therefore
+does not establish \cref{eq:markov-contraction}.
+
+For prompting, a sliding window creates a more immediate difficulty:
+a fact in the original prompt can leave the accessible context before
+the model has carried it forward. Subsequent predictions then have no
+direct access to it. Generated reminders can preserve information, as
+in the copying example, but can also introduce errors into what is retained.
+Keeping the original prompt or verified task information separately
+provides a more reliable source than repeatedly reconstructing it from
+generated text.
+
+A more useful design separates persistent task information \(M\) from
+a revisable working state \(R_t\):
+\begin{equation}
+ S_t=(M,R_t),\qquad
+ R_{t+1}=g_M(R_t,\Xi_{t+1}).
+ \label{eq:persistent-working-memory}
+\end{equation}
+Conditional on the same \(M\), the working dynamics can forget
+perturbations while \(M\) retains the problem and trusted information.
+For example, in proof generation this suggests retaining the problem
+statement and checked lemmas while restarting a failed attempt.
+The mathematical question is which state differences can be made
+contractive without destroying information the task needs.
+An explicit state-space model gives a way to express this separation.
+
+\section{Representing the information that should persist}
+\label{sec:state-space}
+
+A long computation may need an early definition,
+a constraint, or a fact established many steps ago.
+A fixed number of recent observations can be an inconvenient representation
+of this information. A \emph{state-space model} instead gives an explicit
+state and a rule for maintaining it.
+
+One nonlinear stochastic model is
+\begin{equation}
+ S_{t+1}=f_\theta(S_t,\Xi_{t+1}),\qquad
+ X_{t+1}=g_\theta(S_{t+1},\Upsilon_{t+1}).
+ \label{eq:nonlinear-ssm}
+\end{equation}
+The initial law of \(S_0\) and the laws of the noise arguments
+complete the model. Assume here that the noise pairs are independent
+across time, that the two noises within a pair are independent, and
+that they are independent of \(S_0\).
+The state process is Markov. The observation process is a
+\emph{hidden Markov process}: its dependence is mediated by an unobserved,
+or \emph{latent}, state. Its observations need not themselves be Markov.
+
+A state can preserve a component for as long as needed by copying it.
+For instance, one coordinate can retain a bit learned at the beginning
+of the sequence, while others store later facts or working information.
+This permits long memory with a fixed update rule.
+Storing \(k\) independent bits requires at least \(2^k\) distinct states;
+a vector of \(k\) binary coordinates is a compact way to describe that
+large state space. Selecting what to store is part of the modeling problem.
+
+These are old questions in sequence modeling. In engineering, state
+coordinates may describe position, velocity, temperature, or other
+physical quantities, and physical knowledge suggests their evolution
+and measurement equations. In language tasks, a useful state
+representation is less directly specified. In both cases, the state
+assumption relates many observations through the same evolution rule.
+
+\subsection{The statistical cost of hidden states}
+\label{sec:latent-likelihood}
+
+The learner sees observations, so maximum likelihood must sum over the
+hidden explanations of those observations.
+For a finite HMM, write \(J_t\in[d]\) for its hidden-state label and set
+\[
+ A_{ij}=\P(J_{t+1}=i\mid J_t=j),\qquad
+ C_{aj}=\P(X_t=a\mid J_t=j).
+\]
+Columns of \(A\in\R^{d\times d}\) are next-state distributions;
+columns of \(C\in\R^{N\times d}\) are emission distributions.
+Both matrices are column-stochastic.\endnote{\textbf{Matrix and kernel conventions.}
+This convention matches column-vector state probabilities; the earlier
+kernel notation is \(K(j,i)=A_{ij}\).}
+With initial distribution \(\pi\), the likelihood is
+\begin{equation}
+ Q_\theta(X_{1:T})=
+ \sum_{j_{0:T}\in[d]^{T+1}}
+ \pi_{j_0}\prod_{t=1}^T A_{j_tj_{t-1}}C_{X_tj_t},
+ \qquad \theta=(\pi,A,C).
+ \label{eq:hmm-likelihood}
+\end{equation}
+Naive evaluation visits exponentially many trajectories.
+HMM structure allows the sum to be computed in \(O(Td^2)\) operations
+by a forward recursion; \cref{ex:latent-likelihood} asks for this
+algorithm. When \(d=2^k\), even this dependence on the state count can
+be expensive.
+
+If hidden states were observed, transition and emission counts would
+give direct frequency estimates. With hidden states, the corresponding
+posterior expected counts depend on the current parameters.
+The sum inside \(-\log Q_\theta(X_{1:T})\) couples the transition and
+emission parameters. For continuous states, the sum becomes an integral
+over trajectories. Variational approximation to this likelihood is
+outlined in \cref{app:latent-variational}.
+
+There is also an important computationally simpler use of a recurrent
+state. Suppose a predictor fixes \(R_0\) and computes
+\[
+ R_t=h_\theta(R_{t-1},X_t),\qquad
+ Q_\theta(\,\cdot\mid X_{\le t})=q_\theta(R_t).
+\]
+The observed tokens and parameters determine every \(R_t\).
+Teacher-forced likelihood is evaluated and differentiated through that
+recursion. The issue requiring the sum in \cref{eq:hmm-likelihood}
+is stochastic unobserved state trajectories; a deterministically
+computed memory is available during likelihood evaluation.
+
+\subsection{Discrete processes in vector spaces}
+\label{sec:vector-bridge}
+
+To connect this discussion to linear models, represent each token by its
+one-hot vector:
+\[
+ Z_t=e_{X_t}\in\R^N,\qquad
+ \mathcal F_t=\sigma(X_1,\ldots,X_t).
+\]
+The notation \(\mathcal F_t\) records the information in the observations
+through time \(t\).
+
+\begin{proposition}[Conditional probabilities as a vector mean]
+\label{prop:one-hot}
+For every discrete process, define
+\[
+ P_t=\E[Z_{t+1}\mid\mathcal F_t],\qquad
+ E_{t+1}=Z_{t+1}-P_t.
+\]
+Then
+\begin{equation}
+ Z_{t+1}=P_t+E_{t+1},\qquad
+ \E[E_{t+1}\mid\mathcal F_t]=0,\qquad
+ (P_t)_a=\P(X_{t+1}=a\mid\mathcal F_t).
+ \label{eq:one-hot}
+\end{equation}
+\end{proposition}
+
+\begin{proof}
+Coordinate \(a\) of \(Z_{t+1}\) is \(\I\{X_{t+1}=a\}\).
+Its conditional expectation is the corresponding conditional
+probability. Subtracting that expectation gives the residual identity.
+\end{proof}
+
+A noise sequence with this conditional-mean-zero property is called
+a \emph{martingale difference sequence}.
+The conditional mean \(P_t\) is itself random because it depends on
+the observed history. It contains the entire next-token distribution.
+Writing \(P_t=\phi_t(X_{1:t})\) gives a general autoregression
+\[
+ Z_{t+1}=\phi_t(X_{1:t})+E_{t+1}.
+\]
+Every integrable vector process has this conditional-mean-plus-noise
+representation. Squared prediction loss also has a familiar meaning here:
+for a probability-vector report \(q\),
+\(\lVert e_{X_{t+1}}-q\rVert_2^2\) is the Brier loss of Lecture~3.
+
+For finite Markov states, the conditional mean becomes linear after
+one-hot encoding. In the HMM above, set \(S_t=e_{J_t}\in\R^d\) and
+\(Z_t=e_{X_t}\in\R^N\). Then
+\begin{equation}
+ S_{t+1}=AS_t+W_{t+1},\qquad
+ Z_{t+1}=CS_{t+1}+V_{t+1},
+ \label{eq:linear-ssm}
+\end{equation}
+where the residuals satisfy
+\begin{equation}
+ \E[W_{t+1}\mid\mathcal G_t]=0,\qquad
+ \E[V_{t+1}\mid\mathcal G_t,S_{t+1}]=0,
+ \quad
+ \mathcal G_t=\sigma(S_0,\ldots,S_t,Z_1,\ldots,Z_t).
+ \label{eq:hmm-noise}
+\end{equation}
+Indeed, columns of \(A\) and \(C\) are precisely the relevant conditional
+means. Subtract them to obtain \(W_{t+1}\) and \(V_{t+1}\).
+These residual distributions depend on the hidden state.
+Their conditional-mean properties, rather than independence, make the
+linear representation possible.
+
+Thus a discrete HMM has linear state and observation equations with
+martingale noise. A large finite state space becomes a high-dimensional
+one-hot vector. For an arbitrary process, the entire history can serve
+as a state, but the number of such states grows with time.
+An economical fixed-dimensional linear model is a substantive structural
+assumption.
+
+\section{Learning dynamics through observable prediction}
+\label{sec:identification}
+
+\emph{System identification} asks for state-transition and observation
+equations from observed sequences. We have just seen why a direct
+latent-state likelihood can be difficult to fit. Linear models provide
+another route: first learn to predict from observations, then optionally
+recover a compact state representation.
+
+In \cref{eq:linear-ssm}, now allow \(S_t\in\R^d\) and \(Z_t\in\R^m\),
+with \(A\in\R^{d\times d}\) and \(C\in\R^{m\times d}\).
+The matrix \(A\) maps state coordinates to next-state coordinates;
+each row of \(C\) specifies a measured coordinate.
+This is a \emph{linear dynamical system} (LDS).
+It includes engineering models with real measurements as well as the
+one-hot construction above, with different noise laws.
+
+For example, consider motion sampled at intervals \(\Delta\).
+Use position and velocity as the two state coordinates.
+The constant-velocity model has matrices
+\[
+ A=\begin{pmatrix}1&\Delta\\0&1\end{pmatrix},\qquad C=(1,0).
+\]
+The observation measures position; the hidden velocity influences all
+future positions. Process and measurement noises account for departures
+from this idealized motion and errors in the observations.
+
+In what follows, vector norms are Euclidean, the matrix norm
+\(\lVert A\rVert\) is the induced operator norm, and
+\(\lVert A\rVert_{\rm F}\) is the Frobenius norm.
+The spectral radius \(\rho(A)\) is the largest modulus of an eigenvalue.
+We call a matrix \emph{stable} when \(\rho(A)<1\).
+
+If remote observations have little predictive effect, use a
+\emph{linear autoregression of order \(p\)}:
+\begin{equation}
+ \widehat Z_{t+1}
+ =\sum_{j=1}^p B_jZ_{t+1-j}=B\Psi_t,\qquad
+ \Psi_t=\begin{pmatrix}Z_t\\Z_{t-1}\\\vdots\\Z_{t-p+1}\end{pmatrix},
+ \quad B=(B_1,\ldots,B_p).
+ \label{eq:linear-ar}
+\end{equation}
+Here \(\Psi_t\in\R^{mp}\), each \(B_j\in\R^{m\times m}\), and
+\(B\in\R^{m\times mp}\). The word autoregression now makes a
+\emph{linear conditional-prediction assumption}, beyond the probability
+factorization in \cref{eq:probability-chain}.
+
+\begin{proposition}[Observable fitting is convex]
+\label{prop:observable-regression}
+Given the observed sequence, the fitting problem
+\begin{equation}
+ \widehat B\in\arg\min_B
+ \sum_{t=p}^{T-1}\lVert Z_{t+1}-B\Psi_t\rVert_2^2
+ \label{eq:observable-regression}
+\end{equation}
+is convex. All its features and targets are observed.
+\end{proposition}
+
+\begin{proof}
+For each \(\Psi_t\), the prediction \(B\Psi_t\) is linear in \(B\),
+and squared Euclidean distance is convex.
+\end{proof}
+
+This is the same data-access advantage as next-token prediction:
+the observations supply both the context and the answer.
+For comparison, even a deterministic hidden trajectory with Gaussian
+measurement noise leads to the objective
+\[
+ \min_{A,C,s}\sum_{t=1}^T\lVert Z_t-CA^{t-1}s\rVert_2^2,
+\]
+where unknown quantities multiply and \(A\) appears through its powers.
+
+What might we lose by fitting the lag coefficients separately?
+A finite-dimensional state model shares its dynamics across all lags.
+Below, its history coefficients take the form \(CF^{j-1}L\):
+the same three matrices determine every lag.
+Separate regression discards these algebraic relations. It can require a
+long history and many coefficients when important information persists.
+An estimated predictor must also be checked as a generator; the binary
+example showed why one-step fitting alone can overlook error persistence.
+
+This motivates a two-stage identification method:
+fit observable prediction coefficients, arrange them in a matrix whose
+low rank expresses shared dynamics, and factor that matrix to recover
+a recurrent predictor. The lecture sketched this route.
+The following supplementary results make precise what the autoregression
+retains and what the factorization recovers.
+
+\subsection{Exact finite autoregression: Cayley--Hamilton\suppmark}
+\label{sec:cayley-hamilton}
+
+In a noiseless LDS, finite-dimensional hidden dynamics can be eliminated
+exactly. The key linear-algebra result deserves an explicit statement.
+
+\begin{restatable}[Cayley--Hamilton]{theorem}{cayleyhamilton}
+\label{thm:cayley-hamilton}
+Let \(A\in\R^{d\times d}\) have characteristic polynomial
+\[
+ \chi_A(\lambda)=\det(\lambda I-A)
+ =\lambda^d+a_{d-1}\lambda^{d-1}+\cdots+a_1\lambda+a_0.
+\]
+Then
+\begin{equation}
+ \chi_A(A)=A^d+a_{d-1}A^{d-1}+\cdots+a_1A+a_0I=0.
+ \label{eq:cayley-hamilton}
+\end{equation}
+\end{restatable}
+
+The proof by the adjugate identity is in \cref{app:cayley-hamilton}.
+
+\begin{corollary}[Eliminating a noiseless hidden state]
+\label{cor:exact-ar}
+If \(S_{t+1}=AS_t\) and \(Z_t=CS_t\), then
+\begin{equation}
+ Z_{t+d}+a_{d-1}Z_{t+d-1}+\cdots+a_0Z_t=0.
+ \label{eq:exact-ar}
+\end{equation}
+\end{corollary}
+\begin{proof}
+The left side is \(C\chi_A(A)S_t=0\).
+\end{proof}
+
+Even dynamics that retain information indefinitely have this recurrence.
+No forgetting assumption was used. With noise, the same elimination
+produces additional, generally correlated noise terms.
+To fit a predictor by regression, we instead need its conditional mean
+given the \emph{observations}. That is the next construction.
+
+\subsection{Noisy prediction and truncation error\suppmark}
+\label{sec:noisy-prediction}
+
+For a Gaussian LDS, the conditional distribution can be computed by a
+recursive predictor. Its state is an estimate obtained from the
+observations. This gives an observable autoregression after unrolling.
+The useful approximation quantity is the tail of its history coefficients.
+
+The observations in this subsection are real vectors. For their laws,
+log loss uses a probability density, and KL is
+\[
+ \KL(P, Q)=\int p(z)\log\frac{p(z)}{q(z)}\,dz,
+\]
+where \(p,q\) are the densities of \(P,Q\). The probability and KL
+chain rules apply to densities in the same way.
+
+\begin{restatable}[A constant-gain Gaussian predictor]{theorem}{kalmanpredictor}
+\label{thm:kalman}
+Consider \cref{eq:linear-ssm} with spectral radius
+\(\rho(A)<1\), independent centered Gaussian process and observation
+noises with covariances \(\Sigma_W\succ0\) and \(\Sigma_V\succ0\).
+There are matrices \(\Pi\succ0\) and \(L\) such that, when
+\(S_1\sim\mathcal N(0,\Pi)\) independently of the noises, the recursion
+\begin{equation}
+ M_1=0,\qquad M_{t+1}=FM_t+LZ_t,\qquad F=A-LC
+ \label{eq:kalman-predictor}
+\end{equation}
+satisfies
+\begin{equation}
+ M_t=\E[S_t\mid Z_{<t}],\qquad
+ Z_t\mid Z_{<t}\sim\mathcal N(CM_t,\Omega),\qquad
+ \Omega=C\Pi C^\top+\Sigma_V.
+ \label{eq:kalman-conditional}
+\end{equation}
+Moreover, \(\rho(F)<1\) and the observations have uniformly bounded
+second moments.
+\end{restatable}
+
+The recursion is the \emph{Kalman predictor}. The covariance \(\Pi\)
+is chosen to make its gain constant; \cref{app:kalman} constructs it
+and proves the theorem. For an arbitrary Gaussian initialization,
+the same conditional calculation gives time-dependent gains.
+Positive noise covariance means positive variance in every nonzero
+direction. A stable \(A\) permits partially observed states and arbitrary
+\(C\) in this result.
+
+Define the \emph{innovations} \(E_t=Z_t-CM_t\).
+Their conditional law is always \(\mathcal N(0,\Omega)\), so they are
+independent across time and independent of the previous observations.
+Consequently, the same observation law can be generated by
+\begin{equation}
+ Z_t=CM_t+E_t,\qquad
+ M_{t+1}=(F+LC)M_t+LE_t=AM_t+LE_t.
+ \label{eq:innovations-generation}
+\end{equation}
+The conditional predictor and its innovations law together specify
+generation.
+
+Unrolling \cref{eq:kalman-predictor} gives
+\begin{equation}
+ CM_t=\sum_{j=1}^{t-1}K_jZ_{t-j},\qquad K_j=CF^{j-1}L.
+ \label{eq:history-coefficients}
+\end{equation}
+Because \(F\) is stable, these coefficients decay geometrically.
+The following proposition translates their tail into a sequence-law
+guarantee.
+
+\begin{proposition}[Truncation controls prediction and sequence KL]
+\label{prop:truncation}
+In the setting above, suppose
+\(\lVert K_j\rVert\le G\gamma^{j-1}\) for \(j\ge1\), with
+\(0<\gamma<1\), and
+\(\sup_t(\E[\lVert Z_t\rVert_2^2])^{1/2}\le B_Z\).
+Define
+\[
+ \widehat Z_t^{(p)}=\sum_{j=1}^{\min(p,t-1)}K_jZ_{t-j}.
+\]
+Then
+\begin{equation}
+ \bigl(\E[\lVert CM_t-\widehat Z_t^{(p)}\rVert_2^2]\bigr)^{1/2}
+ \le a_p:=\frac{GB_Z\gamma^p}{1-\gamma}.
+ \label{eq:truncation-mean}
+\end{equation}
+Let \(P_{1:T}\) be the true observation law and let \(Q^{(p)}_{1:T}\)
+use conditional law \(\mathcal N(\widehat Z_t^{(p)},\Omega)\).
+Then
+\begin{equation}
+ \KL(P_{1:T}, Q^{(p)}_{1:T})
+ \le\frac{T a_p^2}{2\lambda_{\min}(\Omega)}.
+ \label{eq:truncation-kl}
+\end{equation}
+\end{proposition}
+
+\begin{proof}
+The triangle inequality in \(L^2\) bounds the omitted tail by
+\(B_Z\sum_{j>p}G\gamma^{j-1}=a_p\).
+For Gaussians with the same covariance,
+\[
+ \KL(\mathcal N(u,\Omega),\mathcal N(v,\Omega))
+ =\tfrac12(u-v)^\top\Omega^{-1}(u-v).
+\]
+Apply this at each observed prefix and use the KL chain rule.
+\end{proof}
+
+This explains why an observable autoregression can approximate a noisy
+state-space model well: the lost remote history has an explicit cost.
+The displayed coefficients are the ideal comparison for fitting.
+Regression contributes coefficient-estimation error in addition to
+this truncation error.
+Squared loss is convenient for the convex fit and the Gaussian
+calculation; the state-elimination identity itself is independent of
+the fitting loss.
+
+\subsection{Recover a compact predictor by matrix factorization\suppmark}
+\label{sec:hankel}
+
+The coefficients in \cref{eq:history-coefficients} come from a small
+recurrent computation. Their matrix structure reveals that computation.
+Suppose \(K_j=C_\star F_\star^{j-1}L_\star\) has minimal state
+dimension \(d_\star\). Choose a block count \(q\) for which
+\[
+ \mathcal O_\star=
+ \begin{pmatrix}C_\star\\C_\star F_\star\\\vdots\\C_\star F_\star^{q-1}\end{pmatrix},
+ \qquad
+ \mathcal R_\star=
+ (L_\star,F_\star L_\star,\ldots,F_\star^{q-1}L_\star)
+\]
+both have rank \(d_\star\). The first maps a state to successive
+readouts; the second collects how successive observations enter the state.
+Form the \(qm\times qm\) block matrices
+\begin{equation}
+ \mathcal H_0=[K_{i+j-1}]_{i,j=1}^q
+   =\mathcal O_\star\mathcal R_\star,\qquad
+ \mathcal H_1=[K_{i+j}]_{i,j=1}^q
+   =\mathcal O_\star F_\star\mathcal R_\star.
+ \label{eq:hankel-factorization}
+\end{equation}
+Each block is \(m\times m\); block rows and columns index successive
+lags. A matrix constant along block anti-diagonals is a
+\emph{block Hankel matrix}. Here \(\rank(\mathcal H_0)=d_\star\).
+
+Take its rank-\(d_\star\) singular value decomposition and factor it:
+\[
+ \mathcal H_0=UDV^\top=\mathcal O\mathcal R,\qquad
+ \mathcal O=UD^{1/2},\quad\mathcal R=D^{1/2}V^\top.
+\]
+With \({}^\dagger\) denoting the Moore--Penrose pseudoinverse, set
+\begin{equation}
+ \overline F=\mathcal O^\dagger\mathcal H_1\mathcal R^\dagger,
+ \qquad
+ \overline C=\mathcal O_{1:m,:},\qquad
+ \overline L=\mathcal R_{:,1:m}.
+ \label{eq:recover-matrices}
+\end{equation}
+
+\begin{restatable}[Recovery of the prediction map]{proposition}{hankelrecovery}
+\label{prop:hankel-recovery}
+The recovered matrices satisfy
+\[
+ \overline C\,\overline F^{j-1}\overline L=K_j
+ \quad\text{for every }j\ge1.
+\]
+Thus the recursion
+\begin{equation}
+ \overline M_1=0,\qquad
+ \widehat Z_t=\overline C\,\overline M_t,\qquad
+ \overline M_{t+1}=\overline F\,\overline M_t+\overline LZ_t
+ \label{eq:recovered-predictor}
+\end{equation}
+computes the same predictor on every observed history.
+\end{restatable}
+
+The proof in \cref{app:hankel} shows that the recovered states differ
+from minimal predictive coordinates by an invertible change of basis.
+Their role is to implement prediction; recovering the original physical
+coordinates is optional.
+
+With estimated coefficients, form estimated Hankel matrices, retain a
+chosen number of singular values, and apply \cref{eq:recover-matrices}.
+Run \cref{eq:recovered-predictor} on data to obtain residuals.
+In a Gaussian innovations model, estimate their covariance and generate by
+\begin{equation}
+ \widetilde Z_t=\overline C\,\widetilde M_t+\widetilde E_t,\qquad
+ \widetilde M_{t+1}
+ =(\overline F+\overline L\overline C)\widetilde M_t
+   +\overline L\widetilde E_t.
+ \label{eq:recovered-generator}
+\end{equation}
+This is what follows factorization: a predictor, a fitted innovations
+law, and a generator. Held-out likelihood evaluates its distributional
+fit; generated costs and other target statistics evaluate its intended
+use. Rank can be selected using these evaluations.
+
+The two relevant update matrices have different jobs.
+\(\overline F\) controls decay of observation-history coefficients.
+The matrix \(\overline F+\overline L\overline C\) propagates the state
+during generation. Its stability margin determines whether errors in
+the fitted generator can persist or grow.
+Retaining a compact state preserves remote history without truncation;
+long-run accuracy still requires control of the generated dynamics.
+
+\subsection{Stable autoregression can also control long-run error\suppmark}
+\label{sec:stable-ar}
+
+Stability can be imposed directly on the observable regression.
+Here is one sufficient condition that preserves convex fitting.
+
+\begin{proposition}[A stable autoregressive fit]
+\label{prop:stable-ar}
+Let \(Z_{t+1}=P_t+E_{t+1}\), where \(P_t\) is its conditional mean
+and the \(E_t\) are iid additive innovations independent of the past.
+Fix fitted coefficient matrices satisfying
+\[
+ \sum_{j=1}^p\lVert\widehat B_j\rVert\le\beta<1,\qquad
+ \sup_{t\ge p}
+ \left(\E\left[
+ \left\lVert P_t-\sum_{j=1}^p\widehat B_jZ_{t+1-j}\right\rVert_2^2
+ \right]\right)^{1/2}\le\varepsilon.
+\]
+Start a fitted generator from the same first \(p\) observations and
+use the same innovations in a coupling:
+\[
+ \widetilde Z_{t+1}
+ =\sum_{j=1}^p\widehat B_j\widetilde Z_{t+1-j}+E_{t+1}.
+\]
+Then
+\begin{equation}
+ \sup_t\bigl(\E[\lVert Z_t-\widetilde Z_t\rVert_2^2]\bigr)^{1/2}
+ \le\frac{\varepsilon}{1-\beta}.
+ \label{eq:stable-ar}
+\end{equation}
+\end{proposition}
+
+\begin{proof}
+Let \(d_t\) denote the RMS discrepancy. Inserting the fitted predictor
+evaluated on the true history and using the \(L^2\) triangle inequality
+gives \(d_{t+1}\le\varepsilon+\sum_j\lVert\widehat B_j\rVert d_{t+1-j}\).
+Starting from \(d_1=\cdots=d_p=0\), induction gives the result.
+\end{proof}
+
+The constraint on the sum of operator norms is convex.
+An \(L_c\)-Lipschitz statistic of one observation, or its time average,
+then has expectation discrepancy at most
+\(L_c\varepsilon/(1-\beta)\).
+\Cref{app:state-stability} gives the corresponding state-space comparison
+and a second-moment bound.
+Thus both state-space modeling and autoregression can use stability.
+The choice concerns how useful memory is represented, how much is
+truncated, and what constraints the fitting method preserves.
+
+\section{Take-home messages}
+\label{sec:take-home}
+
+\begin{enumerate}[leftmargin=*,itemsep=0.3em]
+\item Next-token log-loss minimization is sequence maximum likelihood.
+Its population excess loss is forward sequence KL.
+\item Successful demonstrations specify a distribution to imitate.
+The task objective is the expected cost of generated sequences.
+TV and KL connect these objectives, with quantitative losses that matter.
+\item At the same forward KL \(\kappa\) and TV, the laws $Q_-$ and $Q_+$
+have expected counts \(1-e^{-\kappa}\) and \(T(1-e^{-\kappa})\),
+and terminal error probabilities zero and \(1-e^{-\kappa}\).
+Approximate likelihood fitting can leave this choice unresolved:
+a per-token tolerance \(\eta\) permits per-sequence excess \(T\eta\).
+\item Longer training sequences provide more information, while longer
+predictions may require learning additional structure. In the grouped
+Bernoulli model, \(d(T)\) unknown shared probabilities give expected
+sequence KL at most \(d(T)/n\). The persistent law $Q_+$
+shows that a vanishing average-loss gap can coexist with unchanged
+task error as the horizon grows.
+\item Recovery attenuates an initial error; continued prediction errors
+contribute according to how long their effects persist. Contraction
+bounds both terms. Useful task memory may still need to persist.
+\item Forward KL penalizes missing data-supported behavior; reverse KL
+penalizes implausible generated behavior. Reverse KL controls a cost
+according to its concentration under the data law. Obtaining this control
+requires more than evaluating model likelihood on supplied examples.
+\item Multi-step objectives integrate over missing intermediate tokens.
+Direct cost optimization instead uses evaluations on model generations.
+Both change the computational or informational requirements.
+\item State-space models express what should be remembered and how it
+evolves. Latent likelihoods can be difficult to fit; observed regression
+provides a computationally simpler route.
+\item In the additional LDS results, Cayley--Hamilton gives an exact
+noiseless recurrence, coefficient decay bounds noisy truncation error,
+and Hankel factorization recovers a compact recurrent predictor.
+Stability constraints concern the dynamics actually used for generation.
+\end{enumerate}
+
+\section{Exercises}
+\label{sec:exercises}
+
+These exercises follow the lecture from KL and task cost to sequence
+length, fitting, recovery, and hidden-state models.
+\exerciseinstructions
+\setcounter{courseexercise}{0}
+
+\input{../exercises/l4-kl-chain.tex}
+\input{../exercises/l4-positive-data.tex}
+\input{../exercises/l4-reverse.tex}
+\input{../exercises/l4-discrepancy-comparison.tex}
+\input{../exercises/l4-binary-count.tex}
+\input{../exercises/l4-positionwise-kl.tex}
+\input{../exercises/l4-sharing.tex}
+\input{../exercises/l4-sharing-horizon.tex}
+\input{../exercises/l4-sharing-costs.tex}
+\input{../exercises/l4-bernoulli-identification.tex}
+\input{../exercises/l4-copying-context.tex}
+\input{../exercises/l4-positionwise-loss.tex}
+\input{../exercises/l4-fitting-support.tex}
+\input{../exercises/l4-multistep.tex}
+\input{../exercises/l4-stability.tex}
+\input{../exercises/l4-persistent-memory.tex}
+\input{../exercises/l4-latent-likelihood.tex}
+\input{../exercises/l4-lds.tex}
+
+\section*{Glossary}
+\phantomsection
+\label{sec:glossary}
+
+\begin{description}[style=nextline,leftmargin=1.5em,labelindent=0pt,
+  itemsep=0.15em,parsep=0pt]
+\item[Sequence model; autoregressive factorization]
+A joint law on token sequences, expressed as a product of next-token
+conditionals. Every finite sequence law has such a factorization.
+\item[Maximum likelihood; teacher forcing]
+Maximum likelihood minimizes empirical negative log probability.
+Teacher forcing evaluates each conditional using the observed prefix.
+Generation instead feeds sampled tokens back into the predictor.
+\item[Positive-data fine-tuning]
+Continuing model fitting on examples selected to demonstrate desired
+behavior. The idealization here uses sequences of cost zero.
+\item[Cost and reward]
+A numerical assessment of a generated response or sequence.
+The task objective is its expected cost, or expected reward.
+\item[Cost discrepancy; moduli of continuity]
+The pseudometric \(d_c(P,Q)=|\E_P[c]-\E_Q[c]|\) compares
+one expected cost. The modulus \(\omega_{D\to c}\) asks how much cost
+discrepancy a KL budget permits. The converse \(\omega_{c\to D}\) asks
+how large KL can be at a given cost-discrepancy budget. The upper and
+lower endpoints of the fixed-KL cost ranges determine these two moduli.
+Taking the supremum over reference laws gives a uniform conversion.
+\item[Hellinger distance (appendix)]
+A distributional distance used in the proofs of the variance-sensitive
+cost and finite-sample likelihood bounds; defined in \cref{app:hellinger}.
+\item[Optimization tolerance]
+The allowed excess empirical loss above the best fit in the model class.
+It is measured here per token: a tolerance \(\eta\) permits per-sequence
+excess \(T\eta\). The average can place this excess unevenly across positions.
+\item[Total variation]
+\(\tv{P-Q}\) is the largest discrepancy in event probabilities.
+For costs in \([0,C_{\max}]\), it bounds expectation discrepancy
+multiplied by \(C_{\max}\).
+\item[Forward and reverse KL]
+\(\KL(P, Q)\) averages log density ratios under the data law;
+\(\KL(Q, P)\) averages them under the model law.
+The sequence chain rules inherit these different prefix distributions.
+\item[Markov process; transition kernel]
+A process whose current state determines the conditional next-state
+law. \(K(x,y)\) gives its transition probabilities.
+\item[Contraction margin]
+If a kernel contracts TV by at most \(\rho<1\), its margin is
+\(1-\rho\). The local-error bound is amplified by its reciprocal.
+\item[Recovery]
+In the binary example, the probability of returning from an erroneous
+state to zero. It controls the duration of an erroneous run.
+\item[Subgaussian cost]
+A cost whose centered log exponential moment is at most
+\(\lambda^2v^2/2\). The quantity \(v^2\) is a variance proxy;
+\(v_P(c)\) is the smallest valid proxy under \(P\).
+It satisfies \(\sigma_P(c)^2\le v_P(c)\le C_{\max}^2/4\)
+for \(0\le c\le C_{\max}\).
+\item[State-space model; latent state]
+A model of observations through an evolving, possibly unobserved
+state. State coordinates specify the information retained over time.
+\item[One-hot encoding; martingale difference]
+\(Z_t=e_{X_t}\) turns token probabilities into vector conditional means.
+Subtracting a conditional mean produces a residual with conditional
+expectation zero given the past.
+\item[Linear dynamical system; linear autoregression]
+An LDS has linear state and observation equations. A linear
+autoregression predicts from a linear combination of observed lags.
+\item[System identification]
+Estimating dynamical and observation equations from observed data.
+\item[Innovation; Kalman predictor]
+An innovation is the observation minus its conditional-mean prediction.
+For the Gaussian LDS considered here, the Kalman predictor computes
+that mean recursively, and innovations are independent Gaussian vectors.
+\item[Truncation error]
+The predictive effect of history omitted by a finite-lag approximation.
+It is controlled by the tail of the history coefficients.
+\item[Hankel factorization]
+Factoring a matrix of lag coefficients to recover a finite-dimensional
+recurrent predictor. Its rank expresses the minimal predictive state
+dimension under the stated rank assumptions.
+\item[Variational approximation; ELBO]
+Optimizing over a tractable family to approximate a target distribution.
+The evidence lower bound approximates latent-model log likelihood;
+its gap is a reverse KL between a trial and exact hidden-state posterior.
+\end{description}
+
+
+\clearpage
+\appendix
+\renewcommand{\thesection}{4.\Alph{section}}
+
+\section{Where finiteness is used}
+\label{app:finiteness}
+
+The finite sequence space guarantees bounded costs and permits
+term-by-term differentiation. This section records which properties the
+final set of results uses, so we can also apply them to other probability
+spaces. The remaining appendices follow the order in which their topics first
+require deferred arguments in the main text: reverse-KL concentration,
+forward-KL variance control, finite-sample fitting, variational objectives,
+and LDS identification.
+
+\paragraph{Distributional comparisons.}
+Data processing, the TV bound (\cref{prop:tv-cost}), Pinsker's inequality,
+the zero-cost bound (\cref{prop:positive-data}), the exponential-moment
+bound (\cref{prop:entropy-cost}), and the variance-sensitive bounds
+(\cref{prop:forward-variance,prop:hellinger-cost}) hold on general
+probability spaces with the same bounded-cost assumptions. Their proofs
+use integrals of densities in place of sums. The mixture and conditioning
+identities in \cref{prop:kl-directions} also extend, with integrable costs.
+The support requirement becomes \emph{absolute continuity}:
+finite \(\KL(Q, P)\) requires
+\(P(A)=0\Rightarrow Q(A)=0\) for every measurable event \(A\).
+The Markov stability argument in \cref{thm:markov-stability} uses only
+the stated contraction and local-error bounds; replace the local-error
+sum in \cref{eq:markov-local-error} by an expectation.
+
+\paragraph{Extrema at fixed KL.}
+For fixed \(P\), each nonempty KL level set in
+\cref{eq:fixed-kl-endpoints} is compact. Indeed, the probability simplex
+is compact, and \(\KL(P, Q)\) is continuous wherever
+\(Q(x)>0\) on the support of \(P\). It tends to infinity if one of
+those probabilities tends to zero. Hence every finite level set is
+closed. The infinite level set is the finite union of the closed faces
+\(\{Q:Q(x)=0\}\) with \(P(x)>0\). Since \(d_c(P,Q)\) is
+continuous in \(Q\), its minimum and maximum on each level are attained.
+This justifies both endpoint formulas in \cref{prop:endpoints-moduli}.
+On other spaces, compact level sets and continuity of the cost
+discrepancy give the same conclusion. The budget definitions of the
+moduli, their monotonicity, and the lower-bound inversion implication
+use only well-defined discrepancies; identifying an exact converse
+modulus from lower endpoints additionally uses attainment of those
+endpoints.
+
+\paragraph{Boundedness and exponential moments.}
+Every real-valued cost on \([N]^T\) is bounded, so its exponential moments
+exist for every \(\lambda\) and it has a finite subgaussian proxy.
+Bounded costs on any probability space have these same properties.
+For an unbounded cost, \cref{prop:entropy-cost} still holds when
+\(\E_P[|c|],\E_Q[|c|]<\infty\), using those
+\(\lambda>0\) for which \(\E_P[e^{\lambda c}]<\infty\).
+The subgaussian condition in \cref{thm:reverse-cost} supplies the needed
+exponential moments in both directions. Attainment of the optimal proxy
+requires only that a finite valid proxy exist; \cref{app:optimal-proxy}
+proves this directly.
+The entropy decomposition in \cref{eq:population-kl} uses finite
+\(H(P)\); for countable alphabets, \(H(P)<\infty\) keeps that
+decomposition meaningful for comparing log loss with KL.
+
+\paragraph{Differentiating expectations.}
+Finite sums justify the variational gradient in \cref{app:variational}.
+For general densities,
+sufficient conditions are differentiability on a fixed support and
+integrable bounds, uniform in a neighborhood of the parameter, on the
+derivatives of the density and the objective integrand. Dominated
+convergence then permits differentiation under the integral.
+For the exponential tilts in \cref{app:reverse-proof}, boundedness of
+\(c\) supplies such bounds on every bounded interval of \(\lambda\).
+
+\paragraph{The maximum-cost endpoint in the exact modulus.}
+The proof of \cref{prop:reverse-modulus} uses finiteness to obtain a
+maximum cost \(m\) with \(P(c=m)>0\). For a bounded cost on a general
+space, take \(m\) to be its \emph{essential supremum} under \(P\):
+the smallest number with \(P(c\le m)=1\).
+If \(P(c=m)>0\), the same endpoint argument applies. If
+\(P(c=m)=0\), the tilted KL increases to infinity: the tilted laws
+concentrate on sets \(\{c>m-\varepsilon\}\) whose \(P\)-probabilities
+decrease to zero. Every finite positive KL budget is therefore reached
+by a finite tilt. Thus the exact-modulus identity still holds for
+bounded costs; finiteness simplifies its endpoint proof.
+
+\paragraph{Finite model classes and finite-dimensional representations.}
+These are separate assumptions. The finite-class guarantee in
+\cref{thm:finite-mle} uses a union bound over models, producing
+\(\log|\mathcal Q|\); its likelihood-ratio argument also works for
+general observation spaces with densities. The one-hot construction
+in \cref{prop:one-hot} uses the vocabulary size as its vector dimension,
+and \cref{thm:cayley-hamilton} uses the finite dimension of a matrix.
+These finiteness assumptions enter the constructions and bounds
+themselves.
+
+\clearpage
+
+
+\section{Reverse KL and exponential tilting}
+\label{app:reverse-proof}
+
+\subsection{From exponential moments to subgaussian control}
+
+\entropycost*
+\begin{proof}
+The basic inequality uses the full exponential-moment function of the
+cost. Put
+\(\psi(\lambda)=\log\E_P[e^{\lambda(c-\mu)}]\).
+Define the tilted law by
+\[
+ P_\lambda(x)=P(x)e^{\lambda(c(x)-\E_P\,c)-\psi(\lambda)}.
+\]
+This is a probability law. Writing \(\kappa=\KL(Q, P)\), we have
+\[
+ 0\le\KL(Q, P_\lambda)
+ =\kappa-\lambda(\E_Q[c]-\E_P[c])+\psi(\lambda).
+\]
+Consequently,
+\[
+ \E_Q[c]-\E_P[c]
+ \le\inf_{\lambda>0}\frac{\kappa+\psi(\lambda)}{\lambda},
+\]
+which proves \cref{prop:entropy-cost}.
+\end{proof}
+
+Under the subgaussian condition,
+\[
+ \E_Q[c]-\E_P[c]
+ \le\inf_{\lambda>0}
+ \left(\frac{\kappa}{\lambda}+\frac{\lambda v^2}2\right)
+ =v\sqrt{2\kappa}.
+\]
+Apply the same argument to \(-c\) for the other direction.
+If \(v=0\), take \(\lambda\to\infty\) in each direction.
+
+For completeness, the exponential-moment bound for averages follows
+from Hoeffding's lemma. If \(Y\in[0,1]\), let
+\(h(s)=\log\E[e^{s(Y-\E[Y])}]\).
+Then \(h(0)=h'(0)=0\), and \(h''(s)\) is the variance of \(Y\)
+under its tilted law. Every law on \([0,1]\) has variance at most
+\(1/4\), giving \(h(s)\le s^2/8\).
+For independent \(f_t(X_t)\in[0,1]\),
+\[
+ \log\E\exp\left[
+ \frac{\lambda}{T}\sum_{t=1}^T
+ (f_t(X_t)-\E[f_t(X_t)])\right]
+ \le T\,\frac{(\lambda/T)^2}{8}
+ =\frac{\lambda^2}{8T}.
+\]
+Hence the variance proxy is \(v^2=1/(4T)\).
+
+\subsection{Optimal variance proxies}
+\label{app:optimal-proxy}
+
+The smallest valid proxy is attained whenever any finite proxy exists,
+even on an infinite probability space. To see this, let \(c\) be an
+integrable subgaussian cost and write
+\(\psi(\lambda)=\log\E_P[e^{\lambda(c-\E_P[c])}]\).
+The constraints defining a valid proxy give the identity
+\[
+ v_P(c)=\sup_{\lambda\ne0}\frac{2\psi(\lambda)}{\lambda^2}.
+\]
+This value satisfies every constraint, so the set of valid proxies is
+exactly \([v_P(c),\infty)\).
+
+For the bounded costs used here, expansion at zero gives
+\[
+ \psi(\lambda)=\frac{\lambda^2\sigma_P(c)^2}{2}+o(\lambda^2),
+\]
+and hence \(\sigma_P(c)^2\le v_P(c)\).
+Scaling Hoeffding's lemma from \([0,1]\) to \([0,C_{\max}]\) gives
+\(\psi(\lambda)\le\lambda^2C_{\max}^2/8\), so
+\(v_P(c)\le C_{\max}^2/4\).
+
+\subsection{The exact reverse-KL cost modulus}
+\label{app:reverse-modulus}
+
+How much can the expected cost increase if the reverse KL is at most
+\(\kappa\)? Retaining the full exponential-moment function answers this
+question exactly when we allow all model laws.
+
+\begin{proposition}[Exact reverse-KL cost conversion]
+\label{prop:reverse-modulus}
+Fix a law \(P\) and a cost \(c\).
+Let \(\psi(\lambda)=\log\E_P[
+e^{\lambda(c-\E_P[c])}]\). For every \(\kappa\ge0\),
+\begin{equation}
+ \sup_{Q:\,\KL(Q, P)\le\kappa}
+       (\E_Q[c]-\E_P[c])
+ =\inf_{\lambda>0}\frac{\kappa+\psi(\lambda)}{\lambda}.
+ \label{eq:reverse-modulus}
+\end{equation}
+The supremum ranges over all probability laws \(Q\).
+\end{proposition}
+
+\begin{proof}
+\Cref{eq:entropy-cost} gives the upper bound. We construct laws attaining
+it. Put \(\mu=\E_P[c]\) and use the tilted laws
+\(P_\lambda(x)=P(x)e^{\lambda(c(x)-\mu)-\psi(\lambda)}\).
+Differentiating \(\psi\) gives
+\[
+ \psi'(\lambda)=\E_{P_\lambda}[c]-\mu,\qquad
+ \KL(P_\lambda, P)=\lambda\psi'(\lambda)-\psi(\lambda).
+\]
+If \(c\) is constant on \(\operatorname{supp}(P)\), both sides of
+\cref{eq:reverse-modulus} are zero. Otherwise let
+\[
+ m=\max_{x:\,P(x)>0}c(x),\qquad
+ \mathcal A=\{x:P(x)>0,\ c(x)=m\},\qquad
+ \kappa_*=-\log P(\mathcal A)>0.
+\]
+As \(\lambda\) increases from zero to infinity, the tilted KL
+increases continuously from zero to \(\kappa_*\). Indeed, its derivative
+is \(\lambda\psi''(\lambda)>0\), and
+\(P_\lambda\to P(\,\cdot\mid\mathcal A)\).
+For \(0<\kappa<\kappa_*\), choose \(\lambda>0\) with
+\(\KL(P_\lambda, P)=\kappa\). Then
+\[
+ \E_{P_\lambda}[c]-\mu
+ =\psi'(\lambda)=\frac{\kappa+\psi(\lambda)}{\lambda},
+\]
+so this law attains the upper bound.
+
+For \(\kappa\ge\kappa_*\), the law \(P(\,\cdot\mid\mathcal A)\) is feasible
+and has cost \(m\), the largest possible cost on the support of \(P\).
+Also \((\kappa+\psi(\lambda))/\lambda\to m-\mu\) as
+\(\lambda\to\infty\), proving equality in this case.
+For \(\kappa=0\), the only feasible law is \(P\), and
+\(\psi(\lambda)/\lambda\to0\) as \(\lambda\downarrow0\).
+\end{proof}
+
+For the absolute discrepancy, apply the proposition to both \(c\)
+and \(-c\):
+\[
+ \sup_{Q:\,\KL(Q, P)\le\kappa}d_c(P,Q)
+ =\max_{s\in\{-1,1\}}\;
+   \inf_{\lambda>0}\frac{\kappa+\psi(s\lambda)}{\lambda}.
+\]
+This is the reverse-KL counterpart of the forward-KL modulus in
+\cref{eq:cost-modulus}. The subgaussian conversion replaces
+\(\psi(s\lambda)\) by \(\lambda^2v_P(c)/2\). Any slack introduced
+at that step comes from summarizing the cost's full exponential-moment
+function by one quadratic bound.
+
+\subsection{A full-support version of the binary comparison}
+
+The infinite reverse KLs in the exact all-zero example are caused by
+its support. A small perturbation gives finite values and still
+distinguishes the generators.
+Take \(P_\delta=\operatorname{Bernoulli}(\delta)^{\otimes T}\);
+compare \(Q_{\rm ind}\) from \cref{ex:binary-count} with
+\(Q_{\varepsilon,r}\) from \cref{ex:stability}. For \(0<\delta,\varepsilon,r<1\), all three
+laws have full support. With
+\(\operatorname{kl}(a,b)=a\log(a/b)+(1-a)\log((1-a)/(1-b))\),
+the chain rule gives
+\begin{align*}
+ \KL(P_\delta, Q_{\varepsilon,r})
+ &=\operatorname{kl}(\delta,\varepsilon)
+ +(T-1)\bigl[(1-\delta)\operatorname{kl}(\delta,\varepsilon)
+       +\delta\operatorname{kl}(\delta,1-r)\bigr],\\
+ \KL(Q_{\varepsilon,r}, P_\delta)
+ &=\sum_{t=1}^T
+ \bigl[(1-p_{t-1})\operatorname{kl}(\varepsilon,\delta)
+       +p_{t-1}\operatorname{kl}(1-r,\delta)\bigr].
+\end{align*}
+Here \(p_t\) is the generated probability of a one, given by
+\cref{eq:recovery}. For the independent law the two KLs are
+\(T\operatorname{kl}(\delta,\varepsilon)\) and
+\(T\operatorname{kl}(\varepsilon,\delta)\).
+At \(T=1000,\varepsilon=10^{-3},\delta=r=10^{-6}\):
+\begin{center}
+\begin{tabular}{lrrr}
+\toprule
+\(Q\) & \(\KL(P_\delta, Q)\)
+ & \(\KL(Q, P_\delta)\) & \(\E_Q[c_{\mathrm{cnt}}]\)\\
+\midrule
+\(Q_{\rm ind}\) & \(0.993\) & \(5.909\) & \(1\)\\
+\(Q_{\varepsilon,r}\) & \(1.006\) & \(5082.198\) & \(368.224\)\\
+\bottomrule
+\end{tabular}
+\end{center}
+The expected data cost is \(0.001\).
+Forward KL weights the transition out of one by the tiny data
+probability \(\delta\); reverse KL weights it by the much larger
+generated probability \(p_{t-1}\).
+
+\section{The variance-sensitive bound and comparisons}
+\label{app:forward-cost}
+
+\subsection{Cost variance and Hellinger distance}
+\label{app:hellinger}
+
+The \emph{Hellinger distance} between two laws \(P,Q\) is
+\[
+ h(P,Q)^2=\sum_x(\sqrt{P(x)}-\sqrt{Q(x)})^2.
+\]
+We use the normalization \(0\le h(P,Q)^2\le2\).
+Expanding the difference of square roots connects this distance to
+variation of the cost under \(P\).
+
+\begin{proposition}[Hellinger distance and cost variance]
+\label{prop:hellinger-cost}
+If \(0\le c\le C_{\max}\), then
+\begin{equation}
+ d_c(P,Q)\le2\sigma_P(c)h(P,Q)+C_{\max}h(P,Q)^2.
+ \label{eq:hellinger-cost}
+\end{equation}
+Moreover, \(h(P,Q)^2\le\KL(P, Q)\).
+\end{proposition}
+
+\begin{proof}
+Put \(\Delta(x)=\sqrt{Q(x)}-\sqrt{P(x)}\) and
+\(\bar c=c-\E_P[c]\). Expand
+\[
+ \E_Q[c]-\E_P[c]
+ =2\sum_x\bar c(x)\sqrt{P(x)}\Delta(x)
+   +\sum_x\bar c(x)\Delta(x)^2.
+\]
+Cauchy--Schwarz bounds the first term in absolute value by
+\(2\sigma_P(c)h(P,Q)\); \(|\bar c|\le C_{\max}\) bounds the second.
+For finite \(\kappa=\KL(P, Q)\), Jensen's inequality gives
+\(\sum_x\sqrt{P(x)Q(x)}\ge e^{-\kappa/2}\), whence
+\(h(P,Q)^2\le2(1-e^{-\kappa/2})\le\kappa\).
+\end{proof}
+
+Substituting \(h(P,Q)^2\le\KL(P, Q)\) into
+\cref{eq:hellinger-cost} proves the following restated result.
+
+\forwardvariance*
+\begin{proof}
+Apply \cref{eq:hellinger-cost} and \(h(P,Q)^2\le\KL(P,Q)\). Since
+\(h(P,Q)\le\sqrt{\KL(P,Q)}\), the stated bound follows.
+\end{proof}
+
+\subsection{Which bound is stronger? Two single-bit comparisons}
+\label{app:bound-comparison}
+
+One bit suffices to show that either the variance-sensitive or the
+subgaussian bound can be smaller. Throughout this subsection, \(c(x)=x\)
+on \(\{0,1\}\), so \(C_{\max}=1\).
+
+\begin{proposition}[Comparison near a fair coin and near zero cost]
+\label{prop:bound-comparison}
+\begin{enumerate}[(a)]
+\item Suppose
+\[
+ P=\operatorname{Bernoulli}(1/2),\qquad
+ Q=\operatorname{Bernoulli}(1/2+\delta),\qquad 0<|\delta|<1/2.
+\]
+As \(\delta\to0\), the Pinsker and
+subgaussian bounds are asymptotic to \(d_c(P,Q)=|\delta|\), while
+the variance-sensitive bound is asymptotic to \(\sqrt2|\delta|\).
+\item Suppose
+\[
+ P=\operatorname{Bernoulli}(\varepsilon^2),\qquad
+ Q=\operatorname{Bernoulli}(\varepsilon),\qquad 0<\varepsilon<1.
+\]
+As \(\varepsilon\downarrow0\), the actual discrepancy and the
+variance-sensitive bound are both asymptotic to \(\varepsilon\).
+The Pinsker bound is asymptotic to \(\sqrt{\varepsilon/2}\), and
+the subgaussian bound is asymptotic to
+\(\sqrt{\varepsilon/\log(1/\varepsilon)}\).
+\end{enumerate}
+\end{proposition}
+
+\begin{proof}
+For (a), direct expansion gives
+\[
+ \begin{aligned}
+ \KL(P, Q)&=-\tfrac12\log(1-4\delta^2)
+     =2\delta^2+O(\delta^4),\\
+ \KL(Q, P)&=2\delta^2+O(\delta^4).
+ \end{aligned}
+\]
+Also \(\sigma_P(c)=1/2\) and \(v_P(c)=1/4\): every variance proxy
+is at least the variance, and Hoeffding's lemma gives equality for a
+fair coin. Thus the reverse-KL term of
+\cref{eq:two-concentration-directions} is asymptotic to
+\(|\delta|\). The minimum of its two terms is between the actual
+discrepancy and this term, so it has the same asymptotic value.
+Substitution into \cref{eq:pinsker-cost,eq:forward-variance} gives
+the other two comparisons.
+
+For (b), the Bernoulli KL formula gives
+\[
+ \begin{aligned}
+ d_c(P,Q)&=\varepsilon-\varepsilon^2\sim\varepsilon,\\
+ \KL(P, Q)&\sim\varepsilon,\qquad
+ \KL(Q, P)\sim\varepsilon\log(1/\varepsilon),\\
+ \sigma_P(c)&=\varepsilon\sqrt{1-\varepsilon^2}\sim\varepsilon.
+ \end{aligned}
+\]
+The variance-sensitive bound is therefore
+\(2\sigma_P(c)\sqrt{\KL(P, Q)}+\KL(P, Q)
+\sim\varepsilon\).
+To evaluate the subgaussian bound, we use the sharp Bernoulli proxy
+\citep[Eq.~(1.1) and Theorem~1.1]{schlemm2014}:
+\[
+ v_{\operatorname{Bernoulli}(p)}(c)
+ =\frac{1-2p}{2\log((1-p)/p)},\qquad
+ 0<p<1,\quad p\ne\tfrac12,
+\]
+with value \(1/4\) at \(p=1/2\).
+In particular,
+\[
+ v_Q(c)\sim\frac1{2\log(1/\varepsilon)},\qquad
+ v_P(c)\sim\frac1{4\log(1/\varepsilon)}.
+\]
+Consequently,
+\[
+ \begin{aligned}
+ \sqrt{2v_Q(c)\KL(P, Q)}
+    &\sim\sqrt{\frac{\varepsilon}{\log(1/\varepsilon)}},\\
+ \sqrt{2v_P(c)\KL(Q, P)}
+    &\sim\sqrt{\frac{\varepsilon}{2}}.
+ \end{aligned}
+\]
+The forward-KL term is the smaller one for sufficiently small
+\(\varepsilon\). Pinsker gives \(\sqrt{\KL(P, Q)/2}
+\sim\sqrt{\varepsilon/2}\).
+\end{proof}
+
+Near a fair coin, Pinsker and the subgaussian inequality give the
+correct leading constant. Near zero cost, the variance-sensitive bound
+uses the small data variance to give the correct leading order, whereas
+even the optimal subgaussian proxies give a much larger bound.
+The first example requires square-root dependence on KL in a general
+cost bound. The zero-cost equality example in
+\cref{sec:kl-cost} requires linear dependence when the data variance
+vanishes. These explain the two terms in \cref{eq:forward-variance}.
+
+\subsection{Moduli of continuity in analysis and approximation}
+\label{app:moduli-analysis}
+
+A modulus of continuity quantifies how much a function's output can
+change when its input changes by at most a specified amount. For a
+function \(h:[0,1]\to\R\), its \emph{modulus of continuity} is
+\[
+ \omega_h(\delta)
+ =\sup_{\substack{x,y\in[0,1]\\|x-y|\le\delta}}|h(x)-h(y)|.
+\]
+Instead of only asking whether nearby inputs have nearby outputs, we
+ask how nearby the outputs must be. For example, a Lipschitz bound
+\(|h(x)-h(y)|\le L|x-y|\) gives \(\omega_h(\delta)\le L\delta\).
+
+\begin{proposition}[Quantitative uniform continuity]
+A function \(h:[0,1]\to\R\) is uniformly continuous if and only if
+\(\omega_h(\delta)\to0\) as \(\delta\downarrow0\).
+\end{proposition}
+
+\begin{proof}
+Uniform continuity makes every difference in the defining supremum at
+most \(\varepsilon\) once \(\delta\) is sufficiently small. Conversely,
+\(\omega_h(\delta)<\varepsilon\) gives
+\(|h(x)-h(y)|<\varepsilon\) whenever \(|x-y|\le\delta\).
+\end{proof}
+
+In our comparison, the function is the expected-cost map
+\(P\mapsto\E_P[c]\). We measure input discrepancy using KL and
+output discrepancy using \(d_c\). Taking the supremum over \(P\)
+as well as \(Q\) gives the uniform comparison. If \(\mathcal P\)
+contains all data laws, Pinsker's inequality gives
+\(\omega^{\mathcal P}_{D\to c}(\kappa)\le C_{\max}\sqrt{\kappa/2}\) for
+\(0\le c\le C_{\max}\): small KL uniformly forces nearby expected costs.
+
+The expected-cost map can send distinct laws to the same value.
+Accordingly, \(d_c\) is a \emph{pseudometric}: it is symmetric,
+satisfies the triangle inequality, and vanishes on equal laws, but can
+also vanish on distinct laws. The converse modulus quantifies how
+far apart the input laws can be while their expected costs remain
+close. \Cref{prop:binary-moduli,prop:terminal-moduli} show how much
+this depends on the cost and reference law.
+
+\paragraph{From continuity to approximation rates.}
+A quantitative continuity bound can also tell us how accurately a
+function can be approximated by polynomials. Jackson's theorem states
+that, for a universal constant \(C\), every continuous
+\(h:[0,1]\to\R\) satisfies
+\[
+ \inf_{\deg p\le n}\|h-p\|_\infty
+ \le C\,\omega_h(1/n),\qquad n\ge1.
+\]
+Thus \(\omega_h(\delta)\le L\delta^\alpha\), with
+\(0<\alpha\le1\), guarantees a degree-\(n\) approximation with
+uniform error at most \(CLn^{-\alpha}\). The modulus turns a
+qualitative continuity statement into a bound on the degree needed
+for a given approximation error.
+
+\section{Likelihood fitting and conditional support}
+\label{app:learning}
+
+\subsection{Proof of the finite-class likelihood guarantee}
+\label{app:finite-mle}
+
+\finitemle*
+\begin{proof}
+The statistical step in \cref{thm:finite-mle} controls Hellinger distance
+directly. For a fixed \(Q\in\mathcal Q\), define its likelihood ratio on
+the observed sequences,
+\[
+ \Lambda_Q=\prod_{i=1}^n
+ \frac{Q(X^{(i)}_{1:T})}{P(X^{(i)}_{1:T})}.
+\]
+Independence of the sequences gives
+\[
+ \E[\sqrt{\Lambda_Q}]
+ =\left(\sum_x\sqrt{P(x)Q(x)}\right)^n
+ =\left(1-\frac{h(P,Q)^2}{2}\right)^n
+ \le e^{-nh(P,Q)^2/2}.
+\]
+Since \(P\in\mathcal Q\), an \(\eta\)-approximate empirical minimizer
+satisfies
+\[
+ \widehat L(\widehat Q)\le\widehat L(P)+\eta,
+ \qquad \Lambda_{\widehat Q}\ge e^{-nT\eta}.
+\]
+For a fixed candidate \(Q\), Markov's inequality therefore gives
+\[
+ \mathbb P(\Lambda_Q\ge e^{-nT\eta})
+ \le \exp\!\left(\frac{nT\eta}{2}-\frac{nh(P,Q)^2}{2}\right).
+\]
+If \(h(P,Q)^2>b=2\log(|\mathcal Q|/\delta)/n+T\eta\), this probability
+is less than \(\delta/|\mathcal Q|\).
+A union bound over the class proves \(h(P,\widehat Q)^2\le b\)
+with probability at least \(1-\delta\).
+\Cref{prop:hellinger-cost} then supplies the cost bound.
+\end{proof}
+
+The independent observations here are complete sequences. Dependence
+between tokens is part of their joint law \(P\); it never enters this
+likelihood-ratio calculation as an independence assumption.
+Lecture~6 studies how much information dependent observations supply.
+
+\subsection{Proofs of the parameter-sharing results}
+\label{app:growing-horizon}
+
+\paragraph{Two-sided risk and the leading constant.}
+\sharingrisk*
+
+\begin{proof}[Proof of \cref{prop:sharing-kl}]
+First consider \(B\sim\operatorname{Binomial}(L,p)\), with
+\(L\ge1\) and \(0<p<1\).
+The smoothed estimator is \(\widehat p=(B+1)/(L+2)\).
+Using \(1/(B+1)=\int_0^1u^B\,du\),
+\[
+ \E\!\left[\frac1{B+1}\right]
+ =\int_0^1(1-p+pu)^L\,du
+ =\frac{1-(1-p)^{L+1}}{(L+1)p}.
+\]
+Consequently,
+\[
+ p\,\E[1/\widehat p]\le\frac{L+2}{L+1},
+ \qquad
+ (1-p)\,\E[1/(1-\widehat p)]\le\frac{L+2}{L+1}.
+\]
+The second inequality follows by applying the same calculation to
+\(L-B\). Jensen's inequality gives
+\begin{align*}
+ \E[\kl(p,\widehat p)]
+ &\le p\log\!\bigl(p\,\E[1/\widehat p]\bigr)
+ +(1-p)\log\!\bigl((1-p)\,\E[1/(1-\widehat p)]\bigr)\\
+ &\le\log\frac{L+2}{L+1}\le\frac1{L+1}.
+\end{align*}
+For \(p=0,1\), the loss equals \(\log((L+2)/(L+1))\)
+deterministically, so the bound also holds.
+
+For group \(j\), the pooled count is binomial with \(L=nm_j\).
+Independence of the test tokens makes the sequence KL the sum of
+the Bernoulli KLs. Therefore
+\[
+ \kappa_n(T)
+ =\sum_{j=1}^{d(T)}m_j\,\E[\kl(p_j,\widehat p_j)]
+ \le\sum_{j=1}^{d(T)}\frac{m_j}{nm_j+1}
+ \le\frac{d(T)}n.
+\]
+For the lower bound, the binomial mean and variance give
+\[
+ \E[(\widehat p-p)^2]
+ =\frac{Lp(1-p)+(1-2p)^2}{(L+2)^2}.
+\]
+Pinsker's inequality implies
+\[
+ \E[\kl(p,\widehat p)]
+ \ge2\E[(\widehat p-p)^2]
+ \ge\frac{2Lp(1-p)}{(L+2)^2}.
+\]
+With \(L=nm_j\) and \(p_j\in[a,1-a]\),
+\[
+ m_j\,\E[\kl(p_j,\widehat p_j)]
+ \ge\frac{2a(1-a)}n\left(\frac{nm_j}{nm_j+2}\right)^2
+ \ge\frac{2a(1-a)}{9n}.
+\]
+Summing over groups proves \cref{eq:sharing-rate}, with explicit bounds
+\[
+ \frac{2a(1-a)}9\frac{d(T)}n
+ \le\kappa_n(T)\le\frac{d(T)}n.
+\]
+
+For the leading constant, the same mean-squared error formula gives,
+uniformly for \(p\in[a,1-a]\),
+\[
+ \E[(\widehat p-p)^2]=\frac{p(1-p)}L+O(L^{-2}).
+\]
+In a fixed neighborhood of \(p\), Taylor's theorem gives
+\[
+ \kl(p,q)=\frac{(q-p)^2}{2p(1-p)}+O(|q-p|^3).
+\]
+Binomial moment bounds give
+\(\E[|\widehat p-p|^3]=O(L^{-3/2})\).
+Outside that neighborhood the probability is exponentially small
+by a binomial tail bound, while
+\(\kl(p,\widehat p)\le\log(L+2)\).
+Splitting the expectation between the two events yields
+\[
+ \E[\kl(p,\widehat p)]
+ =\frac1{2L}+O(L^{-3/2}).
+\]
+The constants can be chosen uniformly for \(p\in[a,1-a]\),
+\(0<a<1/2\).
+
+Summing over groups gives
+\[
+ \kappa_n(T)=\frac{d(T)}{2n}
+ +O_a\!\left(\frac1{n^{3/2}}
+              \sum_{j=1}^{d(T)}m_j^{-1/2}\right).
+\]
+The relative error is \(O_a((n\min_j m_j)^{-1/2})\), which tends
+to zero under the stated condition.
+This proves \cref{eq:sharing-leading}.
+\end{proof}
+
+\paragraph{Learning rates and task-cost intervals.}
+\sharingfullcost*
+
+\begin{proof}
+Let the \(U_t\) be independent fair bits and \(V_t=0\), giving one law
+\(P\) on infinite sequences. Use terminal cost \(V_T\) and counting
+cost \(\sum_{t=1}^T V_t\).
+Since \(1\le\lceil d(T)\rceil\le T\), at each horizon we can partition
+the first \(T\) positions into \(\lceil d(T)\rceil\) nonempty groups.
+The estimator may use a different partition at each horizon; the data
+law \(P\) remains fixed.
+Let \(\widehat P^U_T\) be the smoothed pooled estimator and set
+\(r_T=\E[\KL(P^U_T,\widehat P^U_T)]\). For every law \(R\)
+supported on \(v_{1:T}\ne0^T\), define
+\[
+ \widehat Q_R=e^{-r_T}(\widehat P^U_T\otimes\delta_{0^T})
+ +(1-e^{-r_T})R.
+\]
+Since all Bernoulli parameters are
+fixed at \(1/2\), \(r_T\) is a deterministic function of the known
+sample sizes. Thus the prescribed mixture weight defines an estimator
+from the observed sample.
+
+For this construction, \(P_T=P^U_T\otimes\delta_{0^T}\).
+Since \(R\) assigns no mass to \(v_{1:T}=0^T\),
+\[
+ \KL(P_T,\widehat Q_R)
+ =\KL(P^U_T,\widehat P^U_T)+r_T.
+\]
+Hence every \(\widehat Q_R\) has expected sequence KL
+\(\kappa_n(T)=2r_T\asymp \lceil d(T)\rceil/n\asymp d(T)/n\).
+Both costs vanish under the first
+mixture component, so
+\[
+ \E\!\left[\E_{\widehat Q_R}[c]\right]
+ =(1-e^{-r_T})\E_R[c].
+\]
+On \(v_{1:T}\ne0^T\), terminal cost ranges from zero to one, while count
+cost ranges from one to \(T\). Varying \(R\) over point masses and their
+mixtures gives the two intervals in \cref{prop:sharing-full-cost}, since
+\(r_T=\kappa_n(T)/2\).
+If an infinite-sequence output law is required, extend each fitted
+length-\(T\) law by a fixed continuation.
+\end{proof}
+
+\subsection{A sharp statistical obstruction to reverse-KL fitting}
+\label{app:conditional-support}
+
+Suppose the learner must answer prompts drawn from a fixed law \(\mu\).
+Replaying a few training prompts would change the task: the distribution
+of prompts is supplied externally. This makes support recovery a
+conditional prediction problem.
+
+\begin{proposition}[Two candidate rules and rare distinguishing prompts]
+\label{prop:conditional-support}
+Let \(\mathcal U\) be finite, with \(\mu(u)>0\) for every \(u\).
+Two known functions \(f_0,f_1:\mathcal U\to\{0,1\}\) disagree on
+\(\mathcal A\subseteq\mathcal U\), where \(\mu(\mathcal A)=\alpha>0\).
+Under candidate \(i\in\{0,1\}\), a demonstration has law
+\[
+ P_i(u,y)=\mu(u)\I\{y=f_i(u)\}.
+\]
+After \(n\) independent demonstrations, a possibly randomized learner
+returns a conditional law \(\widehat q\), inducing
+\(\widehat Q(u,y)=\mu(u)\widehat q(y\mid u)\).
+Then
+\begin{equation}
+ \inf_{\mathcal L}\max_{i\in\{0,1\}}
+ \mathbb P_{P_i^{\otimes n},\mathcal L}
+ \bigl(\KL(\widehat Q, P_i)=+\infty\bigr)
+ =\frac12(1-\alpha)^n.
+ \label{eq:support-lower}
+\end{equation}
+Here \(\mathcal L\) ranges over all such learning rules.
+\end{proposition}
+
+\begin{proof}
+Finite reverse KL requires
+\(\widehat q(f_i(u)\mid u)=1\) for every \(u\); hence it requires
+\(\widehat Q=P_i\).
+With probability \((1-\alpha)^n\), none of the training prompts lies
+in \(\mathcal A\). Conditional on this event the data have the same
+distribution under both candidates.
+No output can equal both \(P_0\) and \(P_1\).
+Averaging over the two equally likely candidates, the probability of
+failure on this event is therefore at least \(1/2\).
+This gives the lower bound on the worst-case failure probability.
+
+For equality, use any observed prompt in \(\mathcal A\) to identify \(i\)
+and return \(P_i\). If none occurs, choose one of the two candidates
+with an independent fair coin. This has the stated failure probability
+under each candidate.
+\end{proof}
+
+For \(0<\alpha<1\) and \(0<\delta<1/2\), success probability at least
+\(1-\delta\) requires
+\[
+ n\ge\frac{\log(1/(2\delta))}{-\log(1-\alpha)}.
+\]
+To make this concrete, a prompt is a pair of \(m\)-bit integers
+\((L,R)\), drawn uniformly and independently. The candidate rules are
+\[
+ f_0(L,R)=\I\{L\ge R\},\qquad f_1(L,R)=\I\{L>R\}.
+\]
+They differ exactly when \(L=R\), an event of probability \(2^{-m}\).
+The sample requirement is consequently
+\(\Omega(2^m\log(1/\delta))\) for \(0<\delta\le1/4\).
+The class has only two rules; random demonstrations rarely distinguish
+them.
+
+For comparison, let \(q\) give the common answer off \(\mathcal A\)
+and a fair bit on \(\mathcal A\). With \(Q(u,y)=\mu(u)q(y\mid u)\)
+and task cost \(c_i(u,y)=\I\{y\ne f_i(u)\}\), direct calculation gives
+\[
+ \KL(P_i, Q)=\alpha\log2,\qquad
+ \E_{P_i}[c_i]=0,\qquad
+ \E_Q[c_i]=\frac\alpha2,\qquad
+ \KL(Q, P_i)=+\infty.
+\]
+Finite reverse KL demands exact conditional support even on very rare
+prompts. Forward KL and expected error can already be small before those
+prompts have been observed.
+One expert answer to a \emph{chosen} prompt with \(L=R\) identifies the
+rule. This specifies additional information that resolves the difficulty.
+Lectures~19 and~24 return to such differences between random examples
+and targeted queries.
+
+\clearpage
+\section{Variational objectives and the information they use}
+\label{app:variational}
+
+There are two distinct unknowns that may appear when evaluating a
+target probability: its normalization constant, and its relative
+probabilities at different sequences. A variational objective can
+eliminate the first from the optimization.
+
+\subsection{A target known up to normalization}
+
+Suppose a target law is specified as
+\[
+ P(x)=\frac{w(x)}{\mathcal Z},\qquad
+ \mathcal Z=\sum_x w(x)>0,
+\]
+where \(w\) is evaluable but \(\mathcal Z\) is expensive to compute.
+Then
+\begin{equation}
+ \KL(Q_\theta, P)
+ =\E_{Q_\theta}[\log Q_\theta-\log w]+\log\mathcal Z.
+ \label{eq:unnormalized-target}
+\end{equation}
+The final term is independent of \(\theta\).
+Minimizing reverse KL within a tractable family therefore uses
+samples from \(Q_\theta\) and evaluations of \(\log w\).
+This is a basic \emph{variational approximation}: choose a tractable
+distribution by optimizing its divergence from a target.
+
+For a differentiable model with fixed support contained in that of
+\(w\), the gradient is
+\[
+ \E\!\left[
+ \bigl(\log Q_\theta(\widetilde X)-\log w(\widetilde X)\bigr)
+ \nabla_\theta\log Q_\theta(\widetilde X)
+ \right],\qquad \widetilde X\sim Q_\theta.
+\]
+Here \(\widetilde X\) denotes the whole generated sequence.
+Differentiating the expectation gives this identity; the additional
+normalization derivative vanishes because \(\sum_x\nabla Q_\theta(x)=0\).
+
+When the target is an unknown data law available only through samples,
+an evaluable \(w\) has not been supplied.
+In particular, if \(\widehat P_n\) is the empirical law of training
+sequences and \(\mathcal S_n\) is their finite set, then
+\[
+ \KL(Q,\widehat P_n)<\infty
+ \quad\Longleftrightarrow\quad Q(\mathcal S_n)=1.
+\]
+Using a broader estimated density or a density-ratio estimator is
+an additional statistical modeling step.
+
+\subsection{A cost-defined target connects variational fitting to RL}
+
+Suppose instead that a cost \(c(x)\) can be evaluated.
+Given a positive reference law \(R\) and \(\beta>0\), define
+\[
+ P_\beta(x)=\frac{R(x)e^{-\beta c(x)}}{\mathcal Z_\beta},
+ \qquad \mathcal Z_\beta=\E_R[e^{-\beta c}].
+\]
+Direct substitution gives
+\begin{equation}
+ \KL(Q, P_\beta)
+ =\KL(Q, R)+\beta\E_Q[c]+\log\mathcal Z_\beta.
+ \label{eq:gibbs-cost}
+\end{equation}
+Thus minimizing reverse KL to \(P_\beta\) is equivalent to minimizing
+\[
+ \E_Q[c]+\beta^{-1}\KL(Q, R).
+\]
+The reference penalizes departures from an existing model, while the
+cost evaluates generated behavior. The supplied cost defines a new
+target whose relative probabilities can be evaluated. This is a useful
+connection to KL-regularized reinforcement learning and post-training.
+
+\subsection{Variational inference for the latent likelihood}
+\label{app:latent-variational}
+
+For a hidden-state model, let \(q_\theta(j,x)\) be the joint mass
+function of a hidden trajectory \(j\) and an observed sequence \(x\).
+Let \(r_\phi(j\mid x)\) be a tractable trial posterior whose support
+is contained in that of \(q_\theta(j,x)\). Define
+\[
+ \mathcal B(\theta,\phi;x)
+ =\sum_jr_\phi(j\mid x)
+       \log\frac{q_\theta(j,x)}{r_\phi(j\mid x)}.
+\]
+Using \(q_\theta(j,x)=Q_\theta(x)q_\theta(j\mid x)\) gives
+\begin{equation}
+ \log Q_\theta(x)
+ =\mathcal B(\theta,\phi;x)
+  +\KL(r_\phi(\,\cdot\mid x), q_\theta(\,\cdot\mid x)).
+ \label{eq:elbo}
+\end{equation}
+The \emph{evidence lower bound}, or ELBO, is \(\mathcal B\).
+Maximizing it fits the model and a tractable approximation to its
+hidden-state posterior. The divergence in \cref{eq:elbo} compares
+two laws of hidden trajectories conditional on a supplied observation.
+It measures the error in the likelihood approximation.
+The reverse sequence KL in \cref{eq:reverse-objective} instead compares
+generated observation sequences with the data law.
+
+\section{Proofs for the additional LDS results}
+
+\subsection{Cayley--Hamilton}
+\label{app:cayley-hamilton}
+
+\cayleyhamilton*
+\begin{proof}
+The adjugate identity is
+\[
+ (\lambda I-A)\operatorname{adj}(\lambda I-A)=\chi_A(\lambda)I.
+\]
+Write the adjugate, a matrix polynomial of degree at most \(d-1\), as
+\(\sum_{j=0}^{d-1}\lambda^jD_j\).
+Comparing coefficients yields
+\[
+ D_{d-1}=I,\qquad
+ D_{j-1}-AD_j=a_jI\ (1\le j\le d-1),\qquad
+ -AD_0=a_0I.
+\]
+Multiply the middle identities on the left by \(A^j\), add them
+to the last identity and to \(A^dD_{d-1}=A^d\).
+All the \(D_j\) terms cancel, leaving \(\chi_A(A)=0\).
+\end{proof}
+
+\subsection{The constant-gain Gaussian predictor}
+\label{app:kalman}
+
+\kalmanpredictor*
+\begin{proof}
+We construct the covariance used in \cref{thm:kalman}.
+If \(S_t\mid Z_{<t}\sim\mathcal N(M_t,\Pi_t)\), Gaussian conditioning
+and the state equation give
+\begin{align}
+ \Omega_t&=C\Pi_tC^\top+\Sigma_V,\qquad
+ L_t=A\Pi_tC^\top\Omega_t^{-1},\nonumber\\
+ M_{t+1}&=AM_t+L_t(Z_t-CM_t),\label{eq:kalman-general}\\
+ \Pi_{t+1}
+ &=A\Pi_tA^\top+\Sigma_W
+   -A\Pi_tC^\top\Omega_t^{-1}C\Pi_tA^\top.\nonumber
+\end{align}
+The covariance update is a deterministic map \(\mathcal T(\Pi_t)\).
+To show that it has a fixed point under the stated conditions, use
+the identity
+\begin{equation}
+ (A-GC)\Pi(A-GC)^\top+\Sigma_W+G\Sigma_VG^\top
+ =\mathcal T(\Pi)+(G-L)(C\Pi C^\top+\Sigma_V)(G-L)^\top,
+ \label{eq:riccati-minimum}
+\end{equation}
+where \(L=A\Pi C^\top(C\Pi C^\top+\Sigma_V)^{-1}\).
+For any vector, its quadratic form on the left is minimized over
+\(G\) by \(G=L\).
+It follows that \(\mathcal T\) is monotone in the positive-semidefinite
+order.
+
+Since \(\rho(A)<1\), the finite matrix
+\[
+ B=\sum_{j=0}^{\infty}A^j\Sigma_W(A^\top)^j
+\]
+satisfies \(B=ABA^\top+\Sigma_W\).
+Starting from \(\Pi_0=0\), iterate \(\Pi_{n+1}=\mathcal T(\Pi_n)\).
+Monotonicity gives an increasing sequence, and
+\(\mathcal T(B)\preceq ABA^\top+\Sigma_W=B\) bounds it above.
+It therefore converges to a fixed point \(\Pi\).
+Continuity follows from \(\Sigma_V\succ0\), and
+\(\Pi\succeq\Sigma_W\succ0\).
+
+Set \(L=A\Pi C^\top(C\Pi C^\top+\Sigma_V)^{-1}\) and \(F=A-LC\).
+The fixed-point identity becomes
+\[
+ \Pi=F\Pi F^\top+\Sigma_W+L\Sigma_VL^\top.
+\]
+Thus \(\Pi-F\Pi F^\top\succ0\); conjugation by \(\Pi^{-1/2}\)
+shows that \(\rho(F)<1\).
+Initialize \(S_1\sim\mathcal N(0,\Pi)\).
+Induction in \cref{eq:kalman-general} now keeps the error covariance
+equal to \(\Pi\), proving \cref{eq:kalman-predictor,eq:kalman-conditional}.
+
+Finally,
+\[
+ S_t=A^{t-1}S_1+\sum_{j=2}^t A^{t-j}W_j.
+\]
+The geometric decay of powers of \(A\) bounds its second moment
+uniformly in \(t\); \(Z_t=CS_t+V_t\) has the same property.
+Geometric decay of powers of \(F\) also supplies the constants
+\(G,\gamma\) in \cref{prop:truncation}.
+\end{proof}
+
+\subsection{Why the Hankel factors recover the predictor}
+\label{app:hankel}
+
+\hankelrecovery*
+\begin{proof}
+Under the ranks assumed in \cref{sec:hankel}, both
+\(\mathcal H_0=\mathcal O_\star\mathcal R_\star\) and
+\(\mathcal H_0=\mathcal O\mathcal R\) are full-rank factorizations
+through a \(d_\star\)-dimensional space.
+Their left factors have the same column space, so
+\(\mathcal O=\mathcal O_\star T_0\) for an invertible \(T_0\).
+Multiplying by a left inverse of \(\mathcal O_\star\) gives
+\(\mathcal R=T_0^{-1}\mathcal R_\star\).
+Consequently, \cref{eq:recover-matrices} yields
+\[
+ \overline F=T_0^{-1}F_\star T_0,\qquad
+ \overline C=C_\star T_0,\qquad
+ \overline L=T_0^{-1}L_\star.
+\]
+Substituting these into
+\(\overline C\overline F^{j-1}\overline L\)
+proves \cref{prop:hankel-recovery}.
+Small singular values make inversion sensitive to coefficient errors;
+the truncated SVD selects which directions to retain.
+\end{proof}
+
+\subsection{State-space error and long-run statistics}
+\label{app:state-stability}
+
+Consider two state processes on one probability space:
+\[
+ S_{t+1}=g(S_t)+W_{t+1},\qquad
+ \widetilde S_{t+1}=\widehat g(\widetilde S_t)+\widetilde W_{t+1}.
+\]
+Assume that \(\widehat g\) is \(\rho\)-Lipschitz, \(0\le\rho<1\),
+and that the local coupled RMS error is bounded:
+\[
+ \left(\E\left[
+ \lVert g(S_t)+W_{t+1}
+ -\widehat g(S_t)-\widetilde W_{t+1}\rVert_2^2
+ \right]\right)^{1/2}\le\varepsilon.
+\]
+With \(e_t=(\E[\lVert S_t-\widetilde S_t\rVert_2^2])^{1/2}\),
+inserting \(\widehat g(S_t)+\widetilde W_{t+1}\) between the next
+states gives \(e_{t+1}\le\varepsilon+\rho e_t\).
+Thus \cref{eq:stability-recursion} applies.
+
+For observations \(Z_t=r(S_t)+V_t\) and
+\(\widetilde Z_t=\widehat r(\widetilde S_t)+\widetilde V_t\),
+assume that \(\widehat r\) is \(L_r\)-Lipschitz and
+\[
+ \left(\E\left[
+ \lVert r(S_t)+V_t-\widehat r(S_t)-\widetilde V_t\rVert_2^2
+ \right]\right)^{1/2}\le b.
+\]
+The observation discrepancy satisfies
+\[
+ d_t:=(\E[\lVert Z_t-\widetilde Z_t\rVert_2^2])^{1/2}
+ \le L_re_t+b.
+\]
+For an \(L_f\)-Lipschitz function \(f\),
+\[
+ |\E[f(Z_t)]-\E[f(\widetilde Z_t)]|\le L_fd_t.
+\]
+If both observation processes have RMS norm at most \(B_Z\), then
+\begin{equation}
+ \left\lVert\E[Z_tZ_s^\top]
+ -\E[\widetilde Z_t\widetilde Z_s^\top]\right\rVert_{\rm F}
+ \le B_Z(d_t+d_s).
+ \label{eq:second-moment-control}
+\end{equation}
+To see this, expand the matrix difference using
+\((Z_t-\widetilde Z_t)Z_s^\top+
+\widetilde Z_t(Z_s-\widetilde Z_s)^\top\), and apply Cauchy--Schwarz.
+Uniformly small coupled error therefore controls means, Lipschitz
+costs, and fixed-lag second moments.
+
+For linear Gaussian models in common state coordinates, take
+\(W_t=\Sigma_W^{1/2}\Xi_t\) and
+\(\widetilde W_t=\widehat\Sigma_W^{1/2}\Xi_t\) with shared standard
+Gaussian \(\Xi_t\), and couple the observation noises similarly.
+If the true states have RMS norm at most \(B_S\), sufficient local bounds are
+\begin{align*}
+ \varepsilon&\le\lVert A-\widehat A\rVert B_S+
+ \lVert\Sigma_W^{1/2}-\widehat\Sigma_W^{1/2}\rVert_{\rm F},\\
+ b&\le\lVert C-\widehat C\rVert B_S+
+ \lVert\Sigma_V^{1/2}-\widehat\Sigma_V^{1/2}\rVert_{\rm F}.
+\end{align*}
+The contraction condition is \(\lVert\widehat A\rVert<1\).
+A change of coordinates can express contraction in a weighted
+Euclidean norm. This is a concrete route from accurate, stable
+state-space fitting to long-run statistical accuracy.
+
+\section*{Bibliographical notes}
+\phantomsection
+\label{sec:bibliographical-notes}
+
+The probability and KL chain rules continue Lecture~3.
+The cost bounds and binary calculations here follow directly from those
+identities. The zero-cost forward-KL refinement makes explicit information
+that a general Pinsker conversion discards.
+
+\paragraph{Likelihood, task discrepancy, and imitation learning.}
+\Cref{prop:forward-variance} has Bernstein form, with a variance-dependent
+square-root term and a range-dependent linear term.
+\citet[Theorem~3.1]{foster2024} obtain this form using trajectory-level
+Hellinger distance and expert-action variance. Their lower-order term
+retains the total-return range \(R\), up to logarithms.
+The technical gain in their Section~3.2 is to avoid an extra horizon
+factor: summing \(H\) advantages (changes in expected remaining return
+caused by an action) gives a naive range coefficient \(HR\), which
+their concentration and stopping-time argument reduces to order \(R\)
+up to logarithms. Their Proposition~3.1 also bounds expert-action
+variance by the variance of the total return; a deterministic expert
+has zero action variance even in a random environment.
+
+Here \(\sigma_P(c)\) measures the variation of the specified trajectory
+cost directly. For our binary examples it is zero, and the sharp
+zero-cost bound already uses \(C_{\max}=T\) for the count and
+\(C_{\max}=1\) for terminal error.
+\citet{wang2025} survey variance-sensitive Hellinger bounds and the
+role of loss functions in decision making.
+
+The finite-class likelihood proof in \cref{app:finite-mle} makes the
+optimization tolerance explicit.
+Lecture~18 develops the imitation-learning results, including the expert
+variance, parameter sharing, misspecification, and the sample-budget
+meaning of horizon dependence.
+
+The comparison-rule example in \cref{app:conditional-support} adapts
+the rare-disagreement construction of \citet[Theorem~3.2]{gyorgy2025}
+to conditional reverse KL. Its exact two-rule failure probability is
+proved here.
+
+\paragraph{Minimax optimality of the parameter-sharing rate.}
+\phantomsection
+\label{note:sharing-minimax}
+The rate \(d(T)/n\) in \cref{prop:sharing-kl} is optimal up to
+constants depending on \(a\). Write \(P_p\) for the length-\(T\)
+grouped Bernoulli law with parameter vector \(p\). Then
+\[
+ \inf_{\widehat Q}\sup_{p\in[a,1-a]^{d(T)}}
+ \E[\KL(P_p,\widehat Q)]\asymp_a\frac{d(T)}n,
+\]
+where the infimum ranges over all learners that use \(n\) independent
+training sequences to output a probability law on length-\(T\) sequences.
+The upper bound follows from \cref{prop:sharing-kl}.
+For the lower bound, put independent two-point priors on the
+parameters, with the two values near \(1/2\) separated by a small
+multiple of \((nm_j)^{-1/2}\), depending only on \(a\).
+At a test position in group \(j\),
+the training data and preceding test tokens contain at most
+\((n+1)m_j\le2nm_j\) observations of that parameter.
+The two values remain hard to distinguish: Le Cam's testing bound
+and Pinsker's inequality give expected conditional KL at least a
+constant multiple of \(1/(nm_j)\). Summing over the \(m_j\) positions per group
+and then over groups, using the KL chain rule, gives \(d(T)/n\).
+\citet{yu1997} explains the two-point and coordinatewise testing
+methods underlying this argument.
+
+\paragraph{Loss normalization in supervised fine-tuning.}
+\phantomsection
+\label{note:sft-normalization}
+\citet[Section~4.3, Eq.~(6)]{yao2025} distinguish averaging all predicted
+token losses from averaging separately normalized response losses, and
+compare these choices in supervised fine-tuning. \citet{hf2024loss}
+explain how to implement token averaging across gradient-accumulation
+batches: sum the losses and divide by the total number of prediction
+targets included in the loss.
+
+\paragraph{Statistical accuracy, optimization, and scaling laws.}
+\citet[Sections~2--3]{bottou2007} study the
+approximation--estimation--optimization tradeoff. Balancing optimization
+tolerance against estimation error gives the statistical-accuracy
+principle used in \cref{eq:statistical-accuracy}.
+As data improve the statistical accuracy, finer optimization becomes
+worthwhile.
+
+The connection to language-model scaling laws is explicit in
+\citet[Section~3.3 and Appendix~D.2]{hoffmann2022}. Renaming their
+variables, they fit the empirical relation
+\[
+ L(m,B)\approx L_\infty+a\,m^{-\alpha}+b\,B^{-\beta},
+\]
+where \(m\) is parameter count, \(B\) is the number of training tokens,
+and the constants are fitted across training runs.
+Their last term combines finite-data effects and incomplete optimization
+during a single pass. Increasing the training-token budget supplies
+both observations and gradient updates.
+Under a fixed compute budget, \citet{kaplan2020} find a regime in
+which a larger model stopped before convergence outperforms smaller
+models trained longer. This allocates computation between model size
+and fitting accuracy.
+These empirical laws describe average log loss. The cost comparisons
+in \cref{sec:binary} ask what task-performance variation remains at
+a given likelihood, and hence what additional information is useful
+for choosing a generator.
+
+\paragraph{Stability and concentration.}
+\citet{rudolf2018} develop perturbation bounds for Markov chains using
+contraction. \Cref{thm:markov-stability} is the elementary finite-state
+TV argument. \citet[Sections~2.2.1 and~3.4.3]{raginsky2014} give
+Hoeffding's lemma and the relative-entropy variational inequality.
+Our exponential-tilting calculation applies these ideas to a specified
+sequence cost. \Cref{prop:reverse-modulus} identifies its exact
+reverse-KL conversion by constructing extremizing tilted laws.
+The single-bit comparison in \cref{app:bound-comparison} uses the
+sharp Bernoulli subgaussian proxy from \citet{schlemm2014}.
+
+\paragraph{Moduli of continuity and approximation.}
+\Cref{sec:discrepancy-comparison} applies the usual quantitative
+continuity question to KL and expected cost. The fixed-KL endpoint
+calculations give both conversion directions directly.
+For the approximation-theory connection in \cref{app:moduli-analysis},
+\citet[Theorem~1]{drucker2011} state Jackson's theorem in the form used
+here and give proofs. Its modulus controls the uniform polynomial
+approximation error as a function of degree.
+
+\paragraph{Variational inference.}
+\citet[Section~2.2]{blei2017} derive the ELBO and its relation to
+reverse KL for posterior approximation.
+\Cref{app:variational} separates this computational use from fitting
+an unknown sequence-data law, and derives the cost-defined Gibbs target
+by direct substitution.
+
+\paragraph{Linear prediction and system identification.}
+The Kalman predictor is the classical Gaussian conditional-prediction
+recursion; \citet{mikusheva2009} give a derivation using Gaussian
+conditioning. The fixed-point and stability proof in
+\cref{app:kalman} supplies sufficient conditions for the version used here.
+Hankel factorization is the state-recovery construction of
+\citet{hokalman1966}.
+\citet{tsiamis2019} study finite-sample stochastic system identification
+through observable regression and low-rank state recovery. Their analysis
+quantifies how data length and conditioning affect recovery; the
+exact algebra in \cref{sec:hankel} explains the underlying construction.
+
+\begin{thebibliography}{99}
+\bibitem[Blei et al.(2017)]{blei2017}
+David M. Blei, Alp Kucukelbir, and Jon D. McAuliffe.
+\newblock Variational Inference: A Review for Statisticians.
+\newblock \emph{Journal of the American Statistical Association},
+112(518):859--877, 2017.
+\newblock \url{https://arxiv.org/abs/1601.00670}.
+
+\bibitem[Bottou and Bousquet(2007)]{bottou2007}
+L\'eon Bottou and Olivier Bousquet.
+\newblock The Tradeoffs of Large Scale Learning.
+\newblock \emph{Advances in Neural Information Processing Systems}, 20, 2007.
+\newblock \url{https://leon.bottou.org/publications/pdf/nips-2007.pdf}.
+
+\bibitem[Drucker and de Wolf(2011)]{drucker2011}
+Andrew Drucker and Ronald de Wolf.
+\newblock Uniform Approximation by (Quantum) Polynomials.
+\newblock \emph{Quantum Information and Computation},
+11(3\&4):215--225, 2011.
+\newblock \url{https://arxiv.org/abs/1008.1599}.
+
+\bibitem[Foster et al.(2024)]{foster2024}
+Dylan J. Foster, Adam Block, and Dipendra Misra.
+\newblock Is Behavior Cloning All You Need? Understanding Horizon
+in Imitation Learning.
+\newblock \emph{Advances in Neural Information Processing Systems}, 2024.
+\newblock \url{https://arxiv.org/abs/2407.15007}.
+
+\bibitem[Gy\"orgy et al.(2025)]{gyorgy2025}
+Andr\'as Gy\"orgy, Tor Lattimore, Nevena Lazi\'c, and Csaba Szepesv\'ari.
+\newblock Beyond Statistical Learning: Exact Learning Is Essential
+for General Intelligence.
+\newblock arXiv:2506.23908, 2025.
+\newblock \url{https://arxiv.org/abs/2506.23908}.
+
+\bibitem[Ho and Kalman(1966)]{hokalman1966}
+B. L. Ho and Rudolf E. Kalman.
+\newblock Effective construction of linear state-variable models
+from input/output functions.
+\newblock \emph{Regelungstechnik}, 14:545--548, 1966.
+\newblock \url{https://doi.org/10.1524/auto.1966.14.112.545}.
+
+\bibitem[Hoffmann et al.(2022)]{hoffmann2022}
+Jordan Hoffmann et al.
+\newblock Training Compute-Optimal Large Language Models.
+\newblock arXiv:2203.15556, 2022.
+\newblock \url{https://arxiv.org/abs/2203.15556}.
+
+\bibitem[Kaplan et al.(2020)]{kaplan2020}
+Jared Kaplan et al.
+\newblock Scaling Laws for Neural Language Models.
+\newblock arXiv:2001.08361, 2020.
+\newblock \url{https://arxiv.org/abs/2001.08361}.
+
+\bibitem[Mikusheva(2009)]{mikusheva2009}
+Anna Mikusheva; Paul Schrimpf, scribe.
+\newblock Filtering. State space models. Kalman filter.
+\newblock MIT 14.384, Lecture 21, revised November 24, 2009.
+\newblock \href{https://ocw.mit.edu/courses/14-384-time-series-analysis-fall-2013/3dcb917d20ece78852cd398a3f7b5e64_MIT14_384F13_lec21.pdf}{MIT OpenCourseWare lecture notes}.
+
+\bibitem[Raginsky and Sason(2014)]{raginsky2014}
+Maxim Raginsky and Igal Sason.
+\newblock \emph{Concentration of Measure Inequalities in Information
+Theory, Communications and Coding}.
+\newblock Second edition, 2014.
+\newblock \url{https://arxiv.org/abs/1212.4663}.
+
+\bibitem[Rudolf and Schweizer(2018)]{rudolf2018}
+Daniel Rudolf and Nikolaus Schweizer.
+\newblock Perturbation theory for Markov chains via Wasserstein distance.
+\newblock \emph{Bernoulli}, 24(4A):2610--2639, 2018.
+\newblock \url{https://doi.org/10.3150/17-BEJ938}.
+
+\bibitem[Schlemm(2014)]{schlemm2014}
+Eckhard Schlemm.
+\newblock The Kearns--Saul inequality for Bernoulli and Poisson-binomial
+distributions.
+\newblock arXiv:1405.4496, 2014.
+\newblock \url{https://arxiv.org/abs/1405.4496}.
+
+\bibitem[Tsiamis and Pappas(2019)]{tsiamis2019}
+Anastasios Tsiamis and George J. Pappas.
+\newblock Finite Sample Analysis of Stochastic System Identification.
+\newblock In \emph{Proceedings of the 58th IEEE Conference on Decision
+and Control}, 2019.
+\newblock \url{https://arxiv.org/abs/1903.09122}.
+
+\bibitem[Wang et al.(2025)]{wang2025}
+Kaiwen Wang, Nathan Kallus, and Wen Sun.
+\newblock The Central Role of the Loss Function in Reinforcement Learning.
+\newblock arXiv:2409.12799, 2025.
+\newblock \url{https://arxiv.org/abs/2409.12799}.
+
+\bibitem[Yu(1997)]{yu1997}
+Bin Yu.
+\newblock Assouad, Fano, and Le Cam.
+\newblock In David Pollard, Erik Torgersen, and Grace L. Yang, editors,
+\emph{Festschrift for Lucien Le Cam: Research Papers in Probability
+and Statistics}, pages 423--435. Springer, 1997.
+\newblock \url{https://doi.org/10.1007/978-1-4612-1880-7_29}.
+
+\bibitem[Hugging Face(2024)]{hf2024loss}
+Hugging Face.
+\newblock Fixing gradient accumulation.
+\newblock October 16, 2024.
+\newblock \url{https://huggingface.co/blog/gradient_accumulation}.
+
+\bibitem[Yao et al.(2025)]{yao2025}
+Yongqiang Yao, Jingru Tan, Kaihuan Liang, Feizhao Zhang, Jiahao Hu,
+Shuo Wu, Yazhe Niu, Ruihao Gong, Dahua Lin, and Ningyi Xu.
+\newblock Hierarchical balance packing: Towards efficient supervised
+fine-tuning for long-context LLM.
+\newblock NeurIPS, 2025. arXiv:2503.07680v3.
+\newblock \url{https://arxiv.org/abs/2503.07680v3}.
+
+\end{thebibliography}
+
+\clearpage
+\printendnotes
+
+\end{document}

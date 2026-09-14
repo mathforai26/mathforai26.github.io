@@ -1,0 +1,29 @@
+% Shared exercise chunk: l4-fitting-support
+\begin{exercisechunk}
+\item \textbf{Likelihood accuracy, data, and support.\suppmark}
+\label[exercise]{ex:fitting-support}
+Parts (a)--(c) use the repeated-error generators from
+\cref{ex:binary-count} and all-zero training sequences.
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Compute both empirical per-token losses. Include
+\(P=\delta_{0^T}\) in the model class and show that
+\(\varepsilon=1-e^{-\eta}\) makes both generators acceptable at
+optimization tolerance \(\eta>0\).
+\item Compute their terminal and counting costs and their leading
+terms as \(T\eta\to0\). Give a sufficient order of \(\eta\) in
+\(T\) to keep each expected count bounded.
+\item Remove \(P\) and use a finite collection of paired generators
+at distinct positive values of \(\varepsilon\). Identify all
+empirical minimizers. Explain why exact fitting leaves a tie between
+models of different task cost.
+\item Specialize \cref{thm:finite-mle} to zero-cost data, first for
+\(c\in[0,T]\) and then for \(c\in[0,1]\). Express each guarantee
+using the number of sequences \(n\), then using the token budget
+\(L=nT\).
+\item In \cref{prop:conditional-support}, choose a prompt on which
+the two candidate rules disagree. Show that its expert label identifies
+the correct rule. Compare the number of such queries with the number
+of random demonstrations needed for failure probability at most
+\(\delta\in(0,1/2)\).
+\end{enumerate}
+\end{exercisechunk}

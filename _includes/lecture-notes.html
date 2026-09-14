@@ -1,0 +1,5 @@
+{%- assign lecture = include.lecture -%}
+{%- capture lecture_links -%}
+<span class="lecture-notes">Lecture notes: <a href="{{ '/documents/scribes/' | append: lecture | append: '.pdf' | relative_url }}">PDF</a> · <a href="{{ '/documents/scribes/' | append: lecture | append: '.tex' | relative_url }}">LaTeX</a><small class="lecture-compiled">Compiled: {{ site.data.pdf_builds[lecture] }}</small></span>
+{%- endcapture -%}
+{{- lecture_links -}}

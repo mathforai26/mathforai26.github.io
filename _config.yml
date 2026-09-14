@@ -34,9 +34,12 @@ defaults:
 
 exclude:
   - course-design-decisions.md
+  - instructor-materials
   - lecture-plans
   - homework-plans
   - README.md
   - startlocalservice
+  - scripts
   - tmp
+  - outputs
   - vendor

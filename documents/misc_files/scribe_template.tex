@@ -5,13 +5,59 @@
 \usepackage[inline,shortlabels]{enumitem}
 \usepackage{xcolor}
 \usepackage{microtype}
+
+% Build identity: keep this block in future scribe notes as well.
+% The timestamp is fixed at compilation start and appears on every page.
+\usepackage[showseconds=false,showzone=true]{datetime2}
+\DTMsetup{datesep=-,datetimesep={\space},timezonesep={\space UTC}}
+\usepackage{eso-pic}
+\AddToShipoutPictureBG{%
+  \AtPageLowerLeft{%
+    \put(\LenToUnit{0.5\paperwidth},\LenToUnit{0.5in}){%
+      \makebox(0,0){\normalfont\footnotesize\color{black!60}Compiled: \DTMnow}%
+    }%
+  }%
+}
+
 \usepackage[square,authoryear]{natbib}
 \usepackage[colorlinks=true,linkcolor=blue!60!black,
   urlcolor=blue!60!black,citecolor=blue!60!black]{hyperref}
+\usepackage[nameinlink,capitalize]{cleveref}
+\crefname{exercise}{Exercise}{Exercises}
+\Crefname{exercise}{Exercise}{Exercises}
+
+% When including shared exercise chunks in the repository, uncomment:
+% \usepackage{../exercises/course-exercises}
+
+% Short refinements that may be skipped on a first reading.
+\usepackage{enotez}
+\DeclareInstance{enotez-list}{lecture}{list}{format=\normalsize,number={#1.}}
+\setenotez{list-name=Endnotes,list-style=lecture,backref=true}
+\crefname{endnote}{Endnote}{Endnotes}
+\Crefname{endnote}{Endnote}{Endnotes}
+
 
 \definecolor{courseblue}{HTML}{17365D}
+\newcommand{\E}{\mathbb E}
+\newcommand{\I}{\mathbb I}
+\renewcommand{\P}{\mathbb P}
 \newcommand{\R}{\mathbb R}
+\newcommand{\KL}{D}
+\newcommand{\TV}{\mathrm{TV}}
+\makeatletter
+\@for\@letter:=A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z\do{%
+  \expandafter\edef\csname c\@letter\endcsname{\noexpand\mathcal{\@letter}}}
+\makeatother
 \newcommand{\lecturenumber}{N}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{example}[theorem]{Example}
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
 
 \renewcommand{\thepage}{\lecturenumber--\arabic{page}}
 \renewcommand{\thesection}{\lecturenumber.\arabic{section}}
@@ -25,6 +71,9 @@
 % Every vector is a column vector. If a matrix stores one vector per position,
 % row i contains the transpose of that vector. Write every row-shaped vector
 % explicitly as the transpose of a column vector.
+% Use n for the number of independent training examples. Use sentence case in
+% optional theorem titles. Use example environments for worked examples that
+% are referenced later. Reserve \boxed{} for literal boxes in diagrams.
 
 \begin{document}
 
@@ -51,10 +100,16 @@ Lecture date
 \end{minipage}}
 \end{center}
 
+% Follow lecture-writing-standards.md from the first draft onward.
 % Organize the body around the lecture's mathematical development. Replace
 % the sample headings below with headings appropriate to the lecture.
 % Let equations carry transparent algebraic operations. Use prose to explain
 % purpose, structural meaning, design choices, and consequences.
+
+\noindent\textbf{Reading guide.}
+State the lecture's purpose and prerequisites, identify the material for a
+first reading, and point to optional material. When relevant, distinguish
+what was covered in class from subsequent additions.
 
 \section{Main question and setup}
 
@@ -72,12 +127,28 @@ Explain what the mathematics says about the AI systems discussed in the
 lecture.
 
 \section{Take-home messages}
+\label{sec:take-home}
 
 \begin{itemize}[leftmargin=*]
 \item Record the main mathematical and conceptual conclusions compactly.
 \end{itemize}
 
-\section{Glossary}
+% A separate Optional reading section, if needed, goes here.
+
+\section{Exercises}
+\label{sec:exercises}
+
+Collect focused exercises in lecture order, splitting long sets when they
+develop distinct ideas. Put hints after the questions. Keep matching model
+solutions in the private exercise files.
+
+% Load course-exercises above, then replace this placeholder with:
+% \exerciseinstructions
+% \setcounter{courseexercise}{0}
+% \input{../exercises/<exercise-id>.tex}
+% Add each exercise to ../exercises/catalog.json in the same order.
+
+\section*{Glossary}
 
 % Include a term when the note gives it a technical meaning needed to follow
 % the lecture or when the term is likely to recur later in the course. Include
@@ -91,7 +162,14 @@ lecture.
 Definition in the sense used in the lecture.
 \end{description}
 
-\section*{Bibliographic remarks}
+% Substantial deferred proofs and background go here, when needed:
+% \appendix
+% \section{Title of the deferred material}
+% Restate each result immediately before its proof environment. Order the
+% appendices by first substantive use in the main text. Exercise solutions
+% belong in private solution files.
+
+\section*{Bibliographical notes}
 
 Explain the origin or significance of each cited reference and its connection
 to the material developed above.
@@ -103,5 +181,13 @@ Author.
 \newblock Venue, year.
 \newblock \url{https://example.com}.
 \end{thebibliography}
+
+% From the first draft, use endnotes for short refinements that may be skipped
+% on a first reading. Keep necessary definitions and assumptions in the main text;
+% put substantial derivations in an appendix. Add a note beside its claim:
+% A statement.\endnote{A short refinement.}
+% Keep this final command after the references. It prints nothing if unused.
+\clearpage
+\printendnotes
 
 \end{document}

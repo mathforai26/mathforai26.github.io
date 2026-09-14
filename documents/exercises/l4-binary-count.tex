@@ -1,0 +1,78 @@
+% Shared exercise chunk: l4-binary-count
+\begin{exercisechunk}
+\item \textbf{Repeated errors and their accumulation.}
+\label[exercise]{ex:binary-count}
+Compare isolated errors with errors that persist. Fix
+\(T\ge2\), \(P=\delta_{0^T}\), \(0<\varepsilon<1\), and \(X_0=0\).
+Use \(c_{\mathrm{cnt}}(x)=\sum_{t=1}^T x_t\) and
+\(c_{\mathrm{fin}}(x)=x_T\).
+The Markov generators \(Q_{\mathrm{ind}},Q_{\mathrm{bad}}\) use
+\[
+ \begin{array}{c|cc}
+ &Q(X_{t+1}=1\mid X_t=0)&Q(X_{t+1}=1\mid X_t=1)\\ \hline
+ Q_{\mathrm{ind}}&\varepsilon&\varepsilon\\
+ Q_{\mathrm{bad}}&\varepsilon&1
+ \end{array}
+ \qquad(0\le t<T).
+\]
+For \(P\), use the kernel that returns zero from either state.
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Show that both generators have conditional KL
+\(-\log(1-\varepsilon)\) at every data prefix, and hence
+\begin{equation}
+ \KL(P, Q_{\mathrm{ind}})
+ =\KL(P, Q_{\mathrm{bad}})
+ =T\log\frac1{1-\varepsilon}.
+ \label{eq:binary-kl}
+\end{equation}
+Compare this constant positionwise loss with the loss profile of
+$Q_-$ and $Q_+$. Compute the probability that the first one occurs at
+position \(s\), and the probability of no ones.
+\item Prove
+\begin{align}
+ \E_{Q_{\mathrm{ind}}}[c_{\mathrm{cnt}}]&=T\varepsilon,
+ \label{eq:ind-cost}\\
+ \E_{Q_{\mathrm{bad}}}[c_{\mathrm{cnt}}]
+ &=\sum_{t=1}^T[1-(1-\varepsilon)^t]
+ =T-\frac{(1-\varepsilon)[1-(1-\varepsilon)^T]}{\varepsilon}.
+ \label{eq:bad-cost}
+\end{align}
+Obtain the second identity both from marginal error probabilities
+and by conditioning on the first error position. Also prove
+\begin{equation}
+ \E_{Q_{\mathrm{ind}}}[c_{\mathrm{fin}}]=\varepsilon,\qquad
+ \E_{Q_{\mathrm{bad}}}[c_{\mathrm{fin}}]=1-(1-\varepsilon)^T.
+ \label{eq:terminal-cost}
+\end{equation}
+\item Prove the finite bounds
+\[
+ \frac{\varepsilon T(T+1)}2
+ -\frac{\varepsilon^2T(T+1)(T-1)}6
+ \le\E_{Q_{\mathrm{bad}}}[c_{\mathrm{cnt}}]
+ \le\frac{\varepsilon T(T+1)}2.
+\]
+Deduce \(\E_{Q_{\mathrm{bad}}}[c_{\mathrm{cnt}}]
+\sim\varepsilon T(T+1)/2\) when \(T\varepsilon\to0\).
+Explain why the expected count can grow quadratically with \(T\)
+in this regime.
+\item Show that both sequence TVs equal \(1-(1-\varepsilon)^T\).
+For either generator, verify the bounds
+\begin{align}
+ \E_Q[c_{\mathrm{cnt}}]&\le T[1-(1-\varepsilon)^T],
+ &&\text{using exact TV},\label{eq:binary-tv-bound}\\
+ \E_Q[c_{\mathrm{cnt}}]&\le
+ T\min\left\{1,\sqrt{\frac T2\log\frac1{1-\varepsilon}}\right\},
+ &&\text{using Pinsker}.\label{eq:binary-pinsker-bound}
+\end{align}
+Compare these with the exact counts at
+\(T=1000,\varepsilon=10^{-3}\), and their leading terms when
+\(T\varepsilon\to0\). Which information about error duration
+does the TV-to-count bound discard?
+\item Set \(\varepsilon=1-e^{-\kappa/T}\) for fixed \(\kappa>0\).
+Compute the two terminal costs and the ratio
+\(\E_{Q_{\mathrm{bad}}}[c_{\mathrm{fin}}]/
+\E_{Q_{\mathrm{ind}}}[c_{\mathrm{fin}}]\). Explain why this ratio is of order \(T\) even though the terminal cost range is
+fixed. Which model attains the terminal-cost upper endpoint?
+\end{enumerate}
+
+\end{exercisechunk}

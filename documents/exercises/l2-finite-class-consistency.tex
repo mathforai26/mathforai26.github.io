@@ -1,0 +1,24 @@
+% Shared exercise chunk: l2-finite-class-consistency
+\begin{exercisechunk}
+\item \textbf{Generalization by consistency.}
+\label[exercise]{ex:finite-class-consistency}
+Use the assumptions and notation of \cref{thm:finite-class-consistency}.
+\begin{enumerate}[(a)]
+\item For a predictor $g\in\cF$, compute the probability that $g$ is
+consistent with all $m$ observations in terms of $L_P(g,f)$. Write the
+factorization that uses the sampling assumptions.
+\item Prove \cref{eq:finite-class-consistency}. You may use the union bound:
+$\P(\bigcup_{j=1}^r E_j)\le\sum_{j=1}^r\P(E_j)$ for events
+$E_1,\ldots,E_r$. Your proof should apply to every choice among consistent
+members, including randomized choices.
+\item Compare the guarantees:
+\begin{enumerate}[label=(\roman*),leftmargin=*,beginpenalty=10000]
+\item Derive the stated sample-size guarantee.
+\item Specialize it to the class
+of thresholds and compare it with \cref{prop:threshold}. Does this prove
+that the threshold learner needs more observations than the sufficient
+sample size in \cref{prop:threshold}?
+Support your answer with the two bounds.
+\end{enumerate}
+\end{enumerate}
+\end{exercisechunk}

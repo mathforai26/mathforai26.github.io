@@ -1,0 +1,21 @@
+% Shared exercise chunk: l4-kl-chain
+\begin{exercisechunk}
+\item \textbf{The KL chain rule.}
+\label[exercise]{ex:kl-chain}
+Let \(P,Q\) be laws on \([N]^T\), with \(Q(x)>0\) whenever \(P(x)>0\).
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Use the probability chain rule to write
+\(\log(P(X_{1:T})/Q(X_{1:T}))\) as a sum.
+\item Take expectation under \(P\), and then condition on \(X_{<t}\)
+in each term, to prove the KL chain rule in \cref{eq:population-kl}.
+\item State the reversed identity, with its own support condition.
+Which prefix distribution appears in each direction?
+\item Let \(P,Q\) now be laws on \(\mathcal U\times[N]^T\), where
+\(\mathcal U\) is a finite prompt set, with the same prompt marginal
+\(\mu\). Prove
+\[
+ \KL(P,Q)=\sum_{u:\,\mu(u)>0}\mu(u)
+ \KL(P(\,\cdot\mid u),Q(\,\cdot\mid u)).
+\]
+\end{enumerate}
+\end{exercisechunk}

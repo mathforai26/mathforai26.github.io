@@ -1,0 +1,17 @@
+% Shared exercise chunk: l2-deterministic-minimax
+\begin{exercisechunk}
+\item \textbf{Nonuniqueness for a fixed sampling distribution.}
+\label[exercise]{ex:deterministic-minimax}
+Use the notation $Q$ and $V(Q)$ from \cref{sec:sampling-law-comparison}.
+Let $N=2$ and $m=1$, and let $X_1$ and $X$ be independent and uniform on
+$\{1,2\}$. Consider the following deterministic learner. Given a sample
+$((1,y))$, it returns the function $g$ with $g(1)=y$ and $g(2)=1-y$. Given a
+sample $((2,y))$, it returns the function $g$ with $g(2)=y$ and $g(1)=y$.
+\begin{enumerate}[(a)]
+\item Compute $Q(U)$ and $V(Q)$.
+\item Show that this learner has risk $1/4$ for every hidden function $f$.
+\item Give a sample and test index on which this learner and $\cAmem$
+have different prediction distributions. Use this example to determine
+whether minimax learners are unique for this $Q$.
+\end{enumerate}
+\end{exercisechunk}

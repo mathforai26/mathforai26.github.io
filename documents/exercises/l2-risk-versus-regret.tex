@@ -1,0 +1,53 @@
+% Shared exercise chunk: l2-risk-versus-regret
+\begin{exercisechunk}
+\item \textbf{Minimax risk or minimax regret?}
+\label[exercise]{ex:risk-versus-regret}
+Consider two decisions with the following risks:
+\begin{center}
+\begin{tabular}{c|cc}
+Decision & Environment 1 & Environment 2\\\hline
+$A$ & $0.1$ & $1.0$\\
+$B$ & $0.3$ & $0.9$
+\end{tabular}
+\end{center}
+Here regret is measured relative to the smallest risk among the available
+decisions in each environment.
+\begin{enumerate}[(a)]
+\item In each case below, give the worst risk and worst regret at each optimizer
+and determine whether the criteria select the same decision.
+\begin{enumerate}[label=(\roman*),leftmargin=*,beginpenalty=10000]
+\item Find the minimax-risk and minimax-regret decisions when choosing
+between $A$ and $B$.
+\item Repeat when allowing randomization between them.
+\end{enumerate}
+
+\item \emph{A common fallback.} Suppose each available decision is implemented
+with probability $\lambda\in(0,1)$; otherwise the same fallback $H$ is
+implemented. This random choice is independent of the environment. Thus
+\[
+R_\lambda(A,\theta)=\lambda R(A,\theta)+(1-\lambda)R(H,\theta).
+\]
+Determine how this transformation affects rankings by worst-case risk and
+by worst-case regret.
+\begin{enumerate}[label=(\roman*),leftmargin=*,beginpenalty=10000]
+\item Show that when the \emph{whole menu} undergoes this transformation, regret
+rankings are unchanged.
+\item Give $\lambda$ and the two risks of $H$ for which
+the minimax-risk ranking of $A$ and $B$ reverses, and verify the reversal.
+\end{enumerate}
+
+\item \emph{Changing the menu.} Return to deterministic decisions. Determine
+whether adding an available decision can change which of $A$ and $B$ is
+preferred under each criterion, even if the new decision is not chosen.
+\begin{enumerate}[label=(\roman*),leftmargin=*,beginpenalty=10000]
+\item Show that adding a decision cannot reverse the minimax-risk ranking
+of $A$ and $B$.
+
+\item Compute the worst-case regret of each of $A$, $B$, and $C$ after adding
+$C$, with risks $1.0$ and $0.05$. Identify the minimax-regret decision and
+compare it with the choice in part~(a)(i).
+\item Prove that adding a decision that improves neither environment's
+best achievable risk leaves all existing regrets unchanged.
+\end{enumerate}
+\end{enumerate}
+\end{exercisechunk}

@@ -1,0 +1,26 @@
+% Shared exercise chunk: l2-minimax-regret-q
+\begin{exercisechunk}
+\item \textbf{Expressing simultaneous optimality by minimax regret.}
+\label[exercise]{ex:minimax-regret-q}
+Consider the excess risk relative to the $Q$-specific minimax value:
+\begin{equation}
+\min_{\cA}\max_{Q\in\cQ}
+\left\{
+\max_f R_Q(\cA,f)-V(Q)
+\right\}.
+\label{eq:minimax-regret-q}
+\end{equation}
+\begin{enumerate}[(a)]
+\item Show that the value of \cref{eq:minimax-regret-q} is zero.
+\item Prove that a learner
+attains this value exactly when it is minimax optimal simultaneously for every
+$Q$.
+\item Using \cref{eq:q-specific-value}, characterize its prediction at every
+seen and unseen test index for every consistent labeled sample.
+
+\item Compute the worst-case regret of the learner that always predicts
+with a fair coin and determine whether it minimizes \cref{eq:minimax-regret-q}.
+Compare its optimality here with its optimality for
+\cref{eq:absolute-distribution-free}.
+\end{enumerate}
+\end{exercisechunk}

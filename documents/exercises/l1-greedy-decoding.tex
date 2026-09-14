@@ -1,0 +1,35 @@
+% Shared exercise chunk: l1-greedy-decoding
+\begin{exercisechunk}
+\item \textbf{Greedy decoding and repetition.}
+\label[exercise]{ex:greedy-decoding}
+A toy language model completes the prefix ``The movie was''.
+Let ``\texttt{very}'' and ``\texttt{good.}'' (including the full stop, not including the apostrophes, which we will drop)
+be two tokens in the model's output token vocabulary.
+Given this prefix, the toy model outputs
+token \texttt{very} with probability $0.6$ or
+token \texttt{good.}
+with probability $0.4$.
+When the prefix ends with token
+\texttt{very}, it repeats the same
+choice; when it ends with \texttt{good.},
+it outputs the stop token with probability one and generation stops.
+Count the stop token as a generated token, including for the budget below.
+
+\begin{enumerate}[(a)]
+\item What token sequence does greedy decoding produce with a budget of $10$
+additional tokens? What token sequence does it produce without a budget?
+\item Under sampling, calculate the probability that generation terminates
+within $10$ additional tokens. Without a token budget, show that generation
+terminates with probability one and compute the expected number of generated
+tokens.
+\item Which complete sentence has the highest probability under the model?
+What is its probability?
+\end{enumerate}
+
+\paragraph{Connection to language models.}
+\href{https://arxiv.org/pdf/1908.04319v2}{Welleck et al. (2019, Table~4,
+p.~11)} show a GPT-2 continuation that repeats ``Portuguese'' under greedy
+decoding. The
+\href{https://huggingface.co/Qwen/Qwen3-8B}{Qwen3-8B model card}
+also warns that greedy decoding can cause endless repetition in thinking mode.
+\end{exercisechunk}

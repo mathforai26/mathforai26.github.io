@@ -1,0 +1,55 @@
+% Shared exercise chunk: l4-positionwise-loss
+\begin{exercisechunk}
+\item \textbf{A missed dependency at the final prediction.\suppmark}
+\label[exercise]{ex:positionwise-loss}
+Let \(T\ge2\). Under \(P_{\mathrm{par}}\), the first \(T-1\) bits
+are independent fair coins and the last is their parity:
+\(X_T=(\sum_{t<T}X_t)\bmod2\). Under \(Q_{\mathrm{coin}}\), all
+\(T\) bits are independent fair coins. The task cost is
+\[
+ c_{\mathrm{par}}(x_{1:T})
+ =\I\!\left\{x_T\ne\Bigl(\sum_{t<T}x_t\Bigr)\bmod2\right\}.
+\]
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Compute the next-token KL at every position and prove
+\begin{equation}
+ \begin{gathered}
+ \KL(P_{\mathrm{par}}, Q_{\mathrm{coin}})=\log2,\qquad
+ \frac{\KL(P_{\mathrm{par}}, Q_{\mathrm{coin}})}T
+ =\frac{\log2}{T},\\
+ \E_{P_{\mathrm{par}}}[c_{\mathrm{par}}]=0,\qquad
+ \E_{Q_{\mathrm{coin}}}[c_{\mathrm{par}}]=\frac12.
+ \end{gathered}
+ \label{eq:parity-final-error}
+\end{equation}
+Verify that \cref{eq:positive-data-bound} is attained.
+Compare the effect of normalization with \cref{eq:endpoint-normalization}.
+\item For the model class \(\{P_{\mathrm{par}},Q_{\mathrm{coin}}\}\)
+and any sample from \(P_{\mathrm{par}}\), prove that returning
+\(Q_{\mathrm{coin}}\) has empirical per-token optimization gap
+\((\log2)/T\). What has been left unlearned when this gap is accepted?
+\item Now use the class of all independent-bit laws
+\(Q=\bigotimes_{t=1}^T\operatorname{Bernoulli}(q_t)\).
+Show that every bit is marginally fair under \(P_{\mathrm{par}}\),
+and deduce that \(Q_{\mathrm{coin}}\) uniquely minimizes population
+log loss in this class. Explain why the same prediction failure is
+now approximation error.
+\item If \(\KL(P, Q)/T\le\eta\), what is the largest possible
+final-position contribution
+\[
+ \E\!\left[\KL\bigl(P(\,\cdot\mid X_{<T})
+       , Q(\,\cdot\mid X_{<T})\bigr)\right],
+ \qquad X_{1:T}\sim P,
+\]
+in \cref{eq:population-kl}? Give an example attaining it.
+Compare the information supplied by the average and by the individual
+positionwise losses.
+\item Define the running parity \(Y_t=(\sum_{j=1}^t X_j)\bmod2\).
+Describe its Markov kernels under \(P_{\mathrm{par}}\) and
+\(Q_{\mathrm{coin}}\). Apply \cref{thm:markov-stability} to this
+state, for which \(c_{\mathrm{par}}=Y_T\). Show that the fitted
+kernels have contraction factor zero, all earlier local discrepancies
+vanish, and the final local discrepancy is \(1/2\).
+Why does contraction leave this final error unchanged?
+\end{enumerate}
+\end{exercisechunk}

@@ -1,0 +1,31 @@
+% Shared exercise chunk: l1-bounded-attention
+\begin{exercisechunk}
+\item \textbf{Bounded scores and attention concentration.}
+\label[exercise]{ex:bounded-attention}
+Let $T\ge2$ be an integer and let $a,b\in\mathbb R$ satisfy $a\le b$.
+Write $R=b-a$ for the score range. For a score vector $s\in[a,b]^T$,
+define the probability vector $\alpha(s)$ by
+\[
+\alpha_j(s)=\frac{e^{s_j}}{\sum_{r=1}^T e^{s_r}},\qquad j\in[T].
+\]
+\begin{enumerate}[(a)]
+\item
+Compute $\sup_{s\in[a,b]^T}\max_{j\in[T]}\alpha_j(s)$ and give a score
+vector attaining this value.
+\item \emph{Optional extension.}
+Writing $H(\alpha)=-\sum_{j=1}^T\alpha_j\log\alpha_j$ for the
+\emph{entropy}, show that for every $s\in[a,b]^T$,
+\[
+\log T-R\le H(\alpha(s))\le\log T.
+\]
+Deduce that, for fixed $a,b$, $H(\alpha(s))/\log T\to1$ uniformly over
+$s\in[a,b]^T$ as $T\to\infty$. This concerns entropy relative to its maximum;
+it does not imply $\sum_{j=1}^T|\alpha_j(s)-1/T|\to0$.
+\item For a fixed $c\in(0,1)$, determine the smallest $R\ge0$ for which
+some $s\in[a,a+R]^T$ satisfies $\max_{j\in[T]}\alpha_j(s)\ge c$.
+Give such a score vector at this minimum range.
+Describe how this minimum range grows with $T$ for fixed $c$, and deduce
+whether a score range independent of $T$ can maintain $\max_j\alpha_j(s)\ge c$
+as $T\to\infty$.
+\end{enumerate}
+\end{exercisechunk}

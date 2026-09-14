@@ -1,0 +1,28 @@
+% Shared exercise chunk: l4-bernoulli-identification
+\begin{exercisechunk}
+\item \textbf{Identifying one of two Bernoulli models.\suppmark}
+\label[exercise]{ex:bernoulli-identification}
+The data law is one of two infinite i.i.d.\ Bernoulli processes, with
+parameter \(p\in\{1/4,3/4\}\). Observe \(n\) independent length-\(T\)
+sequences. Choose \(\widehat p=3/4\) if the empirical mean of their
+\(nT\) bits is at least \(1/2\), and choose \(1/4\) otherwise.
+Let \(\widehat Q\) be the i.i.d.\ model with parameter \(\widehat p\).
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Prove that the probability of choosing the wrong parameter is
+at most \((\sqrt3/2)^{nT}\le e^{-nT/8}\).
+\item Compute the sequence KL when the selected parameter is wrong,
+and deduce
+\[
+ \kappa_n(T)\le\frac{T\log3}{2}e^{-nT/8}\longrightarrow0
+ \qquad(T\to\infty,\ n\text{ fixed}).
+\]
+\item Compare this with estimating an arbitrary \(p\in(0,1)\) in
+\cref{eq:shared-bernoulli}. What allows the two-candidate learner
+to identify the entire model exactly?
+\end{enumerate}
+
+\begin{hints}
+For (a), let \(B\) be the number of observed ones and apply Markov's
+inequality to \(3^{B-nT/2}\) when \(p=1/4\).
+\end{hints}
+\end{exercisechunk}

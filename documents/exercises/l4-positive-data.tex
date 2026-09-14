@@ -1,0 +1,18 @@
+% Shared exercise chunk: l4-positive-data
+\begin{exercisechunk}
+\item \textbf{Zero-cost data and forward KL.}
+\label[exercise]{ex:positive-data}
+Let \(P,Q\) be laws on a finite set \(\cX\), and let
+\(c:\cX\to[0,C_{\max}]\), with \(C_{\max}>0\) and \(\E_P[c]=0\).
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Prove the bound in \cref{eq:positive-data-bound}.
+\item Let \(\kappa\ge0\) and let \(R\) be supported on
+\(\{x:c(x)=C_{\max}\}\). Show that
+\(Q=e^{-\kappa}P+(1-e^{-\kappa})R\) attains the bound.
+\item Can a smaller bound hold for all such laws and costs using only
+\(C_{\max}\) and \(\KL(P,Q)\)? Explain using part (b).
+\end{enumerate}
+\begin{hints}
+For (a), take \(A=\{x:c(x)=0\}\) and compare \(P(A)\) with \(Q(A)\).
+\end{hints}
+\end{exercisechunk}

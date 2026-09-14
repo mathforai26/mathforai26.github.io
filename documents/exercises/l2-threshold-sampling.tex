@@ -1,0 +1,59 @@
+% Shared exercise chunk: l2-threshold-sampling
+\begin{exercisechunk}
+\item \textbf{What do the sampling assumptions buy?}
+\label[exercise]{ex:threshold-sampling}
+Fix a threshold target $f_k$. Let $\cA$ be the learner that returns
+$f_{\kest}$, where $\kest$ is the smallest observed positive index,
+or $N+1$ if none is observed.
+\begin{enumerate}[(a)]
+\item \emph{Arbitrary sampling.} Allow any joint distribution of the training
+and test indices, as in the original boxes problem. Prove
+\[
+R(\cA,f_k)=\P\bigl(X\ge k,\;
+X_i\notin\{k,\ldots,X\}\text{ for every }i\bigr).
+\]
+Prove this by showing equality of the corresponding events, before taking
+probabilities.
+
+\item \emph{Dependent training data with guaranteed coverage.}
+Now suppose the test index is an independent draw from a distribution $P$.
+The training indices may be dependent. Assume that, for some
+$\alpha\in(0,1]$, every interval $I\subseteq[N]$ satisfies
+\[
+\P(X_i\in I\mid X_1,\ldots,X_{i-1})\ge\alpha P(I)
+\qquad\text{almost surely}
+\]
+for each $i$, with unconditional probability when $i=1$.
+Let $L=P(\{k,\ldots,\kest-1\})$ be the learned predictor's error mass,
+where the set is empty if $\kest=k$.
+Adapt the proof of \cref{prop:threshold} to show, for $\epsilon\in(0,1)$,
+\[
+\P(L>\epsilon)\le(1-\alpha\epsilon)^m\le e^{-\alpha m\epsilon}.
+\]
+\emph{Hint: bound the probability of missing a fixed interval at every step
+by conditioning successively on the previous indices.}
+
+\item \emph{Interpret the assumption.} \begin{enumerate}[label=(\roman*),leftmargin=*,beginpenalty=10000]
+\item Verify the conditional coverage
+inequality for independent draws from $P$ with $\alpha=1$.
+\item Construct a
+sampling procedure whose training indices are not independent and verify
+the inequality for some $\alpha\in(0,1)$.
+\item What sample size suffices to
+ensure $L\le\epsilon$ with probability at least $1-\delta$, for
+$\delta\in(0,1)$?
+\end{enumerate}
+
+\item \emph{Matching marginal distributions is insufficient.}
+Let $N=2$, $f=f_1$, and $X_1=\cdots=X_m=Z$ for $m\ge1$, where $Z$ is
+uniform on $\{1,2\}$. Let the test index be independently uniform.
+Compute the learner's risk for every $m\ge1$. Use this expression to
+determine whether increasing $m$ reduces the risk in this example.
+\end{enumerate}
+
+Independence of the test input makes its distribution $P$ the appropriate
+measure of error after observing the training data. The coverage condition
+ensures that each additional observation has a chance of revealing a
+troublesome interval, even when the training observations are dependent.
+Independent sampling from $P$ is one way to obtain this guarantee.
+\end{exercisechunk}

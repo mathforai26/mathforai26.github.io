@@ -1,0 +1,37 @@
+% Shared exercise chunk: l2-transduction
+\begin{exercisechunk}
+\item \textbf{Induction and transduction.}
+\label[exercise]{ex:transduction}
+An \emph{inductive} learner uses the training sample to produce a prediction
+function for future inputs. A \emph{transductive} learner also receives the
+particular unlabeled test inputs whose labels it must predict.
+\begin{enumerate}[(a)]
+\item Consider the original boxes protocol with one test input $X$, and allow
+any known promise $f\in\cH\subseteq\{0,1\}^{[N]}$. A transductive learner
+$\cB$ receives $(s,x,w)$ and returns a bit. Show that there is an inductive
+learner $\cA$ of the form \cref{eq:randomized-algorithm} with exactly the same
+risk as $\cB$ for every $f\in\cH$. The training sample and its selection
+procedure are unchanged, and the learner's output function need not belong
+to $\cH$.
+
+\item Three boxes have nondecreasing binary labels. The training data reveal
+$f(1)=0$ and $f(3)=1$. The test set consists of box 2 and one other box, with
+the promise that their labels differ. Loss is the fraction of the two test
+labels predicted incorrectly. Allow randomized learners in both cases; the
+hidden labels are chosen before the learner's private random seed is drawn.
+\begin{enumerate}[label=(\roman*),leftmargin=*,beginpenalty=10000]
+\item Find the smallest worst-case expected loss when the learner must produce its
+prediction function before seeing the test set.
+\item Then find it when the learner
+receives both test indices before predicting their labels.
+\end{enumerate}
+\end{enumerate}
+
+\emph{Where does the gain come from?}
+In part~(b), the promise links the test-set composition to the hidden labels,
+so the unlabeled test indices themselves convey information about $f$.
+This changes the original assumption that index selection does not use $f$.
+Part~(a) concerns a single test input with unchanged training data; it does
+not rule out gains from seeing a whole unlabeled test set under additional
+promises such as the one in part~(b).
+\end{exercisechunk}

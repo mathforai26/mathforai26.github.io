@@ -1,0 +1,44 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage[inline,shortlabels]{enumitem}
+\usepackage{xcolor,microtype}
+\usepackage[square,authoryear]{natbib}
+\usepackage{xr-hyper}
+\usepackage[colorlinks=true,linkcolor=blue!60!black,urlcolor=blue!60!black]{hyperref}
+\usepackage[nameinlink,capitalize]{cleveref}
+\usepackage{course-exercises}
+\crefname{exercise}{Exercise}{Exercises}
+\Crefname{exercise}{Exercise}{Exercises}
+\crefname{endnote}{Endnote}{Endnotes}
+\Crefname{endnote}{Endnote}{Endnotes}
+\newtheorem{theorem}{Theorem}[section]
+\theoremstyle{remark}
+\newtheorem{remark}{Remark}[section]
+\newcommand{\I}{\mathbb I}
+\newcommand{\E}{\mathbb E}
+\renewcommand{\P}{\mathbb P}
+\newcommand{\KL}{D}
+\newcommand{\TV}{\mathrm{TV}}
+\newcommand{\kl}{\mathrm{kl}}
+\newcommand{\tv}[1]{\lVert #1\rVert_{\mathrm{TV}}}
+\newcommand{\suppmark}{\texorpdfstring{\textsuperscript{*}}{*}}
+\DeclareMathOperator{\diag}{diag}
+\DeclareMathOperator{\rank}{rank}
+\newcommand{\R}{\mathbb R}
+\makeatletter
+\@for\@letter:=A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z\do{%
+  \expandafter\edef\csname c\@letter\endcsname{\noexpand\mathcal{\@letter}}}
+\makeatother
+\newcommand{\cAmem}{\cA_{\mathrm{mem}}}
+\newcommand{\kest}{K}
+\usepackage[showseconds=false,showzone=true]{datetime2}
+\DTMsetup{datesep=-,datetimesep={\space},timezonesep={\space UTC}}
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\setlength{\headheight}{14pt}
+\fancyhead[L]{\small\documenttitle}
+\fancyfoot[L]{\footnotesize\documentrevision}
+\fancyfoot[R]{\thepage}
+\fancyfoot[C]{\scriptsize Compiled: \DTMnow}

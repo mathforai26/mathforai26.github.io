@@ -1,0 +1,26 @@
+% Shared exercise chunk: l4-sharing-horizon
+\begin{exercisechunk}
+\item \textbf{Sequence length and the training budget.\suppmark}
+\label[exercise]{ex:sharing-horizon}
+Use the grouped Bernoulli model and smoothed estimator from
+\cref{sec:parameter-sharing}. Assume \(p_j\in[a,1-a]\), with
+\(0<a<1/2\).
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Keep \(n\) fixed and suppose \(p_t\in[a,1-a]\).
+Use \cref{ex:sharing}(b) to give explicit upper and lower bounds proportional to
+\(T/n\) for the unshared model's expected sequence KL.
+Compare this growth with the shared model's limit in
+\cref{eq:shared-bernoulli}.
+\item Use one new parameter for each successive block of lengths
+\(1,2,3,\ldots\). Compute \(d(T)\) at complete-block endpoints and
+interpret \cref{eq:sharing-rate,eq:sharing-leading}. How can normalized
+KL improve while sequence KL grows?
+\item Fix the total training-token budget \(L=nT\) and use
+\(\kappa'_L(T)=\kappa_{L/T}(T)\) to repeat the shared and unshared
+leading-order comparisons. Explain why increasing \(T\) worsens
+expected sequence KL in the shared model. Compare the numbers of
+observations per parameter in the two models. Translate the expected-KL bounds into
+bounds on the discrepancy of a cost in \([0,1]\).
+\end{enumerate}
+
+\end{exercisechunk}

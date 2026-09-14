@@ -1,0 +1,43 @@
+% Shared exercise chunk: l2-probability-rules
+\begin{exercisechunk}
+\item \textbf{Probability rules and their notation.}
+\label[exercise]{ex:probability-rules}
+Use the definitions in \cref{app:probability}.
+\begin{enumerate}[(a)]
+\item Derive the following from the probability axioms:
+\begin{enumerate}[label=(\roman*),leftmargin=*,beginpenalty=10000]
+\item $\P(\emptyset)=0$.
+\item $\P(E^c)=1-\P(E)$ for every event $E$.
+\item Monotonicity of probability.
+\end{enumerate}
+\item Events and indicators:
+\begin{enumerate}[label=(\roman*),leftmargin=*,beginpenalty=10000]
+\item Write $\P(X=x,Y\in D)$ and $\I(X\ne Y)$ with their events expressed
+as subsets of $\Omega$.
+\item Show that $\I(E)$ is a measurable real-valued
+function whenever $E$ is an event.
+\end{enumerate}
+\item Expectations:
+\begin{enumerate}[label=(\roman*),leftmargin=*,beginpenalty=10000]
+\item For finite-valued random variables with an arbitrary joint distribution,
+prove linearity of expectation directly from the finite-sum definition.
+
+\item Also prove $\mathbb E[\I(E)]=\P(E)$.
+\end{enumerate}
+\item For a finite partition, prove each rule below, accounting for
+zero-probability parts of the partition:
+\begin{enumerate}[label=(\roman*),leftmargin=*,beginpenalty=10000]
+\item The multiplication rule.
+\item Total probability.
+\item Total expectation.
+\end{enumerate}
+\item Conditioning and independence:
+\begin{enumerate}[label=(\roman*),leftmargin=*,beginpenalty=10000]
+\item Prove the rule in \cref{eq:conditional-block-independence} by writing
+conditional probabilities as ratios.
+\item Give an example where two independent
+random variables become dependent after conditioning on an event involving
+both of them.
+\end{enumerate}
+\end{enumerate}
+\end{exercisechunk}

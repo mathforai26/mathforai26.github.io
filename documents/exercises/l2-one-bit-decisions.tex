@@ -1,0 +1,31 @@
+% Shared exercise chunk: l2-one-bit-decisions
+\begin{exercisechunk}
+\item \textbf{Bayes and worst-case predictions for one bit.}
+\label[exercise]{ex:one-bit-decisions}
+Fix a training sample $s$ consistent with at least one hidden function, and a
+test index $x$. Let $q$ be the learner's probability of predicting 1.
+\begin{enumerate}[(a)]
+\item If $x$ appears in $s$, show that a zero-error rule must return its
+observed label with probability one.
+\item Suppose $x$ is unseen and its conditional probability of label 1 is $p$
+under a specified prior.
+\begin{enumerate}[label=(\roman*),leftmargin=*,beginpenalty=10000]
+\item Derive the conditional expected loss as a function
+of $p$ and $q$.
+\item Characterize its minimizing values of $q$ for every $p$.
+\end{enumerate}
+\item With an unknown label $b\in\{0,1\}$, write the two-by-two loss matrix
+and let $r(q,b)$ be the expected loss. Solve
+\[
+\min_{q\in[0,1]}\max_b r(q,b),
+\qquad
+\max_{p\in[0,1]}\min_{q\in[0,1]}
+\bigl((1-p)r(q,0)+p\,r(q,1)\bigr).
+\]
+Identify all optimal $q$ in the first problem and all optimal $q$ for the
+least-favorable $p$ in the second. Are these sets of optimal $q$ equal?
+\item Suppose an adversary chooses $b$ after seeing the learner's predicted
+bit. Give an optimal strategy for this adversary, compute the resulting
+minimax value, and compare it with the first value in part~(c).
+\end{enumerate}
+\end{exercisechunk}

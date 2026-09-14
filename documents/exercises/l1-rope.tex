@@ -1,0 +1,187 @@
+% Shared exercise chunk: l1-rope
+The following tool may be used in \cref{ex:rope}.
+\begin{theorem}[Hoeffding's inequality]
+\label{thm:hoeffding}
+Let $n\ge1$ be an integer and let $Z_1,\ldots,Z_n$ be independent real
+random variables. Suppose $Z_r\in[a_r,b_r]$ almost surely for each $r\in[n]$,
+where $a_r<b_r$ are real numbers. For every real $t\ge0$,
+\[
+\mathbb P\!\left(\sum_{r=1}^n (Z_r-\mathbb E[Z_r])\ge t\right)
+\le \exp\!\left(-\frac{2t^2}{\sum_{r=1}^n(b_r-a_r)^2}\right).
+\]
+\end{theorem}
+
+\begin{exercisechunk}
+\item \textbf{Relative addressing with RoPE.}
+\label[exercise]{ex:rope}
+Can a query request a value at a specified relative offset while leaving the
+source keys unchanged? We will construct such queries, identify collisions between
+addresses, and examine how additional coordinate pairs help distinguish them.
+
+Let $T\ge2$ and $d_v\ge1$ be integers. Position $j\in[T]$ stores an
+arbitrary fixed value $v_j\in\mathbb R^{d_v}$. Every source uses the same
+unrotated unit key $k\in\mathbb R^2$. For each integer offset $1\le d<T$,
+we seek a unit-length query vector $q(d)\in\mathbb R^2$ that retrieves $v_{i-d}$ at every
+query position $i\in[T]$ with $i>d$. Reusing this query at different positions
+should implement the same addressing rule, independently of the stored values.
+As described earlier, RoPE modifies the attention calculation
+by applying position-dependent linear
+transformations---specifically, rotations---to the query and key vectors before
+taking their inner product.
+
+\begin{enumerate}[(a)]
+\item \textbf{Encoding the request.}
+For a real angle $\phi$, define
+\[
+R_\phi=\begin{pmatrix}\cos\phi&-\sin\phi\\\sin\phi&\cos\phi\end{pmatrix}.
+\]
+Fix an \emph{angular frequency} $\omega>0$ (called simply a \emph{frequency}
+below): moving forward one position increases the rotation angle by
+$\omega$ radians. RoPE compares the
+query at position $i$ with the key at position $j$ using the score
+\[
+s_{ij}=(R_{i\omega}q(d))^\top(R_{j\omega}k),\qquad i,j\in[T].
+\]
+\begin{enumerate}[label=(\roman*),leftmargin=*,beginpenalty=10000]
+\item Show that $R_\alpha^\top R_\beta=R_{\beta-\alpha}$ for real angles $\alpha,\beta$.
+\item Find the unique unit vector $q(d)$ so that $s_{i,i-d}=1$ whenever $i>d$, and derive a formula
+for $s_{ij}$. Show that no source has a larger score.
+\item Verify that shifting
+$i$ and $j$ by the same integer amount leaves the score unchanged whenever
+both positions remain in $[T]$.
+\end{enumerate}
+\item \textbf{From scores to retrieval.}
+For the scores constructed in (a), let $\varnothing\ne S_i\subseteq[T]$
+be the source positions available to query $i$. At positive real scale
+$\lambda$, define the attention weights and output by
+\[
+a_{ij}(\lambda)=\frac{e^{\lambda s_{ij}}}
+{\sum_{r\in S_i}e^{\lambda s_{ir}}},\quad j\in S_i,
+\qquad
+o_i(\lambda)=\sum_{j\in S_i}a_{ij}(\lambda)v_j\in\mathbb R^{d_v}.
+\]
+Fix $\varepsilon\in(0,1/2)$.
+\begin{enumerate}[label=(\roman*),leftmargin=*,beginpenalty=10000]
+\item For any $j\in S_i$, show that
+\[
+\|o_i(\lambda)-v_j\|_2
+\le (1-a_{ij}(\lambda))\max_{r\in S_i}\|v_r-v_j\|_2.
+\]
+Thus $a_{ij}(\lambda)>1-\varepsilon$ gives an $O(\varepsilon)$ retrieval
+error for fixed values. More explicitly, for a positive real bound $B$,
+show that $\|v_r\|_2\le B$ for all $r\in S_i$ gives error less than
+$2B\varepsilon$.
+\item Show that guaranteeing error at most $2B\varepsilon$
+for every such collection of values requires $a_{ij}(\lambda)\ge1-\varepsilon$.
+
+\item Use $S_i=[i]$ and suppose $0<\omega<2\pi/T$.
+Show that $i-d$ is the unique maximizing source at every query position
+$i>d$. For each such $i$, show that $\lim_{\lambda\to\infty}o_i(\lambda)=v_{i-d}$,
+accounting for the weight at every source position.
+\item At any such position, prove that $a_{i,i-d}(\lambda)\ge1-\varepsilon$
+requires
+\[
+\lambda\ge\frac{T^2}{2\pi^2}\log\frac{1-\varepsilon}{\varepsilon}.
+\]
+\end{enumerate}
+Hence, for fixed $\varepsilon$, uniform retrieval over values of norm at most
+$B$ requires $\lambda=\Omega(T^2)$ in this construction.
+Reducing the frequency makes neighboring scores increasingly close; increasing
+$\lambda$ compensates for this shrinking gap. The next part examines collisions
+when the frequency is held fixed as the sequence grows, and how a window removes
+them.
+\item \textbf{Collisions and a window repair.}
+For this part, hold $d$ fixed and allow the sequence length $T$ to grow. Choose an integer period $P>d$, set $\omega=2\pi/P$, and use the
+query construction from (a) with $S_i=[i]$. A \emph{collision} occurs when
+another source has the same score as the requested source $i-d$.
+\begin{enumerate}[label=(\roman*),leftmargin=*,beginpenalty=10000]
+\item Characterize all colliding source positions.
+\item Find the first query position
+$i>d$ at which a collision occurs.
+\item Evaluate $\lim_{\lambda\to\infty}o_i(\lambda)$ at the first collision
+position.
+\item Now use the window $S_i=\{j\in[i]:i-j<w\}$, where $w$ is a
+positive integer. Find the smallest width that retains $i-d$. For this width,
+prove that $i-d$ is the unique maximizing source and that
+$\lim_{\lambda\to\infty}o_i(\lambda)=v_{i-d}$ for every $i>d$, however long
+the sequence becomes.
+\end{enumerate}
+\item \textbf{Reliable addressing at a fixed score scale.}
+Close scores can require high numerical precision to distinguish, even when
+$\lambda$ is large. Can additional coordinate pairs create better-separated
+scores and permit a smaller scale? Increasing $\lambda$ is equivalent to
+increasing query and key norms. To compare this with increasing width, we fix
+$\lambda=1$ and unit query and key norms within each pair.
+
+Fix an integer context length $T\ge2$. Throughout this part, use $S_i=[i]$.
+Determine, up to constant factors, how many coordinates are necessary and
+sufficient to give the requested
+source attention weight at least $3/4$, simultaneously for every integer
+offset $1\le d<T$ and every query position $i\in[T]$ with $i>d$.
+
+Let $m$ be a positive integer, which determines the number of coordinate pairs used.
+For each coordinate pair $r\in[m]$, use a
+fixed unit key $k_r\in\mathbb R^2$, a frequency $\omega_r\in[0,2\pi)$,
+and the unit query $q_r(d)\in\mathbb R^2$ constructed in (a).
+Define the combined score as
+\[
+s_{ij}=\sum_{r=1}^m
+(R_{i\omega_r}q_r(d))^\top(R_{j\omega_r}k_r),\qquad i,j\in[T].
+\]
+\begin{enumerate}[label=(\roman*),leftmargin=*,beginpenalty=10000]
+\item \textbf{A necessary dimension.}
+Show that all scores lie in $[-m,m]$. Use \cref{ex:bounded-attention} to prove
+that, at query position $i=T$, attention weight at least $3/4$ on the requested
+source requires
+\[
+m\ge\tfrac12\log\bigl(3(T-1)\bigr).
+\]
+\item \textbf{Finding frequencies that separate addresses.}
+Prove that, for every integer $m\ge8\log(2T)$, there exist frequencies
+$\omega_1,\ldots,\omega_m\in[0,2\pi)$ such that
+\begin{equation}
+\label{eq:rope-separated-addresses}
+\sum_{r=1}^m\cos(\omega_r h)\le m/2
+\quad\text{for every integer }h\text{ with }1\le|h|<T.
+\end{equation}
+\item \textbf{Retrieval at every position and offset.}
+Fix frequencies satisfying \cref{eq:rope-separated-addresses}. Show that the requested source has score
+$m$ and that every other available source has score at most $m/2$,
+simultaneously for all offsets and query positions in the question.
+Prove that the total attention weight outside the requested source is at most
+$(T-1)e^{-m/2}$. Deduce that
+$m=\lceil8\log(2T)\rceil$ suffices for target weight at least $3/4$ with
+$\lambda=1$. State the resulting error bound when every value vector has
+norm at most a positive real bound $B$. Together with (i), conclude that
+$\Theta(\log T)$ coordinate pairs are necessary and sufficient.
+\end{enumerate}
+
+\end{enumerate}
+
+\paragraph{Conclusion.}
+With suitably chosen frequencies, RoPE supports relative addressing with
+logarithmic width and bounded coordinates. Extra coordinate pairs both
+distinguish addresses and accumulate
+the score advantage needed to concentrate attention
+(\cref{ex:bounded-attention}). Keeping each coordinate bounded still allows
+the total score to grow: width supplies an alternative to increasing $\lambda$.
+
+Standard RoPE instead uses geometrically spaced frequencies to provide both
+rapidly and slowly varying positional features. The existence guarantee in
+(d) does not automatically apply to that schedule. Indeed, its frequencies
+satisfy $0<\omega_r\le1$, so at displacement $h=1$,
+\[
+\sum_{r=1}^m\cos\omega_r\ge m\cos1>m/2.
+\]
+Thus it fails the particular sufficient separation condition in (d)(ii);
+this does not rule out retrieval with that schedule.
+
+\begin{hints}
+For (d)(i), apply the bound from \cref{ex:bounded-attention} with $T$ sources
+and score range $2m$.
+For (d)(ii), choose the frequencies independently and uniformly on $[0,2\pi)$.
+Compute $\mathbb E[\cos(\omega_r h)]$ for a nonzero integer $h$, then apply
+\cref{thm:hoeffding} and a union bound over $h\in[T-1]$.
+Use the evenness of cosine to handle negative $h$.
+\end{hints}
+\end{exercisechunk}

@@ -75,20 +75,28 @@ is introduced, state what its rows, columns, and any additional axes index. If
 a diagram uses a different spatial orientation from the algebraic convention,
 make that difference explicit. Let equations carry transparent algebraic
 operations. Use prose to explain purpose, structural meaning, design choices,
-and consequences. End with a short
-**Bibliographic remarks** section in the style of *Bandit Algorithms*: use
+and consequences. Include a short
+**Bibliographical notes** section in the style of *Bandit Algorithms*: use
 narrative prose to explain the origins of the ideas, how the cited work relates
 to the lecture, and where its scope differs. Follow this with an ordinary
 reference list.
 
+From the first draft, use **endnotes** for short remarks that refine the material
+and may be skipped on a first reading. An endnote is too short to require an
+appendix; substantial proofs and extended discussions belong in appendices. Keep definitions,
+assumptions, and explanations needed for the main argument in the main text.
+Collect endnotes after the references. During revision, check whether short
+ancillary remarks would fit there and whether the main text reads correctly
+without them.
+
 Start from the [LaTeX scribe template]({{ '/documents/misc_files/scribe_template.tex' | relative_url }}).
+The [lecture-writing standards]({{ '/documents/misc_files/lecture-writing-standards.md' | relative_url }})
+give the conventions for drafting and reviewing notes.
 
 The note is due within two calendar days of the lecture: a Tuesday lecture is
 due by the end of Thursday, ideally by the end of Wednesday; a Thursday lecture
-is due by the end of Saturday, ideally by the end of Friday. See the Lecture 1
-model note as a [PDF]({{ '/documents/scribes/lecture01.pdf' | relative_url }})
-or as [LaTeX source]({{ '/documents/scribes/lecture01.tex' | relative_url }}).
-The instructor will also prepare a second model note for Lecture 2. The
+is due by the end of Saturday, ideally by the end of Friday. The [course schedule]({% link _pages/schedule.md %}) links to each lecture's
+notes and LaTeX source. Lectures 1 and 2 also serve as examples for scribing. The
 editable signup sheet will be distributed through Slack.
 
 ### Research-question notes: 10%
