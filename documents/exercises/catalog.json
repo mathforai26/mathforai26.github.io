@@ -8,7 +8,9 @@
   {
     "id": "l1-greedy-decoding",
     "lecture": 1,
-    "reference_lectures": [2],
+    "reference_lectures": [
+      2
+    ],
     "number": 2,
     "file": "l1-greedy-decoding.tex"
   },
@@ -223,39 +225,45 @@
     "file": "l4-positionwise-loss.tex"
   },
   {
-    "id": "l4-fitting-support",
+    "id": "l4-optimization-certificate",
     "lecture": 4,
     "number": 13,
+    "file": "l4-optimization-certificate.tex"
+  },
+  {
+    "id": "l4-fitting-support",
+    "lecture": 4,
+    "number": 14,
     "file": "l4-fitting-support.tex"
   },
   {
     "id": "l4-multistep",
     "lecture": 4,
-    "number": 14,
+    "number": 15,
     "file": "l4-multistep.tex"
   },
   {
     "id": "l4-stability",
     "lecture": 4,
-    "number": 15,
+    "number": 16,
     "file": "l4-stability.tex"
   },
   {
     "id": "l4-persistent-memory",
     "lecture": 4,
-    "number": 16,
+    "number": 17,
     "file": "l4-persistent-memory.tex"
   },
   {
     "id": "l4-latent-likelihood",
     "lecture": 4,
-    "number": 17,
+    "number": 18,
     "file": "l4-latent-likelihood.tex"
   },
   {
     "id": "l4-lds",
     "lecture": 4,
-    "number": 18,
+    "number": 19,
     "file": "l4-lds.tex"
   }
 ]

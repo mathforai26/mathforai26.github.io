@@ -9,7 +9,7 @@
 \usepackage{microtype}
 
 % Revision date: maintained by scripts/build_lecture_notes.py. Keep this command.
-\newcommand{\lecturerevised}{2026-09-14 10:41 UTC-06:00}
+\newcommand{\lecturerevised}{2026-09-14 12:59 UTC-06:00}
 \usepackage{eso-pic}
 \AddToShipoutPictureBG{%
   \AtPageLowerLeft{%
@@ -1090,8 +1090,20 @@ Pinsker and exact-TV bounds in a variant with an error opportunity
 at every step; the additional calculations make the same distinction
 between sharpening a guarantee and choosing a better generator.
 
-\section{How does sequence length affect KL control?}
+\section{What does likelihood fitting guarantee?}
 \label{sec:growing-horizon}
+
+What does likelihood fitting guarantee about the generated solutions
+when data and computation are limited? We first ask how sequence length
+and parameter sharing affect learning accuracy, and why lower per-token
+loss need not mean better task performance. We then examine the accuracy
+required of the optimizer and how optimization error combines with
+finite-data error. Together, these comparisons identify what likelihood
+fitting controls and which differences between generators it leaves
+unresolved.
+
+\subsection{Repeated parameters and new parameters}
+\label{sec:parameter-sharing}
 
 Increasing the length of the training sequences gives us more
 observations, but fitting longer sequences requires predicting more
@@ -1139,9 +1151,6 @@ statistical accuracy also calls for a sufficiently small optimization
 error. Thus the appropriate fitting tolerance depends on both the
 amount of data and the sequence length.
 \Cref{sec:finite-class-fitting} makes this balance explicit.
-
-\subsection{Repeated parameters and new parameters}
-\label{sec:parameter-sharing}
 
 A simple estimation problem exhibits both possibilities. First suppose
 all tokens are independent \(\operatorname{Bernoulli}(p)\) variables.
@@ -1328,35 +1337,26 @@ sequence loss by a larger \(T\).
 When comparing different sequence lengths, lower per-token log loss
 alone is therefore insufficient evidence of better final-answer accuracy.
 
-\section{How should we fit a model for good task performance?}
-\label{sec:better-control}
-
-At a given likelihood-fitting accuracy, generated cost can still depend
-strongly on how the model behaves after errors. We can improve this
-behavior in two ways: evaluate consequences that distinguish the models,
-or impose structure on error propagation. Direct task feedback and
-further-ahead prediction will distinguish $Q_-$ and $Q_+$:
-\(Q_-\) returns to zero after its random first bit, while \(Q_+\)
-copies that bit forever (\cref{eq:endpoint-generators}).
-A recovery constraint will improve \(Q_+\) without changing its
-likelihood on the data.
-We first make precise what fitting accuracy means, then develop these
-two approaches and ask which information should persist through recovery.
-
 \subsection{Likelihood fitting at finite accuracy}
 \label{sec:likelihood-pitfall}
 
-The natural unit for our optimization objective is loss per predicted
-token. For \(n\) observed sequences, define empirical \emph{per-token}
+We use loss per predicted token as the optimization objective.
+For \(n\) observed sequences, define empirical \emph{per-token}
 log loss
 \[
  \widehat L(Q)=\frac1{nT}\sum_{i=1}^n\sum_{t=1}^T
  -\log Q(X_t^{(i)}\mid X_{<t}^{(i)}).
 \]
-This averages the losses of the \(nT\) prediction tasks.
-We consider this normalization despite the earlier warning
-in \cref{sec:late-predictions},
-because log-loss is conventionally reported per token.\endnote{\textbf{Unequal response lengths.}
+This averages the losses of the \(nT\) token predictions.
+We use this normalization despite the warning in
+\cref{sec:late-predictions}: per-token loss can improve as sequence
+length grows without task performance improving.
+There are two reasons for using it. First, when token losses have
+comparable scales, normalization removes the explicit factor of \(T\)
+that would otherwise multiply the objective and its gradient.
+For gradient descent, this avoids a corresponding adjustment of the
+stepsize and helps us use common optimization settings across sequence
+lengths. Second, log loss is conventionally reported per token.\endnote{\textbf{Unequal response lengths.}
 For response \(y_i\) to prompt \(u_i\), let \(T_i\) count its predicted
 tokens and put \(\ell_i(Q)=-\log Q(y_i\mid u_i)\).
 Two averaging conventions are
@@ -1371,29 +1371,75 @@ the loss are also excluded from \(T_i\). Both conventions reduce to the
 formula in \cref{sec:likelihood-pitfall} when every \(T_i=T\).
 Both are used in supervised fine-tuning; see the
 \hyperref[note:sft-normalization]{bibliographical notes}.}
-We express a target optimization accuracy as
+
+When an optimizer is run with finite compute, it generally does not
+return a model with the lowest possible empirical loss.
+The \emph{optimization error} of its returned model \(\widehat Q\) is
 \begin{equation}
- \widehat L(\widehat Q)\le\min_{Q\in\mathcal Q}\widehat L(Q)+\eta,
- \qquad \eta\ge0.
+ E(\widehat Q):=\widehat L(\widehat Q)
+ -\inf_{Q\in\mathcal Q}\widehat L(Q).
+ \label{eq:approximate-fit-error}
+\end{equation}
+We say that \(\widehat Q\) satisfies the \emph{optimization tolerance}
+\(\eta\ge0\) if \(E(\widehat Q)\le\eta\), equivalently,
+\begin{equation}
+ \widehat L(\widehat Q)\le\inf_{Q\in\mathcal Q}\widehat L(Q)+\eta.
  \label{eq:approximate-fit}
 \end{equation}
-The \emph{optimization tolerance} \(\eta\) bounds the remaining gap to
-the best empirical fit in the class. Certifying such a gap requires
-an optimization analysis; here we ask what achieving it buys us.
-Multiplying by \(T\) gives the corresponding per-sequence tolerance
-\(T\eta\). Maintaining a fixed per-sequence tolerance as \(T\)
-increases would require increasingly accurate per-token optimization.
+Establishing whether a returned model satisfies this tolerance is a
+\emph{certification question}. For example, suppose
+\(\mathcal Q=\{Q_\theta:\theta\in\R^d\}\) and
+\(f(\theta)=\widehat L(Q_\theta)\) is differentiable and strongly convex
+with known parameter \(\mu>0\). Then
+\[
+ E(Q_\theta)\le\frac{\|\nabla f(\theta)\|_2^2}{2\mu},
+\]
+so \(\|\nabla f(\theta)\|_2\le\sqrt{2\mu\eta}\) certifies the tolerance
+(\cref{ex:optimization-certificate}). A small gradient alone gives no
+such guarantee for a general nonconvex loss.
+We can still study the consequences of positive optimization error
+even when its size is unknown to the optimizer.
 
-Increasing the number of examples creates a second reason for finer
-accuracy: to retain a decreasing statistical error, the optimization
-contribution should stay on that same scale.
-More examples can supply more gradient updates within a single pass,
-so a smaller tolerance may be reached without increasing the number
-of passes over the data.
+Because of the normalization by \(T\), a per-token tolerance \(\eta\)
+only guarantees a per-sequence tolerance \(T\eta\).
+Our earlier cost bounds motivate controlling the per-sequence error.
+Maintaining a fixed per-sequence tolerance as \(T\) increases requires
+increasingly accurate per-token optimization, which may require more
+compute. Whether a fixed number of passes through the dataset suffices
+depends on the optimization problem and how the number of updates
+scales with \(T\).\endnote{\textbf{Fixed passes and finer accuracy.}
+Consider smooth, strongly convex per-token objectives with constants
+uniform in \(n,T\), bounded initial gaps, and unbiased stochastic gradients
+with uniformly bounded variance. With suitable decreasing stepsizes,
+stochastic gradient descent gives expected optimization error
+\(O(1/K)\) after \(K\) updates. If batches contain a fixed number of
+uniformly sampled token losses, \(K=\Theta(nT)\) updates process a fixed
+multiple of the dataset's token count and give expected per-sequence
+error \(O(1/n)\). This counts token-loss evaluations; their computational
+cost can depend on context length. The bound averages over optimizer
+randomness and does not certify an individual run. Full-gradient descent uses one pass per
+update, so fixed passes give fixed \(K\). Even for
+\(f(\theta)=\theta^2/2\), starting at \(\theta_0=1\) with stepsize
+\(1/2\) gives error \(2^{-2K-1}\), independent of \(T\); reaching
+\(s/T\) for fixed \(s>0\) requires order \(\log T\) updates.
+Thus passes alone do not determine the achieved tolerance. The
+stochastic rate also need not hold for a general neural-network loss.
+Lecture~10 returns to when local gradients ensure global convergence;
+see the \hyperref[note:optimization-accuracy]{bibliographical notes}
+for the assumptions and rate.}\label{en:optimization-compute}
 
-For all-zero data and a class containing \(P=\delta_{0^T}\), the
-minimum empirical loss is zero. In this example the gap is simply the
-observed loss, and its effect on final-answer accuracy is exact.
+More examples create a second reason for finer optimization accuracy.
+As the statistical error from a finite sample decreases, the
+optimization error should decrease on the same scale if we are to
+benefit fully from the additional data.
+
+Positive optimization error can translate into poor task performance,
+just as sequence-level KL error can. Since \(\eta\) is measured per
+token, the relevant sequence-level quantity is \(T\eta\).
+The simplest illustration uses the deterministic data law
+\(P=\delta_{0^T}\) from \cref{sec:endpoint-generators}: empirical and
+population log loss coincide, so there is no statistical error to
+account for. Reusing that example gives the following result.
 
 \begin{proposition}[Different task costs at the same optimization tolerance]
 \label{prop:endpoint-optimization}
@@ -1426,7 +1472,8 @@ More demonstrations of \(0^T\) leave this choice unchanged.
 If the class consists of \(Q_-,Q_+\) at a fixed \(\kappa>0\), then
 the data law \(P\) is outside the class. Both generators minimize
 empirical and population log loss, yet their terminal costs are zero
-and \(1-e^{-\kappa}\). Thus approximation error can also leave a
+and \(1-e^{-\kappa}\). Thus, in addition to optimization error,
+\emph{approximation error} can also leave a
 consequential choice between equally fitted models.
 \Cref{ex:fitting-support} develops this comparison with repeated
 errors, and \cref{ex:positionwise-loss} studies a missed dependency
@@ -1492,14 +1539,21 @@ optimization contribution has the correct leading order in this example,
 even with infinitely many demonstrations and a fixed cost range.
 
 Lecture~18 develops this comparison for imitation learning.
-The comparison in \cref{sec:growing-horizon} fixes infinite-sequence
+The comparison in \cref{sec:parameter-sharing} fixes infinite-sequence
 models and varies the length of the observed prefixes. Its Bernoulli
 examples isolate parameter sharing; the present finite-class theorem
 also accounts for optimization tolerance. The number of sequences
 and the token budget specify different learning comparisons.
 
-We now give additional objectives that distinguish generators within
-the accuracy permitted by likelihood fitting.
+\section{How can we improve task performance?}
+\label{sec:better-control}
+
+Likelihood fitting can leave models with similar losses but very different
+task performance. How can training favor the more successful models?
+We examine two approaches: changing the objective to assess the
+consequences of generation, and giving the model structure that supports
+recovery from errors. Recovery then raises a further question: which
+information should be forgotten, and which must be preserved?
 
 \subsection{Evaluate consequences of generation}
 \label{sec:generation-objectives}
@@ -2499,6 +2553,7 @@ length, fitting, recovery, and hidden-state models.
 \input{../exercises/l4-bernoulli-identification.tex}
 \input{../exercises/l4-copying-context.tex}
 \input{../exercises/l4-positionwise-loss.tex}
+\input{../exercises/l4-optimization-certificate.tex}
 \input{../exercises/l4-fitting-support.tex}
 \input{../exercises/l4-multistep.tex}
 \input{../exercises/l4-stability.tex}
@@ -2535,9 +2590,10 @@ Taking the supremum over reference laws gives a uniform conversion.
 \item[Hellinger distance (appendix)]
 A distributional distance used in the proofs of the variance-sensitive
 cost and finite-sample likelihood bounds; defined in \cref{app:hellinger}.
-\item[Optimization tolerance]
-The allowed excess empirical loss above the best fit in the model class.
-It is measured here per token: a tolerance \(\eta\) permits per-sequence
+\item[Optimization error and tolerance]
+The error \(E(\widehat Q)\) is the model's excess empirical per-token
+loss above the infimum in the class. A tolerance \(\eta\) bounds this
+error and permits per-sequence
 excess \(T\eta\). The average can place this excess unevenly across positions.
 \item[Total variation]
 \(\tv{P-Q}\) is the largest discrepancy in event probabilities.
@@ -3709,6 +3765,18 @@ batches: sum the losses and divide by the total number of prediction
 targets included in the loss.
 
 \paragraph{Statistical accuracy, optimization, and scaling laws.}
+\phantomsection
+\label{note:optimization-accuracy}
+The strong-convexity certificate in \cref{sec:likelihood-pitfall} follows
+by minimizing the quadratic lower bound in the definition of strong
+convexity; \cref{ex:optimization-certificate} gives the calculation.
+\citet[Section~9.1.2]{boyd2004} discuss this stopping criterion.
+\citet[Theorem~4.7]{bottou2018} give the \(O(1/K)\) expected optimization
+rate used in \cref{en:optimization-compute}, under smoothness, strong
+convexity, controlled gradient noise, and suitable decreasing stepsizes.
+Their Section~4.3 treats the weaker stationarity guarantees available
+for general nonconvex objectives.
+
 \citet[Sections~2--3]{bottou2007} study the
 approximation--estimation--optimization tradeoff. Balancing optimization
 tolerance against estimation error gives the statistical-accuracy
@@ -3788,6 +3856,18 @@ L\'eon Bottou and Olivier Bousquet.
 \newblock The Tradeoffs of Large Scale Learning.
 \newblock \emph{Advances in Neural Information Processing Systems}, 20, 2007.
 \newblock \url{https://leon.bottou.org/publications/pdf/nips-2007.pdf}.
+
+\bibitem[Bottou et al.(2018)]{bottou2018}
+L\'eon Bottou, Frank E. Curtis, and Jorge Nocedal.
+\newblock Optimization Methods for Large-Scale Machine Learning.
+\newblock \emph{SIAM Review}, 60(2):223--311, 2018.
+\newblock \url{https://arxiv.org/abs/1606.04838}.
+
+\bibitem[Boyd and Vandenberghe(2004)]{boyd2004}
+Stephen Boyd and Lieven Vandenberghe.
+\newblock \emph{Convex Optimization}.
+\newblock Cambridge University Press, 2004. Section~9.1.2.
+\newblock \url{https://web.stanford.edu/~boyd/cvxbook/}.
 
 \bibitem[Drucker and de Wolf(2011)]{drucker2011}
 Andrew Drucker and Ronald de Wolf.

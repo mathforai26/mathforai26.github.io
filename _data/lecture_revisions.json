@@ -59,6 +59,7 @@
       "documents/exercises/l4-latent-likelihood.tex": "7e893e56843edce9bfd672d7b6720de35ef8b7c5bfe998b3c43d327a87851a98",
       "documents/exercises/l4-lds.tex": "e8185326b1ffe3502ac192e534c817d0837b7c8d780450e288c39d65f78f895d",
       "documents/exercises/l4-multistep.tex": "d556808f1704724c68d639aefef18f42b448f1c10c1011ffb2f25df057031cff",
+      "documents/exercises/l4-optimization-certificate.tex": "e918a3d54684297aa09a43851dd0a658cffc2eb81a9f29920e75beaf62f0fef6",
       "documents/exercises/l4-persistent-memory.tex": "6ea88d6263233c7ff2b8efda0c661f30a87dc7195eb74930888bfb2d9b9d90d4",
       "documents/exercises/l4-positionwise-kl.tex": "befb42f02613ae10961cbcf8882538e0749797b0cc0c666927715e73e4da0a87",
       "documents/exercises/l4-positionwise-loss.tex": "62a73c9ac9021b705874178d460c561432dd858b0c6131c41c25cc5aef17c08b",
@@ -69,8 +70,8 @@
       "documents/exercises/l4-sharing.tex": "4eaf82b2e3594e970683fa71c5a33371d986e0f06148eb760982b27d5295da21",
       "documents/exercises/l4-stability.tex": "afa4b2ae301d49126848a6a36339f001f223c1dae04d04d1102760e5ed1abcb4",
       "documents/scribes/lecture03.tex": "4df605d5e298dd5fac3933d9b476f449eb050c154ad3dbfc5d5ce963139c21a4",
-      "documents/scribes/lecture04.tex": "2ced743ee1f0a86a45e968359bdc4415c95241189be17aa38ca1144a5a9acb4a"
+      "documents/scribes/lecture04.tex": "fbf9675916600ddeb6bdcd6af22ad1254b055fcc01a4555c8657fc4d1d95bbe0"
     },
-    "revised": "2026-09-14 10:41 UTC-06:00"
+    "revised": "2026-09-14 12:59 UTC-06:00"
   }
 }
