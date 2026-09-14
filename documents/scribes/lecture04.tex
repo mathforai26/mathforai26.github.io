@@ -9,7 +9,7 @@
 \usepackage{microtype}
 
 % Revision date: maintained by scripts/build_lecture_notes.py. Keep this command.
-\newcommand{\lecturerevised}{2026-09-14 15:25 UTC-06:00}
+\newcommand{\lecturerevised}{2026-09-14 17:45 UTC-06:00}
 \usepackage{eso-pic}
 \AddToShipoutPictureBG{%
   \AtPageLowerLeft{%
@@ -1504,7 +1504,13 @@ In particular, if \(\E_P[c]=0\), then
 \(\E_{\widehat Q}[c]\le C_{\max}b\).
 \end{restatable}
 
-The proof is in \cref{app:finite-mle}.
+The proof in \cref{app:finite-mle} uses the same Hellinger-to-cost
+inequality as \cref{prop:forward-variance}
+(\cref{prop:hellinger-cost}). The earlier result bounds squared
+Hellinger distance by forward KL; here the likelihood argument bounds
+it directly by \(b\). Forward KL itself need not be finite, so the
+earlier proposition alone does not give this theorem.
+
 For zero-cost data and \(0\le c\le1\), the theorem separates the two
 contributions to its guarantee:
 \begin{equation}
