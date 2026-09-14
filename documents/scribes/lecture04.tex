@@ -9,7 +9,7 @@
 \usepackage{microtype}
 
 % Revision date: maintained by scripts/build_lecture_notes.py. Keep this command.
-\newcommand{\lecturerevised}{2026-09-14 12:59 UTC-06:00}
+\newcommand{\lecturerevised}{2026-09-14 14:48 UTC-06:00}
 \usepackage{eso-pic}
 \AddToShipoutPictureBG{%
   \AtPageLowerLeft{%
@@ -1428,11 +1428,6 @@ Lecture~10 returns to when local gradients ensure global convergence;
 see the \hyperref[note:optimization-accuracy]{bibliographical notes}
 for the assumptions and rate.}\label{en:optimization-compute}
 
-More examples create a second reason for finer optimization accuracy.
-As the statistical error from a finite sample decreases, the
-optimization error should decrease on the same scale if we are to
-benefit fully from the additional data.
-
 Positive optimization error can translate into poor task performance,
 just as sequence-level KL error can. Since \(\eta\) is measured per
 token, the relevant sequence-level quantity is \(T\eta\).
@@ -1482,7 +1477,8 @@ in a parity task.
 \subsection{What does finite-sample likelihood fitting guarantee?\suppmark}
 \label{sec:finite-class-fitting}
 
-Likelihood fitting still gives a positive statistical guarantee.
+Likelihood fitting gives a positive statistical guarantee
+on task performance.
 The following result states it directly in terms of generated cost,
 with the optimization tolerance retained.
 
@@ -1531,12 +1527,8 @@ for a decreasing per-token tolerance as the number of examples grows.
 For a fixed target cost \(s\), it is enough to make
 \(2\log(|\mathcal Q|/\delta)/n+T\eta\le s\).
 
-A fixed tolerance leaves the term \(T\eta\) in the guarantee as
-\(n\) grows.
-\Cref{prop:endpoint-optimization} gives final-answer error
-\(1-e^{-T\eta}\sim T\eta\) when \(T\eta\) is small. Thus the
-optimization contribution has the correct leading order in this example,
-even with infinitely many demonstrations and a fixed cost range.
+The example in \cref{prop:endpoint-optimization} shows that the
+optimization contribution has the correct order when \(T\eta\) is small.
 
 Lecture~18 develops this comparison for imitation learning.
 The comparison in \cref{sec:parameter-sharing} fixes infinite-sequence
