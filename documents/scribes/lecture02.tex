@@ -51,6 +51,7 @@
 \newtheorem{corollary}[theorem]{Corollary}
 \theoremstyle{definition}
 \newtheorem{definition}[theorem]{Definition}
+\newtheorem{example}[theorem]{Example}
 \theoremstyle{remark}
 \newtheorem{remark}[theorem]{Remark}
 
@@ -364,20 +365,20 @@ $(f(1),\ldots,f(N))$ identifies the same object with a vector in
 $\{0,1\}^N = \underbrace{\{0,1\}\times \dots \times \{0,1\}}_{N \text{ times}}$.
 
 A randomized sampling procedure selects \emph{training} indices
-$X_1,\ldots,X_m$ and one \emph{test} index $X$.
+$X_1,\ldots,X_n$ and one \emph{test} index $X$.
 The complete tuple
 \[
-(X_1,\ldots,X_m,X)
+(X_1,\ldots,X_n,X)
 \]
 produced by the randomized procedure may have \emph{any} joint distribution
-on $[N]^{m+1}$.
+on $[N]^{n+1}$.
 In particular, the indices may be dependent and may repeat.
 The procedure for selecting the indices can be made known to the learner.
 The procedure for selecting the indices does not use the hidden labeling
 function $f$, so the selected indices cannot themselves communicate
 information about the target.
 
-The learner is shown the contents of the boxes with indices $X_1,\dots,X_m$.
+The learner is shown the contents of the boxes with indices $X_1,\dots,X_n$.
 No other information is revealed.
 Based on this information, the learner must be prepared to
 choose a bit for each of the boxes.
@@ -418,7 +419,7 @@ value of the indicator of an event is the probability of that event.
 
 In learning terminology, a box index is an \emph{input}, and its hidden bit is
 its \emph{label}. Each revealed index--bit pair is a \emph{labeled example}.
-The ordered collection of $m$ examples is the \emph{training sample}, also
+The ordered collection of $n$ examples is the \emph{training sample}, also
 called the \emph{training data}; repeated inputs are allowed. The \emph{test input}
 is the index at which the learner is asked to predict a label.
 
@@ -440,7 +441,7 @@ binary digit, these questions fit comfortably within the context window.
 The rapid (exponential) growth of the number of possible inputs by scaling some parameter such as
 $L$ is called a \emph{combinatorial explosion}.
 Observing every possible input is out of reach.
-Even with internet scale data, the number of training data points $m$ is a
+Even with internet scale data, the number of training data points $n$ is a
 vanishing fraction of all possible inputs.
 As such, to get a successful AI system,
 learning must transfer information from a vanishingly small fraction
@@ -458,28 +459,28 @@ the labels will also matter. Explicit finite bounds help us make this judgment.
 
 \subsection{Randomized learners and risk}
 We will now formalize what a learner can do. First, consider learners that do
-not randomize. Given a labeled sample consisting of $m$ index--bit pairs, such
+not randomize. Given a labeled sample consisting of $n$ index--bit pairs, such
 a learner chooses which bit to assign to each future index.
 Formally, we can view such a learner as mapping an element of
-$([N]\times \{0,1\})^m$ to $\{0,1\}^{[N]}$ (equivalently, to
+$([N]\times \{0,1\})^n$ to $\{0,1\}^{[N]}$ (equivalently, to
 $\{0,1\}^N = \underbrace{\{0,1\}\times \dots \times \{0,1\}}_{N\text{ times}}$).
-In addition to an $m$-tuple of index--bit pairs, a \emph{randomized learner} takes a
+In addition to an $n$-tuple of index--bit pairs, a \emph{randomized learner} takes a
 \emph{random seed} $W$ that is uniformly distributed over $[0,1]$.
 In \cref{ex:random-seed}, you will show that this choice places no restriction
 on the learner's output distribution.
 Formally, such a learner can be identified with a measurable deterministic map
 \begin{equation}
-\cA:\bigl([N]\times\{0,1\}\bigr)^m\times[0,1]
+\cA:\bigl([N]\times\{0,1\}\bigr)^n\times[0,1]
 \longrightarrow \{0,1\}^{[N]}.
 \label{eq:randomized-algorithm}
 \end{equation}
 
-For $(s,w)\in ([N]\times \{0,1\})^m \times [0,1]$, $\cA(s,w)$ is thus a
+For $(s,w)\in ([N]\times \{0,1\})^n \times [0,1]$, $\cA(s,w)$ is thus a
 function from $[N]$ to $\{0,1\}$.
 The prediction at the \emph{test index} $X$ is
 $\hat Y = \cA(S_f,W)(X)$, where
 \begin{equation}
-S_f=\bigl((X_i,f(X_i))\bigr)_{i=1}^m
+S_f=\bigl((X_i,f(X_i))\bigr)_{i=1}^n
 \label{eq:sample}
 \end{equation}
 is the labeled sample the learner receives before making a decision.
@@ -534,8 +535,8 @@ R(\cA,f)=
 \mathbb E\!\left[\I\{\cA(S_f,W)(X)\ne f(X)\}\right].
 \label{eq:risk}
 \end{equation}
-Here, the randomness comes from $(X_1,\dots,X_m,X)$ and $W$. Importantly, $W$
-is independent of $(X_1,\dots,X_m,X)$. This expresses that the algorithm's
+Here, the randomness comes from $(X_1,\dots,X_n,X)$ and $W$. Importantly, $W$
+is independent of $(X_1,\dots,X_n,X)$. This expresses that the algorithm's
 randomization is private.
 We suppress the dependence of the risk on the distribution of the random indices
 in the notation $R(\cA,f)$ to minimize clutter.
@@ -553,17 +554,17 @@ procedure, and nature may choose any fixed arrangement of bits. The question is
 which method has the smallest worst-case risk.
 
 The critical point is that in \cref{eq:risk}, the test index $X$ either matches
-one of the indices $X_1,\dots,X_m$ or matches none of them.
-If $X$ matches one of $X_1,\dots,X_m$, the learner should simply use the label
+one of the indices $X_1,\dots,X_n$ or matches none of them.
+If $X$ matches one of $X_1,\dots,X_n$, the learner should simply use the label
 associated with the matching index.
-That is, if the learner's data are $((X_1,Y_1), \dots, (X_m,Y_m))$ and $X = X_J$
-for some $J\in [m]$, then the learner should set $\hat Y = Y_J$.
+That is, if the learner's data are $((X_1,Y_1), \dots, (X_n,Y_n))$ and $X = X_J$
+for some $J\in [n]$, then the learner should set $\hat Y = Y_J$.
 This is because \emph{we are promised} that for the (unknown to us) secret function
 $f$, $Y_J = f(X_J)$. Thus, choosing $Y_J$, we have $\hat Y = Y_J = f(X_J) = f(X)$.
 We are therefore guaranteed to be correct, which gives zero loss, the minimum
 possible loss---we are winning!
 The challenge is deciding what to do when $X$ matches none of
-$X_1,\dots,X_m$.
+$X_1,\dots,X_n$.
 One may then try to ``figure out some pattern''
 in the data and follow that pattern. If we had more structure in the problem,
 this could work (more about this soon).
@@ -572,7 +573,7 @@ One optimal solution is to flip an unbiased coin and return $0$ for heads and
 $1$ for tails.
 To express this algorithm using the random seed $W$, set
 $\hat Y = \mathbb{I}(W\le 1/2)$ when
-$X$ is not found in $\{X_1,\dots,X_m\}$.
+$X$ is not found in $\{X_1,\dots,X_n\}$.
 We will call this algorithm $\cAmem$.
 
 \section{Exact solution of the unstructured boxes problem}
@@ -580,7 +581,7 @@ We will call this algorithm $\cAmem$.
 
 Define the event
 \begin{equation}
-U=\{X\notin\{X_1,\ldots,X_m\}\}\,.
+U=\{X\notin\{X_1,\ldots,X_n\}\}\,.
 \label{eq:unseen-event}
 \end{equation}
 This event occurs when the test index does not appear among the indices for
@@ -591,7 +592,7 @@ On $U$, no revealed label gives direct information about $f(X)$.
 
 The smallest worst-case risk over the allowed learners is the \emph{minimax risk}.
 
-\begin{theorem}[arbitrary-labeling minimax risk]
+\begin{theorem}[Arbitrary-labeling minimax risk]
 \label{thm:arbitrary-labels}
 Consider any index-selection procedure allowed in the boxes problem, and let
 the learner's random seed $W$ be independent of the selected indices.
@@ -623,7 +624,7 @@ $\tfrac12\P(U)$.
 
 It is instructive to consider the following promise: all boxes contain the same
 bit.
-Opening any one box now determines every label. For $m\ge1$, the learner
+Opening any one box now determines every label. For $n\ge1$, the learner
 that returns the first observed label at every input has zero risk, even if
 the test box has never been opened and $N$ is enormous.
 
@@ -704,7 +705,7 @@ R(\cAmem,f)
 \end{equation}
 
 On $U^c$, the test index agrees with at least one training index: $X=X_J$ for
-some $J\in[m]$. The learner returns the revealed label
+some $J\in[n]$. The learner returns the revealed label
 $f(X_J)=f(X)$, so $E_f$ cannot occur. Thus,
 \[
 E_f\cap U^c=\emptyset,
@@ -714,8 +715,8 @@ E_f\cap U^c=\emptyset,
 
 On $U$, the learner predicts with the fair bit
 $B=\I\{W\le 1/2\}$.
-Write $Z=(X,X_1,\ldots,X_m)$.
-Conditional on any fixed index tuple $z=(x,x_1,\ldots,x_m)$ that has positive
+Write $Z=(X,X_1,\ldots,X_n)$.
+Conditional on any fixed index tuple $z=(x,x_1,\ldots,x_n)$ that has positive
 probability and for which $U$ occurs, $f(x)$ is a fixed bit, whereas $B$ is an
 independent fair bit.
 Therefore
@@ -735,7 +736,7 @@ for every fixed $f$, which proves the upper bound.
 We now turn to showing that the LHS is lower bounded by the RHS. Fix an
 arbitrary randomized learner $\cA$.
 It suffices to prove that $\max_{f\in \{0,1\}^{[N]}} R(\cA,f) \ge \frac12 \P(U)$.
-Write $Z=(X,X_1,\ldots,X_m)$. Introduce an auxiliary random function
+Write $Z=(X,X_1,\ldots,X_n)$. Introduce an auxiliary random function
 \[
 F:[N]\longrightarrow\{0,1\}
 \]
@@ -744,7 +745,7 @@ by choosing the bits $F(1),\ldots,F(N)$ independently, with
 \P(F(j)=0)=\P(F(j)=1)=\frac12,
 \qquad j\in[N].
 \]
-Choose $F$ independently of the index tuple $(X,X_1,\ldots,X_m)$ and the
+Choose $F$ independently of the index tuple $(X,X_1,\ldots,X_n)$ and the
 learner's seed $W$. Set
 \[
 \widehat Y=\cA(S_F,W)(X).
@@ -760,10 +761,10 @@ We then have
 To continue from the last term in \cref{eq:lower-forward-start}, let
 \[
 \cZ=
-\left\{z=(x,x_1,\ldots,x_m)\in[N]^{m+1}:
-x\notin\{x_1,\ldots,x_m\}\right\}.
+\left\{z=(x,x_1,\ldots,x_n)\in[N]^{n+1}:
+x\notin\{x_1,\ldots,x_n\}\right\}.
 \]
-Fix $z=(x,x_1,\ldots,x_m)\in\cZ$, a possible sample $s$, and
+Fix $z=(x,x_1,\ldots,x_n)\in\cZ$, a possible sample $s$, and
 $a,b\in\{0,1\}$. On $\{Z=z,S_F=s\}$, the prediction is
 $\cA(s,W)(x)$. The event $\{Z=z,S_F=s\}$ is determined by $Z$ and
 coordinates $F(j)$ with $j\ne x$. Hence the independent fair bit $F(x)$
@@ -802,9 +803,9 @@ and uses it to compare Bayesian and minimax decision making.
 \label{sec:iid}
 
 The theorem allows \emph{dependent} data
-(meaning, the joint distribution of $(X_1,\dots,X_m,X)$ is arbitrary; the random variables in it can ``depend'' on each other).
+(meaning, the joint distribution of $(X_1,\dots,X_n,X)$ is arbitrary; the random variables in it can ``depend'' on each other).
 We now add a special assumption to
-obtain a closed form: $X_1,\ldots,X_m,X$ are independent
+obtain a closed form: $X_1,\ldots,X_n,X$ are independent
 draws from the same distribution $P$ on $[N]$. Write $P(x)$ for the
 probability assigned to index $x$.
 Besides this giving us a closed form, the  assumption models a scenario
@@ -837,33 +838,33 @@ TODO: Add a simple exercise about covariate shift; probability ratios govern how
 Conditioning on $X=x$ gives
 (see \cref{ex:unseen-probability})
 \begin{equation}
-\P(U)=\sum_{x=1}^N P(x)(1-P(x))^m.
+\P(U)=\sum_{x=1}^N P(x)(1-P(x))^n.
 \label{eq:unseen-iid}
 \end{equation}
 If $P$ is uniform, then
 \begin{equation}
-\P(U)=\left(1-\frac1N\right)^m,
+\P(U)=\left(1-\frac1N\right)^n,
 \qquad
 \min_{\cA}\max_f R(\cA,f)
-=\frac12\left(1-\frac1N\right)^m.
+=\frac12\left(1-\frac1N\right)^n.
 \label{eq:uniform-risk}
 \end{equation}
-For fixed $N$, the risk tends to zero as $m$ grows. But when $m/N$ is small,
+For fixed $N$, the risk tends to zero as $n$ grows. But when $n/N$ is small,
 it remains close to $1/2$: eventual coverage does not help in this regime.
 
 For example, a sufficient condition for worst-case risk at most $0.1$ is
 \begin{equation}
-m\ge N\log 5,
+n\ge N\log 5,
 \label{eq:sample-upper}
 \end{equation}
-because $(1-1/N)^m\le e^{-m/N}$. Conversely, Bernoulli's inequality gives
-$(1-1/N)^m\ge 1-m/N$, so risk at most $0.1$ requires $m\ge0.8N$.
+because $(1-1/N)^n\le e^{-n/N}$. Conversely, Bernoulli's inequality gives
+$(1-1/N)^n\ge 1-n/N$, so risk at most $0.1$ requires $n\ge0.8N$.
 \Cref{ex:sample-size-bounds} asks you to prove both inequalities and derive
 these sample-size bounds.
 Thus an unstructured problem with independent uniform training and test
 indices requires a number of observations proportional to the number of
-boxes. When $N$ is enormous relative to $m$, almost every test input remains
-unseen, and achieving, say, $m\ge 0.8 N$ is hopeless.
+boxes. When $N$ is enormous relative to $n$, almost every test input remains
+unseen, and achieving, say, $n\ge 0.8 N$ is hopeless.
 
 \section{What's in a box? Part II: a threshold promise}
 \label{sec:structure}
@@ -901,9 +902,9 @@ observed positive label, and set $\kest=N+1$ if no positive label was
 observed. The learner returns $f_{\kest}$.
 Assume that the true labeling function (unknown to the learner) is $f_k$.
 The chance that the learner is missing the correct label on the test index $X$
-given the training indices $(X_1,\dots,X_m)$ is
+given the training indices $(X_1,\dots,X_n)$ is
 \begin{equation}
-M=\P(f_\kest(X)\ne f_k(X)| X_1,\dots,X_m)\,.
+M=\P(f_\kest(X)\ne f_k(X)| X_1,\dots,X_n)\,.
 \label{eq:threshold-risk}
 \end{equation}
 We will call this the \emph{error mass} on a fresh sample from $P$.
@@ -912,21 +913,21 @@ It follows from the definition that
 M = \sum_{x=1}^N P(x)\I\{f_{\kest}(x)\ne f_k(x)\}.
 \]
 The error mass is therefore a random variable
-through $\kest$, whose randomness comes from that of $X_1,\dots,X_m$.
+through $\kest$, whose randomness comes from that of $X_1,\dots,X_n$.
 The next proposition shows that the chance of this random
-error exceeding some level $\epsilon$ decreases exponentially fast in $m$
-(to be precise, in $m\epsilon$):
+error exceeding some level $\epsilon$ decreases exponentially fast in $n$
+(to be precise, in $n\epsilon$):
 
-\begin{proposition}[threshold generalization]
+\begin{proposition}[Threshold generalization]
 \label{prop:threshold}
 For every $P$, every threshold $f_k$, and every $\epsilon\in(0,1)$,
 \begin{equation}
 \P\bigl(M>\epsilon\bigr)
-\le (1-\epsilon)^m
-\le e^{-m\epsilon}.
+\le (1-\epsilon)^n
+\le e^{-n\epsilon}.
 \label{eq:threshold-bound}
 \end{equation}
-Consequently, $m\ge \epsilon^{-1}\log(1/\delta)$
+Consequently, $n\ge \epsilon^{-1}\log(1/\delta)$
 observations suffice to guarantee that the error mass stays below $\epsilon$
 with probability exceeding $1-\delta$.
 \end{proposition}
@@ -965,17 +966,17 @@ Therefore,
 \]
 
 Now, $K>j_\epsilon$ can only hold if the sample
- $\{X_1,\dots,X_m\}$
+ $\{X_1,\dots,X_n\}$
  had no point in $[k,j_\epsilon]$ (otherwise, at the point in this interval the label would be one,
  forcing $K$ to be at most $j_\epsilon$).
 Thus,
 \begin{equation}
-\{ K>j_\epsilon \} \subset \{ X_1\not\in [k,j_\epsilon]\} \cap \dots \cap \{ X_m\not\in [k,j_\epsilon]\}\,.
+\{ K>j_\epsilon \} \subset \{ X_1\not\in [k,j_\epsilon]\} \cap \dots \cap \{ X_n\not\in [k,j_\epsilon]\}\,.
 \label{eq:threshold-missed-interval}
 \end{equation}
-Taking probabilities and using that $X_1,\dots,X_m$ are independent and identically distributed, we get
+Taking probabilities and using that $X_1,\dots,X_n$ are independent and identically distributed, we get
 \[
-\P(M>\epsilon) = \P(K>j_\epsilon) \le \P(X_1\not\in [k,j_\epsilon])^m\,.
+\P(M>\epsilon) = \P(K>j_\epsilon) \le \P(X_1\not\in [k,j_\epsilon])^n\,.
 \]
 Now, $\P(X_1\not\in [k,j_\epsilon]) = 1-\P(X_1\in [k,j_\epsilon])$ and since
 $\P(X_1\in [k,j_\epsilon])=P([k,j_\epsilon])=q(j_\epsilon)>\epsilon$,
@@ -991,7 +992,7 @@ Indeed, if the sample misses $[k,j_\epsilon]$, every observed positive index
 must exceed $j_\epsilon$. Thus, when $q(N)>\epsilon$, the exact error-tail
 probability is
 \[
-\P(M>\epsilon)=(1-q(j_\epsilon))^m.
+\P(M>\epsilon)=(1-q(j_\epsilon))^n.
 \]
 When $q(N)\le\epsilon$, this probability is zero.
 \end{remark}
@@ -1004,14 +1005,14 @@ learner's randomization. The threshold proposition gives a stronger kind of
 control: it bounds the probability that the learned predictor's error mass
 exceeds a specified level. This also yields an expected-risk bound.
 
-\begin{corollary}[expected risk of the threshold learner]
+\begin{corollary}[Expected risk of the threshold learner]
 \label{cor:threshold-expected}
 For every distribution $P$ on $[N]$, every threshold target $f_k$ with
 $k\in[N+1]$, and every
-sample size $m\ge0$, let the training and test indices be independent draws
+sample size $n\ge0$, let the training and test indices be independent draws
 from $P$. The risk of the learner returning $f_K$ satisfies
 \begin{equation}
-\mathbb E[M]\le\frac{1}{m+1}.
+\mathbb E[M]\le\frac{1}{n+1}.
 \label{eq:threshold-expected}
 \end{equation}
 \end{corollary}
@@ -1022,8 +1023,8 @@ from $P$. The risk of the learner returning $f_K$ satisfies
 
 For a direct comparison, use independent uniform training and test indices
 in both problems. Allowing arbitrary labels gives exact minimax risk
-$\tfrac12(1-1/N)^m$, so expected error at most $0.1$ requires $m\ge0.8N$.
-With the threshold promise, $m=9$ already suffices for expected error at most
+$\tfrac12(1-1/N)^n$, so expected error at most $0.1$ requires $n\ge0.8N$.
+With the threshold promise, $n=9$ already suffices for expected error at most
 $0.1$, for every $N$. This upper bound even holds for every input distribution
 $P$. With the common-label promise, one observation suffices for zero error.
 
@@ -1035,12 +1036,12 @@ open ones. Their different answers come from different promises about the
 target: it may be any function, a constant function, or a threshold. We can
 express such a promise by specifying a set of possible targets.
 
-\begin{definition}[realizability and consistency]
+\begin{definition}[Realizability and consistency]
 \label{def:realizability-consistency}
 Let $\cF\subseteq\{0,1\}^{[N]}$ be a nonempty \emph{target class}.
 The assumption that the true labeling function $f$ belongs to $\cF$ is
 called \emph{realizability}. A predictor $g$ is \emph{consistent} with a
-labeled sample $((x_i,y_i))_{i=1}^m$ if $g(x_i)=y_i$ for every $i$.
+labeled sample $((x_i,y_i))_{i=1}^n$ if $g(x_i)=y_i$ for every $i$.
 \end{definition}
 
 Such a set of predictors is commonly called a \emph{hypothesis class}.
@@ -1065,19 +1066,19 @@ For a learned predictor $\widehat f$,
 this is the same as its error mass:
 $M=L_P(\widehat f,f)$, extending the notation from the threshold problem.
 
-\begin{theorem}[generalization by consistency in a finite class]
+\begin{theorem}[Generalization by consistency in a finite class]
 \label{thm:finite-class-consistency}
 Let $\cF\subseteq\{0,1\}^{[N]}$ be nonempty, $f\in\cF$, and let
-$X_1,\ldots,X_m$ be independent draws from a distribution $P$ on $[N]$.
+$X_1,\ldots,X_n$ be independent draws from a distribution $P$ on $[N]$.
 Any learner returning a member $\widehat f\in\cF$ consistent with
-$((X_i,f(X_i)))_{i=1}^m$ satisfies, for every $\epsilon\in(0,1)$,
+$((X_i,f(X_i)))_{i=1}^n$ satisfies, for every $\epsilon\in(0,1)$,
 \begin{equation}
 \P\bigl(L_P(\widehat f,f)>\epsilon\bigr)
-\le |\cF|e^{-m\epsilon}.
+\le |\cF|e^{-n\epsilon}.
 \label{eq:finite-class-consistency}
 \end{equation}
 In particular, for $\delta\in(0,1)$,
-$m\ge\epsilon^{-1}(\log|\cF|+\log(1/\delta))$ suffices for error mass
+$n\ge\epsilon^{-1}(\log|\cF|+\log(1/\delta))$ suffices for error mass
 at most $\epsilon$ with probability at least $1-\delta$.
 \end{theorem}
 
@@ -1232,7 +1233,7 @@ of values does not imply that every Bayes rule for that prior is minimax;
 
 \subsection{Performance across sampling laws}
 \label{sec:sampling-law-comparison}
-Let $\cQ$ be the set of joint distributions of $(X_1,\ldots,X_m,X)$.
+Let $\cQ$ be the set of joint distributions of $(X_1,\ldots,X_n,X)$.
 Each $Q\in\cQ$ is the same for every hidden target. Write $R_Q(\cA,f)$
 when the sampling law must be explicit, and define
 \begin{equation}
@@ -1309,14 +1310,14 @@ is the associated answer. A labeled example is an observed pair $(x,y)$.
 In the boxes problem, $x$ is a box index and $y=f(x)$ is its hidden bit.
 \item[Training sample]
 The observations supplied to the learner. Here
-$S_f=((X_i,f(X_i)))_{i=1}^m$ is a tuple of labeled examples; indices may
+$S_f=((X_i,f(X_i)))_{i=1}^n$ is a tuple of labeled examples; indices may
 repeat, and independence is an additional assumption.
 \item[Test input]
 An input $X$ at which a prediction is evaluated against its label $f(X)$.
 Its label is withheld for evaluation, but the same input and label may
 already have appeared in the training sample.
 \item[Sampling law]
-The joint distribution $Q$ of $(X_1,\ldots,X_m,X)$. In the original boxes
+The joint distribution $Q$ of $(X_1,\ldots,X_n,X)$. In the original boxes
 problem it may have dependence and repeated indices, but it does not depend
 on the hidden target $f$. Independent draws from a common distribution $P$
 are a special case; see \cref{sec:boxes,sec:iid}.
@@ -1352,13 +1353,13 @@ In the noiseless setting here, the assumption $f\in\cF$: the specified
 class contains the true labeling function. This assumption concerns the
 target, not the learner's choice of output.
 \item[Consistency]
-A predictor $g$ is consistent with a sample $((x_i,y_i))_{i=1}^m$ if
+A predictor $g$ is consistent with a sample $((x_i,y_i))_{i=1}^n$ if
 $g(x_i)=y_i$ for every $i$. This is a property of its predictions on the
 observed sample.
 \item[Empirical risk]
 Average loss on the observed training sample. Under $0$--$1$ loss, for
-$s=((x_i,y_i))_{i=1}^m$ with $m\ge1$, it is
-$\widehat L_s(g)=m^{-1}\sum_{i=1}^m\I\{g(x_i)\ne y_i\}$.
+$s=((x_i,y_i))_{i=1}^n$ with $n\ge1$, it is
+$\widehat L_s(g)=n^{-1}\sum_{i=1}^n\I\{g(x_i)\ne y_i\}$.
 \item[Empirical risk minimization (ERM)]
 Choosing $g\in\operatorname*{arg\,min}_{h\in\cF}\widehat L_s(h)$.
 Under realizability and noiseless labels, the minimum $0$--$1$ empirical
@@ -1386,7 +1387,7 @@ $R(\cA,f)=\mathbb E[M]$, with the expectation over the training data and
 the learner's seed.
 \item[Unseen input]
 A test input whose index is absent from the training sample. In the boxes
-problem this is the event $U=\{X\notin\{X_1,\ldots,X_m\}\}$.
+problem this is the event $U=\{X\notin\{X_1,\ldots,X_n\}\}$.
 \item[Threshold target]
 On the ordered inputs $[N]$, the function $f_k(x)=\I\{x\ge k\}$ for
 $k\in[N+1]$. The cases $k=1$ and $k=N+1$ give the all-one and all-zero
@@ -1532,7 +1533,7 @@ R(\cAmem,f)
 \]
 
 On $U^c$, the test index agrees with at least one training index: $X=X_J$ for
-some $J\in[m]$. The learner returns the revealed label
+some $J\in[n]$. The learner returns the revealed label
 $f(X_J)=f(X)$, so $E_f$ cannot occur. Thus,
 \[
 E_f\cap U^c=\emptyset,
@@ -1584,12 +1585,12 @@ by choosing the bits $F(1),\ldots,F(N)$ independently, with
 \P(F(j)=0)=\P(F(j)=1)=\frac12,
 \qquad j\in[N].
 \]
-Choose $F$ independently of the index tuple $(X,X_1,\ldots,X_m)$ and the
+Choose $F$ independently of the index tuple $(X,X_1,\ldots,X_n)$ and the
 learner's seed $W$. Set
 \[
 \widehat Y=\cA(S_F,W)(X),
 \qquad
-Z=(X,X_1,\ldots,X_m).
+Z=(X,X_1,\ldots,X_n).
 \]
 We then have
 \begin{align*}
@@ -1605,11 +1606,11 @@ We then have
 To continue from the last term, let
 \[
 \cZ=
-\left\{z=(x,x_1,\ldots,x_m)\in[N]^{m+1}:
-x\notin\{x_1,\ldots,x_m\}\right\}.
+\left\{z=(x,x_1,\ldots,x_n)\in[N]^{n+1}:
+x\notin\{x_1,\ldots,x_n\}\right\}.
 \]
-Fix $z=(x,x_1,\ldots,x_m)\in\cZ$, a possible sample
-$s\in([N]\times\{0,1\})^m$, and $a,b\in\{0,1\}$. On the event
+Fix $z=(x,x_1,\ldots,x_n)\in\cZ$, a possible sample
+$s\in([N]\times\{0,1\})^n$, and $a,b\in\{0,1\}$. On the event
 $\{Z=z,S_F=s\}$, we have $\widehat Y=\cA(s,W)(x)$. Moreover, this event
 is determined by $Z$ and coordinates $F(j)$ with $j\ne x$ (why?). Since
 $F(x)$ is a fair bit independent of those quantities and of $W$,
@@ -1791,8 +1792,8 @@ In particular, for finite-valued $Z,S$,
 \end{align*}
 Applying the multiplication rule successively also yields
 \[
-\P\left(\bigcap_{i=1}^m E_i\right)
-=\prod_{i=1}^m\P\left(E_i\,\middle|\,\bigcap_{j<i}E_j\right),
+\P\left(\bigcap_{i=1}^n E_i\right)
+=\prod_{i=1}^n\P\left(E_i\,\middle|\,\bigcap_{j<i}E_j\right),
 \]
 when the conditioning events have positive probability. If an earlier
 intersection has probability zero, the full intersection also has probability
@@ -1942,7 +1943,7 @@ An improper learner can return the all-zero predictor until a positive label
 is observed, then return the identified singleton. For any $P$, this rule's
 error exceeds $\epsilon$ only if the positive box has mass greater than
 $\epsilon$ and is missed in every draw, an event of probability at most
-$e^{-m\epsilon}$. At $\epsilon=1/(2(N-1))$ and fixed small failure
+$e^{-n\epsilon}$. At $\epsilon=1/(2(N-1))$ and fixed small failure
 probability, it therefore needs only order $N$ observations. The gain comes
 from allowing a prediction that need not assert an unobserved positive label.
 

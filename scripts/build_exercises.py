@@ -55,7 +55,10 @@ def build(folder, entries, title, revision, instructions, solutions, book=False)
                 # without it, extra empty fields corrupt external link targets.
                 external.append(r'\HyperFirstAtBeginDocument{}')
             match=re.match(r'\\newlabel\{([^}]+)\}',line)
-            if match and match[1].removesuffix('@cref') not in local_labels:
+            # thmtools stores executable restatement metadata as labels.
+            # Export public references only; xr-hyper cannot import that data.
+            if (match and not match[1].startswith('thmt@@')
+                    and match[1].removesuffix('@cref') not in local_labels):
                 external.append(line)
         (folder/(stem+'.aux')).write_text('\n'.join(external)+'\n')
         shutil.copy2(ROOT / f'documents/scribes/{stem}.pdf', folder)

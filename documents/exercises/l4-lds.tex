@@ -1,0 +1,26 @@
+% Shared exercise chunk: l4-lds
+\begin{exercisechunk}
+\item \textbf{Observable recurrence and predictive state.\suppmark}
+\label[exercise]{ex:lds}
+Use \(M_{t+1}=FM_t+LZ_t\), \(\widehat Z_t=CM_t\), and
+\(K_j=CF^{j-1}L\) from \cref{eq:kalman-predictor,eq:history-coefficients}.
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Let \(S_{t+1}=AS_t\), where
+\(A=\bigl(\begin{smallmatrix}\cos\theta&-\sin\theta\\
+\sin\theta&\cos\theta\end{smallmatrix}\bigr)\), and let
+\(Z_t=c^\top S_t\). Use Cayley--Hamilton to derive an order-two
+recurrence for \(Z_t\). Show that distinct initial states remain
+at the same Euclidean distance under these dynamics.
+\item Unroll \cref{eq:kalman-predictor} from a nonzero fixed \(M_1\).
+Which initialization term must be added to
+\cref{eq:history-coefficients}?
+\item Verify the two block factorizations in
+\cref{eq:hankel-factorization}, including the index shifts.
+\item Show directly that replacing
+\((F,C,L)\) by \((T_0^{-1}FT_0,CT_0,T_0^{-1}L)\), with \(T_0\)
+invertible, preserves every history coefficient.
+\item For scalars \(F=1/2,C=1,L=3/4\), compare predictor-memory decay
+with the dynamics used for generation. Which matrix is relevant to
+each question?
+\end{enumerate}
+\end{exercisechunk}

@@ -1,0 +1,32 @@
+% Shared exercise chunk: l4-sharing-costs
+\begin{exercisechunk}
+\item \textbf{Task costs at a given learning rate.\suppmark}
+\label[exercise]{ex:sharing-costs}
+Prove \cref{prop:sharing-full-cost} using the following construction.
+At each horizon \(T\), partition
+the first \(T\) positions into \(\lceil d(T)\rceil\) nonempty groups.
+Let the \(U_t\) be independent fair bits and \(V_t=0\) under \(P\).
+Use terminal cost \(V_T\) and counting cost \(\sum_{t=1}^T V_t\).
+Write \(P_T\) and \(P_T^U\) for the laws of \((U,V)_{1:T}\) and
+\(U_{1:T}\), respectively.
+If \(\widehat P^U_T\) is the pooled
+smoothed estimate of the law of \(U_{1:T}\), set
+\[
+ r_T=\E\!\left[\KL(P^U_T,\widehat P^U_T)\right]
+\]
+and, for any law $R$ supported on $v_{1:T}\ne0^T$, define
+\[
+ \widehat Q_R
+ =e^{-r_T}(\widehat P^U_T\otimes\delta_{0^T})
+  +(1-e^{-r_T})R.
+\]
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Show that \(r_T\) is determined by \(n,T\) and the chosen
+partition, so the mixture weight can be used by the estimator.
+\item Compute \(\E[\KL(P_T,\widehat Q_R)]\) and show that it has
+order \(d(T)/n\), independently of \(R\).
+\item Determine the full attainable intervals for the expected terminal
+and counting costs as \(R\) varies. Identify laws attaining the endpoints.
+\end{enumerate}
+
+\end{exercisechunk}

@@ -1,0 +1,31 @@
+% Shared exercise chunk: l4-copying-context
+\begin{exercisechunk}
+\item \textbf{Copying with a bounded context.\suppmark}
+\label[exercise]{ex:copying-context}
+Let \(P\) generate \(B_1B_1B_2B_2\cdots\), where the blocks
+\(B_m\) are independent and uniform on \(\{0,1\}^m\).
+For an integer \(w\ge0\), let \(\mathcal Q_w\) be all
+infinite-sequence models whose next-token distribution can depend
+on the position and the last \(w\) tokens only.
+\begin{enumerate}[(a),beginpenalty=10000]
+\item In a copied block of length \(m>w\), show that the required
+bit is fair given the available context, although the full prefix
+determines it. Deduce expected conditional KL at least \(\log2\)
+at each such position.
+\item At \(T=M(M+1)\), for \(M>w\), prove
+\begin{equation}
+ \inf_{Q\in\mathcal Q_w}\KL(P_{1:T}, Q_{1:T})
+ =\frac{\log2}{2}\bigl(T-w(w+1)\bigr).
+ \label{eq:copying-context}
+\end{equation}
+Specify a predictor attaining equality.
+\item Explain why more training data cannot remove this error for
+a fixed \(w\). How must \(w\) grow to predict every copied bit exactly?
+\item Show that an exact recurrent generator must distinguish
+\(2^m\) states after generating a fresh length-\(m\) block, and hence
+needs at least \(m\) bits of state information.
+Compare the description length of the copying rule with its memory
+requirement. Relate the distinction to recalling earlier definitions
+or intermediate results in a mathematical argument.
+\end{enumerate}
+\end{exercisechunk}

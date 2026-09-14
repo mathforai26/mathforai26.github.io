@@ -22,10 +22,29 @@
 \usepackage[square,authoryear]{natbib}
 \usepackage[colorlinks=true,linkcolor=blue!60!black,
   urlcolor=blue!60!black,citecolor=blue!60!black]{hyperref}
+\usepackage[nameinlink,capitalize]{cleveref}
 
 \definecolor{courseblue}{HTML}{17365D}
+\newcommand{\E}{\mathbb E}
+\newcommand{\I}{\mathbb I}
+\renewcommand{\P}{\mathbb P}
 \newcommand{\R}{\mathbb R}
+\newcommand{\KL}{D}
+\newcommand{\TV}{\mathrm{TV}}
+\makeatletter
+\@for\@letter:=A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z\do{%
+  \expandafter\edef\csname c\@letter\endcsname{\noexpand\mathcal{\@letter}}}
+\makeatother
 \newcommand{\lecturenumber}{N}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{example}[theorem]{Example}
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
 
 \renewcommand{\thepage}{\lecturenumber--\arabic{page}}
 \renewcommand{\thesection}{\lecturenumber.\arabic{section}}
@@ -39,6 +58,9 @@
 % Every vector is a column vector. If a matrix stores one vector per position,
 % row i contains the transpose of that vector. Write every row-shaped vector
 % explicitly as the transpose of a column vector.
+% Use n for the number of independent training examples. Use sentence case in
+% optional theorem titles. Use example environments for worked examples that
+% are referenced later. Reserve \boxed{} for literal boxes in diagrams.
 
 \begin{document}
 

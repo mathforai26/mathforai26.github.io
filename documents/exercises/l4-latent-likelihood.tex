@@ -1,0 +1,27 @@
+% Shared exercise chunk: l4-latent-likelihood
+\begin{exercisechunk}
+\item \textbf{Latent likelihood and the forward algorithm.}
+\label[exercise]{ex:latent-likelihood}
+Use the hidden Markov model in \cref{eq:hmm-likelihood}, with
+\(d\) hidden states, transition matrix \(A\), emission matrix
+\(C\), and initial law \(\pi\).
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Derive the likelihood by summing the joint law of hidden states
+and observations. How many hidden trajectories appear?
+\item Starting from \(\Lambda_0=\pi\), derive the recursion
+\[
+ \Lambda_t=\diag(C_{X_t,1},\ldots,C_{X_t,d})A\Lambda_{t-1},
+ \qquad Q_\theta(X_{1:T})=\mathbf1^\top\Lambda_T.
+\]
+Prove that \(\Lambda_t(j)\) is the joint mass the model assigns to
+the observed prefix and hidden state \(j\) at time \(t\).
+Explain the \(O(Td^2)\) arithmetic cost.
+\item If \(J_{0:T}\) were observed, write the transition and emission
+counts that appear in the complete-data log likelihood.
+What replaces those counts when the hidden trajectory is averaged
+under its posterior given \(X_{1:T}\)?
+\item For a continuous state model with initial density \(\pi_\theta\),
+transition density \(a_\theta(s'\mid s)\), and emission density
+\(b_\theta(x\mid s)\), write the corresponding trajectory integral.
+\end{enumerate}
+\end{exercisechunk}

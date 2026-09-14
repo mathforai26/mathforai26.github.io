@@ -1,0 +1,48 @@
+% Shared exercise chunk: l4-discrepancy-comparison
+\begin{exercisechunk}
+\item \textbf{Comparing fitting and task discrepancies.\suppmark}
+\label[exercise]{ex:discrepancy-comparison}
+Use the definitions in \cref{sec:discrepancy-comparison}.
+For parts (b)--(e), let \(P=\delta_{0^T}\), \(T\ge2\), with
+\(c_{\mathrm{cnt}}(x)=\sum_{t=1}^T x_t\) and
+\(c_{\mathrm{fin}}(x)=x_T\).
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Prove that \(d_c\) is a pseudometric. Give distinct laws with
+\(d_c(P,Q)=0\), first for the binary count and then for another cost.
+\item Use the fixed-KL intervals
+in \cref{eq:binary-kl-level,eq:terminal-kl-level} to prove
+\begin{align}
+ \omega_{D\to c_{\mathrm{cnt}}}(\kappa;P)
+ &=T(1-e^{-\kappa}),\label{eq:binary-moduli}\\
+ \omega_{D\to c_{\mathrm{fin}}}(\kappa;P)
+ &=1-e^{-\kappa},\qquad \kappa\ge0.
+ \label{eq:terminal-moduli}
+\end{align}
+Which of $Q_-$ and $Q_+$ attains these bounds?
+\item Calculate the reverse conversions:
+\begin{align}
+ \omega_{c_{\mathrm{cnt}}\to D}(s;P)
+ &=\begin{cases}-\log(1-s),&0\le s<1,\\
+                 +\infty,&s\ge1,\end{cases}
+ \label{eq:binary-converse-modulus}\\
+ \omega_{c_{\mathrm{fin}}\to D}(s;P)
+ &=+\infty,\qquad s\ge0.
+ \label{eq:terminal-converse-modulus}
+\end{align}
+Exhibit laws attaining each finite bound and laws with infinite KL
+where appropriate. Explain why small expected count forces small
+KL, whereas perfect final answers allow arbitrarily large KL.
+\item Fix an expected count \(s\in[0,1)\). Prove the sharp bounds
+\[
+ -\log(1-s/T)\le\KL(P, Q)\le-\log(1-s).
+\]
+Give a law attaining each endpoint and relate them to part (c).
+\item Replace the count by the average count \(c_{\mathrm{cnt}}/T\).
+Recompute both moduli. How does normalization change their scales
+and the ratio between the largest and smallest costs at a fixed
+positive KL?
+\item Verify that the cost in \cref{prop:forward-variance} may have
+zero variance under \(P\) and positive expectation under \(Q\).
+Which term in the bound accounts for this?
+\end{enumerate}
+\end{exercisechunk}

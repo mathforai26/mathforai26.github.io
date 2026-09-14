@@ -1,0 +1,26 @@
+% Shared exercise chunk: l4-multistep
+\begin{exercisechunk}
+\item \textbf{Computing further-ahead predictions.}
+\label[exercise]{ex:multistep}
+Use the autoregressive model in \cref{eq:multistep-marginal}. Fix
+\(x_{\le t}\), \(k\ge2\) with \(t+k\le T\), and \(a\in[N]\).
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Verify \cref{eq:endpoint-multistep}. The sequence likelihoods of
+\(Q_-,Q_+\) agree; which prediction question distinguishes them, and
+which feature of their generation does it evaluate?
+\item Derive \cref{eq:multistep-marginal}.
+Count its terms and the number of conditional evaluations if each term
+is evaluated separately. Explain why sharing prefixes still leaves
+exponentially many distinct prefixes in a general model.
+\item Explain which conditional probability is evaluated if all the
+intervening tokens are replaced by their observed values.
+\item Suppose instead that the model is first-order Markov on \([N]\)
+with known transition matrix \(K\). Give a recursion that computes the
+entire \(k\)-step distribution in \(O(kN^2)\) arithmetic operations.
+Why can this recursion merge histories?
+\item A separate head \(h_{\theta,k}(\,\cdot\mid x_{\le t})\) can be
+trained from pairs \((X_{\le t},X_{t+k})\). State the additional
+equality needed for its probabilities to be the original sequence
+model's \(k\)-step marginals.
+\end{enumerate}
+\end{exercisechunk}

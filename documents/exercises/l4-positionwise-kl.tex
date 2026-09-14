@@ -1,0 +1,31 @@
+% Shared exercise chunk: l4-positionwise-kl
+\begin{exercisechunk}
+\item \textbf{Positionwise and average KL bounds.}
+\label[exercise]{ex:positionwise-kl}
+Let \(P=\delta_{0^T}\), \(T\ge2\), and use the counting and terminal
+costs from \cref{ex:binary-count}. Compare a bound on each
+next-token KL with a bound on their average. Fix \(\eta\ge0\).
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Suppose a generator \(Q\) satisfies
+\[
+ \E\!\left[\KL\bigl(P(\,\cdot\mid X_{<t})
+       , Q(\,\cdot\mid X_{<t})\bigr)\right]\le\eta
+ \quad(t=1,\ldots,T),\qquad X_{1:T}\sim P.
+\]
+Show that \(Q(X_{1:t}=0^t)\ge e^{-t\eta}\), and deduce
+\begin{equation}
+ \E_Q[c_{\mathrm{cnt}}]\le\sum_{t=1}^T(1-e^{-t\eta}),
+ \qquad
+ \E_Q[c_{\mathrm{fin}}]\le1-e^{-T\eta}.
+ \label{eq:positionwise-count}
+\end{equation}
+Show that \(Q_{\mathrm{bad}}\) attains both bounds when
+\(\varepsilon=1-e^{-\eta}\).
+\item Suppose instead that only \(\KL(P, Q)/T\le\eta\).
+Use \cref{eq:binary-kl-level,eq:terminal-kl-level} to obtain the
+corresponding bounds. Compare their small-\(T\eta\) leading terms
+with \cref{eq:positionwise-count}. What per-token accuracy suffices
+to guarantee terminal error at most \(s\in(0,1)\)?
+\end{enumerate}
+
+\end{exercisechunk}

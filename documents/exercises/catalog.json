@@ -149,5 +149,113 @@
     "lecture": 3,
     "number": 2,
     "file": "l3-fresh-test-evaluation.tex"
+  },
+  {
+    "id": "l4-kl-chain",
+    "lecture": 4,
+    "number": 1,
+    "file": "l4-kl-chain.tex"
+  },
+  {
+    "id": "l4-positive-data",
+    "lecture": 4,
+    "number": 2,
+    "file": "l4-positive-data.tex"
+  },
+  {
+    "id": "l4-reverse",
+    "lecture": 4,
+    "number": 3,
+    "file": "l4-reverse.tex"
+  },
+  {
+    "id": "l4-discrepancy-comparison",
+    "lecture": 4,
+    "number": 4,
+    "file": "l4-discrepancy-comparison.tex"
+  },
+  {
+    "id": "l4-binary-count",
+    "lecture": 4,
+    "number": 5,
+    "file": "l4-binary-count.tex"
+  },
+  {
+    "id": "l4-positionwise-kl",
+    "lecture": 4,
+    "number": 6,
+    "file": "l4-positionwise-kl.tex"
+  },
+  {
+    "id": "l4-sharing",
+    "lecture": 4,
+    "number": 7,
+    "file": "l4-sharing.tex"
+  },
+  {
+    "id": "l4-sharing-horizon",
+    "lecture": 4,
+    "number": 8,
+    "file": "l4-sharing-horizon.tex"
+  },
+  {
+    "id": "l4-sharing-costs",
+    "lecture": 4,
+    "number": 9,
+    "file": "l4-sharing-costs.tex"
+  },
+  {
+    "id": "l4-bernoulli-identification",
+    "lecture": 4,
+    "number": 10,
+    "file": "l4-bernoulli-identification.tex"
+  },
+  {
+    "id": "l4-copying-context",
+    "lecture": 4,
+    "number": 11,
+    "file": "l4-copying-context.tex"
+  },
+  {
+    "id": "l4-positionwise-loss",
+    "lecture": 4,
+    "number": 12,
+    "file": "l4-positionwise-loss.tex"
+  },
+  {
+    "id": "l4-fitting-support",
+    "lecture": 4,
+    "number": 13,
+    "file": "l4-fitting-support.tex"
+  },
+  {
+    "id": "l4-multistep",
+    "lecture": 4,
+    "number": 14,
+    "file": "l4-multistep.tex"
+  },
+  {
+    "id": "l4-stability",
+    "lecture": 4,
+    "number": 15,
+    "file": "l4-stability.tex"
+  },
+  {
+    "id": "l4-persistent-memory",
+    "lecture": 4,
+    "number": 16,
+    "file": "l4-persistent-memory.tex"
+  },
+  {
+    "id": "l4-latent-likelihood",
+    "lecture": 4,
+    "number": 17,
+    "file": "l4-latent-likelihood.tex"
+  },
+  {
+    "id": "l4-lds",
+    "lecture": 4,
+    "number": 18,
+    "file": "l4-lds.tex"
   }
 ]

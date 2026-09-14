@@ -1,0 +1,37 @@
+% Shared exercise chunk: l4-reverse
+\begin{exercisechunk}
+\item \textbf{Concentration and reverse KL.}
+\label[exercise]{ex:reverse}
+Use the notation of \cref{sec:cost-concentration}.
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Prove \cref{prop:entropy-cost} by exponential tilting, and
+then deduce \cref{thm:reverse-cost}, including the case \(v=0\).
+\item Let \(c=T^{-1}\sum_{t=1}^T f_t(X_t)\), with independent
+\([0,1]\)-valued summands under \(P\). Prove
+\(v_P(c)\le1/(4T)\), and deduce, for every law \(Q\),
+\begin{equation}
+ |\E_Q[c]-\E_P[c]|\le
+ \sqrt{\frac{\KL(Q, P)}{2T}}.
+ \label{eq:reverse-average}
+\end{equation}
+What growth of reverse KL still permits vanishing discrepancy?
+\item Let \(P_\delta=\operatorname{Bernoulli}(\delta)^{\otimes T}\),
+\(0<\delta<1\), and set \(m=\E_Q[c_{\mathrm{cnt}}]/T\) for the error-count
+cost. Prove
+\[
+ \KL(Q, P_\delta)
+ =T\,\operatorname{kl}(m,\delta)+\KL(Q, P_m),
+\]
+where \(P_m=\operatorname{Bernoulli}(m)^{\otimes T}\) and
+\(\operatorname{kl}(a,b)=a\log(a/b)+(1-a)\log((1-a)/(1-b))\).
+Treat \(m=0,1\) as well.
+\item Which generator has the smallest reverse KL among laws with a
+specified expected count?
+\end{enumerate}
+
+\begin{hints}
+For (a), normalize \(P(x)e^{\lambda(c(x)-\E_P[c])}\) to obtain a
+probability law, then use nonnegativity of KL. For (b), apply
+Hoeffding's lemma to each independent summand.
+\end{hints}
+\end{exercisechunk}

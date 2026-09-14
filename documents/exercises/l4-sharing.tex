@@ -1,0 +1,53 @@
+% Shared exercise chunk: l4-sharing
+\begin{exercisechunk}
+\item \textbf{Estimating shared parameters.\suppmark}
+\label[exercise]{ex:sharing}
+Use the independent-bit models and pooled estimator from
+\cref{sec:parameter-sharing}. All expectations below average over the
+training observations. Fix \(0<a<1/2\).
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Let \(B\sim\operatorname{Binomial}(L,p)\), with \(L\ge1\).
+For \(0<p<1\), show that the ordinary empirical frequency
+\(\bar p=B/L\) satisfies \(\E[\kl(p,\bar p)]=\infty\).
+Explain why adding one count of each bit gives
+\(\widehat p=(B+1)/(L+2)\), and why this assigns positive probability
+to both bits. To obtain a finite-sample bound for this choice, prove
+that, for \(0<p<1\),
+\[
+ \E\!\left[\frac1{B+1}\right]
+ =\frac{1-(1-p)^{L+1}}{(L+1)p}.
+\]
+Apply the same identity to \(L-B\), then use Jensen's inequality
+for the logarithm to show
+\[
+ \E[\kl(p,\widehat p)]
+ \le\log\frac{L+2}{L+1}
+ \le\frac1{L+1}.
+\]
+Verify the bound directly for \(p=0,1\).
+\item Apply part (a) with \(L=nm_j\) to bound \(\kappa_n(T)\) from above.
+For the lower bound, calculate
+\[
+ \E[(\widehat p-p)^2]
+ =\frac{Lp(1-p)+(1-2p)^2}{(L+2)^2}.
+\]
+Use Pinsker's inequality and \(L/(L+2)\ge1/3\) to show that
+\[
+ \frac{2a(1-a)}9\frac{d(T)}n
+ \le\kappa_n(T)\le\frac{d(T)}n
+ \qquad\text{when }p_j\in[a,1-a].
+\]
+Explain why group sizes cancel from both bounds.
+\item For fixed \(p\in(0,1)\), prove
+\(L\,\E[\kl(p,\widehat p)]\to1/2\) as \(L\to\infty\).
+Deduce \cref{eq:shared-bernoulli,eq:unshared-bernoulli}, keeping track
+of which of \(n,T\) is fixed in each limit.
+Make the expansion uniform for \(p\in[a,1-a]\) and prove
+\cref{eq:sharing-leading} when \(n\min_jm_j\to\infty\).
+\end{enumerate}
+\begin{hints}
+For (a), use \(1/(B+1)=\int_0^1u^B\,du\).
+For (c), expand \(\kl(p,q)\) near \(q=p\) and use a binomial tail
+bound for the remaining event.
+\end{hints}
+\end{exercisechunk}

@@ -1,0 +1,49 @@
+% Shared exercise chunk: l4-stability
+\begin{exercisechunk}
+\item \textbf{Contraction and repeated errors.}
+\label[exercise]{ex:stability}
+This exercise compares recovery from an initial error with continual
+correction of new errors.
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Prove \cref{eq:dobrushin}.
+\item For the recovery family \(Q_r\), compute the contraction factor
+and use \cref{eq:stability-recursion} to recover the terminal and
+count bounds in \cref{prop:recovery}. Verify that the recurrence
+inequality is an equality here, giving the exact costs.
+\item Now let \(Q_{\varepsilon,r}\), with \(X_0=0\), use
+\[
+ Q_{\varepsilon,r}(X_{t+1}=1\mid X_t=0)=\varepsilon,\qquad
+ Q_{\varepsilon,r}(X_{t+1}=0\mid X_t=1)=r,
+\]
+where \(0<\varepsilon<1\), \(0\le r\le1\), and \(0\le t<T\).
+For \(p_t=Q_{\varepsilon,r}(X_t=1)\), prove
+\begin{equation}
+ p_0=0,\qquad
+ p_{t+1}=\varepsilon+(1-\varepsilon-r)p_t,\qquad
+ p_t=\frac{\varepsilon}{\varepsilon+r}
+       [1-(1-\varepsilon-r)^t].
+ \label{eq:recovery}
+\end{equation}
+Identify the choices of \(r\) giving the two models in
+\cref{ex:binary-count}.
+\item Compute the contraction factor \(|1-\varepsilon-r|\).
+For \(0\le r\le1-\varepsilon\), prove
+\begin{equation}
+ \E_{Q_{\varepsilon,r}}[c_{\mathrm{fin}}]\le
+ \frac{\varepsilon}{\varepsilon+r},\qquad
+ \frac1T\E_{Q_{\varepsilon,r}}[c_{\mathrm{cnt}}]\le
+ \frac{\varepsilon}{\varepsilon+r}.
+ \label{eq:recovery-cost}
+\end{equation}
+Recover these bounds from \cref{thm:markov-stability}, using
+\(e_1=\varepsilon\) and local error \(\varepsilon\) at every
+subsequent step. At \(r=0\), why does the positive contraction margin
+still give the bound one? How large must \(r\) be relative to
+\(\varepsilon\) for the limiting error probability to be at most
+\(s\in(0,1)\)?
+\end{enumerate}
+\begin{hints}
+For (a), normalize the positive and negative parts of
+\(\alpha-\beta\) to obtain two probability laws.
+\end{hints}
+\end{exercisechunk}

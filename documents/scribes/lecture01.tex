@@ -42,6 +42,8 @@
 
 \theoremstyle{plain}
 \newtheorem{theorem}{Theorem}[section]
+\theoremstyle{definition}
+\newtheorem{example}{Example}[section]
 \theoremstyle{remark}
 \newtheorem{remark}{Remark}[section]
 
@@ -1003,7 +1005,7 @@ For a fixed normalization rule, $N_\nu:\R^d\to\R^d$ denotes its map with
 learned parameters $\nu$. These parameters are separate from those of
 attention and the FFN.
 
-\begin{remark}[Example: LayerNorm-type normalization]
+\begin{example}[LayerNorm-type normalization]
 \label{rem:rmsnorm}
 For an input $u\in\R^d$, first decide whether to remove a common offset
 across features. Let $\mu(u)$ be its coordinate mean. A centering choice
@@ -1040,7 +1042,7 @@ it uses the mean square. For LayerNorm, $\nu=(\gamma,\beta)$ and
 $N_\nu=N_{1,\gamma,\beta}$. For RMSNorm, which is used in Llama~3,
 $\nu=\gamma$ and $N_\nu=N_{0,\gamma,0}$. The centering choice and
 $\varepsilon$ are fixed.
-\end{remark}
+\end{example}
 
 The lift in \eqref{eq:positionwise-lift} normalizes each position
 separately across its features: $(N_\nu(H)_{i,:})^\top=N_\nu(h_i)$.
