@@ -9,7 +9,7 @@
 \usepackage{microtype}
 
 % Revision date: maintained by scripts/build_lecture_notes.py. Keep this command.
-\newcommand{\lecturerevised}{2026-09-14 14:48 UTC-06:00}
+\newcommand{\lecturerevised}{2026-09-14 15:25 UTC-06:00}
 \usepackage{eso-pic}
 \AddToShipoutPictureBG{%
   \AtPageLowerLeft{%
@@ -1479,8 +1479,10 @@ in a parity task.
 
 Likelihood fitting gives a positive statistical guarantee
 on task performance.
-The following result states it directly in terms of generated cost,
-with the optimization tolerance retained.
+The following stylized result bounds the task cost of choosing a model
+with nearly minimal empirical log loss from a finite class.
+Allowing optimization slack, as in the previous subsection, lets us ask
+how optimization effort should depend on sample size.
 
 \begin{restatable}[Approximate maximum likelihood controls cost]{theorem}{finitemle}
 \label{thm:finite-mle}
@@ -1511,10 +1513,11 @@ contributions to its guarantee:
  +\underbrace{T\eta}_{\text{optimization contribution}}.
  \label{eq:finite-mle-zero-cost}
 \end{equation}
-At fixed model class and confidence level, the first term decreases
-as \(1/n\). \emph{Optimizing to statistical accuracy} means keeping
-the optimization contribution on the scale of that statistical term.
-For example, it suffices to choose
+At fixed model class and confidence level, the statistical contribution
+is of order \(1/n\) and remains in the bound even with exact optimization.
+If optimization effort is insufficient, the optimization contribution
+\(T\eta\) may dominate. To keep it no larger than the statistical
+contribution, it suffices to achieve
 \begin{equation}
  \eta\le\frac{2\log(|\mathcal Q|/\delta)}{nT}.
  \label{eq:statistical-accuracy}
@@ -1522,10 +1525,10 @@ For example, it suffices to choose
 Substitution into \cref{eq:finite-mle-zero-cost} gives
 \(\E_{\widehat Q}[c]\le4\log(|\mathcal Q|/\delta)/n\), with probability
 at least \(1-\delta\).
+\emph{Optimizing to statistical accuracy} means keeping
+the optimization contribution on the scale of that statistical term.
 Even at fixed sequence length, retaining this statistical rate calls
 for a decreasing per-token tolerance as the number of examples grows.
-For a fixed target cost \(s\), it is enough to make
-\(2\log(|\mathcal Q|/\delta)/n+T\eta\le s\).
 
 The example in \cref{prop:endpoint-optimization} shows that the
 optimization contribution has the correct order when \(T\eta\) is small.
