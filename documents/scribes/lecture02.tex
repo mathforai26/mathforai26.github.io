@@ -10,7 +10,7 @@
 \usepackage{microtype}
 
 % Revision date: maintained by scripts/build_lecture_notes.py. Keep this command.
-\newcommand{\lecturerevised}{2026-09-14 10:41 UTC-06:00}
+\newcommand{\lecturerevised}{2026-09-15 23:21 UTC-06:00}
 \usepackage{eso-pic}
 \AddToShipoutPictureBG{%
   \AtPageLowerLeft{%
@@ -121,11 +121,10 @@ appendices provide a more detailed proof and probability background.
 Read through \cref{sec:take-home} before the next class, which will begin by
 reviewing this material.
 \cref{app:detailed-proof,app:probability} provide reference material to consult as needed.
-\Cref{sec:optional-reading} contains optional reading, followed by
-bibliographical notes and one collection of exercises. The actual homework
-will sample from these exercises and may add others.
-
-Numbered endnotes collect short refinements that may be skipped on a first reading.
+\Cref{sec:optional-reading} contains optional reading before the take-home
+messages. Numbered endnotes, bibliographical notes and references, the
+glossary, one collection of exercises, and the appendices follow in that
+order. The actual homework will sample from these exercises and may add others.
 
 \section{Why use machine learning to build AI?}
 \label{sec:why-learning}
@@ -1142,30 +1141,6 @@ system requires choices about what capabilities to seek and how to evaluate
 them. Hypothesis classes help us study generalization, but choosing a class
 does not settle the broader problem of designing a learning system.
 
-\section{Take-home messages}
-\label{sec:take-home}
-
-\begin{enumerate}[leftmargin=*,itemsep=0.25em,topsep=0.4em]
-\item Machine learning moves part of the behavioral specification problem into
-data and feedback. Architecture, objectives, optimization, evaluation, and the
-surrounding program remain designed components.
-\item Pretraining, post-training, and repeated evaluation supply different
-information. A capability should be attributed to the components that made it
-possible.
-\item In the boxes problem, the training and test indices may have any joint
-distribution that is the same for every hidden function, with the learner's
-seed independent of the indices. The exact minimax risk is one half of the
-probability that the test index was not revealed.
-\item Private randomization protects an unseen prediction against a fixed
-worst-case label. It creates no information about that label.
-\item Generalization requires alignment: the learner and its observations must
-exploit relations that the target actually satisfies.
-\item Finite input spaces can be astronomically large. Interpret asymptotic
-guarantees in the relevant regime, and inspect their explicit dependence on
-sample size, domain size, and the promised structure.
-\end{enumerate}
-
-
 \section{Optional reading: priors, best responses, and robustness}
 \label{sec:optional-reading}
 \label{app:decision-theory}
@@ -1268,30 +1243,137 @@ to insist on depends on the application: whether absolute losses or avoidable
 shortfalls matter, and what information the comparator should use.
 \end{remark}
 
-\section{Exercises}
-\label{sec:exercises}
-\exerciseinstructions
-\setcounter{courseexercise}{0}
-\input{../exercises/l2-random-seed.tex}
-\input{../exercises/l2-coin-flip-map.tex}
-\input{../exercises/l2-repeated-experiments.tex}
-\input{../exercises/l2-unseen-probability.tex}
-\input{../exercises/l2-sample-size-bounds.tex}
-\input{../exercises/l2-complete-boxes-proof.tex}
-\input{../exercises/l2-threshold-expectation.tex}
-\input{../exercises/l2-data-coverage.tex}
-\input{../exercises/l2-threshold-sampling.tex}
-\input{../exercises/l2-finite-class-consistency.tex}
-\input{../exercises/l2-transduction.tex}
-\input{../exercises/l2-deterministic-minimax.tex}
-\input{../exercises/l2-one-bit-decisions.tex}
-\input{../exercises/l2-unknown-sampling-law.tex}
-\input{../exercises/l2-minimax-regret-q.tex}
-\input{../exercises/l2-regret-comparison.tex}
-\input{../exercises/l2-risk-versus-regret.tex}
-\input{../exercises/l2-probability-rules.tex}
-\input{../exercises/l2-bayes-not-minimax.tex}
-\input{../exercises/l2-prior-structure.tex}
+\section{Take-home messages}
+\label{sec:take-home}
+
+\begin{enumerate}[leftmargin=*,itemsep=0.25em,topsep=0.4em]
+\item Machine learning moves part of the behavioral specification problem into
+data and feedback. Architecture, objectives, optimization, evaluation, and the
+surrounding program remain designed components.
+\item Pretraining, post-training, and repeated evaluation supply different
+information. A capability should be attributed to the components that made it
+possible.
+\item In the boxes problem, the training and test indices may have any joint
+distribution that is the same for every hidden function, with the learner's
+seed independent of the indices. The exact minimax risk is one half of the
+probability that the test index was not revealed.
+\item Private randomization protects an unseen prediction against a fixed
+worst-case label. It creates no information about that label.
+\item Generalization requires alignment: the learner and its observations must
+exploit relations that the target actually satisfies.
+\item Finite input spaces can be astronomically large. Interpret asymptotic
+guarantees in the relevant regime, and inspect their explicit dependence on
+sample size, domain size, and the promised structure.
+\end{enumerate}
+
+\printendnotes
+
+\section*{Bibliographical notes}
+\phantomsection
+\label{sec:bibliographical-notes}
+
+\paragraph{Pretraining examples.}
+The base GPT-3 continuations discussed in the text appear in
+\href{https://arxiv.org/html/2203.02155v1\#S4.F8}{Figure 8 of Ouyang et al. (2022)}.
+The prompts were selected to illustrate those behaviours.
+GPT-2's fictional report about English-speaking unicorns appears in
+\href{https://cdn.openai.com/better-language-models/language_models_are_unsupervised_multitask_learners.pdf\#page=20}{Table 13 of Radford et al. (2019)};
+that example was selected from ten generated samples.
+
+\paragraph{Counting possible inputs.}
+For the comparison with the number of atoms in the observable universe, see
+Peter Norvig,
+\href{https://www.norvig.com/atoms.html}{\emph{On the (Small) Number of Atoms
+in the Universe}} (2016).
+
+\paragraph{Probability.}
+The conventions for random variables, vectors, and elements follow
+\href{https://tor-lattimore.com/downloads/book/book.pdf}{Lattimore and
+Szepesv\'ari, \emph{Bandit Algorithms}}, Chapter~2. That chapter develops
+probability spaces, measurability, conditioning, and independence in greater
+generality. \Cref{app:probability} collects the tools needed here.
+
+\paragraph{Randomized algorithms.}
+Randomized algorithms are a major subject in theoretical computer science.
+Their mathematical analysis typically assumes access to independent random
+bits. Software commonly uses pseudorandom generators, which deterministically
+expand a seed into a longer sequence; whether this adequately replaces ideal
+randomness depends on the application and assumptions. See Motwani and
+Raghavan, \emph{Randomized Algorithms}, and Vadhan,
+\href{https://people.seas.harvard.edu/~salil/pseudorandomness/}{\emph{Pseudorandomness}}.
+
+\paragraph{Hypothesis classes, realizability, and ERM.}
+Shalev-Shwartz and Ben-David's
+\href{https://www.cs.huji.ac.il/~shais/UnderstandingMachineLearning/understanding-machine-learning-theory-algorithms.pdf}{\emph{Understanding
+Machine Learning: From Theory to Algorithms}} (2014), Chapters~2--4,
+develops realizability, consistency, ERM, and finite-class guarantees.
+Remark~3.2 discusses proper versus improper learning; the terminology
+``hypothesis class'' does not by itself restrict the learner's output.
+Section~5.2 separates approximation error from estimation error, clarifying
+why approaching the best predictor in a class need not give small absolute
+risk. Chapter~6 introduces VC dimension and the classical learnability
+characterization. The optimal-rate results below postdate that textbook.
+
+\paragraph{VC dimension and optimal sample complexity.}
+For a class of VC dimension $d$, Hanneke's
+\href{https://jmlr.org/papers/v17/15-389.html}{\emph{The Optimal Sample
+Complexity of PAC Learning}} (2016) gives a realizable PAC learner using
+$O((d+\log(1/\delta))/\epsilon)$ observations. This removes the extra
+$\log(1/\epsilon)$ factor in the classical guarantee for arbitrary ERM
+learners. The algorithm combines consistent predictors by majority vote and
+may return a predictor outside the original class.
+
+\paragraph{When improper learning helps.}
+The distinction can affect the best achievable sample complexity, even
+without computational restrictions. Bousquet, Hanneke, Moran, and
+Zhivotovskiy's
+\href{https://proceedings.mlr.press/v125/bousquet20a.html}{\emph{Proper
+Learning, Helly Number, and an Optimal SVM Bound}} (2020),
+\href{https://proceedings.mlr.press/v125/bousquet20a/bousquet20a.pdf\#page=10}{Theorem~11},
+exhibits classes for which \emph{every} proper learner needs an additional
+logarithmic factor. This is stronger than showing that some ERM choices
+are inefficient in their use of data.
+
+The finite singleton class in its proof gives a boxes example: exactly one
+of $N$ boxes is positive. A proper learner must designate one box as
+positive. If sampling is uniform over the other $N-1$ boxes, reliable
+identification of the missing box requires order $N\log N$ observations.
+An improper learner can return the all-zero predictor until a positive label
+is observed, then return the identified singleton. For any $P$, this rule's
+error exceeds $\epsilon$ only if the positive box has mass greater than
+$\epsilon$ and is missed in every draw, an event of probability at most
+$e^{-n\epsilon}$. At $\epsilon=1/(2(N-1))$ and fixed small failure
+probability, it therefore needs only order $N$ observations. The gain comes
+from allowing a prediction that need not assert an unobserved positive label.
+
+\paragraph{Transduction.}
+Transduction can save labels when the unlabeled test inputs reveal structure
+that constrains their labels. Examples include
+\href{https://www.cs.cmu.edu/~zhuxj/pub/zgl.pdf}{graph-based label propagation},
+which encourages similar inputs to share labels, and
+\href{https://www.cs.cornell.edu/people/tj/publications/joachims_99c.pdf}{transductive SVMs},
+which seek a large margin on labeled and unlabeled examples. In learning
+theory, the
+\href{https://arxiv.org/abs/2212.09270}{one-inclusion graph algorithm}
+is central; its transductive analysis also yields inductive expected-risk
+guarantees. Label savings are not universal: for distribution-free, realizable
+binary classification with i.i.d. training and test samples and at least as
+many test as training examples, the optimal labeled-sample complexity has the
+same order in transduction and induction. See
+\href{https://arxiv.org/abs/1602.03027}{Tolstikhin and Lopez-Paz (2016)}.
+
+\paragraph{Decision criteria.}
+For axiomatic treatments, see Stoye's
+\href{https://stoye.economics.cornell.edu/docs/AxiomsRegret.pdf}{\emph{Axioms
+for Minimax Regret Choice Correspondences}} (2011), and Section~3.2 and
+Table~1 of his survey
+\href{https://stoye.economics.cornell.edu/docs/ARE.pdf}{\emph{New Perspectives
+on Statistical Decisions under Ambiguity}}. These characterizations make
+explicit the tradeoffs between consistency requirements; they do not single
+out one criterion as universally preferable.
+
+
+\clearpage
 
 \section*{Glossary}
 
@@ -1468,6 +1550,33 @@ It controls excess loss relative to the benchmark; a small regret can
 coexist with a large absolute risk. See \cref{ex:risk-versus-regret}.
 \end{description}
 
+\section{Exercises}
+\label{sec:exercises}
+\exerciseinstructions
+\setcounter{courseexercise}{0}
+\input{../exercises/l2-random-seed.tex}
+\input{../exercises/l2-coin-flip-map.tex}
+\input{../exercises/l2-repeated-experiments.tex}
+\input{../exercises/l2-unseen-probability.tex}
+\input{../exercises/l2-sample-size-bounds.tex}
+\input{../exercises/l2-complete-boxes-proof.tex}
+\input{../exercises/l2-threshold-expectation.tex}
+\input{../exercises/l2-data-coverage.tex}
+\input{../exercises/l2-threshold-sampling.tex}
+\input{../exercises/l2-finite-class-consistency.tex}
+\input{../exercises/l2-transduction.tex}
+\input{../exercises/l2-deterministic-minimax.tex}
+\input{../exercises/l2-one-bit-decisions.tex}
+\input{../exercises/l2-unknown-sampling-law.tex}
+\input{../exercises/l2-minimax-regret-q.tex}
+\input{../exercises/l2-regret-comparison.tex}
+\input{../exercises/l2-risk-versus-regret.tex}
+\input{../exercises/l2-probability-rules.tex}
+\input{../exercises/l2-probability-bounds.tex}
+\input{../exercises/l2-bayes-not-minimax.tex}
+\input{../exercises/l2-prior-structure.tex}
+
+\clearpage
 \appendix
 \renewcommand{\thesection}{\Alph{section}}
 
@@ -1831,6 +1940,10 @@ Measurable functions of independent elements remain independent. In
 particular, if $Y$ is independent of $Z$, it is independent of every event
 determined by $Z$.
 
+\Cref{ex:probability-bounds} derives the corresponding factorization
+of expectations of products, along with Markov's inequality and the
+union bound.
+
 Conditioning can destroy independence. A useful sufficient condition for
 preserving it is the following: suppose $T$ is independent of the pair
 $(V,W)$, and $C$ is an event determined by $V$, with $\P(C)>0$. Then
@@ -1865,112 +1978,5 @@ has probability one. \Cref{ex:repeated-experiments} connects the statement
 to the risk of a learner.
 
 \clearpage
-\section*{Bibliographical notes}
-\phantomsection
-\label{sec:bibliographical-notes}
-
-\paragraph{Pretraining examples.}
-The base GPT-3 continuations discussed in the text appear in
-\href{https://arxiv.org/html/2203.02155v1\#S4.F8}{Figure 8 of Ouyang et al. (2022)}.
-The prompts were selected to illustrate those behaviours.
-GPT-2's fictional report about English-speaking unicorns appears in
-\href{https://cdn.openai.com/better-language-models/language_models_are_unsupervised_multitask_learners.pdf\#page=20}{Table 13 of Radford et al. (2019)};
-that example was selected from ten generated samples.
-
-\paragraph{Counting possible inputs.}
-For the comparison with the number of atoms in the observable universe, see
-Peter Norvig,
-\href{https://www.norvig.com/atoms.html}{\emph{On the (Small) Number of Atoms
-in the Universe}} (2016).
-
-\paragraph{Probability.}
-The conventions for random variables, vectors, and elements follow
-\href{https://tor-lattimore.com/downloads/book/book.pdf}{Lattimore and
-Szepesv\'ari, \emph{Bandit Algorithms}}, Chapter~2. That chapter develops
-probability spaces, measurability, conditioning, and independence in greater
-generality. \Cref{app:probability} collects the tools needed here.
-
-\paragraph{Randomized algorithms.}
-Randomized algorithms are a major subject in theoretical computer science.
-Their mathematical analysis typically assumes access to independent random
-bits. Software commonly uses pseudorandom generators, which deterministically
-expand a seed into a longer sequence; whether this adequately replaces ideal
-randomness depends on the application and assumptions. See Motwani and
-Raghavan, \emph{Randomized Algorithms}, and Vadhan,
-\href{https://people.seas.harvard.edu/~salil/pseudorandomness/}{\emph{Pseudorandomness}}.
-
-\paragraph{Hypothesis classes, realizability, and ERM.}
-Shalev-Shwartz and Ben-David's
-\href{https://www.cs.huji.ac.il/~shais/UnderstandingMachineLearning/understanding-machine-learning-theory-algorithms.pdf}{\emph{Understanding
-Machine Learning: From Theory to Algorithms}} (2014), Chapters~2--4,
-develops realizability, consistency, ERM, and finite-class guarantees.
-Remark~3.2 discusses proper versus improper learning; the terminology
-``hypothesis class'' does not by itself restrict the learner's output.
-Section~5.2 separates approximation error from estimation error, clarifying
-why approaching the best predictor in a class need not give small absolute
-risk. Chapter~6 introduces VC dimension and the classical learnability
-characterization. The optimal-rate results below postdate that textbook.
-
-\paragraph{VC dimension and optimal sample complexity.}
-For a class of VC dimension $d$, Hanneke's
-\href{https://jmlr.org/papers/v17/15-389.html}{\emph{The Optimal Sample
-Complexity of PAC Learning}} (2016) gives a realizable PAC learner using
-$O((d+\log(1/\delta))/\epsilon)$ observations. This removes the extra
-$\log(1/\epsilon)$ factor in the classical guarantee for arbitrary ERM
-learners. The algorithm combines consistent predictors by majority vote and
-may return a predictor outside the original class.
-
-\paragraph{When improper learning helps.}
-The distinction can affect the best achievable sample complexity, even
-without computational restrictions. Bousquet, Hanneke, Moran, and
-Zhivotovskiy's
-\href{https://proceedings.mlr.press/v125/bousquet20a.html}{\emph{Proper
-Learning, Helly Number, and an Optimal SVM Bound}} (2020),
-\href{https://proceedings.mlr.press/v125/bousquet20a/bousquet20a.pdf\#page=10}{Theorem~11},
-exhibits classes for which \emph{every} proper learner needs an additional
-logarithmic factor. This is stronger than showing that some ERM choices
-are inefficient in their use of data.
-
-The finite singleton class in its proof gives a boxes example: exactly one
-of $N$ boxes is positive. A proper learner must designate one box as
-positive. If sampling is uniform over the other $N-1$ boxes, reliable
-identification of the missing box requires order $N\log N$ observations.
-An improper learner can return the all-zero predictor until a positive label
-is observed, then return the identified singleton. For any $P$, this rule's
-error exceeds $\epsilon$ only if the positive box has mass greater than
-$\epsilon$ and is missed in every draw, an event of probability at most
-$e^{-n\epsilon}$. At $\epsilon=1/(2(N-1))$ and fixed small failure
-probability, it therefore needs only order $N$ observations. The gain comes
-from allowing a prediction that need not assert an unobserved positive label.
-
-\paragraph{Transduction.}
-Transduction can save labels when the unlabeled test inputs reveal structure
-that constrains their labels. Examples include
-\href{https://www.cs.cmu.edu/~zhuxj/pub/zgl.pdf}{graph-based label propagation},
-which encourages similar inputs to share labels, and
-\href{https://www.cs.cornell.edu/people/tj/publications/joachims_99c.pdf}{transductive SVMs},
-which seek a large margin on labeled and unlabeled examples. In learning
-theory, the
-\href{https://arxiv.org/abs/2212.09270}{one-inclusion graph algorithm}
-is central; its transductive analysis also yields inductive expected-risk
-guarantees. Label savings are not universal: for distribution-free, realizable
-binary classification with i.i.d. training and test samples and at least as
-many test as training examples, the optimal labeled-sample complexity has the
-same order in transduction and induction. See
-\href{https://arxiv.org/abs/1602.03027}{Tolstikhin and Lopez-Paz (2016)}.
-
-\paragraph{Decision criteria.}
-For axiomatic treatments, see Stoye's
-\href{https://stoye.economics.cornell.edu/docs/AxiomsRegret.pdf}{\emph{Axioms
-for Minimax Regret Choice Correspondences}} (2011), and Section~3.2 and
-Table~1 of his survey
-\href{https://stoye.economics.cornell.edu/docs/ARE.pdf}{\emph{New Perspectives
-on Statistical Decisions under Ambiguity}}. These characterizations make
-explicit the tradeoffs between consistency requirements; they do not single
-out one criterion as universally preferable.
-
-
-\clearpage
-\printendnotes
 
 \end{document}

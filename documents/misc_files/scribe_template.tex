@@ -124,6 +124,8 @@ Use additional sections when the lecture contains several substantial blocks.
 Explain what the mathematics says about the AI systems discussed in the
 lecture.
 
+% A separate Optional reading section, if needed, goes here.
+
 \section{Take-home messages}
 \label{sec:take-home}
 
@@ -131,20 +133,26 @@ lecture.
 \item Record the main mathematical and conceptual conclusions compactly.
 \end{itemize}
 
-% A separate Optional reading section, if needed, goes here.
+% From the first draft, use endnotes for short refinements that may be skipped
+% on a first reading. Keep necessary definitions and assumptions in the main text;
+% put substantial derivations in an appendix. Add a note beside its claim:
+% A statement.\endnote{A short refinement.}
+% This command prints nothing if no endnotes were defined.
+\clearpage
+\printendnotes
 
-\section{Exercises}
-\label{sec:exercises}
+\section*{Bibliographical notes}
 
-Collect focused exercises in lecture order, splitting long sets when they
-develop distinct ideas. Put hints after the questions. Keep matching model
-solutions in the private exercise files.
+Explain the origin or significance of each cited reference and its connection
+to the material developed above.
 
-% Load course-exercises above, then replace this placeholder with:
-% \exerciseinstructions
-% \setcounter{courseexercise}{0}
-% \input{../exercises/<exercise-id>.tex}
-% Add each exercise to ../exercises/catalog.json in the same order.
+\begin{thebibliography}{99}
+\bibitem[Author(Year)]{reference-key}
+Author.
+\newblock Title.
+\newblock Venue, year.
+\newblock \url{https://example.com}.
+\end{thebibliography}
 
 \section*{Glossary}
 
@@ -160,32 +168,24 @@ solutions in the private exercise files.
 Definition in the sense used in the lecture.
 \end{description}
 
+\section{Exercises}
+\label{sec:exercises}
+
+Collect focused exercises in lecture order, splitting long sets when they
+develop distinct ideas. Put hints after the questions. Keep matching model
+solutions in the private exercise files.
+
+% Load course-exercises above, then replace this placeholder with:
+% \exerciseinstructions
+% \setcounter{courseexercise}{0}
+% \input{../exercises/<exercise-id>.tex}
+% Add each exercise to ../exercises/catalog.json in the same order.
+
 % Substantial deferred proofs and background go here, when needed:
 % \appendix
 % \section{Title of the deferred material}
 % Restate each result immediately before its proof environment. Order the
 % appendices by first substantive use in the main text. Exercise solutions
 % belong in private solution files.
-
-\section*{Bibliographical notes}
-
-Explain the origin or significance of each cited reference and its connection
-to the material developed above.
-
-\begin{thebibliography}{99}
-\bibitem[Author(Year)]{reference-key}
-Author.
-\newblock Title.
-\newblock Venue, year.
-\newblock \url{https://example.com}.
-\end{thebibliography}
-
-% From the first draft, use endnotes for short refinements that may be skipped
-% on a first reading. Keep necessary definitions and assumptions in the main text;
-% put substantial derivations in an appendix. Add a note beside its claim:
-% A statement.\endnote{A short refinement.}
-% Keep this final command after the references. It prints nothing if unused.
-\clearpage
-\printendnotes
 
 \end{document}

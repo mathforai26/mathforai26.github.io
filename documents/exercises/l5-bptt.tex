@@ -1,0 +1,20 @@
+\begin{exercisechunk}
+\item \textbf{Backpropagation, affine scans, and recurrent attention.}
+\label[exercise]{ex:l5-bptt}
+Consider \(R_{t+1}=h_\theta(R_t,u_t)\) with observed inputs.
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Express \(\partial R_T/\partial R_s\) as a product of
+state-update Jacobians. For a scalar linear update \(R_{t+1}=aR_t\),
+compare \(0<|a|<1\) and \(|a|>1\).
+\item Verify associativity of the affine composition in
+\cref{sec:rnn}. Compare a dense \(d\)-dimensional sequential recurrence
+and a parallel scan in work, depth, and activation storage.
+What improves if the transition matrices are diagonal?
+\item Show that linearity in the state does not make learning the
+transition parameter convex: use \(R_0=1\), \(R_2=a^2\),
+and loss \((R_2-1)^2\).
+\item Derive \cref{prop:attention-recurrence}. For \(\gamma_t=1\),
+derive the extra denominator state needed for normalized linear
+attention. State when the denominator is valid.
+\end{enumerate}
+\end{exercisechunk}

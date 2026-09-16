@@ -1,0 +1,23 @@
+\begin{exercisechunk}
+\item \textbf{EM averages hidden paths.}
+\label[exercise]{ex:l5-em}
+In a finite model with positive joint masses, fix observed data \(z\),
+write \(\ell(\theta)=\log Q_\theta(z)\), and let
+\(q(s)=Q_{\theta_0}(s\mid z)\).
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Prove
+\[
+ \ell(\theta)-\ell(\theta_0)
+ =\sum_s q(s)\log\frac{Q_\theta(s,z)}{Q_{\theta_0}(s,z)}
+   +\KL(q,Q_\theta(\cdot\mid z)).
+\]
+Deduce monotonicity of exact EM and of an M-step that merely increases
+the expected complete-data log likelihood.
+\item Why does this identity not guarantee convergence to a local
+maximum? Explain why replacing \(q\) by a point mass at a most likely
+path generally changes the update and its guarantee.
+\item For a Gaussian LDS, expand
+\(\E[\|S_{t+1}-AS_t\|^2\mid Z_{1:T}]\).
+Identify the second moments that a state-mean substitution omits.
+\end{enumerate}
+\end{exercisechunk}

@@ -1,0 +1,17 @@
+% Shared exercise chunk: l4-reverse-variational
+\begin{exercisechunk}
+\item \textbf{Variational representation of reverse KL.}
+\label[exercise]{ex:reverse-variational}
+Let \(P,Q\) be laws on a finite space \(\cX\), with \(X\sim P\)
+and \(Y\sim Q\). Prove the identity in \cref{eq:reverse-adversarial}:
+\[
+ \KL(Q,P)=\sup_{g:\cX\to\R}
+ \left\{1+\E[g(Y)]-\E[e^{g(X)}]\right\}.
+\]
+Include the cases where either law has zero probabilities.
+When \(P,Q\) are strictly positive, show that the supremum is attained
+by \(g^*(x)=\log(Q(x)/P(x))\).
+\begin{hints}
+Optimize each value \(g(x)\) separately.
+\end{hints}
+\end{exercisechunk}

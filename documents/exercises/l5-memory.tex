@@ -1,0 +1,19 @@
+\begin{exercisechunk}
+\item \textbf{Permanent state and finite-window prediction.}
+\label[exercise]{ex:l5-memory}
+Use the process in \cref{eq:constant-state}.
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Complete the square in the posterior density of \(U\) given
+\(Z_{1:n}\) to derive \cref{eq:constant-posterior}.
+Give a recursion that stores only a running sum and a count.
+\item Derive the minimum prediction risks using all \(n\) observations
+and only the last \(p\le n\). Prove that the latter bound applies to
+nonlinear predictors as well as linear AR predictors.
+\item Derive the expected conditional KL in
+\cref{prop:memory-advantage} directly from the Gaussian KL formula.
+You may use conditional-expectation orthogonality.
+\item Explain why recovering \(U\) accurately along one infinite
+trajectory does not consistently estimate an unknown prior variance
+\(\tau^2\). What additional data would supply repeated draws of \(U\)?
+\end{enumerate}
+\end{exercisechunk}

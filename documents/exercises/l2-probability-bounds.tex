@@ -1,0 +1,30 @@
+% Shared exercise chunk: l2-probability-bounds
+\begin{exercisechunk}
+\item \textbf{Products of expectations and probability bounds.}
+\label[exercise]{ex:probability-bounds}
+Use the probability and expectation rules in \cref{app:probability}.
+All random variables below take finitely many values.
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Let \(X_1,\ldots,X_n\) be mutually independent, and let
+\(g_1,\ldots,g_n\) be real-valued functions on their respective ranges.
+Prove directly from the finite-sum definition that
+\[
+ \E\left[\prod_{i=1}^n g_i(X_i)\right]
+ =\prod_{i=1}^n\E[g_i(X_i)].
+\]
+\item Prove \emph{Markov's inequality}: for \(Y\ge0\) and \(a>0\),
+\[
+ \P(Y\ge a)\le\frac{\E[Y]}a.
+\]
+\item Prove the \emph{union bound}: for events \(E_1,\ldots,E_m\)
+on the same probability space,
+\[
+ \P\left(\bigcup_{j=1}^m E_j\right)\le\sum_{j=1}^m\P(E_j).
+\]
+Does this require independence of the events?
+\end{enumerate}
+\begin{hints}
+For (b), compare \(a\I\{Y\ge a\}\) with \(Y\).
+For (c), compare the indicator of the union with the sum of the indicators.
+\end{hints}
+\end{exercisechunk}

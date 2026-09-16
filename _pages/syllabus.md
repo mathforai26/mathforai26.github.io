@@ -52,7 +52,26 @@ Assignments must be typeset using the provided [LaTeX homework template]({{ '/do
 
 ### Final oral examination: 20%
 
-Each student will have an individual oral examination of at most 20 minutes during the final-examination period. At least one week beforehand, the instructor will publish a list of approximately 8–12 possible topics. The exam begins with one of those topics and continues with questions testing mathematical understanding, interpretation, and the ability to communicate an argument. It is open notes and open book, without computing devices.
+Each student will have an individual oral examination during the
+final-examination period. The total examination time will be between 30 and 60
+minutes, with approximately 30 minutes as the usual target. At least one week
+beforehand, the instructor will publish a pool of approximately 8–12 possible
+questions. At the beginning of the examination, the student will draw one
+question at random from this pool.
+
+The student will have 10 minutes to prepare. During this period, the student may
+consult any amount of their own handwritten notes. Printed materials and
+electronic devices are not permitted. The student may prepare a separate
+handwritten exam note of unrestricted length.
+
+The student will then present the answer at the board. During the presentation,
+the student may consult only the exam note produced during the preparation
+period; the original handwritten notes may no longer be used. The exam note
+will not be collected. The instructor will ask follow-up questions throughout
+the presentation to check and clarify the student's understanding. Grading will
+be based on the correctness and depth of that understanding, the clarity and
+organization of the explanations, the appropriate use of mathematical
+formalism, and the student's responses to follow-up questions.
 
 ### Scribing / polished lecture note: 10%
 
@@ -85,7 +104,8 @@ From the first draft, use **endnotes** for short remarks that refine the materia
 and may be skipped on a first reading. An endnote is too short to require an
 appendix; substantial proofs and extended discussions belong in appendices. Keep definitions,
 assumptions, and explanations needed for the main argument in the main text.
-Collect endnotes after the references. During revision, check whether short
+Collect endnotes immediately after the take-home messages, before the
+bibliographical notes and references. During revision, check whether short
 ancillary remarks would fit there and whether the main text reads correctly
 without them.
 

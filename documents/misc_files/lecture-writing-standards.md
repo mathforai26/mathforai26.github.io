@@ -14,20 +14,23 @@ Use this structure, omitting optional material when it is unnecessary:
    setup, central results, arguments, and implications for AI. Use substantive
    headings that follow this development. State the point before a derivation
    and explain its consequence afterward.
-3. **Take-home messages.** Collect the main conclusions compactly. Any separate
-   **Optional reading** section follows these messages and precedes the exercises.
-4. **Exercises.** Collect the lecture's exercises in one section, in the order
-   of the ideas they develop.
-5. **Glossary.** Use `\section*{Glossary}`. Recap important technical terms,
-   persistent notation, and diagram conventions; define them first in the
-   exposition. Omit incidental names and ordinary mathematical vocabulary.
-6. **Appendices**, when needed. Collect substantial deferred proofs and
-   background, ordered by their first substantive use in the main text.
-   Restate each deferred result immediately before its `proof` environment.
-7. **Bibliographical notes**, then the **References**, then **Endnotes**. Use
+3. **Optional reading**, when needed. Place a separate optional-reading section
+   after the main exposition and before the take-home messages.
+4. **Take-home messages.** Collect the main conclusions compactly.
+5. **Endnotes.** Print the numbered endnotes immediately after the take-home
+   messages with `\printendnotes`.
+6. **Bibliographical notes**, then the **References**. Use
    `\section*{Bibliographical notes}` for narrative attribution, source
    comparisons, and further reading. Follow it with the ordinary reference
-   list and finally `\printendnotes`.
+   list.
+7. **Glossary.** Use `\section*{Glossary}`. Recap important technical terms,
+   persistent notation, and diagram conventions; define them first in the
+   exposition. Omit incidental names and ordinary mathematical vocabulary.
+8. **Exercises.** Collect the lecture's exercises in one section, in the order
+   of the ideas they develop.
+9. **Appendices**, when needed. Collect substantial deferred proofs and
+   background, ordered by their first substantive use in the main text.
+   Restate each deferred result immediately before its `proof` environment.
 
 Keep the main argument complete for a first reading. Mark supplementary
 material clearly, refer to it where it becomes useful, and keep the reading
@@ -116,10 +119,11 @@ implementation observation.
   understandable from that statement, and use a short descriptive opening
   when helpful. Put a cross-reference label after the command:
   `\endnote{...}\label{en:example}`.
-- Retain the template's `enotez` setup and final `\printendnotes`. Endnotes
-  appear after the bibliographical notes and reference list, with links in
-  both directions. Use unnumbered displays inside notes so their numbering
-  does not depend on the section in which the endnotes are printed.
+- Retain the template's `enotez` setup and `\printendnotes`. Print the endnotes
+  immediately after the take-home messages, before the bibliographical notes
+  and reference list, with links in both directions. Use unnumbered displays
+  inside notes so their numbering does not depend on the section in which the
+  endnotes are printed.
 
 ## Completion checks
 
@@ -131,6 +135,8 @@ and the rendered pages, including transitions between sections.
 
 ## Website publication
 
+- Keep edits and rebuilds local unless the user explicitly requests
+  publication. Do not publish intermediate revisions automatically.
 - Publish completed student-facing notes as both PDF and LaTeX source. Put
   **Lecture notes: PDF · LaTeX** directly beneath the corresponding lecture's
   description on the course schedule, with the PDF's **Last revised** date. Use

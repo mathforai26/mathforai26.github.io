@@ -7,7 +7,7 @@
 \usepackage{microtype}
 
 % Revision date: maintained by scripts/build_lecture_notes.py. Keep this command.
-\newcommand{\lecturerevised}{2026-09-14 10:41 UTC-06:00}
+\newcommand{\lecturerevised}{2026-09-15 23:21 UTC-06:00}
 \usepackage{eso-pic}
 \AddToShipoutPictureBG{%
   \AtPageLowerLeft{%
@@ -116,8 +116,8 @@ about what was covered at the board.
 Read through \cref{sec:take-home}. The exercises develop the calculations that
 were left open in class. The appendices in
 \cref{app:bregman,app:efficiency} are optional technical references. The
-glossary follows the exercises. Bibliographical notes and references precede
-the endnotes, which collect short refinements that may be skipped on a first reading.
+endnotes follow the take-home messages. Bibliographical notes and references,
+the glossary, the exercises, and the appendices follow in that order.
 
 \section{From deterministic labels to probability distributions}
 \label{sec:from-labels}
@@ -782,6 +782,7 @@ an additional argument: why the predictive regularities needed for compression
 also support the capabilities of interest. The coding identity does not supply
 that argument.
 
+
 \section{Take-home messages}
 \label{sec:take-home}
 
@@ -806,6 +807,209 @@ a model that stores the data gives an uninformative zero data-codelength claim.
 that reusable predictive regularity was captured. It does not identify the
 regularity or explain every capability of the model.
 \end{enumerate}
+
+\clearpage
+\printendnotes
+
+\section*{Bibliographical notes}
+\phantomsection
+\label{sec:bibliographical-notes}
+
+The following sources provide the background for the results stated here.
+
+\paragraph{Proper scoring rules.}
+\citet{gneiting2007} develop proper scoring rules, entropy functions, Bregman divergences, and
+examples including logarithmic, quadratic, spherical, ranked-probability, and
+energy scores. Theorems~1 and~2 give the general and finite-categorical
+representations in terms of convex functions and supporting affine functions.
+The optional converse in \cref{ex:bregman-proper-loss} is the differentiable
+finite-simplex version. Nondifferentiable scores require subgradients, and
+scores such as log loss require care at the boundary. Our convention treats
+smaller losses as better; the paper uses rewards, with larger values
+preferred.
+
+\paragraph{Inference from proper scores.}
+\citet{dawid2016} develop estimating equations, asymptotic covariance, and efficiency for
+estimators obtained from proper scoring rules. Maximum likelihood is the log
+score case. The equality between an efficient estimating function and a
+nonsingular transform of the likelihood score is the basis for
+\cref{eq:efficiency-equality}. The regular likelihood expansions and the
+convolution theorem used in \cref{app:efficiency} are treated by
+\citet[Chapters~7--8]{vandervaart1998}.
+
+\paragraph{Betting.}
+\citet{kelly1956} connects information rate with exponential capital growth
+under repeated betting. The protocol in \cref{sec:betting} is the
+finite-outcome form needed here.
+
+\paragraph{Compression.}
+\citet{shannon1948} established the fundamental connection among probability,
+entropy, and codelength. The ideal length $-\log_2q(x)$ may be nonintegral;
+prefix coding, block coding, and arithmetic coding make the operational
+statement precise in different ways. \citet[Chapter~14]{lattimore2020} give a
+short treatment of prefix-free codes, entropy bounds, arithmetic coding, and
+KL as the expected extra codelength caused by using the wrong distribution.
+
+\paragraph{Alternative scores for language generation.}
+\citet{shao2024} study training language generators with Brier and spherical
+scores. Their results show that log loss is not the only trainable proper
+objective. The efficiency result identifies one general statistical property
+of log loss; it is not a claim that every finite-sample or misspecified
+comparison favors log loss.
+
+\begin{thebibliography}{99}
+
+\bibitem[Dawid et al.(2016)]{dawid2016}
+A. Philip Dawid, Monica Musio, and Laura Ventura.
+\newblock Minimum Scoring Rule Inference.
+\newblock \emph{Scandinavian Journal of Statistics}, 43(1):123--138, 2016.
+\newblock \url{https://doi.org/10.1111/sjos.12168}.
+
+\bibitem[Gneiting and Raftery(2007)]{gneiting2007}
+Tilmann Gneiting and Adrian E. Raftery.
+\newblock Strictly Proper Scoring Rules, Prediction, and Estimation.
+\newblock \emph{Journal of the American Statistical Association},
+102(477):359--378, 2007.
+\newblock \url{https://doi.org/10.1198/016214506000001437}.
+
+\bibitem[Kelly(1956)]{kelly1956}
+John L. Kelly, Jr.
+\newblock A New Interpretation of Information Rate.
+\newblock \emph{Bell System Technical Journal}, 35(4):917--926, 1956.
+\newblock \url{https://doi.org/10.1002/j.1538-7305.1956.tb03809.x}.
+
+\bibitem[Lattimore and Szepesv\'ari(2020)]{lattimore2020}
+Tor Lattimore and Csaba Szepesv\'ari.
+\newblock \emph{Bandit Algorithms}.
+\newblock Cambridge University Press, 2020.
+\newblock \url{https://tor-lattimore.com/downloads/book/book.pdf}.
+
+\bibitem[Shao et al.(2024)]{shao2024}
+Chenze Shao, Fandong Meng, Yijin Liu, and Jie Zhou.
+\newblock Language Generation with Strictly Proper Scoring Rules.
+\newblock In \emph{Proceedings of the 41st International Conference on
+Machine Learning}, volume 235 of \emph{Proceedings of Machine Learning
+Research}, pages 44474--44488, 2024.
+\newblock \url{https://proceedings.mlr.press/v235/shao24c.html}.
+
+\bibitem[Shannon(1948)]{shannon1948}
+Claude E. Shannon.
+\newblock A Mathematical Theory of Communication.
+\newblock \emph{Bell System Technical Journal}, 27:379--423 and 623--656,
+1948.
+\newblock
+\url{https://people.math.harvard.edu/~ctm/home/text/others/shannon/entropy/entropy.pdf}.
+
+\bibitem[van der Vaart(1998)]{vandervaart1998}
+A. W. van der Vaart.
+\newblock \emph{Asymptotic Statistics}.
+\newblock Cambridge University Press, 1998.
+
+\end{thebibliography}
+
+\clearpage
+
+\section*{Glossary}
+\phantomsection
+\label{sec:glossary}
+
+This glossary collects the notation and terms used in the lecture.
+
+\begin{description}[style=nextline,leftmargin=1.5em,labelindent=0pt]
+\item[Probability simplex]
+$\Delta_N$ is the set of nonnegative functions on $[N]$ whose values sum to
+one. Identifying functions on $[N]$ with vectors gives
+$\Delta_N\subseteq\R^{[N]}\equiv\R^N$.
+\item[Empirical distribution]
+The vector of relative frequencies in a sample.
+\item[Probabilistic model]
+A family of distributions, often written $\{p_\theta:\theta\in\Theta\}$.
+Shared parameters connect probabilities across outcomes or contexts.
+\item[Autoregressive model]
+A sequence model that factors a joint probability into conditional next-token
+probabilities as in \cref{eq:autoregressive-factorization}.
+\item[Unsupervised learning]
+Learning from observations without separately supplied task labels.
+\item[Self-supervised learning]
+Learning from prediction targets constructed from the observations themselves.
+In next-token prediction, the prefix is the input and its following token is
+the target.
+\item[Generative modeling]
+Learning a probability distribution over observations. Such a model can assign
+probabilities and, in principle, generate new observations by sampling.
+\item[Population loss; empirical loss]
+Population loss is expected loss under the data distribution. Empirical loss
+is its sample average.
+\item[Maximum likelihood]
+The choice of model parameter that maximizes the probability assigned to the
+observed sample. It is equivalently the minimizer of empirical log loss.
+\item[Proper scoring loss]
+A loss whose population value is minimized by the true probability
+distribution. Strict properness makes that minimizer unique.
+\item[Equivalent losses]
+Losses related by a positive scaling and an outcome-dependent additive term,
+as in \cref{eq:equivalent-losses}. They have the same empirical minimizers.
+\item[Bayes loss; generalized entropy]
+For a proper loss, $B(p)=\ell(p,p)=\inf_q\ell(q,p)$ is the smallest population
+loss achievable when the data distribution is $p$. Under the loss convention,
+$B$ is concave.
+\item[Supporting affine function]
+An affine function $A$ supports a convex function $F$ at $q$ if
+$A(p)\le F(p)$ for every $p$ and $A(q)=F(q)$. If $F$ is differentiable, this
+is its tangent affine function at $q$.
+\item[Bregman divergence]
+For differentiable convex $F$,
+$D_F(p,q)=F(p)-F(q)-\langle\nabla F(q),p-q\rangle$. It is the gap between
+$F(p)$ and the tangent affine approximation to $F$ made at $q$.
+\item[Savage representation]
+The characterization of proper categorical losses by convex functions and
+their supporting affine functions. In the differentiable case, the associated
+regrets are Bregman divergences.
+\item[Log loss; cross-entropy]
+The realized loss $-\log q(x)$. Its population value is cross-entropy and its
+regret is $\KL(p, q)$.
+\item[Brier loss]
+Squared Euclidean distance between the reported probability vector and the
+one-hot realized outcome. Its regret is $\lVert p-q\rVert_2^2$.
+\item[Entropy]
+$H(p)=-\sum_xp(x)\log p(x)$, the minimum population log loss under $p$.
+\item[KL divergence]
+$\KL(p, q)=\sum_xp(x)\log(p(x)/q(x))$. It is nonnegative, asymmetric, and
+infinite if $q$ assigns zero probability to an event of positive
+$p$-probability. A term with $p(x)=0$ contributes zero.
+\item[Binary KL divergence]
+$\operatorname{kl}(a,b)$ is the KL divergence from
+$\operatorname{Bernoulli}(a)$ to $\operatorname{Bernoulli}(b)$, as defined in
+\cref{eq:binary-kl}.
+\item[Total variation]
+The largest discrepancy between probabilities assigned to the same event by
+two distributions; on a finite space it is one half of their $\ell_1$
+distance.
+\item[Statistical efficiency]
+Attainment of the smallest leading asymptotic estimation or prediction error
+within a specified regular model and class of estimators. These notes use
+predictive KL as the error measure.
+\item[Model-agnostic efficiency]
+An efficiency guarantee that holds across regular parametric models without
+adapting the loss to the particular model.
+\item[Log-growth betting]
+A repeated betting criterion that maximizes the long-run exponential growth
+rate of wealth. Its regret under the stated protocol is KL divergence.
+\item[Bits and nats]
+Log loss uses bits with logarithm base two and nats with the natural logarithm.
+One nat is $\log_2(e)\approx1.4427$ bits; one bit is
+$\log(2)\approx0.6931$ nats.
+\item[Perplexity]
+The exponential of average log loss: $2^b$ when the average is $b$ bits per
+token, or $e^n$ when it is $n$ nats per token. It is the geometric mean of the
+inverse probabilities assigned to the realized tokens.
+\item[Conditional codelength]
+The number of bits needed to encode data when a probability model is already
+shared. For a sequence, it is approximately $-\log_2Q(D)$.
+\item[Two-part code]
+A code that transmits both a model description and data encoded under that
+model. Its total length has the form $L(\theta)-\log_2Q_\theta(D)$.
+\end{description}
 
 \section{Exercises}
 \label{sec:exercises}
@@ -1049,109 +1253,7 @@ and it explains when a fresh test set can support a model comparison.
 \input{../exercises/l3-probabilistic-classification.tex}
 \input{../exercises/l3-fresh-test-evaluation.tex}
 
-\section*{Glossary}
-\phantomsection
-\label{sec:glossary}
-
-This glossary collects the notation and terms used in the lecture.
-
-\begin{description}[style=nextline,leftmargin=1.5em,labelindent=0pt]
-\item[Probability simplex]
-$\Delta_N$ is the set of nonnegative functions on $[N]$ whose values sum to
-one. Identifying functions on $[N]$ with vectors gives
-$\Delta_N\subseteq\R^{[N]}\equiv\R^N$.
-\item[Empirical distribution]
-The vector of relative frequencies in a sample.
-\item[Probabilistic model]
-A family of distributions, often written $\{p_\theta:\theta\in\Theta\}$.
-Shared parameters connect probabilities across outcomes or contexts.
-\item[Autoregressive model]
-A sequence model that factors a joint probability into conditional next-token
-probabilities as in \cref{eq:autoregressive-factorization}.
-\item[Unsupervised learning]
-Learning from observations without separately supplied task labels.
-\item[Self-supervised learning]
-Learning from prediction targets constructed from the observations themselves.
-In next-token prediction, the prefix is the input and its following token is
-the target.
-\item[Generative modeling]
-Learning a probability distribution over observations. Such a model can assign
-probabilities and, in principle, generate new observations by sampling.
-\item[Population loss; empirical loss]
-Population loss is expected loss under the data distribution. Empirical loss
-is its sample average.
-\item[Maximum likelihood]
-The choice of model parameter that maximizes the probability assigned to the
-observed sample. It is equivalently the minimizer of empirical log loss.
-\item[Proper scoring loss]
-A loss whose population value is minimized by the true probability
-distribution. Strict properness makes that minimizer unique.
-\item[Equivalent losses]
-Losses related by a positive scaling and an outcome-dependent additive term,
-as in \cref{eq:equivalent-losses}. They have the same empirical minimizers.
-\item[Bayes loss; generalized entropy]
-For a proper loss, $B(p)=\ell(p,p)=\inf_q\ell(q,p)$ is the smallest population
-loss achievable when the data distribution is $p$. Under the loss convention,
-$B$ is concave.
-\item[Supporting affine function]
-An affine function $A$ supports a convex function $F$ at $q$ if
-$A(p)\le F(p)$ for every $p$ and $A(q)=F(q)$. If $F$ is differentiable, this
-is its tangent affine function at $q$.
-\item[Bregman divergence]
-For differentiable convex $F$,
-$D_F(p,q)=F(p)-F(q)-\langle\nabla F(q),p-q\rangle$. It is the gap between
-$F(p)$ and the tangent affine approximation to $F$ made at $q$.
-\item[Savage representation]
-The characterization of proper categorical losses by convex functions and
-their supporting affine functions. In the differentiable case, the associated
-regrets are Bregman divergences.
-\item[Log loss; cross-entropy]
-The realized loss $-\log q(x)$. Its population value is cross-entropy and its
-regret is $\KL(p, q)$.
-\item[Brier loss]
-Squared Euclidean distance between the reported probability vector and the
-one-hot realized outcome. Its regret is $\lVert p-q\rVert_2^2$.
-\item[Entropy]
-$H(p)=-\sum_xp(x)\log p(x)$, the minimum population log loss under $p$.
-\item[KL divergence]
-$\KL(p, q)=\sum_xp(x)\log(p(x)/q(x))$. It is nonnegative, asymmetric, and
-infinite if $q$ assigns zero probability to an event of positive
-$p$-probability. A term with $p(x)=0$ contributes zero.
-\item[Binary KL divergence]
-$\operatorname{kl}(a,b)$ is the KL divergence from
-$\operatorname{Bernoulli}(a)$ to $\operatorname{Bernoulli}(b)$, as defined in
-\cref{eq:binary-kl}.
-\item[Total variation]
-The largest discrepancy between probabilities assigned to the same event by
-two distributions; on a finite space it is one half of their $\ell_1$
-distance.
-\item[Statistical efficiency]
-Attainment of the smallest leading asymptotic estimation or prediction error
-within a specified regular model and class of estimators. These notes use
-predictive KL as the error measure.
-\item[Model-agnostic efficiency]
-An efficiency guarantee that holds across regular parametric models without
-adapting the loss to the particular model.
-\item[Log-growth betting]
-A repeated betting criterion that maximizes the long-run exponential growth
-rate of wealth. Its regret under the stated protocol is KL divergence.
-\item[Bits and nats]
-Log loss uses bits with logarithm base two and nats with the natural logarithm.
-One nat is $\log_2(e)\approx1.4427$ bits; one bit is
-$\log(2)\approx0.6931$ nats.
-\item[Perplexity]
-The exponential of average log loss: $2^b$ when the average is $b$ bits per
-token, or $e^n$ when it is $n$ nats per token. It is the geometric mean of the
-inverse probabilities assigned to the realized tokens.
-\item[Conditional codelength]
-The number of bits needed to encode data when a probability model is already
-shared. For a sequence, it is approximately $-\log_2Q(D)$.
-\item[Two-part code]
-A code that transmits both a model description and data encoded under that
-model. Its total length has the form $L(\theta)-\log_2Q_\theta(D)$.
-\end{description}
-
-
+\clearpage
 \appendix
 
 \section{Bregman divergences and proper losses}
@@ -1498,103 +1600,5 @@ theory for that regime must account for representation, optimization,
 regularization, and function-space rather than raw parameter-space behavior.
 
 \clearpage
-\section*{Bibliographical notes}
-\phantomsection
-\label{sec:bibliographical-notes}
-
-The following sources provide the background for the results stated here.
-
-\paragraph{Proper scoring rules.}
-\citet{gneiting2007} develop proper scoring rules, entropy functions, Bregman divergences, and
-examples including logarithmic, quadratic, spherical, ranked-probability, and
-energy scores. Theorems~1 and~2 give the general and finite-categorical
-representations in terms of convex functions and supporting affine functions.
-The optional converse in \cref{ex:bregman-proper-loss} is the differentiable
-finite-simplex version. Nondifferentiable scores require subgradients, and
-scores such as log loss require care at the boundary. Our convention treats
-smaller losses as better; the paper uses rewards, with larger values
-preferred.
-
-\paragraph{Inference from proper scores.}
-\citet{dawid2016} develop estimating equations, asymptotic covariance, and efficiency for
-estimators obtained from proper scoring rules. Maximum likelihood is the log
-score case. The equality between an efficient estimating function and a
-nonsingular transform of the likelihood score is the basis for
-\cref{eq:efficiency-equality}. The regular likelihood expansions and the
-convolution theorem used in \cref{app:efficiency} are treated by
-\citet[Chapters~7--8]{vandervaart1998}.
-
-\paragraph{Betting.}
-\citet{kelly1956} connects information rate with exponential capital growth
-under repeated betting. The protocol in \cref{sec:betting} is the
-finite-outcome form needed here.
-
-\paragraph{Compression.}
-\citet{shannon1948} established the fundamental connection among probability,
-entropy, and codelength. The ideal length $-\log_2q(x)$ may be nonintegral;
-prefix coding, block coding, and arithmetic coding make the operational
-statement precise in different ways. \citet[Chapter~14]{lattimore2020} give a
-short treatment of prefix-free codes, entropy bounds, arithmetic coding, and
-KL as the expected extra codelength caused by using the wrong distribution.
-
-\paragraph{Alternative scores for language generation.}
-\citet{shao2024} study training language generators with Brier and spherical
-scores. Their results show that log loss is not the only trainable proper
-objective. The efficiency result identifies one general statistical property
-of log loss; it is not a claim that every finite-sample or misspecified
-comparison favors log loss.
-
-\begin{thebibliography}{99}
-
-\bibitem[Dawid et al.(2016)]{dawid2016}
-A. Philip Dawid, Monica Musio, and Laura Ventura.
-\newblock Minimum Scoring Rule Inference.
-\newblock \emph{Scandinavian Journal of Statistics}, 43(1):123--138, 2016.
-\newblock \url{https://doi.org/10.1111/sjos.12168}.
-
-\bibitem[Gneiting and Raftery(2007)]{gneiting2007}
-Tilmann Gneiting and Adrian E. Raftery.
-\newblock Strictly Proper Scoring Rules, Prediction, and Estimation.
-\newblock \emph{Journal of the American Statistical Association},
-102(477):359--378, 2007.
-\newblock \url{https://doi.org/10.1198/016214506000001437}.
-
-\bibitem[Kelly(1956)]{kelly1956}
-John L. Kelly, Jr.
-\newblock A New Interpretation of Information Rate.
-\newblock \emph{Bell System Technical Journal}, 35(4):917--926, 1956.
-\newblock \url{https://doi.org/10.1002/j.1538-7305.1956.tb03809.x}.
-
-\bibitem[Lattimore and Szepesv\'ari(2020)]{lattimore2020}
-Tor Lattimore and Csaba Szepesv\'ari.
-\newblock \emph{Bandit Algorithms}.
-\newblock Cambridge University Press, 2020.
-\newblock \url{https://tor-lattimore.com/downloads/book/book.pdf}.
-
-\bibitem[Shao et al.(2024)]{shao2024}
-Chenze Shao, Fandong Meng, Yijin Liu, and Jie Zhou.
-\newblock Language Generation with Strictly Proper Scoring Rules.
-\newblock In \emph{Proceedings of the 41st International Conference on
-Machine Learning}, volume 235 of \emph{Proceedings of Machine Learning
-Research}, pages 44474--44488, 2024.
-\newblock \url{https://proceedings.mlr.press/v235/shao24c.html}.
-
-\bibitem[Shannon(1948)]{shannon1948}
-Claude E. Shannon.
-\newblock A Mathematical Theory of Communication.
-\newblock \emph{Bell System Technical Journal}, 27:379--423 and 623--656,
-1948.
-\newblock
-\url{https://people.math.harvard.edu/~ctm/home/text/others/shannon/entropy/entropy.pdf}.
-
-\bibitem[van der Vaart(1998)]{vandervaart1998}
-A. W. van der Vaart.
-\newblock \emph{Asymptotic Statistics}.
-\newblock Cambridge University Press, 1998.
-
-\end{thebibliography}
-
-\clearpage
-\printendnotes
 
 \end{document}
