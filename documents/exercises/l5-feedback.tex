@@ -1,0 +1,13 @@
+\begin{exercisechunk}
+\item \textbf{Observed feedback does not imply Markov observations.}
+\label[exercise]{ex:l5-feedback}
+Let \(W_t\) be iid Bernoulli\((1/4)\), put \(Z_{-1}=Z_0=0\), and set
+\(Z_t=Z_{t-2}\mathbin{\oplus}W_t\), where \(\oplus\) is addition modulo two.
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Express the model as \cref{eq:observation-driven} with
+\(R_t=(Z_{t-2},Z_{t-1})\). Show that \((R_t,Z_t)\) is Markov.
+\item Compare \(Q(Z_3=1\mid Z_1=0,Z_2=0)\) and
+\(Q(Z_3=1\mid Z_1=1,Z_2=0)\). Prove that both conditioning events
+have positive probability and that \((Z_t)\) is not first-order Markov.
+\end{enumerate}
+\end{exercisechunk}

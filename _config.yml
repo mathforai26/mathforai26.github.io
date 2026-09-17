@@ -31,8 +31,13 @@ defaults:
       path: ""
     values:
       image: /assets/og.png
+  - scope:
+      path: "documents"
+    values:
+      nav_exclude: true
 
 exclude:
+  - AGENTS.md
   - course-design-decisions.md
   - instructor-materials
   - lecture-plans

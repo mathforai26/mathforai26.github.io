@@ -1,0 +1,19 @@
+\begin{exercisechunk}
+\item \textbf{From noise-driven maps to an HMM law.}
+\label[exercise]{ex:l5-kernels}
+Use \cref{eq:nonlinear-ssm,eq:ssm-joint} and the finite HMM matrices
+\(A,C\) defined in \cref{eq:hmm-joint}.
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Prove the joint-law product formula by successive conditioning.
+Write the marginal law of \(S_{1:T},Z_{1:T}\) after integrating out \(S_0\).
+\item For independent uniform \([0,1]\) noises, give explicit
+inverse-cumulative-sum maps implementing \(A\) and \(C\), including a
+convention at zero-probability endpoints.
+\item Construct two different noise maps with the same transition kernel.
+Explain why a specified model gives a unique law but the law does not
+uniquely specify its noise maps.
+\item Suppose the hidden states are observed. Derive the column-normalized
+transition and emission count estimates. Which columns remain undetermined
+if some states are never visited?
+\end{enumerate}
+\end{exercisechunk}

@@ -1,0 +1,2642 @@
+\documentclass[11pt,twoside]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{thmtools}
+\usepackage[inline,shortlabels]{enumitem}
+\usepackage{booktabs}
+\usepackage{xcolor}
+\usepackage{microtype}
+\usepackage{float}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usetikzlibrary{arrows.meta,positioning,calc}
+
+% Revision date: maintained by scripts/build_lecture_notes.py. Keep this command.
+\newcommand{\lecturerevised}{2026-09-16 22:35 UTC-06:00}
+\usepackage{eso-pic}
+\AddToShipoutPictureBG{%
+  \AtPageLowerLeft{%
+    \put(\LenToUnit{0.5\paperwidth},\LenToUnit{0.5in}){%
+      \makebox(0,0){\normalfont\footnotesize\color{black!60}Last revised: \lecturerevised}%
+    }%
+  }%
+}
+\usepackage[square,authoryear]{natbib}
+\usepackage{xr-hyper}
+\usepackage[colorlinks=true,linkcolor=blue!60!black,
+  urlcolor=blue!60!black,citecolor=blue!60!black]{hyperref}
+\usepackage[nameinlink,capitalize]{cleveref}
+\hypersetup{pdftitle={Lecture 5: State-space models and system identification},
+  pdfauthor={Csaba Szepesvari}}
+\crefname{exercise}{Exercise}{Exercises}
+\Crefname{exercise}{Exercise}{Exercises}
+
+\usepackage{enotez}
+\DeclareInstance{enotez-list}{lecture}{list}{format=\normalsize,number={#1.}}
+\setenotez{list-name=Endnotes,list-style=lecture,backref=true}
+\crefname{endnote}{Endnote}{Endnotes}
+\Crefname{endnote}{Endnote}{Endnotes}
+
+\definecolor{courseblue}{HTML}{17365D}
+\tikzset{
+ ssm flow/.style={-Latex,line width=.85pt,draw=courseblue},
+ ssm block/.style={draw=courseblue,line width=.85pt,rounded corners=1.5pt,
+   fill=courseblue!3,minimum width=24mm,minimum height=12mm,align=center},
+ ssm delay/.style={draw=courseblue,line width=.85pt,fill=white,
+   minimum width=7mm,minimum height=7mm,inner sep=.5pt,align=center,
+   font=\scriptsize},
+ pics/ssm noise/.style={code={
+   \draw[courseblue,line width=.85pt,fill=white] (-.34,-.34) rectangle (.34,.34);
+   \fill[orange!85!black] (.08,.25)--(-.17,-.025)--(-.015,-.025)
+      --(-.10,-.26)--(.18,.065)--(.035,.065)--cycle;
+ }},
+ pics/ssm eye/.style={code={
+   \draw[courseblue,line width=.85pt,fill=white]
+     (-.43,0) .. controls (-.16,.30) and (.16,.30) .. (.43,0)
+     .. controls (.16,-.25) and (-.16,-.25) .. (-.43,0);
+   \fill[courseblue] (0,0) circle (.085);
+   \draw[courseblue,line width=.85pt]
+     (-.31,.12)--(-.42,.27) (-.16,.20)--(-.21,.38)
+     (.16,.20)--(.21,.38) (.31,.12)--(.42,.27);
+ }}
+}
+\newcommand{\R}{\mathbb R}
+\newcommand{\E}{\mathbb E}
+\newcommand{\I}{\mathbb I}
+\renewcommand{\P}{\mathbb P}
+\newcommand{\KL}{D}
+\newcommand{\TV}{\mathrm{TV}}
+\newcommand{\suppmark}{\texorpdfstring{\textsuperscript{*}}{*}}
+\DeclareMathOperator{\diag}{diag}
+\DeclareMathOperator{\rank}{rank}
+\makeatletter
+\@for\@letter:=A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z\do{%
+  \expandafter\edef\csname c\@letter\endcsname{\noexpand\mathcal{\@letter}}}
+\makeatother
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{example}[theorem]{Example}
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+\renewcommand{\thepage}{5--\arabic{page}}
+\renewcommand{\thesection}{5.\arabic{section}}
+\renewcommand{\theequation}{5.\arabic{equation}}
+\pagestyle{myheadings}
+\markboth{Lecture 5: State-space models and system identification}
+{Lecture 5: State-space models and system identification}
+\usepackage{../exercises/course-exercises}
+
+\begin{document}
+
+\begin{center}
+\fcolorbox{courseblue}{white}{%
+\begin{minipage}{0.92\textwidth}
+\vspace{1mm}
+\textbf{CMPUT 654: Mathematical Foundations of Modern AI Systems}
+\hfill Fall 2026
+\vspace{3mm}
+\begin{center}
+{\Large\bfseries Lecture 5: State-space models and system identification}
+\vspace{1mm}
+
+September 15, 2026
+\end{center}
+\vspace{2mm}
+\textit{Lecturer: Csaba Szepesv\'ari}
+\hfill
+\textit{Note prepared by: Csaba Szepesv\'ari}
+\vspace{1mm}
+\end{minipage}}
+\end{center}
+
+\noindent\textbf{About these lecture notes.}
+This lecture asks how a structured hidden state can explain a sequence,
+how to predict and generate after observing a prefix, and how to fit the
+model from observations. The main construction first fits observed lag
+coefficients, then recovers a compact recurrent predictor by matrix
+factorization. Fitting a dynamical model from data is called
+\emph{system identification}.
+
+For language, a latent state has a direct modeling interpretation.
+Spoken or written language can be treated as a partial and noisy observation
+of an evolving internal process: a speaker can form or retain thoughts that
+are not expressed, and both the utterance and its reception can affect what
+happens next. This is a motivating hypothesis, not a claim that the models in
+this lecture describe human cognition faithfully. At a finer resolution,
+motor commands, articulation, acoustics, and perception introduce further
+latent variables; a state model chooses which distinctions to represent.
+This explains why latent variables are natural for language, while leaving
+open whether explicitly fitting them improves prediction. A transformer also
+computes hidden representations, but its conditional likelihood does not
+usually marginalize over a stochastic latent trajectory. An observable
+conditional model can therefore be easier to train and more effective even
+when a latent-process description is scientifically plausible.
+
+\medskip
+\noindent\textbf{Scope and reading guide.}
+The main text follows the classroom sequence: nonlinear state-space
+models, conditional generation, estimation and identifiability, latent
+likelihoods and EM, observable prediction, linear models, and the
+subspace algorithm. It develops the questions about memory, parameter
+sharing, backpropagation, and attention raised in class.
+The synthetic comparisons are additions to the lecture.
+The optional section after this development justifies the algorithm and
+relates estimation error to prediction, sequence KL, and generation.
+Cayley--Hamilton was not presented in class; it is retained as an optional
+noiseless comparison and an exercise. After the take-home messages, the notes
+continue with endnotes, bibliographical notes, the glossary, exercises,
+appendices, and references.
+
+\medskip
+\noindent\textbf{Notation.}
+States are \(S_t\in\cS\), observations are \(Z_t\in\cZ\), and
+\(Z_{<t}=Z_{1:t-1}\). Finite observation labels are denoted \(X_t\).
+Vectors are columns. \(T\) is trajectory length; \(d\) and \(m\) are
+state and observation dimensions. Expectations refer to the model law
+specified at their use; logarithms are natural.
+We assume basic matrix algebra, conditional probability, and Gaussian
+distributions. Lecture~1 supplies the attention terminology; Lecture~4
+supplies autoregression, sequence KL, and recovery bounds.
+We write \([d]=\{1,\ldots,d\}\).
+Superscript asterisks\suppmark{} mark optional material; numbered endnotes
+contain short refinements.
+
+\section{State, observations, and the modeling choice}
+\label{sec:state-space}
+
+A state-space model specifies what information a process retains and how
+that information produces observations. Let \(\cS\) and \(\cZ\) be the
+state and observation spaces. The state is \emph{latent} when it is not
+directly observed. We use the equations
+\begin{equation}
+ S_0\sim\pi_\theta,\qquad
+ S_{t+1}=f_\theta(S_t,V_{t+1}),\qquad
+ Z_{t+1}=g_\theta(S_{t+1},W_{t+1}),\quad t\ge0.
+ \label{eq:nonlinear-ssm}
+\end{equation}
+Here \((V_t)_{t\ge1}\) is state noise and \((W_t)_{t\ge1}\) is observation
+noise. Each sequence is independent and identically distributed (iid);
+the two sequences and \(S_0\) are mutually independent. Their laws are part of the model
+and may depend on \(\theta\).
+We assume measurable update maps; Euclidean spaces and finite sets cover
+our examples.\endnote{\textbf{General spaces.}
+The conditional distributions used here exist for finite and Euclidean
+spaces. More general measurable spaces need additional regularity
+assumptions.}
+The notation suppresses observed, time-varying inputs from the environment.
+They can enter the state update as
+\(S_{t+1}=f_\theta(S_t,U_t,V_{t+1})\), and can also enter the observation
+map.\endnote{\textbf{Input--output models.}
+Adding an observed input \(U_t\) is a small change to the model definition,
+and filtering can condition on its realized values. Learning can be more
+difficult when inputs are chosen in response to past outputs or are correlated
+with unobserved disturbances; causal interpretation then requires assumptions
+beyond the autonomous model used here. Section~\ref{sec:rnn} returns to inputs
+and feedback for recurrent and linear models.}
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[font=\normalsize]
+\path[use as bounding box] (-4.8,-2.2) rectangle (4.8,4.5);
+\node[ssm block] (f) at (0,2.6) {$f_\theta$\\[-1pt]\small state update};
+\node[ssm block] (g) at (0,0) {$g_\theta$\\[-1pt]\small observation};
+\node[ssm delay] (memory) at (3.2,2.6) {$\mathsf D$};
+\pic at (-3.2,2.6) {ssm noise};
+\pic at (-3.2,0) {ssm noise};
+\draw[ssm flow] (-2.86,2.6)--node[above]{$V_{t+1}$}(f.west);
+\draw[ssm flow] (-2.86,0)--node[above]{$W_{t+1}$}(g.west);
+\coordinate (state) at (0,1.3);
+\draw[courseblue,line width=.85pt] (f.south)--(state);
+\draw[ssm flow] (state)--(g.north);
+\fill[courseblue] (state) circle (1.7pt);
+\node[left=4pt] at (state) {$S_{t+1}$};
+\draw[ssm flow] (state)--(3.2,1.3)--(memory.south);
+\draw[ssm flow] (memory.north)--(3.2,4.1)--(0,4.1)
+ --node[left]{$S_t$}(f.north);
+\draw[ssm flow] (g.south)--(0,-1.40);
+\pic at (0,-1.85) {ssm eye};
+\node[right] at (.58,-1.85) {$Z_{t+1}$};
+\end{tikzpicture}
+\caption{A state-space model. Independent noise sources enter the update
+and observation maps. The state feeds both the observation map and the
+next update. The box \(\mathsf D\) is a one-step delay (and one can think of it as 
+also providing the initial value of
+\(S_0\)). Function boxes apply static maps; delay boxes store values between steps.
+Dots mark branches of the same signal. The eye marks the observed output.}
+\label{fig:ssm}
+\end{figure}
+
+The process \((S_t)\) is Markov: conditional on its current state, its
+next state does not depend on earlier states or observations.
+We call the full construction a \emph{hidden Markov model} (HMM), and
+\((Z_t)\) its \emph{observation process}, or a \emph{hidden Markov process}.
+The pair process \((S_t,Z_t)_{t\ge1}\) is Markov. The observation process
+alone generally is not. We will say \emph{finite HMM} when \(\cS\) is
+finite. This terminology also allows a continuous-state HMM.
+
+\subsection{Where the inductive bias enters}
+
+The useful assumption is a small or structured state space and a
+restricted update rule. As in Lecture~1, an architecture relates
+predictions at different inputs through shared structure.
+For physical motion, a few state coordinates can have known meanings.
+For language, identifying a useful compact state is itself a learning
+problem.
+
+One structural choice divides the state into components intended to
+operate at different time scales. A slower component can influence an
+intermediate component, which can influence a faster component, while all
+three contribute to the observation.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[font=\small]
+\path[use as bounding box] (-5.0,-4.05) rectangle (5.0,5.30);
+\begin{scope}[xshift=-.65cm]
+\draw[dashed,black!45,rounded corners=3pt,fill=courseblue!1]
+  (-2.40,-1.30) rectangle (3.95,5.15);
+\node[ssm block,minimum width=42mm,text width=38mm] (slow) at (0,4.0)
+  {slow component\\update};
+\node[ssm block,minimum width=42mm,text width=38mm] (intermediate) at (0,1.8)
+  {intermediate component\\update};
+\node[ssm block,minimum width=42mm,text width=38mm] (fast) at (0,-.4)
+  {fast component\\update};
+\node[ssm delay] (slowdelay) at (3.0,4.0) {$\mathsf D$};
+\node[ssm delay] (intermediatedelay) at (3.0,1.8) {$\mathsf D$};
+\node[ssm delay] (fastdelay) at (3.0,-.4) {$\mathsf D$};
+\draw[ssm flow] (slow.east)--(slowdelay.west);
+\draw[ssm flow] (slowdelay.east)--++(.40,0)--++(0,.95)
+  -|($(slow.north east)+(-.6,0)$);
+\draw[ssm flow] (intermediate.east)--(intermediatedelay.west);
+\draw[ssm flow] (intermediatedelay.east)--++(.40,0)--++(0,.95)
+  -|($(intermediate.north east)+(-.6,0)$);
+\draw[ssm flow] (fast.east)--(fastdelay.west);
+\draw[ssm flow] (fastdelay.east)--++(.40,0)--++(0,.95)
+  -|($(fast.north east)+(-.6,0)$);
+\draw[ssm flow] (slow.south)--(intermediate.north);
+\draw[ssm flow] (intermediate.south)--(fast.north);
+
+\node[ssm block] (readout) at (0,-2.25) {observation\\map};
+\draw[ssm flow] (fast.south)--(readout.north);
+\draw[ssm flow] (readout.south)--(0,-3.55);
+\pic at (0,-3.80) {ssm eye};
+\end{scope}
+\end{tikzpicture}
+\caption{A structured state update with several intended time scales,
+drawn with the same static-map and delay semantics as \cref{fig:ssm}.
+Each component has an explicit self-feedback loop through its own one-step
+delay \(\mathsf D\). The only cross-component arrows run from slow to
+intermediate and from intermediate to fast. Only the fast component enters
+the observation map. Noise inputs are omitted.}
+\label{fig:multiscale-state}
+\end{figure}
+
+The dependence pattern alone does not make one component slower than
+another. That distinction requires further restrictions on rates of change,
+such as different update frequencies, persistence constraints, or noise
+scales. When these restrictions match the process, they can provide a useful
+inductive bias. The combined collection of components is still one state.
+The displayed observation map uses only the fast component. Allowing it to
+use all three components is a less restrictive alternative.
+
+The representation is a modeling choice. Removing process noise gives
+\[
+ S_{t+1}=f_\theta(S_t),\qquad Z_t=g_\theta(S_t,W_t).
+\]
+All state randomness then comes from the initial state. Deterministic
+dynamics can still describe elaborate processes. Even a scalar linear
+state update can reproduce any binary process if the random initial
+state encodes the whole sequence and a nonlinear observation map reads
+successive digits.\endnote{\textbf{A linear update with a nonlinear readout.}
+Let \((B_t)_{t\ge1}\) have any joint law on binary sequences. Set
+\(S_0=\sum_{k\ge1}3^{-k}B_k\), \(S_{t+1}=3S_t\), and
+\(Z_t=\lfloor S_t\rfloor\bmod 3\) for \(t\ge1\).
+The fractional tail of \(S_t\) is at most \(1/2\), and its integer
+part is \(\sum_{k=1}^t3^{t-k}B_k\), so \(Z_t=B_t\).
+The initial law encodes the entire process. Exact generation for
+arbitrarily long times uses arbitrarily many digits of the initial state.}
+If the state and observation maps are both linear and the state is
+finite-dimensional, noiseless observations instead satisfy a finite
+recurrence with scalar coefficients; see \cref{sec:cayley-hamilton}.
+
+Another choice is an \emph{observation-driven model}:
+\begin{equation}
+ R_{t+1}=h_\theta(R_t,Z_t),\qquad
+ Z_t=j_\theta(R_t,W_t),\qquad R_1\sim\nu_\theta.
+ \label{eq:observation-driven}
+\end{equation}
+Here \(R_1\) is independent of the iid observation noises \((W_t)\).
+For fixed parameters and a specified initial state, the observed prefix
+determines \(R_t\) by successive applications of \(h_\theta\).
+If the initial state is random and hidden, uncertainty about it may remain.
+During generation, random observations feed randomness into future states.
+
+Every process on a finite or Euclidean observation space has an
+observation-driven representation: take \(R_t=Z_{<t}\), let
+\(h_\theta\) append the new observation, and let \(j_\theta\) sample
+the desired conditional law using fresh uniform noise. The empty history
+is a fixed initial state, and the history's length records time.
+Inductive bias comes from restrictions such as a fixed state dimension
+and linear maps or a prescribed neural-network architecture.
+\Cref{sec:filtering} gives another representation whose state is a
+conditional distribution. For linear Gaussian models this leads to the
+innovations representation in \cref{sec:innovations-generation};
+\emph{innovations} will mean the one-step prediction errors.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[font=\normalsize]
+\path[use as bounding box] (-6.4,-2.2) rectangle (6.4,5.2);
+\draw[dashed,black!45,rounded corners=3pt]
+ (-1.65,-.8) rectangle (4.25,4.4);
+\node[ssm block] (h) at (0,2.6) {$h_\theta$\\[-1pt]\small state update};
+\node[ssm block] (j) at (0,0) {$j_\theta$\\[-1pt]\small observation};
+\node[ssm delay] (memory) at (3.2,2.6) {$\mathsf D$};
+\node[ssm delay] (feedback) at (5.4,0) {$\mathsf D$};
+\pic at (-3.2,0) {ssm noise};
+\draw[ssm flow] (-2.86,0)--node[above,pos=.35]{$W_{t+1}$}(j.west);
+\coordinate (state) at (0,1.3);
+\draw[courseblue,line width=.85pt] (h.south)--(state);
+\draw[ssm flow] (state)--(j.north);
+\fill[courseblue] (state) circle (1.7pt);
+\node[left=4pt] at (state) {$R_{t+1}$};
+\draw[ssm flow] (state)--(3.2,1.3)--(memory.south);
+\draw[ssm flow] (memory.north)--(3.2,4.1)--(.5,4.1)
+ --node[right]{$R_t$}($(h.north)+(.5,0)$);
+\coordinate (observed) at (0,-1.05);
+\draw[courseblue,line width=.85pt] (j.south)--(observed);
+\fill[courseblue] (observed) circle (1.7pt);
+\draw[ssm flow] (observed)--(5.4,-1.05)--(feedback.south);
+\draw[ssm flow] (feedback.north)--(5.4,4.95)--(-.5,4.95)
+ --node[left]{$Z_t$}($(h.north)+(-.5,0)$);
+\draw[ssm flow] (observed)--(0,-1.40);
+\pic at (0,-1.85) {ssm eye};
+\node[right] at (.58,-1.85) {$Z_{t+1}$};
+\end{tikzpicture}
+\caption{An observation-driven model, drawn in the same layout as
+\cref{fig:ssm}. The update uses \(R_t,Z_t\) to produce \(R_{t+1}\);
+the observation map then produces \(Z_{t+1}\). Each \(\mathsf D\) box
+stores its incoming signal for the next update. The dashed enclosure
+contains the \(R_t\) memory; observation feedback and fresh noise enter
+from outside.}
+\label{fig:observed-feedback}
+\end{figure}
+
+Viewed from outside the dashed enclosure, observation feedback and fresh
+noise appear to produce the next observation, as in a first-order
+autoregressive process. The enclosure, however, contains a delay that
+stores \(R_t\). The individual function boxes are static maps; their
+enclosure is a computation with memory. Substituting the state update gives
+\[
+ Z_{t+1}=j_\theta\bigl(h_\theta(R_t,Z_t),W_{t+1}\bigr).
+\]
+The state \(R_t\) remains: \(Z_t\) and fresh noise alone need not suffice
+to generate \(Z_{t+1}\) with its conditional law given the full past.
+The pair \((R_t,Z_t)\) is Markov, while the observation process need not
+be. \Cref{ex:l5-feedback} gives an explicit counterexample.
+
+\subsection{The equations define a probability law}
+\label{sec:model-law}
+
+The initial law, noise laws, and maps together determine a unique law
+\(Q_\theta\) on state and observation sequences. A \emph{probability kernel}
+assigns a probability distribution to each input state; the probability
+of any fixed measurable event must depend measurably on that state.
+The \emph{transition kernel} is the conditional law of the next state.
+The \emph{observation kernel}, also called the \emph{emission kernel},
+is the conditional law of an observation given its current state.
+For measurable \(B\subseteq\cS\) and \(D\subseteq\cZ\), write them as
+\[
+ a_\theta(s,B)=\P(f_\theta(s,V_1)\in B),\qquad
+ b_\theta(s,D)=\P(g_\theta(s,W_1)\in D).
+\]
+Their joint law has the product form
+\begin{equation}
+ Q_\theta(ds_{0:T},dz_{1:T})
+ =\pi_\theta(ds_0)\prod_{t=1}^T
+ a_\theta(s_{t-1},ds_t)b_\theta(s_t,dz_t).
+ \label{eq:ssm-joint}
+\end{equation}
+For discrete variables, the kernels give conditional probability masses.
+When densities exist, they are taken relative to a specified measure,
+such as Lebesgue measure for real vectors. We write the corresponding
+masses or densities as \(a_\theta(s'\mid s)\) and \(b_\theta(z\mid s)\).
+
+The correspondence is not one-to-one. Different randomized maps can
+implement the same kernels; different hidden representations can give
+the same observation law.
+
+For a finite HMM, let \(S_t\in[d]\) and \(X_t\in[N]\), with
+\[
+ A_{ij}=Q_\theta(S_t=i\mid S_{t-1}=j),\qquad
+ C_{aj}=Q_\theta(X_t=a\mid S_t=j).
+\]
+Both matrices are \emph{column-stochastic}: their entries are nonnegative
+and every column sums to one. This convention matches column-vector probability
+distributions. With \(\pi_j=Q_\theta(S_0=j)\),
+\begin{equation}
+ Q_\theta(s_{0:T},x_{1:T})
+ =\pi_{s_0}\prod_{t=1}^T A_{s_ts_{t-1}}C_{x_ts_t}.
+ \label{eq:hmm-joint}
+\end{equation}
+Independent uniform random variables and inverse cumulative sums of the
+columns implement \(f_\theta,g_\theta\); \cref{ex:l5-kernels} asks for
+the construction. Here \(X_t\) is the discrete observation label;
+later \(Z_t=e_{X_t}\) is its \emph{one-hot encoding}, where \(e_a\) has
+entry one in position \(a\) and zero in every other position.
+
+\section{Generation after an observed prefix}
+\label{sec:filtering}
+
+Unconditional generation follows the equations: sample \(S_0\), then
+sample fresh noises at each step. Conditional generation must first
+account for what the observations reveal about the hidden state.
+
+Let
+\[
+ \mu_t^-=Q_\theta(S_t\in\cdot\mid Z_{<t}=z_{<t})
+\]
+be the \emph{predictive state distribution}. To sample a continuation
+\(Z_{t:T}\), first sample \(S_t\sim\mu_t^-\), then draw fresh observation
+noise \(W_t\) and set \(Z_t=g_\theta(S_t,W_t)\).
+Continue with \(S_{t+1}=f_\theta(S_t,V_{t+1})\) and the remaining
+observations, using fresh independent noises at each step.
+
+A \emph{posterior} is a conditional distribution after incorporating
+observed data. After seeing \(z_t\), the \emph{filtering distribution} is
+\(\mu_t=Q_\theta(S_t\in\cdot\mid Z_{1:t}=z_{1:t})\).
+Bayes' rule gives it and the next prediction:
+\begin{equation}
+ \mu_t(ds)=\frac{b_\theta(z_t\mid s)\mu_t^-(ds)}
+ {\int b_\theta(z_t\mid u)\mu_t^-(du)},\qquad
+ \mu_{t+1}^-(B)=\int a_\theta(s,B)\mu_t(ds).
+ \label{eq:filter}
+\end{equation}
+The first formula assumes an observation density or mass and a positive
+denominator. Conditional laws are specified only almost surely.
+
+For a finite HMM, let \(\alpha_t(i)=Q_\theta(S_t=i\mid X_{1:t}=x_{1:t})\)
+and \(\alpha_t^-(i)=Q_\theta(S_t=i\mid X_{<t}=x_{<t})\).
+Then \(\alpha_0=\pi\) and
+\begin{equation}
+ \alpha_t^-=A\alpha_{t-1},\qquad
+ \alpha_t=\frac{\diag(C_{x_t,1},\ldots,C_{x_t,d})\alpha_t^-}
+ {\mathbf1^\top\diag(C_{x_t,1},\ldots,C_{x_t,d})\alpha_t^-}.
+ \label{eq:hmm-filter}
+\end{equation}
+Each step costs \(O(d^2)\) for dense \(A\). This is the forward
+filtering recursion. Viterbi instead finds a most likely complete
+hidden path; smoothing computes posterior state distributions using
+observations on both sides of the time in question.
+
+For continuous nonlinear models, \emph{particle filtering} approximates
+the filtering distribution by weighted sampled states: propagate particles
+through the transition, weight them by observation likelihood, and
+resample when needed, drawing replacement particles with probabilities
+proportional to their weights. This algorithm uses evaluable observation
+likelihoods.
+\emph{Filter forgetting} means that the effect of the initial filtering
+distribution diminishes as more observations arrive. It can help keep
+approximation errors bounded over time.
+Observation informativeness, dependence across time, dimension, and the particle count
+also matter; the bibliographical notes give precise sources.
+A linear Gaussian model permits exact filtering by updating means and
+covariances; this is \emph{Kalman filtering}.
+
+Filtering also gives an observation-driven representation. Take
+\(R_t=\mu_t^-\), the entire predictive state distribution.
+\Cref{eq:filter} updates it deterministically after observing \(z_t\);
+the next observation is sampled by first drawing a state from this
+distribution and then applying the observation map. The initial
+\(R_1\) is the fixed law of \(S_1\), even when \(S_1\) is random.
+For a finite HMM, this state is a probability vector; for a Gaussian LDS,
+it is a mean and covariance. In general, it is a whole probability law,
+whose update may require difficult integration.
+
+\section{What can be learned from observations?}
+\label{sec:estimation}
+
+If finite hidden states were observed, transition and emission counts
+would give direct estimates of \(A,C\). For linear models with observed
+states, least squares estimates the linear maps under standard rank
+conditions. Hidden states remove these directly observed targets.
+
+We focus on a single observed trajectory \(Z_{1:T}\). With independent
+trajectories, log likelihoods add and the recursions restart at each
+initial state. These are straightforward algorithmic changes; the
+statistical information can be substantially different.
+
+We use \emph{mixing} here to mean decreasing statistical dependence
+between observation blocks as their time separation grows; quantitative
+conditions will be introduced in Lecture~6.
+For example, a long mixing trajectory contains repeated information
+about transitions but only one draw from its initial law. Even observing
+\(S_0\) exactly would not consistently estimate an unrestricted
+\(\pi_\theta\) from that one draw. Later observations do not supply
+independent initial states. Mixing and \emph{excitation}---variation in
+the observations that distinguishes different parameter values---help estimate the
+dynamics.
+Lecture~6 returns to learning from dependent data.
+
+\subsection{Identifiability and the meaning of success}
+\label{sec:identification}
+
+A parameter is \emph{identifiable} if distinct values give distinct
+observation laws. Relabeling hidden states leaves a finite HMM's observation law unchanged.
+Unreachable extra states, or suitably duplicated states with identical
+observable behavior, can leave it unchanged too. Thus neither the state
+labels nor an unrestricted state count are identifiable.
+
+An invertible change of hidden-state coordinates also preserves the
+observation law when the update and observation maps are transformed
+accordingly; \cref{sec:lds-model} gives the linear case. Beyond this coordinate
+ambiguity, an observation law need not uniquely separate physical process
+noise from measurement noise.
+
+Three useful questions are:
+\begin{enumerate}[leftmargin=*,itemsep=.2em]
+\item How accurately does the model predict the next observation?
+\item How close are its conditional or joint observation laws, for example
+in KL, and its generated task statistics?
+\item If the model uses the smallest state dimension needed for its
+predictions, how accurately can its update and observation matrices be
+recovered, allowing an invertible change of state coordinates?
+\end{enumerate}
+The third can help answer the first two, but the conversion needs
+assumptions about sensitivity to data errors and about long-run error
+propagation.
+
+\subsection{Likelihood evaluation and optimization}
+\label{sec:latent-likelihood}
+
+The \emph{observed likelihood} is the mass or density assigned to the
+observed sequence. It \emph{marginalizes} the hidden trajectory: sums or
+integrates the joint law over the unobserved states. For the
+finite HMM,
+\begin{equation}
+ Q_\theta(X_{1:T})=
+ \sum_{s_{0:T}\in[d]^{T+1}}
+ \pi_{s_0}\prod_{t=1}^T A_{s_ts_{t-1}}C_{X_ts_t}.
+ \label{eq:hmm-likelihood}
+\end{equation}
+There are \(d^{T+1}\) terms with this initialization convention.
+If the initial distribution is specified directly for \(S_1\),
+there are \(d^T\) terms. The forward recursion evaluates the sum in
+\(O(Td^2)\) arithmetic operations; normalization at each step or a
+log-domain calculation prevents numerical underflow.
+For continuous states, marginalization is an integral.
+
+We fit \(\theta\) by minimizing \(-\log Q_\theta(Z_{1:T})\).
+Differentiating the finite-HMM forward algorithm is feasible and is
+implemented in modern software. Reverse-mode differentiation propagates
+derivatives backward through the likelihood computation. It has
+the same order of arithmetic work as likelihood evaluation, with
+additional storage or recomputation. The parameter optimization is
+generally nonconvex.
+
+\emph{Monte Carlo} methods estimate expectations and integrals with random
+samples. They are also used for likelihoods and gradients in nonlinear
+state-space models. \emph{Sequential Monte Carlo} methods, including the
+particle filter above, update these samples as observations arrive.
+
+\subsection{EM and optimization over hidden trajectories}
+\label{sec:em}
+
+\emph{Expectation--maximization} (EM) uses the current parameters
+\(\theta^{(k)}\) to compute a posterior over hidden trajectories,
+then maximizes the expected \emph{complete-data log likelihood}, the log
+joint mass or density of states and observations. The posterior expectation
+is the E-step; maximizing over parameters is the M-step:
+\begin{align}
+ q_k(ds)&=Q_{\theta^{(k)}}(ds_{0:T}\mid Z_{1:T}),\nonumber\\
+ \theta^{(k+1)}&\in\arg\max_\theta
+ \E_{S\sim q_k}[\log Q_\theta(S,Z_{1:T})].
+ \label{eq:em}
+\end{align}
+For a finite HMM, the \emph{forward--backward algorithm} combines forward
+probability calculations from the past with backward calculations from
+future observations. It supplies expected transition and
+emission counts; these replace the observed counts. For a linear Gaussian model,
+the E-step uses smoothing means \emph{and second moments}, including
+cross moments at adjacent times.
+
+Exact EM makes the observed log likelihood nondecreasing. Under regularity
+conditions its limit points are stationary: they satisfy first-order
+optimality conditions, with zero gradient at an interior point.
+Finite HMMs and linear Gaussian models admit efficient E- and M-steps.
+\Cref{ex:l5-em} asks for the monotonicity calculation.
+
+Another approach treats the hidden states as optimization variables:
+\begin{equation}
+ \min_{\theta,s_{0:T}}-\log Q_\theta(s_{0:T},Z_{1:T}).
+ \label{eq:joint-map}
+\end{equation}
+This maximizes a joint mass or density, rather than summing or integrating
+over states. Multiplying by a prior density on \(\theta\) gives a joint
+\emph{maximum a posteriori} (MAP) objective: maximize the posterior
+density of states and parameters given the observations.
+Trajectory optimization is central in \emph{simultaneous localization
+and mapping} (SLAM), where a robot estimates its path and a map from
+measurements. Its objective is often sparse: each measurement involves
+only a small subset of the unknown poses and map features.
+It can remain nonconvex. For continuous states its density objective also
+depends on the chosen coordinates and reference measure.
+
+For deterministic linear state dynamics and unit Gaussian observation
+noise, optimizing the initial state \(s=S_1\) gives
+\[
+ \min_{A,C,s}\sum_{t=1}^T\|Z_t-CA^{t-1}s\|_2^2.
+\]
+Products and powers of the unknown matrices make this a nonconvex
+parameter-fitting problem.
+
+For the observation-driven model in \cref{eq:observation-driven}, specified
+parameters and \(R_1\) determine every \(R_t\) by a forward computation
+on the observed prefix. Likelihood evaluation also needs the conditional
+mass or density of \(j_\theta(R_t,W_t)\). For example,
+\(j_\theta(r,w)=Cr+w\) with Gaussian noise of covariance \(\Omega\succ0\)
+gives the evaluable density \(\mathcal N(Cr,\Omega)\).
+A general observation-sampling map need not provide an efficient way to
+evaluate its density. When the state updates and log densities are
+differentiable, backpropagation differentiates their forward computation;
+\cref{sec:rnn} returns to this calculation.
+
+\section{Fit an observable predictor, then impose state-space structure}
+\label{sec:observable-first}
+
+The proposed two-stage method first fits a flexible predictor using
+observed inputs and targets, then fits a compact state-space representation
+to that predictor. The first stage avoids hidden-state optimization.
+The second imposes relationships between predictions at different lags.
+
+A finite-window model predicts from \(Z_{t-p:t-1}\). If older observations
+have little additional predictive effect, choosing a sufficiently large
+\(p\) controls approximation error. This is a statement about conditional
+prediction.
+
+Why fit a large, noisy model first? Many fitted coefficients can be noisy
+estimates of quantities determined by a few shared parameters. Enforcing
+those relationships can reduce estimation error. It also introduces bias
+when the proposed structure is wrong. \Cref{ex:l5-sharing} makes the variance
+reduction exact for coefficients constrained to a known low-dimensional
+family. The subspace algorithm below also estimates the family from data.
+
+Long memory and filtering stability can coexist. The physical state can
+retain information while new observations correct errors in its estimate.
+For the linear models below, different matrices govern the physical state
+and errors in its observation-based estimate. The state may retain or
+amplify past perturbations even while errors in its estimate decay.
+\Cref{sec:memory-example} gives a process with permanent memory and an
+exact compact predictor.
+
+\section{Linear dynamical systems}
+\label{sec:lds-model}
+
+A \emph{linear dynamical system} (LDS) has state \(S_t\in\R^d\), observations \(Z_t\in\R^m\),
+and equations
+\begin{equation}
+ S_{t+1}=AS_t+V_{t+1},\qquad
+ Z_{t+1}=CS_{t+1}+W_{t+1}.
+ \label{eq:linear-ssm}
+\end{equation}
+Here \(A\in\R^{d\times d}\), \(C\in\R^{m\times d}\).
+The noise laws are specified separately; we state the Gaussian assumption
+where it is used.
+The observations are now continuous. KL still means relative entropy between
+probability laws; when the laws have densities, sums become integrals of log
+density ratios. It is not defined by treating differential entropy as ordinary
+discrete entropy. \Cref{sec:continuous-kl} gives the precise definition and the
+Gaussian formula used below.
+
+An invertible coordinate change \(S_t'=T_0^{-1}S_t\) replaces the matrices by
+\(A'=T_0^{-1}AT_0\), \(C'=CT_0\), and transforms the noise and initial
+laws accordingly, without changing the observation law.
+The relation between \(A\) and \(A'\) is called \emph{similarity}.
+
+The \emph{spectral radius} \(\rho(A)\) is the largest absolute value of
+an eigenvalue of \(A\). We call the linear recurrence \emph{stable} when
+\(\rho(A)<1\), equivalently \(A^t\to0\): initial-state perturbations decay.
+For a symmetric matrix \(\Sigma\), \(\Sigma\succ0\) means
+\(x^\top\Sigma x>0\) for every nonzero \(x\); this is \emph{positive
+definiteness}. Replacing \(>\) by \(\ge\) defines \(\Sigma\succeq0\).
+We write \(\lambda_{\min}(\Sigma)\) for its smallest eigenvalue.
+
+\begin{example}[Position and unobserved velocity]
+\label{eg:position-velocity}
+With sampling interval \(\Delta>0\), consider
+\[
+ S_t=\begin{pmatrix}P_t\\U_t\end{pmatrix},\quad
+ A=\begin{pmatrix}1&\Delta\\0&1\end{pmatrix},\quad C=(1,0),
+ \quad V_{t+1}=\begin{pmatrix}0\\\xi_{t+1}\end{pmatrix}.
+\]
+The model takes \(P_{t+1}=P_t+\Delta U_t\), then perturbs velocity.
+Only position is measured: \(Z_t=P_t+W_t\).
+Differencing measurements estimates velocity, but also differences
+measurement noise. For independent measurement errors of variance
+\(\sigma_W^2\), the noise in
+\((Z_{t+1}-Z_t)/\Delta\) has variance \(2\sigma_W^2/\Delta^2\).
+A state estimator can combine many measurements instead.
+
+Both eigenvalues of \(A\) are one. State perturbations need not decay,
+and velocity errors accumulate in position.
+The process-noise covariance is \emph{singular}: a nonzero direction
+has zero noise variance. Here
+\(\Sigma_V=\diag(0,\sigma_\xi^2)\).
+This is appropriate for the discrete model just specified.\endnote{
+\textbf{When does acceleration also perturb position?}
+If a random acceleration acts throughout a sampling interval, integrating
+it generally gives correlated position and velocity perturbations.
+The zero position-noise convention corresponds to motion at the old
+velocity followed by a random velocity change at the interval boundary.}
+\end{example}
+
+Adding a small covariance \(\varepsilon I\) makes a singular Gaussian
+transition density nonsingular and can regularize numerical calculations.
+This models additional state noise. Full-rank observation noise can give
+a nonsingular observation law even with singular state-transition covariance.
+If fitted variances are allowed
+to collapse around interpolated data, a Gaussian likelihood can become
+unbounded; an appropriate variance constraint or prior addresses that issue.
+
+We will first justify the algorithm under positive-definite process and
+measurement covariances and stable \(A\), which permit a short proof.
+The bibliographical notes describe more general identification results.
+\emph{Numerical conditioning} concerns the sensitivity of a
+computed answer to perturbations in its inputs. Near-singular covariances
+require checking this sensitivity in both prediction and parameter recovery.
+
+\subsection{Finite HMMs also have linear vector equations}
+\label{sec:vector-bridge}
+
+For the finite HMM, the one-hot vectors \(e_{S_t}\in\R^d\) and
+\(Z_t=e_{X_t}\in\R^N\) satisfy
+\[
+ e_{S_{t+1}}=Ae_{S_t}+V_{t+1},\qquad
+ Z_{t+1}=Ce_{S_{t+1}}+W_{t+1}.
+\]
+These have the form of \cref{eq:linear-ssm}, with residuals satisfying
+\begin{equation}
+ \E[V_{t+1}\mid\mathcal G_t]=0,\qquad
+ \E[W_{t+1}\mid\mathcal G_t,S_{t+1}]=0,\qquad
+ \mathcal G_t=\sigma(S_{0:t},Z_{1:t}).
+ \label{eq:hmm-noise}
+\end{equation}
+Here \(\sigma(S_{0:t},Z_{1:t})\) denotes the information generated by
+the listed variables; conditioning on it means conditioning on their history.
+For example, column \(j\) of \(A\) is the conditional mean of
+\(e_{S_{t+1}}\) given \(S_t=j\); subtraction defines \(V_{t+1}\).
+These additive residuals generally have state-dependent, non-Gaussian
+laws. One-hot encoding gives linear conditional means.
+
+More generally, for a finite-valued (\emph{categorical}) observation,
+\begin{proposition}[A categorical conditional mean]
+\label{prop:one-hot}
+With \(\mathcal F_t=\sigma(X_{1:t})\) and
+\(P_t=\E[e_{X_{t+1}}\mid\mathcal F_t]\),
+\[
+ (P_t)_a=Q(X_{t+1}=a\mid X_{1:t}),\qquad
+ Z_{t+1}=P_t+E_{t+1},\qquad
+ \E[E_{t+1}\mid\mathcal F_t]=0.
+\]
+\end{proposition}
+\begin{proof}
+Coordinate \(a\) of \(e_{X_{t+1}}\) is \(\I\{X_{t+1}=a\}\).
+Take its conditional expectation, then subtract.
+\end{proof}
+A sequence with conditional mean zero given its past is called a
+\emph{martingale-difference sequence}; the residuals above have this property. With
+\(P_t=\phi_t(X_{1:t})\), this is a vector autoregression.
+Squared loss against \(e_{X_{t+1}}\) is the Brier loss of Lecture~3.
+
+\section{The regression and subspace algorithm}
+\label{sec:subspace-algorithm}
+
+We now give the complete procedure before explaining why it can work.
+For centered (zero-mean) real observations, choose a history length \(p\), a block
+count \(q\) with \(2q\le p\), and a retained state dimension \(1\le r\le qm\).
+An intercept (constant prediction offset) or a mean model is needed when centering is inappropriate.
+Vector norms below are Euclidean; matrix norms are induced operator norms
+unless marked \({\rm F}\) for Frobenius norm.
+Explicitly, \(\|A\|=\sup_{\|x\|_2=1}\|Ax\|_2\) and
+\(\|A\|_{\rm F}^2=\sum_{i,j}A_{ij}^2\).
+
+\subsection{Fit lag coefficients}
+
+Use the observed lag vector
+\begin{equation}
+ \Psi_t=\begin{pmatrix}Z_t\\Z_{t-1}\\\vdots\\Z_{t-p+1}\end{pmatrix},
+ \qquad \widehat B=(\widehat B_1,\ldots,\widehat B_p)
+ \in\arg\min_B\sum_{t=p}^{T-1}\|Z_{t+1}-B\Psi_t\|_2^2 .
+ \label{eq:observable-regression}
+\end{equation}
+Each \(B_j\in\R^{m\times m}\) maps one observed lag to the next
+prediction; \(B\in\R^{m\times mp}\). Thus
+\begin{equation}
+ \widehat Z_{t+1}=\sum_{j=1}^p\widehat B_jZ_{t+1-j}.
+ \label{eq:linear-ar}
+\end{equation}
+This is order-\(p\) \emph{linear autoregression}, abbreviated AR(\(p\)).
+The \emph{design matrix} has rows \(\Psi_t^\top\), one for each fitted target.
+\begin{proposition}[Observable fitting is convex]
+\label{prop:observable-regression}
+For fixed observed data, the objective in
+\cref{eq:observable-regression} is convex in \(B\).
+\end{proposition}
+\begin{proof}
+Each prediction is linear in \(B\); squared Euclidean distance is convex.
+\end{proof}
+
+This is conditional Gaussian maximum likelihood, conditional on the
+first \(p\) observations, for iid \emph{isotropic} Gaussian residuals:
+their covariance is a fixed multiple of the identity. With a specified covariance \(\Omega\succ0\), the loss is
+the corresponding quadratic form
+\(u^\top\Omega^{-1}u\). For unrestricted multioutput regression its
+minimizer is the same ordinary least-squares coefficient matrix when the
+design has full rank. Other conditional noise densities give other
+negative-log-likelihood losses.
+
+\subsection{Arrange, factor, and recover}
+\label{sec:hankel}
+
+Form two \(qm\times qm\) \emph{block Hankel matrices}:
+\begin{equation}
+ \widehat{\mathcal H}_0=[\widehat B_{i+j-1}]_{i,j=1}^q,\qquad
+ \widehat{\mathcal H}_1=[\widehat B_{i+j}]_{i,j=1}^q .
+ \label{eq:estimated-hankel}
+\end{equation}
+Each block is \(m\times m\); block rows and columns index successive
+lags. Equal anti-diagonals use the same fitted coefficient.
+This indexing explains the requirement \(2q\le p\).
+
+In a \emph{singular value decomposition} (SVD), a matrix is written as
+\(UDV^\top\), with orthonormal columns in \(U,V\) and positive singular
+values on the diagonal of \(D\). Retain the largest \(r\) singular values
+of \(\widehat{\mathcal H}_0\), assumed positive, and set
+\[
+ \widehat{\mathcal H}_{0,r}=U_rD_rV_r^\top
+   =\mathcal O\mathcal R,\qquad
+ \mathcal O=U_rD_r^{1/2},\quad
+ \mathcal R=D_r^{1/2}V_r^\top .
+\]
+The factors have sizes \(qm\times r\) and \(r\times qm\).
+The retained matrix \(\widehat{\mathcal H}_{0,r}\) is the \emph{truncated
+SVD}, a best rank-\(r\) approximation in operator and Frobenius norm.
+For a matrix with compact SVD \(UDV^\top\), its \emph{Moore--Penrose
+pseudoinverse} is \(VD^{-1}U^\top\), denoted by a dagger; only positive
+singular values are included. Set
+\begin{equation}
+ \overline F=\mathcal O^\dagger\widehat{\mathcal H}_1\mathcal R^\dagger,
+ \qquad \overline C=\mathcal O_{1:m,:},\qquad
+ \overline L=\mathcal R_{:,1:m}.
+ \label{eq:recover-matrices}
+\end{equation}
+Thus \(\overline F\) updates an \(r\)-dimensional predictive state,
+\(\overline C\) reads it out, and \(\overline L\) inserts an observation.
+A state-update and readout rule implementing a given predictor is called
+a \emph{realization} of that predictor.
+This is a regression-based subspace-identification construction.
+
+\subsection{Estimate innovations and generate}
+\label{sec:innovations-generation}
+
+Run the recovered predictor on observed data:
+\begin{equation}
+ \overline M_1=0,\qquad
+ \widehat Z_t=\overline C\overline M_t,\qquad
+ \overline M_{t+1}=\overline F\overline M_t+\overline LZ_t.
+ \label{eq:recovered-predictor}
+\end{equation}
+The true \emph{innovation} is the one-step prediction error
+\(E_t=Z_t-\E[Z_t\mid Z_{<t}]\). The fitted residuals
+\(\widehat E_t=Z_t-\widehat Z_t\) estimate these innovations.
+Use a \emph{calibration block} \(\mathcal I\): observations reserved for
+estimating the residual law, rather than fitting the lag coefficients.
+For its size \(n_{\rm cal}\), a
+zero-mean innovations fit uses
+\begin{equation}
+ \widehat\Omega=\frac1{n_{\rm cal}}\sum_{t\in\mathcal I}
+ \widehat E_t\widehat E_t^\top .
+ \label{eq:innovation-covariance}
+\end{equation}
+Check residual means and temporal correlations; a persistent mean needs
+a mean model. Discarding an initial transient or fitting the initial
+predictive state can be appropriate. A \emph{covariance floor} replaces
+eigenvalues below a chosen positive threshold by that threshold. This makes
+\(\widehat\Omega\) positive definite when needed for a density.
+Using a separate block reduces reuse of fitting noise, although contiguous
+blocks from one trajectory are not independent.
+
+Set \(\overline A=\overline F+\overline L\overline C\) and generate
+\begin{equation}
+ \widetilde M_1=0,\qquad
+ \widetilde Z_t=\overline C\widetilde M_t+\widetilde E_t,\qquad
+ \widetilde M_{t+1}=\overline A\widetilde M_t+\overline L\widetilde E_t,
+ \quad \widetilde E_t\stackrel{\rm iid}{\sim}
+ \mathcal N(0,\widehat\Omega).
+ \label{eq:recovered-generator}
+\end{equation}
+This is an \emph{innovations realization}. Its state and observation
+perturbations share the same \(\widetilde E_t\); they are correlated.
+In the ideal case it gives the same observation law as the original LDS.
+A process can have different state-space representations; independent
+state and observation noises are not needed in this representation.
+Substituting \(\widetilde E_t=\widetilde Z_t-\overline C\widetilde M_t\)
+gives
+\[
+ \widetilde M_{t+1}
+ =\overline F\widetilde M_t+\overline L\widetilde Z_t.
+\]
+This is the observation-driven update in \cref{fig:observed-feedback}:
+the observation carries the noise into the next state.
+Its state is an observation-based state estimate in suitable coordinates.
+For the ideal linear Gaussian predictor, \(F=A-LC\).
+Thus \(A\) governs generative state dynamics and \(F\) governs the
+propagation of errors when filtering the same observed history. These
+matrices can have different stability properties.
+
+With exact infinite-history coefficients of a constant-gain Gaussian
+predictor, the residuals are indeed iid Gaussian. For finite data,
+truncated regression and estimated matrices, assess residual Gaussianity
+and temporal correlations on held-out observations.
+Moreover, \emph{population least squares} minimizes expected squared loss,
+rather than a finite-data sum. Its finite-window coefficients generally
+differ from the first \(p\) infinite-history coefficients. The omitted
+tail can correlate with the included lags. Increasing \(p\) reduces
+this bias under suitable filtering stability and design conditioning.
+
+\subsection{What should be checked?}
+
+Select \(p,q,r\) using held-out predictive performance and the intended
+use. Inspect small retained singular values, residual covariance,
+and both recovered matrices:
+\[
+ \rho(\overline F)\quad\hbox{for filtering},\qquad
+ \rho(\overline A)\quad\hbox{for generation}.
+\]
+Truncated SVD alone does not guarantee
+either stability condition. Predictive likelihood, generated statistics,
+and stability diagnostics answer different questions.
+
+The compact model ties all lag coefficients to
+\(\overline C\overline F^{j-1}\overline L\). This is the parameter sharing
+that the unconstrained first-stage regression omits. It can reduce
+variance and extend a fitted finite history to a recurrent predictor.
+
+\paragraph{Finite-window AR and variable-length predictors.}
+The first-stage AR(\(p\)) fit always uses the same fixed window and learns a
+separate matrix for each retained lag. The recovered state model instead uses
+the same three matrices at every time:
+\(
+ M_{t+1}=\overline F M_t+\overline LZ_t
+\)
+and \(\widehat Z_{t+1}=\overline C M_{t+1}\).
+It therefore defines one rule for prefixes of every length, while its
+finite-dimensional state summarizes the entire observed prefix. Equivalently,
+the few matrices generate the whole family of lag coefficients
+\(\overline C\overline F^{j-1}\overline L\).
+
+A causal transformer is closer to the state model than to fixed-window AR in
+this limited sense. Shared layer parameters define a predictor for
+variable-length prefixes, and attention can use every token inside the
+available context rather than assigning one separately learned coefficient to
+each fixed lag. The mechanisms remain different: a state model compresses the
+prefix recursively into a fixed-dimensional state, whereas standard attention
+retains token-level keys and values and revisits them. Its memory and
+computation grow with the context, and using lengths beyond the architecture's
+or training distribution's range is not automatic. The later discussion of
+recurrent attention asks a separate computational question: when can an
+attention calculation itself be reorganized as a recurrence or parallel scan?
+
+\section{A controlled example of the memory advantage}
+\label{sec:memory-example}
+
+A state model can build a state that maintains information
+from arbitrarily distant past,
+whereas a fixed observation window discards past information.
+Consider the scalar Gaussian process
+\begin{equation}
+ \begin{gathered}
+ U\sim\mathcal N(0,\tau^2),\qquad S_0=U,\\
+ S_{t+1}=S_t,\qquad Z_{t+1}=S_{t+1}+W_{t+1},\quad t\ge0,\\
+ W_t\stackrel{\rm iid}{\sim}\mathcal N(0,\sigma^2).
+ \end{gathered}
+ \label{eq:constant-state}
+\end{equation}
+with \(U\) independent of the noises and \(\tau,\sigma>0\).
+The state in this process keeps the initial data indefinitely.
+Suppose the model and its parameters are known and the goal is to predict
+\(Z_{n+1}\) after observing \(Z_{1:n}\). The minimum-mean-squared-error
+predictor is the posterior mean \(\E[S_n\mid Z_{1:n}]\).
+The posterior mean and variance after \(n\)
+observations are
+\begin{equation}
+ m_n=\frac{\sum_{i=1}^n Z_i}{\sigma^2/\tau^2+n},\qquad
+ v_n=\frac{\tau^2\sigma^2}{\sigma^2+n\tau^2}.
+ \label{eq:constant-posterior}
+\end{equation}
+Letting \(H_n=\sum_{i=1}^n Z_i\), we obtain \(m_n\) from the updates
+\(H_{t+1}=H_t+Z_{t+1}\) and \(C_{t+1}=C_t+1\), initialized with
+\(H_0=0\) and \(C_0=\sigma^2/\tau^2\), and return \(m_n=H_n/C_n\).
+Thus the optimal predictor stores two scalars rather than the full history.
+\begin{proposition}[Full history versus a fixed window]
+\label{prop:memory-advantage}
+For \(n\ge p\), the minimum mean squared prediction error for \(Z_{n+1}\)
+using all \(n\) observations is \(\sigma^2+v_n\).
+Using only the most recent \(p\) observations gives minimum error
+\(\sigma^2+v_p\), even among nonlinear predictors.
+The expected KL from the full-history predictive law to the optimal
+window predictive law is
+\[
+ \frac12\log\frac{\sigma^2+v_p}{\sigma^2+v_n}.
+\]
+\end{proposition}
+\begin{proof}
+Gaussian conditioning gives \cref{eq:constant-posterior}.
+The conditional mean minimizes squared loss; the fresh measurement noise
+adds \(\sigma^2\). Any \(p\) observations give the same posterior variance
+\(v_p\), because their joint law is unchanged by reordering them.
+Let \(a=\sigma^2+v_n\), \(b=\sigma^2+v_p\), and let \(m_p\) denote the
+posterior mean based on the last \(p\) observations. Conditional-expectation
+orthogonality gives
+\[
+ \E[(m_n-m_p)^2]
+ =\E[(Z_{n+1}-m_p)^2]-\E[(Z_{n+1}-m_n)^2]
+ =b-a.
+\]
+Applying the Gaussian KL formula in \cref{eq:gaussian-kl-scalar} conditionally
+and averaging therefore leaves only \(\tfrac12\log(b/a)\).
+\end{proof}
+
+For \(\tau=\sigma=1\), \(p=10\), and \(n=1000\), the excess prediction
+errors above irreducible noise are \(1/11\) and \(1/1001\).
+This comparison uses known model parameters and isolates the effect of
+history length. \Cref{ex:l5-memory} asks you to derive the posterior and
+prediction formulas and to explain which additional data identify \(\tau^2\).
+
+\subsection{A finite-data comparison of the actual algorithm}
+\label{sec:synthetic-experiment}
+
+A complementary experiment fits both models to the same single training
+trajectory. The scalar innovations generator is
+\[
+ M_{t+1}=0.98M_t+0.18E_t,\qquad Z_t=M_t+E_t,\qquad
+ E_t\stackrel{\rm iid}{\sim}\mathcal N(0,1),
+\]
+started at \(M_0=0\) and warmed up before the retained data.
+Its predictor has \(F=0.8\) and coefficients \(K_j=0.18(0.8)^{j-1}\).
+The lag-Hankel matrix has rank one.
+
+We compare ordinary AR(32) with its rank-one subspace fit
+(\(q=16,r=1\)); rank and history length are supplied, not selected
+using test data. Both covariance estimates use a separate 2,000-step
+calibration continuation. A further 10,000-step continuation evaluates
+conditional-mean error and Gaussian conditional KL against the exact
+innovations predictor. Repeating over 50 fixed random seeds measures
+variation between training trajectories. Results, including generation
+instability, appear in \cref{tab:l5-synthetic}.
+The reproducible script is
+\texttt{scripts/lecture05\_synthetic.py}.
+
+\input{../figures/lecture05-synthetic-results.tex}
+\input{../figures/lecture05-synthetic-plots.tex}
+
+\Cref{fig:l5-synthetic} shows one-step conditional-mean predictions and errors,
+the fitted lag coefficients, and every run's prediction risk.
+The trajectory is the first test segment from seed~0 at \(T=1024\),
+selected independently of its performance. Both fitted predictors make
+one-step conditional predictions using the same observed history.
+For either predictor, let \(\widehat q(\cdot\mid Z_{<t})\) be its Gaussian
+conditional density, with predicted mean \(\widehat\mu_t\) and calibrated
+variance \(\widehat\Omega\). Its per-step test log-loss is
+\[
+ -\log\widehat q(Z_t\mid Z_{<t})
+ =\frac12\log(2\pi\widehat\Omega)
+  +\frac{(Z_t-\widehat\mu_t)^2}{2\widehat\Omega}.
+\]
+With a fixed positive variance, minimizing this loss over mean predictors
+is equivalent to
+minimizing squared error. The AR least-squares fit estimates the mean
+coefficients; a residual-variance estimate completes the probability
+model used for scoring and generation. Here both models estimate
+\(\widehat\Omega\) on the calibration block. The ideal variance is
+one for the exact state predictor and approximately
+\(1+1.57\times10^{-7}\) for AR(32) with coefficients minimizing expected
+squared error in the long-run limit; see \cref{app:synthetic-experiment}.
+Thus one is the reference value for both methods in \cref{tab:l5-synthetic}.
+For either fitted predictor, the data-generating law gives
+\[
+ \E[(Z_t-\widehat\mu_t)^2]
+ =1+\E[(M_t-\widehat\mu_t)^2].
+\]
+Calibration includes mean-prediction error; a finite estimate can also
+fall below one.
+
+The script regenerates the table,
+plots, and JSON results; the saved results include fitted coefficients,
+the plotted data, seeds, software versions, and source hashes.
+\Cref{app:synthetic-experiment} specifies the data generation, fitting,
+calibration, evaluation metrics, and construction of all four panels.
+
+At \(T=1024\) and \(4096\), imposing rank one substantially reduces
+both mean-prediction error and conditional KL. At \(T=256\), the
+subspace fit is worse on average and produces two unstable generators.
+All fitted predictive recursions are stable in this run. The example
+therefore exhibits both a gain from parameter sharing and a small-sample
+failure of unconstrained realization.
+
+The comparison is conditional on this low-rank data-generating model.
+It measures finite-data estimation, whereas
+\cref{prop:memory-advantage} isolates information lost by a fixed window.
+
+\subsection{Completing an observed prefix}
+\label{sec:completion-experiments}
+
+The two completion experiments answer different questions. The first asks
+what the two predictors fitted in \cref{sec:synthetic-experiment} generate;
+it includes parameter-estimation and realization error. The second supplies
+the true constant-state law and asks only what information is lost by
+restricting prediction to a fixed window. In both experiments, generation
+starts from an observed prefix and then feeds each model's generated
+observations back into that model.
+
+\Cref{fig:l5-completion-fit} uses the same seed~0, \(T=1024\) fits as
+\cref{fig:l5-synthetic}, starting immediately before its first test
+observation. The fitted state model has
+\(\overline A=\overline F+\overline L\overline C\approx0.949\), compared
+with the true \(A=0.98\). Its conditional mean loses half its magnitude
+in about 13 steps, compared with 34 for the true process. The AR model's
+dominant eigenvalue is approximately \(0.978\).
+In this run the state fit has smaller one-step prediction error, but
+its completions lose the prompt's influence too quickly and have too
+little long-horizon variation. At step 300, the conditional standard
+deviations are approximately \(1.35\) for the truth, \(1.29\) for AR,
+and \(1.20\) for the state fit.
+
+\input{../figures/lecture05-completion-fit.tex}
+
+The constant-hidden-state process in \cref{eq:constant-state} isolates
+memory without parameter-estimation error. Take \(\tau=\sigma=1\)
+and supply a 1,000-observation prompt centered near 2.
+The full-history model has posterior mean \(m_n\) and variance \(v_n\)
+from \cref{eq:constant-posterior}. Its continuation has conditional
+mean \(m_n\) at every future step: the inferred level persists.
+This is exactly the true conditional process. Its next-observation
+variance is \(1+v_n=1+1/1001\), including the remaining uncertainty
+about the hidden level. The optimal ten-observation predictor instead
+has residual variance \(1+v_{10}=12/11\). Sampling from it recursively gives
+\[
+ \widetilde Z_{t+1}
+ =\frac1{11}\sum_{j=0}^{9}\widetilde Z_{t-j}
+   +\sqrt{\frac{12}{11}}\,\xi_{t+1},
+ \qquad \xi_{t+1}\stackrel{\rm iid}{\sim}\mathcal N(0,1),
+\]
+initialized with the prompt's final ten values.
+Its coefficients sum to \(10/11<1\), so its conditional mean eventually
+returns to the population mean zero.
+\Cref{fig:l5-completion-memory} shows the resulting loss of the
+prompt-specific level. An AR model can propagate information through
+generated observations for many more steps than its window length;
+here that influence decays, while the constant-state model retains it.
+
+\input{../figures/lecture05-completion-memory.tex}
+
+Corresponding paths in both figures share every fresh standard Gaussian
+draw. In \cref{fig:l5-completion-fit}, this noise drives large fluctuations,
+yet the paths remain strikingly close: the models respond similarly to it
+even after the prompt's influence decays. \Cref{app:completion-experiments}
+gives the code, prompts, noise draws, and protocol.
+
+The figures support two separate conclusions. In
+\cref{fig:l5-completion-fit}, the fitted state model has better one-step
+prediction but a worse estimate of generative persistence; fitting error can
+reverse the ranking when the evaluation target changes. In
+\cref{fig:l5-completion-memory}, all probability laws are known. The
+full-history conditional law is then Bayes optimal, and fixed-window AR has
+strict approximation error because it discards observations that contain
+information about \(U\). This error is modest for one-step prediction but
+qualitatively important for long continuations, where the inferred level is
+eventually forgotten.
+
+Learning the constant-state law would create a third comparison, not shown in
+the figure. With many independent training trajectories, each with an
+independent \(U\), consistent estimators converge to the two displayed
+predictors. With finitely many trajectories, their approximation error must be
+compared with parameter-estimation and algorithmic error. One long trajectory
+does not provide repeated draws from the distribution of \(U\).
+
+\clearpage
+\paragraph{What does ``simpler'' mean?}
+Suppose the constant-state structure in \cref{eq:constant-state} is supplied
+to the learner. A direct state-model fit then estimates two variances, or an
+equivalent tied prediction rule. Unrestricted AR(10) estimates ten regression
+coefficients separately and, for a probabilistic model, a residual variance.
+For a fixed number of independent training trajectories, our prior expectation
+is therefore that the correctly specified state fit has the statistical
+advantage: its parameter sharing reduces estimation variance. This expectation
+does not follow from the number of time points alone. The distribution of
+\(U\) is identified by variation between trajectories, so one long trajectory
+is not equivalent to many independent draws of \(U\).
+
+AR is simpler in a different sense. Least squares is a direct convex
+calculation, whereas fitting a latent model can require nonconvex optimization
+or a numerically delicate realization step. AR also imposes less of the
+particular constant-state structure, which can help when that structure is
+wrong. The rank-one model in \cref{fig:l5-synthetic} has fewer final
+parameters than AR(32), yet the generic subspace procedure first estimates AR
+coefficients and then performs an SVD-based realization; at \(T=256\), that
+procedure is less reliable. Representation size, optimization difficulty,
+conditioning, structural commitment, and prediction quality are distinct
+notions of simplicity. They need not rank two methods in the same order.
+
+Minimum description length (MDL) does not reduce this comparison to counting
+parameters. It requires a specified class of candidate codes, including how
+models or parameters and the data are encoded, and it selects the shortest
+resulting description \citep{barron1998}. Familiar parameter-count penalties
+are special asymptotic approximations for regular models. Latent-variable
+models are often singular, where such approximations can fail
+\citep{watanabe2013}. A fully specified MDL procedure may prefer either model;
+its answer depends on the candidates, code, data, and prediction target. The
+examples here contradict the slogan that small samples automatically favor
+the model with fewer parameters. They do not contradict MDL as a precisely
+specified model-selection method.
+
+\section{Recurrent networks, backpropagation, and attention}
+\label{sec:rnn}
+
+A conventional recurrent predictor computes
+\[
+ R_{t+1}=h_\theta(R_t,u_t),\qquad
+ q_\theta(\,\cdot\mid u_{1:t})=o_\theta(R_{t+1}).
+\]
+The inputs \(u_t\) may be external measurements or previous tokens.
+With \emph{teacher forcing}, the supplied inputs are the observed past
+tokens rather than sampled model outputs. The recurrent
+states are deterministic functions of them, so the output likelihood
+can be evaluated directly.
+
+\emph{Backpropagation through time} differentiates this unrolled
+computation. For a per-step update costing \(c\), its work is
+\(O(Tc)\), up to constant factors for the derivatives; straightforward
+storage is linear in \(T\) times the size of the intermediate values saved
+per step. \emph{Checkpointing} saves only selected intermediate values
+and recomputes the others during differentiation.
+The state-update \emph{Jacobian} is its matrix of partial derivatives
+with respect to the incoming state. Products of these matrices can make
+gradients small or large. \emph{Long short-term memory} (LSTM) networks
+use learned gates to control the retention and updating of state values;
+gradient propagation depends on the resulting Jacobian products.
+
+Linearity permits additional computational structure.
+For affine updates with known per-position coefficients,
+\[
+ R_{t+1}=A_tR_t+b_t,\qquad
+ (A_2,b_2)\circ(A_1,b_1)=(A_2A_1,A_2b_1+b_2),
+\]
+composition is associative. A \emph{parallel scan} computes all prefix
+compositions by combining adjacent blocks in parallel. It can reduce
+sequential depth, the number of operations that must wait for one another.
+Dense matrix compositions may cost more than a sequential matrix--vector
+recurrence; diagonal or other structured transitions make the scan useful.
+Learning the matrices end to end can still be nonconvex.
+The coefficients must be computable without first evaluating the unknown
+preceding recurrent state. \Cref{ex:l5-bptt} compares these operations.
+
+Observed inputs can also be added to an LDS:
+\(S_{t+1}=AS_t+Bu_t+V_{t+1}\).
+Lagged inputs become additional regression features. Inputs chosen
+independently of unobserved system noises are simpler to analyze than
+inputs correlated with those noises, for example through feedback.
+Sufficient excitation still matters.
+
+\subsection{An exact recurrent evaluation of linear attention}
+\label{sec:attention-state}
+
+Let key and query features \(k_t,q_t\in\R^r\), values \(v_t\in\R^s\),
+and gates \(\gamma_t\in\R\) be computed from a layer's inputs.
+The matrix state
+\begin{equation}
+ R_0=0,\qquad R_t=\gamma_tR_{t-1}+v_tk_t^\top,\qquad
+ y_t=R_tq_t
+ \label{eq:attention-recurrence}
+\end{equation}
+has \(sr\) coordinates.
+\begin{proposition}[Recurrent and pairwise evaluations]
+\label{prop:attention-recurrence}
+The same output is
+\[
+ y_t=\sum_{u=1}^t v_u(k_u^\top q_t)
+              \prod_{j=u+1}^t\gamma_j.
+\]
+\end{proposition}
+\begin{proof}
+Unroll the affine recursion for \(R_t\) and multiply by \(q_t\).
+The empty product equals one.
+\end{proof}
+For \(\gamma_t=1\), this is unnormalized \emph{causal linear attention}:
+it uses only current and past values, with weights \(k_u^\top q_t\).
+If these weights are nonnegative, a normalized version maintains
+\(d_t=d_{t-1}+k_t\) and uses \(R_tq_t/(d_t^\top q_t)\), when the
+denominator is positive. The state and recurrent work per token are
+\(O(sr)\), in addition to feature computation. Directly evaluating
+all pairwise interactions has quadratic dependence on sequence length.
+
+This identity concerns a finite-feature attention map.
+Unrestricted softmax attention need not admit such an exact fixed-size
+summary.\endnote{\textbf{A rank obstruction.}
+Choose scalar queries \(q_i=i-1\) and keys \(k_j=\log a_j\) for
+distinct positive \(a_j\). Then
+\([\exp(q_i k_j)]_{i,j=1}^n=[a_j^{i-1}]_{i,j=1}^n\) is an invertible
+Vandermonde matrix. Row normalization preserves rank.
+Putting these keys before these queries gives a past-to-future block
+of causal attention with rank \(n\). A fixed \(r\)-feature bilinear
+score matrix has rank at most \(r\), so it cannot represent all these blocks
+for \(n>r\). This bound concerns finite-feature bilinear representations.}
+
+\subsection{What this says about language models}
+
+One can train recurrent-compatible layers from the start, or convert a
+trained transformer using \emph{distillation}: train the new model to
+match the original model's predictions or intermediate computations.
+Mamba-2 develops structured state-space/attention computations with
+efficient blocked implementations. MOHAWK matches attention-weight matrices,
+intermediate representations, and predictions in stages.
+Mamba-in-Llama reuses attention projections and trains hybrid models;
+retained attention layers still store past keys and values in growing caches.
+
+Hazan and collaborators' spectral filtering takes another route:
+fit combinations of fixed temporal filters---weighted sums of past
+observations---whose span approximates a
+specified family of dynamical predictors. It can avoid identifying
+a physical transition matrix. Spectral state-space sequence layers extend
+this idea, and observation spectral filtering addresses prediction from
+outputs. These methods should be distinguished from recovering
+\((F,C,L)\) by the Hankel procedure.
+
+A small recurrent state offers economical sequential inference.
+It must also support the information retrieval, optimization, numerical
+stability, and accelerator utilization needed by the task.
+Training-time auxiliary objectives offer another use of state structure:
+they can require hidden representations to predict future representations
+at several time scales and then discard the auxiliary hierarchy for
+generation. This imposes partial state-like constraints while retaining an
+ordinary autoregressive generator; the bibliographical notes describe a
+recent example.
+The cited papers
+demonstrate particular constructions and experiments; broad architectural
+dominance remains an empirical question. The possibility of stronger
+state-space models is a research motivation.
+
+\section{Analysis of the autoregression--subspace method\suppmark}
+\label{sec:optional-theory}
+The following results justify the construction under explicit assumptions.
+They may be read after the algorithm and classroom discussion.
+For a random vector \(Y\), its \emph{root mean square} (RMS) norm is
+\((\E[\|Y\|_2^2])^{1/2}\), also called its \(L^2\) norm.
+\subsection{Gaussian prediction and truncation}
+\label{sec:noisy-prediction}
+
+For a Gaussian LDS, the conditional distribution can be computed by a
+recursive predictor. Its state is an estimate obtained from the
+observations. This gives an observable autoregression after unrolling.
+The tail of its history coefficients controls the truncation error.
+
+The observations in this subsection are real vectors. Log loss uses their
+probability densities, and the probability and KL chain rules apply to these
+conditional densities.
+
+\begin{restatable}[A constant-gain Gaussian predictor]{theorem}{kalmanpredictor}
+\label{thm:kalman}
+Initialize the system at time \(1\) for this theorem.
+Consider \(S_{t+1}=AS_t+V_{t+1}\), \(Z_t=CS_t+W_t\) for
+\(t\ge1\), with spectral radius
+\(\rho(A)<1\), independent centered Gaussian process and observation
+noises with covariances \(\Sigma_V\succ0\) and \(\Sigma_W\succ0\).
+There are matrices \(\Pi\succ0\) and \(L\) such that, when
+\(S_1\sim\mathcal N(0,\Pi)\) independently of the noises, the recursion
+\begin{equation}
+ M_1=0,\qquad M_{t+1}=FM_t+LZ_t,\qquad F=A-LC
+ \label{eq:kalman-predictor}
+\end{equation}
+satisfies
+\begin{equation}
+ M_t=\E[S_t\mid Z_{<t}],\qquad
+ Z_t\mid Z_{<t}\sim\mathcal N(CM_t,\Omega),\qquad
+ \Omega=C\Pi C^\top+\Sigma_W.
+ \label{eq:kalman-conditional}
+\end{equation}
+Moreover, \(\rho(F)<1\) and the observations have uniformly bounded
+second moments.
+\end{restatable}
+
+The recursion is the \emph{Kalman predictor}. The covariance \(\Pi\)
+is chosen to make the \emph{gain} \(L\), which converts observation error
+into a state correction, constant over time; \cref{app:kalman} constructs it
+and proves the theorem. For an arbitrary Gaussian initialization,
+the same conditional calculation gives time-dependent gains.
+Positive noise covariance means positive variance in every nonzero
+direction. A stable \(A\) permits partially observed states and arbitrary
+\(C\) in this result.
+
+Define the \emph{innovations} \(E_t=Z_t-CM_t\).
+Their conditional law is always \(\mathcal N(0,\Omega)\), so they are
+independent across time and independent of the previous observations.
+Consequently, the same observation law can be generated by
+\begin{equation}
+ Z_t=CM_t+E_t,\qquad
+ M_{t+1}=(F+LC)M_t+LE_t=AM_t+LE_t.
+ \label{eq:innovations-generation}
+\end{equation}
+The conditional predictor and its innovations law together specify
+generation.
+
+Unrolling \cref{eq:kalman-predictor} gives
+\begin{equation}
+ CM_t=\sum_{j=1}^{t-1}K_jZ_{t-j},\qquad K_j=CF^{j-1}L.
+ \label{eq:history-coefficients}
+\end{equation}
+Because \(F\) is stable, these coefficients decay geometrically.
+The following proposition translates their tail into a sequence-law
+guarantee.
+
+\begin{proposition}[Truncation controls prediction and sequence KL]
+\label{prop:truncation}
+In the setting above, suppose
+\(\lVert K_j\rVert\le G\gamma^{j-1}\) for \(j\ge1\), with
+\(0<\gamma<1\), and
+\(\sup_t(\E[\lVert Z_t\rVert_2^2])^{1/2}\le B_Z\).
+Define
+\[
+ \widehat Z_t^{(p)}=\sum_{j=1}^{\min(p,t-1)}K_jZ_{t-j}.
+\]
+Then
+\begin{equation}
+ \bigl(\E[\lVert CM_t-\widehat Z_t^{(p)}\rVert_2^2]\bigr)^{1/2}
+ \le a_p:=\frac{GB_Z\gamma^p}{1-\gamma}.
+ \label{eq:truncation-mean}
+\end{equation}
+Let \(P_{1:T}\) be the true observation law and let \(Q^{(p)}_{1:T}\)
+use conditional law \(\mathcal N(\widehat Z_t^{(p)},\Omega)\).
+Then
+\begin{equation}
+ \KL(P_{1:T}, Q^{(p)}_{1:T})
+ \le\frac{T a_p^2}{2\lambda_{\min}(\Omega)}.
+ \label{eq:truncation-kl}
+\end{equation}
+\end{proposition}
+
+\begin{proof}
+The triangle inequality in \(L^2\) bounds the omitted tail by
+\(B_Z\sum_{j>p}G\gamma^{j-1}=a_p\).
+For Gaussians with the same covariance,
+\[
+ \KL(\mathcal N(u,\Omega),\mathcal N(v,\Omega))
+ =\tfrac12(u-v)^\top\Omega^{-1}(u-v).
+\]
+Apply this at each observed prefix and use the KL chain rule.
+\end{proof}
+
+This explains why an observable autoregression can approximate a noisy
+state-space model well: the lost remote history has an explicit cost.
+These bounds use the true coefficients.
+Regression contributes coefficient-estimation error in addition to
+this truncation error.
+Squared loss is convenient for the convex fit and the Gaussian
+calculation; the state-elimination identity itself is independent of
+the fitting loss.
+
+\subsection{Exact recovery from ideal coefficients}
+\label{sec:exact-realization}
+
+The coefficients in \cref{eq:history-coefficients} come from a small
+recurrent computation. Their matrix structure reveals that computation.
+Suppose \(K_j=C_\star F_\star^{j-1}L_\star\) has minimal state
+dimension \(d_\star\): no smaller state can realize the same sequence
+of coefficients. Choose a block count \(q\) for which
+\[
+ \mathcal O_\star=
+ \begin{pmatrix}C_\star\\C_\star F_\star\\\vdots\\C_\star F_\star^{q-1}\end{pmatrix},
+ \qquad
+ \mathcal R_\star=
+ (L_\star,F_\star L_\star,\ldots,F_\star^{q-1}L_\star)
+\]
+both have rank \(d_\star\). The first maps a state to successive
+readouts; the second collects how successive observations enter the state.
+Form the \(qm\times qm\) block matrices
+\begin{equation}
+ \mathcal H_0=[K_{i+j-1}]_{i,j=1}^q
+   =\mathcal O_\star\mathcal R_\star,\qquad
+ \mathcal H_1=[K_{i+j}]_{i,j=1}^q
+   =\mathcal O_\star F_\star\mathcal R_\star.
+ \label{eq:hankel-factorization}
+\end{equation}
+Each block is \(m\times m\); block rows and columns index successive
+lags. A matrix constant along block anti-diagonals is a
+\emph{block Hankel matrix}. Here \(\rank(\mathcal H_0)=d_\star\).
+
+Take its rank-\(d_\star\) singular value decomposition and factor it:
+\[
+ \mathcal H_0=UDV^\top=\mathcal O\mathcal R,\qquad
+ \mathcal O=UD^{1/2},\quad\mathcal R=D^{1/2}V^\top.
+\]
+Apply \cref{eq:recover-matrices} with the exact matrix
+\(\mathcal H_1\) and these factors. Then the matrices satisfy the following
+recovery property.
+
+\begin{restatable}[Recovery of the prediction map]{proposition}{hankelrecovery}
+\label{prop:hankel-recovery}
+The recovered matrices satisfy
+\[
+ \overline C\,\overline F^{j-1}\overline L=K_j
+ \quad\text{for every }j\ge1.
+\]
+Thus \cref{eq:recovered-predictor} computes the same predictor
+on every observed history.
+\end{restatable}
+
+The proof in \cref{app:hankel} shows that the recovered states differ
+from minimal predictive coordinates by an invertible change of basis.
+Their role is to implement prediction; recovering the original physical
+coordinates is optional.
+
+\subsection{What finite-data guarantees must control}
+\label{sec:finite-guarantees}
+
+A finite-data analysis must control four errors:
+finite-history approximation, estimation of the regression coefficients,
+matrix realization, and estimation of the innovations law.
+
+The regression error has a useful exact decomposition. Write
+\[
+ Z_{t+1}=B^{[p]}\Psi_t+r_t+E_{t+1},\qquad
+ B^{[p]}=(K_1,\ldots,K_p),
+\]
+where \(r_t\) is the omitted predictor tail and \(E_{t+1}\) is the
+innovation. If \(\sum_t\Psi_t\Psi_t^\top\) is invertible, ordinary least
+squares gives
+\begin{equation}
+ \widehat B-B^{[p]}
+ =\left(\sum_tE_{t+1}\Psi_t^\top+
+         \sum_tr_t\Psi_t^\top\right)
+       \left(\sum_t\Psi_t\Psi_t^\top\right)^{-1}.
+ \label{eq:regression-decomposition}
+\end{equation}
+The first numerator sums conditionally mean-zero terms; it is a
+martingale sum. The second is truncation error correlated with the
+regressors. The matrix \(\sum_t\Psi_t\Psi_t^\top\) is the design's
+\emph{Gram matrix}. Its inverse expresses
+\emph{excitation}: insufficient variation in some direction makes that
+direction hard to estimate. Dependence between overlapping windows must
+be handled in the probability bounds.
+
+If every coefficient used in a \(q\)-block Hankel matrix has operator
+error at most \(\delta\), its matrix error is at most \(q\delta\).
+Indeed, each output block has norm at most
+\(\delta\sum_j\|x_j\|\), and Cauchy--Schwarz bounds the full norm.
+If the true Hankel matrix has rank \(r\), the best rank-\(r\)
+approximation to its estimate obeys
+\begin{equation}
+ \|\widehat{\mathcal H}_{0,r}-\mathcal H_0\|
+ \le2\|\widehat{\mathcal H}_0-\mathcal H_0\|.
+ \label{eq:rank-truncation}
+\end{equation}
+This follows because the discarded singular value is no larger than
+the perturbation norm. Converting this to matrices requires controlling
+\(\sigma_r(\mathcal H_0)\) and the pseudoinverses.
+Prediction-risk bounds also require the conversions in the next subsection.
+
+There are finite-sample theorems for related stochastic subspace
+algorithms, including single-trajectory recovery up to similarity at
+order \(T^{-1/2}\) with logarithmic and system-dependent factors.
+Some allow \(\rho(A)\le1\). Their assumptions include
+\emph{observability}: different noiseless initial states can be distinguished
+by their observations, equivalently \((C^\top,(CA)^\top,\ldots,(CA^{d-1})^\top)^\top\)
+has rank \(d\). They also require \emph{controllability by the process noise}:
+\((\Sigma_V^{1/2},A\Sigma_V^{1/2},\ldots,A^{d-1}\Sigma_V^{1/2})\) has rank \(d\),
+so process noise can affect every state direction over time.
+Other assumptions include positive measurement covariance, known state
+dimension, and a \emph{steady-state filtering initialization}, whose
+prediction-error covariance is fixed by the covariance recursion.
+Their regression predicts a block of future observations from a block
+of past observations, rather than the single next observation used here.
+The bibliographical notes give the exact source and theorem locations.
+A corresponding rate for the algorithm here requires analysis of
+\cref{eq:regression-decomposition} and its realization step.
+
+\subsection{From matrix errors to prediction and sequence laws}
+\label{sec:metric-conversions}
+
+The following calculation makes a useful part of the conversion explicit.
+Compare a true and fitted predictor on the \emph{same observed history},
+in aligned state coordinates:
+\[
+ M_{t+1}=FM_t+LZ_t,\qquad
+ \overline M_{t+1}=\overline F\overline M_t+\overline LZ_t,
+ \qquad M_1=\overline M_1=0.
+\]
+Suppose \(\|\overline F\|\le\rho<1\), the true states and observations
+have RMS norms bounded by \(B_M,B_Z\), and
+\(\|\overline F-F\|\le\delta_F\),
+\(\|\overline L-L\|\le\delta_L\),
+\(\|\overline C-C\|\le\delta_C\).
+Then the RMS state discrepancy
+\(e_t=(\E[\|\overline M_t-M_t\|^2])^{1/2}\) obeys
+\[
+ e_{t+1}\le\rho e_t+\delta_FB_M+\delta_LB_Z.
+\]
+Consequently
+\begin{equation}
+ \sup_t\bigl(\E[\|\overline C\overline M_t-CM_t\|^2]\bigr)^{1/2}
+ \le \varepsilon_\mu:=
+ \frac{\|\overline C\|(\delta_FB_M+\delta_LB_Z)}{1-\rho}
+       +\delta_CB_M .
+ \label{eq:parameter-to-prediction}
+\end{equation}
+Here \emph{contraction} means shrinking distances by a factor strictly
+below one. A weighted norm \(\|x\|_H=(x^\top Hx)^{1/2}\), \(H\succ0\),
+may supply contraction when the ordinary Euclidean norm does not.
+Alignment and norm conditioning
+then affect the constants.
+
+For Gaussian conditional laws, mean accuracy and covariance accuracy
+together give sequence KL.
+\begin{proposition}[Conditional errors control Gaussian sequence KL]
+\label{prop:gaussian-sequence-kl}
+Let \(P\) and \(Q\) have conditional laws
+\(\mathcal N(\mu_t,\Omega)\) and
+\(\mathcal N(\widehat\mu_t,\widehat\Omega)\), evaluated at the same
+prefix, with positive-definite constant covariances. Then
+\[
+ \KL(P_{1:T},Q_{1:T})
+ =\frac12\sum_{t=1}^T\E_P[
+   (\mu_t-\widehat\mu_t)^\top\widehat\Omega^{-1}
+   (\mu_t-\widehat\mu_t)]
+ +\frac T2\left[
+ \operatorname{tr}(\widehat\Omega^{-1}\Omega)-m+
+ \log\frac{\det\widehat\Omega}{\det\Omega}\right].
+\]
+If \(\E_P[\|\mu_t-\widehat\mu_t\|^2]\le\varepsilon_\mu^2\)
+and all eigenvalues of
+\(\widehat\Omega^{-1/2}\Omega\widehat\Omega^{-1/2}\)
+lie in \([1-\eta,1+\eta]\), \(0\le\eta<1\), then
+\begin{equation}
+ \frac1T\KL(P_{1:T},Q_{1:T})
+ \le \frac{\varepsilon_\mu^2}{2\lambda_{\min}(\widehat\Omega)}
+       +\frac{m\eta^2}{4(1-\eta)^2}.
+ \label{eq:gaussian-kl-bound}
+\end{equation}
+\end{proposition}
+\begin{proof}
+Apply the sequence KL chain rule and the Gaussian KL formula.
+For \(\lambda\in[1-\eta,1+\eta]\), Taylor's theorem gives
+\(\lambda-1-\log\lambda\le(\lambda-1)^2/[2(1-\eta)^2]\).
+Sum this bound over the covariance eigenvalues.
+\end{proof}
+
+This explains which small-noise issue matters for KL:
+mean errors are measured in units of conditional observation variance.
+A nearly zero \(\lambda_{\min}(\widehat\Omega)\) can make a small
+Euclidean error costly. The conditional observation covariance can remain
+positive definite when the physical process-noise covariance is singular.
+
+For any sequence cost with range length \(C_{\max}\), Pinsker gives
+\[
+ |\E_P[c]-\E_Q[c]|
+ \le C_{\max}\sqrt{\KL(P_{1:T},Q_{1:T})/2}.
+\]
+The sequence KL bound grows with \(T\). To control long-run generated statistics, use stability
+of the \emph{generative} dynamics and an appropriate \emph{coupling}:
+a joint construction of the two processes with their prescribed marginal laws.
+\Cref{app:state-stability} gives that comparison.
+The required condition concerns \(\overline A=\overline F+\overline L\overline C\),
+the matrix governing generation.
+
+\subsection{Stable autoregression can also control long-run error}
+\label{sec:stable-ar}
+
+Stability can be imposed directly on the observable regression.
+Here is one sufficient condition that preserves convex fitting.
+
+\begin{proposition}[A stable autoregressive fit]
+\label{prop:stable-ar}
+Let \(Z_{t+1}=P_t+E_{t+1}\), where \(P_t\) is its conditional mean
+and the \(E_t\) are iid additive innovations independent of the past.
+Fix fitted coefficient matrices satisfying
+\[
+ \sum_{j=1}^p\lVert\widehat B_j\rVert\le\beta<1,\qquad
+ \sup_{t\ge p}
+ \left(\E\left[
+ \left\lVert P_t-\sum_{j=1}^p\widehat B_jZ_{t+1-j}\right\rVert_2^2
+ \right]\right)^{1/2}\le\varepsilon.
+\]
+Start a fitted generator from the same first \(p\) observations and
+use the same innovations in a coupling:
+\[
+ \widetilde Z_{t+1}
+ =\sum_{j=1}^p\widehat B_j\widetilde Z_{t+1-j}+E_{t+1}.
+\]
+Then
+\begin{equation}
+ \sup_t\bigl(\E[\lVert Z_t-\widetilde Z_t\rVert_2^2]\bigr)^{1/2}
+ \le\frac{\varepsilon}{1-\beta}.
+ \label{eq:stable-ar}
+\end{equation}
+\end{proposition}
+
+\begin{proof}
+Let \(d_t\) denote the RMS discrepancy. Inserting the fitted predictor
+evaluated on the true history and using the \(L^2\) triangle inequality
+gives \(d_{t+1}\le\varepsilon+\sum_j\lVert\widehat B_j\rVert d_{t+1-j}\).
+Starting from \(d_1=\cdots=d_p=0\), induction gives the result.
+\end{proof}
+
+The constraint on the sum of operator norms is convex.
+A statistic \(c\) is \(L_c\)-\emph{Lipschitz} if
+\(|c(x)-c(y)|\le L_c\|x-y\|\).
+Such a statistic of one observation, or its time average,
+then has expectation discrepancy at most
+\(L_c\varepsilon/(1-\beta)\).
+\Cref{app:state-stability} gives the corresponding state-space comparison
+and a second-moment bound.
+Thus both state-space modeling and autoregression can use stability.
+The choice concerns how useful memory is represented, how much is
+truncated, and what constraints the fitting method preserves.
+
+\subsection{A noiseless comparison: Cayley--Hamilton}
+\label{sec:cayley-hamilton}
+
+In a noiseless LDS, we can eliminate the hidden state to obtain an exact
+recurrence involving only observations. The key linear-algebra result
+is the following.
+
+\begin{restatable}[Cayley--Hamilton]{theorem}{cayleyhamilton}
+\label{thm:cayley-hamilton}
+Let \(A\in\R^{d\times d}\) have characteristic polynomial
+\[
+ \chi_A(\lambda)=\det(\lambda I-A)
+ =\lambda^d+a_{d-1}\lambda^{d-1}+\cdots+a_1\lambda+a_0.
+\]
+Then
+\begin{equation}
+ \chi_A(A)=A^d+a_{d-1}A^{d-1}+\cdots+a_1A+a_0I=0.
+ \label{eq:cayley-hamilton}
+\end{equation}
+\end{restatable}
+
+The proof by the adjugate identity is in \cref{app:cayley-hamilton}.
+
+\begin{corollary}[Eliminating a noiseless hidden state]
+\label{cor:exact-ar}
+If \(S_{t+1}=AS_t\) and \(Z_t=CS_t\), then
+\begin{equation}
+ Z_{t+d}+a_{d-1}Z_{t+d-1}+\cdots+a_0Z_t=0.
+ \label{eq:exact-ar}
+\end{equation}
+\end{corollary}
+\begin{proof}
+The left side is \(C\chi_A(A)S_t=0\).
+\end{proof}
+
+The same scalar coefficients \(a_0,\ldots,a_{d-1}\) apply to every
+observation coordinate, even when \(Z_t\) is vector-valued.
+This deterministic linear model is more expressive than it may first appear.
+Its trajectories are combinations of terms of the form
+\(t^k\lambda^t\), arising from the eigenvalues and Jordan blocks of \(A\).
+They therefore include exponential growth and decay, polynomial trends,
+damped or persistent oscillations, periodic motion, and superpositions of
+oscillations with incommensurate frequencies. Even dynamics that retain
+information indefinitely have the recurrence in \cref{eq:exact-ar}.
+
+Nonlinear state updates permit qualitatively different behavior, including
+multiple attractors and chaos. A precise one-dimensional result illustrates
+the distinction: if a continuous map from an interval to itself has a point
+of least period three, then it has points of every positive period and an
+uncountable scrambled set in the sense of Li and Yorke
+\citep{li1975}. The conclusion requires continuity, an interval state space,
+and least period three; ``period three implies chaos'' is not a statement
+about an arbitrary nonlinear recurrence. The observation map can reveal or
+hide features of the state dynamics.
+
+With noise, the linear elimination produces additional, generally correlated
+noise terms.
+To fit a predictor by regression, we need its conditional mean
+given the \emph{observations}, as in \cref{sec:noisy-prediction}.
+
+
+\section{Take-home messages}
+\label{sec:take-home}
+\begin{enumerate}[leftmargin=*,itemsep=.2em]
+\item A useful state-space model restricts what is remembered and how it
+evolves. The observation process need not be Markov.
+\item Language may be viewed as a partial observation of an evolving internal
+process, which motivates latent state. This does not imply that explicitly
+estimating a stochastic latent trajectory is the best predictive method.
+\item Conditional generation first infers a distribution over the current
+state. Filtering, smoothing, and most likely path decoding answer
+different questions.
+\item Hidden-state likelihood can be evaluated efficiently in important
+families, while its optimization remains difficult. EM uses posterior
+averages; joint state optimization uses a different objective.
+\item Observable regression supplies a flexible predictor. Hankel
+factorization imposes shared dynamics and can recover a compact
+innovations realization. Finite-data success depends on truncation,
+excitation, rank conditioning, and residual modeling.
+\item Fixed-window AR discards older observations. State models and
+transformers instead share parameters across prefix lengths, but state models
+compress the prefix into fixed-dimensional recurrent memory while standard
+attention retains token-level memory that grows with the context.
+\item Memory in the physical state and forgetting of filtering errors
+are compatible. Prediction stability and generation stability must
+be checked separately.
+\item Deterministic recurrent states permit backpropagation through
+observed prefixes. Structured affine updates can also support parallel
+training and recurrent evaluation of some attention maps.
+\end{enumerate}
+
+\clearpage
+\printendnotes
+
+\section*{Bibliographical notes}
+\phantomsection
+\label{sec:bibliographical-notes}
+
+\paragraph{Filtering, smoothing, and likelihood fitting.}
+\citet{doucet2009} give an accessible particle-filtering and smoothing
+tutorial. \citet{douc2014} establishes time-uniform
+control of asymptotic particle-filter variance and error under mixing
+and observation assumptions, including noncompact state spaces.
+
+Dynamax implements EM and gradient-based marginal-likelihood fitting
+\citep{dynamax}. Thus differentiating a forward recursion is an established
+computational option. \citet{wu1983} supplies convergence conditions for EM
+and explains why monotonicity alone does not establish convergence to
+a local optimum. \citet{dellaert2017} develops sparse trajectory MAP
+estimation for robotics. It concerns optimization over states and, in
+SLAM, map variables, rather than replacing marginal likelihood by an
+equivalent objective.
+
+\paragraph{Gaussian prediction and realization.}
+\citet{mikusheva2009} derives Gaussian state prediction.
+The sufficient-condition proof in \cref{app:kalman} is included in full.
+\citet{hokalman1966} gives the classical realization construction from
+input-output coefficient matrices; \cref{sec:exact-realization} applies
+that algebra to the predictor's coefficients.
+
+For finite stochastic data, \citet{tsiamis2019}, Theorem~1 and Theorem~4
+with Remark~4, analyzes future-on-past block regression and an SVD-based
+realization. Assumptions~1--3 specify known state dimension, observability,
+controllability by process noise, positive measurement covariance,
+steady-state filtering initialization, and sufficient block lengths.
+Together with sample-size and conditioning requirements, the bounds give
+matrix error of order \(T^{-1/2}\) up to logarithmic factors and similarity.
+The allowed \(\rho(A)\le1\) includes the boundary case \(\rho(A)=1\).
+This is a closely related algorithm, not a finite-sample theorem for
+every one-step AR/SVD variant.
+
+\citet{tsiamis2020} instead bounds \emph{regret}, cumulative squared loss
+minus that of the Kalman predictor, using online regression.
+With high probability the bound grows as a power of \(\log T\),
+including systems with \(\rho(A)\le1\) under the paper's
+conditions. This directly addresses prediction performance; it need
+not identify a compact generative realization. The Gaussian KL and
+coupling calculations here explain additional steps needed when the
+evaluation criterion is a sequence law or a generated statistic.
+
+\paragraph{Synthetic comparisons and spectral prediction.}
+Synthetic dynamical systems are a standard controlled setting for
+comparing sequence models. \citet{agarwal2024}, Section~4.1 and
+Appendix~E.1, tests a system with diagonal eigenvalues \(\pm0.9999\)
+and compares spectral units with learned linear recurrence.
+These eigenvalues are strictly inside the unit circle, although the
+appendix calls the system marginally stable.
+Our constant-state calculation isolates the effect of history length;
+the AR/SVD experiment compares two fitted predictors.
+
+\citet{hazan2017} fits a predictor in a fixed spectral feature space and
+proves guarantees against a specified LDS class. The learner need not
+recover the comparator's state coordinates. \citet{agarwal2024} develops
+spectral sequence layers and an autoregressive extension.
+\citet{dogariu2025} extends observable-history prediction using spectral
+filtering and linear observers in a nonlinear-dynamics setting; the
+bounds require their structural and conditioning assumptions.
+These are additional ways to exploit dynamical structure.
+
+\paragraph{Recurrent computation and language models.}
+\citet{pascanu2013} analyzes vanishing and exploding gradients in
+recurrent-network training. \citet{katharopoulos2020} derives recurrent
+causal linear attention. \citet{dao2024}, Sections~2 and~5, develops
+structured state-space duality and efficient matrix-based algorithms;
+the finite-feature calculation in \cref{sec:attention-state} is an
+elementary example.
+
+\citet{bick2024} introduces MOHAWK's staged transformer-to-SSM distillation.
+\citet{wang2024} converts pretrained attention layers and trains
+hybrid recurrent/attention models. Their measured results concern the
+models, tasks, and compute settings in those papers.
+
+\citet{shi2026hilp} introduce Hierarchical Latent Prediction, which adds
+auxiliary objectives requiring token-level and coarser hidden
+representations to predict future hidden representations at several temporal
+scales. These are partial state-like constraints on the shared transformer
+representation. The auxiliary hierarchy is removed at inference, so
+generation still uses the ordinary next-token head. The paper reports
+improvements on its tested coding, multi-step reasoning, and speculative
+decoding evaluations.
+
+\paragraph{Nonlinear recurrence and chaos.}
+\citet{li1975} prove the theorem summarized after
+\cref{cor:exact-ar}: for a continuous self-map of an interval, a point of
+least period three implies points of every positive period and an uncountable
+scrambled set. This result motivates the standard phrase ``period three
+implies chaos,'' with the stated setting and Li--Yorke notion of chaos.
+
+
+
+\clearpage
+
+\section*{Glossary}
+\phantomsection
+\label{sec:glossary}
+
+\begingroup\small
+\begin{description}[style=nextline,leftmargin=1.5em,labelindent=0pt,
+  itemsep=0.15em,parsep=0pt]
+\item[State-space model; latent state]
+A model of observations through an evolving, possibly unobserved
+state. State coordinates specify the information retained over time.
+\item[Transition and observation kernels]
+Conditional probability laws of the next state given the current state,
+and of the current observation given the current state. The observation
+kernel is also called the emission kernel; it averages over observation noise.
+\item[One-hot encoding; martingale difference]
+\(Z_t=e_{X_t}\) turns token probabilities into vector conditional means.
+Subtracting a conditional mean produces a residual with conditional
+expectation zero given the past.
+\item[Linear dynamical system; linear autoregression]
+An LDS has linear state and observation equations. A linear
+autoregression predicts from a linear combination of observed lags.
+\item[Unit-delay box \(\mathsf D\)]
+A diagram element that stores its incoming signal for one time step.
+Function boxes are static maps; feedback through a delay gives the diagram
+memory.
+\item[System identification]
+Estimating dynamical and observation equations from observed data.
+\item[Innovation; Kalman predictor]
+An innovation is the observation minus its conditional-mean prediction.
+For the Gaussian LDS considered here, the Kalman predictor computes
+that mean recursively, and innovations are independent Gaussian vectors.
+\item[Truncation error]
+The predictive effect of history omitted by a finite-lag approximation.
+It is controlled by the tail of the history coefficients.
+\item[Hankel factorization]
+Factoring a matrix of lag coefficients to recover a finite-dimensional
+recurrent predictor. Its rank expresses the minimal predictive state
+dimension under the stated rank assumptions.
+\item[Filtering; prediction; smoothing]
+Conditioning a current state on observations through the current time,
+conditioning a future state on earlier observations, and conditioning
+a state on observations before and after it.
+\item[Observation-driven state]
+A recurrent state updated deterministically using observations; given
+parameters and its initial state, the observed prefix determines it.
+\item[EM]
+Alternating posterior inference and expected complete-data likelihood
+maximization.
+\item[Excitation; realization conditioning]
+Variation in observed regressors and separation of retained singular
+values from zero; both affect recovery from noisy data.
+\item[Backpropagation through time]
+Differentiation of the unrolled recurrent computation.
+\end{description}
+\endgroup
+
+\clearpage
+
+\section{Exercises}
+\label{sec:exercises}
+The exercises follow the modeling, estimation, and computational questions.
+The noiseless recurrence in \cref{ex:lds}(a) is optional.
+\exerciseinstructions
+\setcounter{courseexercise}{0}
+
+\input{../exercises/l5-feedback.tex}
+\input{../exercises/l5-kernels.tex}
+\input{../exercises/l4-latent-likelihood.tex}
+\input{../exercises/l5-em.tex}
+\input{../exercises/l5-sharing.tex}
+\input{../exercises/l4-lds.tex}
+\input{../exercises/l5-memory.tex}
+\input{../exercises/l5-bptt.tex}
+
+\clearpage
+\appendix
+\renewcommand{\thesection}{5.\Alph{section}}
+\section{Deferred proofs and stability comparisons}
+
+\subsection{KL for continuous laws}
+\label{sec:continuous-kl}
+
+For probability laws \(P\) and \(Q\) on the same measurable space, suppose
+that \(P\) is absolutely continuous with respect to \(Q\), written
+\(P\ll Q\). Then the density ratio \(dP/dQ\) exists and
+\[
+ \KL(P,Q)=\int \log\!\left(\frac{dP}{dQ}\right)dP.
+\]
+If \(P\not\ll Q\), set \(\KL(P,Q)=+\infty\). When both laws have densities
+\(p,q\) with respect to Lebesgue measure, this becomes
+\[
+ \KL(P,Q)=\int p(z)\log\frac{p(z)}{q(z)}\,dz.
+\]
+This definition applies directly to discrete, continuous, and mixed laws; it
+does not require defining differential entropy. It follows the treatment of
+relative entropy on general measurable spaces in \citet[Chapter~14]{lattimore2020}.
+
+For scalar Gaussian laws with \(a,b>0\), direct integration gives
+\begin{equation}
+ \KL\!\left(\mathcal N(\mu,a),\mathcal N(\nu,b)\right)
+ =\frac12\left(
+   \log\frac ba+\frac{a+(\mu-\nu)^2}{b}-1
+ \right).
+ \label{eq:gaussian-kl-scalar}
+\end{equation}
+For random conditional laws, expected conditional KL means that this
+pointwise KL is averaged over the conditioning history.
+
+\subsection{The constant-gain Gaussian predictor}
+\label{app:kalman}
+
+\kalmanpredictor*
+\begin{proof}
+We construct the covariance used in \cref{thm:kalman}.
+If \(S_t\mid Z_{<t}\sim\mathcal N(M_t,\Pi_t)\), Gaussian conditioning
+and the state equation give
+\begin{align}
+ \Omega_t&=C\Pi_tC^\top+\Sigma_W,\qquad
+ L_t=A\Pi_tC^\top\Omega_t^{-1},\nonumber\\
+ M_{t+1}&=AM_t+L_t(Z_t-CM_t),\label{eq:kalman-general}\\
+ \Pi_{t+1}
+ &=A\Pi_tA^\top+\Sigma_V
+   -A\Pi_tC^\top\Omega_t^{-1}C\Pi_tA^\top.\nonumber
+\end{align}
+The covariance update is a deterministic map \(\mathcal T(\Pi_t)\).
+To show that it has a fixed point under the stated conditions, use
+the identity
+\begin{equation}
+ (A-GC)\Pi(A-GC)^\top+\Sigma_V+G\Sigma_WG^\top
+ =\mathcal T(\Pi)+(G-L)(C\Pi C^\top+\Sigma_W)(G-L)^\top,
+ \label{eq:riccati-minimum}
+\end{equation}
+where \(L=A\Pi C^\top(C\Pi C^\top+\Sigma_W)^{-1}\).
+For any vector, its quadratic form on the left is minimized over
+\(G\) by \(G=L\).
+It follows that \(\mathcal T\) is monotone in the positive-semidefinite
+order.
+
+Since \(\rho(A)<1\), the finite matrix
+\[
+ B=\sum_{j=0}^{\infty}A^j\Sigma_V(A^\top)^j
+\]
+satisfies \(B=ABA^\top+\Sigma_V\).
+Starting from \(\Pi_0=0\), iterate \(\Pi_{n+1}=\mathcal T(\Pi_n)\).
+Monotonicity gives an increasing sequence, and
+\(\mathcal T(B)\preceq ABA^\top+\Sigma_V=B\) bounds it above.
+It therefore converges to a fixed point \(\Pi\).
+Continuity follows from \(\Sigma_W\succ0\), and
+\(\Pi\succeq\Sigma_V\succ0\).
+
+Set \(L=A\Pi C^\top(C\Pi C^\top+\Sigma_W)^{-1}\) and \(F=A-LC\).
+The fixed-point identity becomes
+\[
+ \Pi=F\Pi F^\top+\Sigma_V+L\Sigma_WL^\top.
+\]
+Thus \(\Pi-F\Pi F^\top\succ0\); conjugation by \(\Pi^{-1/2}\)
+shows that \(\rho(F)<1\).
+Initialize \(S_1\sim\mathcal N(0,\Pi)\).
+Induction in \cref{eq:kalman-general} now keeps the error covariance
+equal to \(\Pi\), proving \cref{eq:kalman-predictor,eq:kalman-conditional}.
+
+Finally,
+\[
+ S_t=A^{t-1}S_1+\sum_{j=2}^t A^{t-j}V_j.
+\]
+The geometric decay of powers of \(A\) bounds its second moment
+uniformly in \(t\); \(Z_t=CS_t+W_t\) has the same property.
+Geometric decay of powers of \(F\) also supplies the constants
+\(G,\gamma\) in \cref{prop:truncation}.
+\end{proof}
+
+\subsection{Why the Hankel factors recover the predictor}
+\label{app:hankel}
+
+\hankelrecovery*
+\begin{proof}
+Under the ranks assumed in \cref{sec:exact-realization}, both
+\(\mathcal H_0=\mathcal O_\star\mathcal R_\star\) and
+\(\mathcal H_0=\mathcal O\mathcal R\) are full-rank factorizations
+through a \(d_\star\)-dimensional space.
+Their left factors have the same column space, so
+\(\mathcal O=\mathcal O_\star T_0\) for an invertible \(T_0\).
+Multiplying by a left inverse of \(\mathcal O_\star\) gives
+\(\mathcal R=T_0^{-1}\mathcal R_\star\).
+Consequently, \cref{eq:recover-matrices} yields
+\[
+ \overline F=T_0^{-1}F_\star T_0,\qquad
+ \overline C=C_\star T_0,\qquad
+ \overline L=T_0^{-1}L_\star.
+\]
+Substituting these into
+\(\overline C\overline F^{j-1}\overline L\)
+proves \cref{prop:hankel-recovery}.
+Small singular values make inversion sensitive to coefficient errors;
+the truncated SVD selects which directions to retain.
+\end{proof}
+
+\subsection{State-space error and long-run statistics}
+\label{app:state-stability}
+
+Consider two state processes on one probability space:
+\[
+ S_{t+1}=g(S_t)+V_{t+1},\qquad
+ \widetilde S_{t+1}=\widehat g(\widetilde S_t)+\widetilde V_{t+1}.
+\]
+Assume that \(\widehat g\) is \(\rho\)-Lipschitz, \(0\le\rho<1\),
+and that the local coupled RMS error is bounded:
+\[
+ \left(\E\left[
+ \lVert g(S_t)+V_{t+1}
+ -\widehat g(S_t)-\widetilde V_{t+1}\rVert_2^2
+ \right]\right)^{1/2}\le\varepsilon.
+\]
+With \(e_t=(\E[\lVert S_t-\widetilde S_t\rVert_2^2])^{1/2}\),
+inserting \(\widehat g(S_t)+\widetilde V_{t+1}\) between the next
+states gives \(e_{t+1}\le\varepsilon+\rho e_t\).
+Iterating gives the same geometric-sum bound used in Lecture~4:
+\[
+ e_t\le\rho^{t-1}e_1+
+ \varepsilon\frac{1-\rho^{t-1}}{1-\rho}.
+\]
+
+For observations \(Z_t=r(S_t)+W_t\) and
+\(\widetilde Z_t=\widehat r(\widetilde S_t)+\widetilde W_t\),
+assume that \(\widehat r\) is \(L_r\)-Lipschitz and
+\[
+ \left(\E\left[
+ \lVert r(S_t)+W_t-\widehat r(S_t)-\widetilde W_t\rVert_2^2
+ \right]\right)^{1/2}\le b.
+\]
+The observation discrepancy satisfies
+\[
+ d_t:=(\E[\lVert Z_t-\widetilde Z_t\rVert_2^2])^{1/2}
+ \le L_re_t+b.
+\]
+For an \(L_f\)-Lipschitz function \(f\),
+\[
+ |\E[f(Z_t)]-\E[f(\widetilde Z_t)]|\le L_fd_t.
+\]
+If both observation processes have RMS norm at most \(B_Z\), then
+\begin{equation}
+ \left\lVert\E[Z_tZ_s^\top]
+ -\E[\widetilde Z_t\widetilde Z_s^\top]\right\rVert_{\rm F}
+ \le B_Z(d_t+d_s).
+ \label{eq:second-moment-control}
+\end{equation}
+To see this, expand the matrix difference using
+\((Z_t-\widetilde Z_t)Z_s^\top+
+\widetilde Z_t(Z_s-\widetilde Z_s)^\top\), and apply Cauchy--Schwarz.
+Uniformly small coupled error therefore controls means, Lipschitz
+costs, and fixed-lag second moments.
+
+For linear Gaussian models in common state coordinates, take
+\(V_t=\Sigma_V^{1/2}\Xi_t\) and
+\(\widetilde V_t=\widehat\Sigma_V^{1/2}\Xi_t\) with shared standard
+Gaussian \(\Xi_t\), and couple the observation noises similarly.
+If the true states have RMS norm at most \(B_S\), sufficient local bounds are
+\begin{align*}
+ \varepsilon&\le\lVert A-\widehat A\rVert B_S+
+ \lVert\Sigma_V^{1/2}-\widehat\Sigma_V^{1/2}\rVert_{\rm F},\\
+ b&\le\lVert C-\widehat C\rVert B_S+
+ \lVert\Sigma_W^{1/2}-\widehat\Sigma_W^{1/2}\rVert_{\rm F}.
+\end{align*}
+The contraction condition is \(\lVert\widehat A\rVert<1\).
+A change of coordinates can express contraction in a weighted
+Euclidean norm. These bounds control errors in observation statistics
+uniformly over time.
+
+\subsection{Cayley--Hamilton}
+\label{app:cayley-hamilton}
+
+\cayleyhamilton*
+\begin{proof}
+The \emph{adjugate} is the transpose of the matrix of cofactors.
+Its defining determinant identity gives
+\[
+ (\lambda I-A)\operatorname{adj}(\lambda I-A)=\chi_A(\lambda)I.
+\]
+Write the adjugate, a matrix polynomial of degree at most \(d-1\), as
+\(\sum_{j=0}^{d-1}\lambda^jD_j\).
+Comparing coefficients yields
+\[
+ D_{d-1}=I,\qquad
+ D_{j-1}-AD_j=a_jI\ (1\le j\le d-1),\qquad
+ -AD_0=a_0I.
+\]
+Multiply the middle identities on the left by \(A^j\), add them
+to the last identity and to \(A^dD_{d-1}=A^d\).
+All the \(D_j\) terms cancel, leaving \(\chi_A(A)=0\).
+\end{proof}
+
+\section{Reproducing the synthetic experiment}
+\label{app:synthetic-experiment}
+
+This appendix specifies the experiment in \cref{tab:l5-synthetic,fig:l5-synthetic}.
+The saved code fits the AR and state-space models to the same observations
+and evaluates them on the same continuation.
+
+\subsection{Generator, seeds, and data blocks}
+
+Use training sizes \(T\in\{256,1024,4096\}\) and seeds
+\(s\in\{0,\ldots,49\}\). For each pair, initialize NumPy's
+\texttt{default\_rng(s)} and draw independent standard normal
+\(E_0,\ldots,E_{N-1}\), where \(N=T+14000\).
+Using the code's zero-based indexing, generate
+\[
+ M_0=0,\qquad Z_t=M_t+E_t,\qquad
+ M_{t+1}=0.98M_t+0.18E_t,\quad 0\le t<N.
+\]
+Equivalently, \(M_{t+1}=0.8M_t+0.18Z_t\), so \(M_t\) is the
+exact conditional mean given \(Z_{0:t-1}\). The conditional variance
+of \(Z_t\) is one. The data blocks are:
+\begin{center}
+\begin{tabular}{lrr}
+\toprule
+Block & Indices (inclusive) & Length\\
+\midrule
+Warmup & \(0,\ldots,1999\) & 2000\\
+Training & \(2000,\ldots,1999+T\) & \(T\)\\
+Calibration & \(2000+T,\ldots,3999+T\) & 2000\\
+Test & \(4000+T,\ldots,13999+T\) & 10000\\
+\bottomrule
+\end{tabular}
+\end{center}
+Only the training block is used to fit lag coefficients. The warmup
+observations remain available as history when running the fitted
+predictors. Their states are propagated from time zero through all
+blocks without resetting at block boundaries. Calibration and test
+are consecutive parts of the same trajectory. Reusing each seed across
+training sizes makes those comparisons dependent; the 50 seeds supply
+the repeated trials at each size.
+
+\subsection{Fitting and calibration}
+
+Fit a zero-intercept AR(32) by ordinary least squares on all \(T-32\)
+training targets whose 32 preceding observations are also in the training
+block:
+\[
+ (\widehat B_1,\ldots,\widehat B_{32})
+ \in\operatorname*{argmin}_{b_1,\ldots,b_{32}}
+ \sum_{t=2032}^{1999+T}
+ \left(Z_t-\sum_{j=1}^{32}b_jZ_{t-j}\right)^2.
+\]
+The implementation uses \texttt{numpy.linalg.lstsq} with
+\texttt{rcond=None}, with no centering or regularization.
+Construct the \(16\times16\) matrices
+\[
+ (H_0)_{ij}=\widehat B_{i+j-1},\qquad
+ (H_1)_{ij}=\widehat B_{i+j},\qquad 1\le i,j\le16.
+\]
+Retain the leading singular triplet \((u_1,\sigma_1,v_1)\) of \(H_0\),
+set \(\mathcal O=\sqrt{\sigma_1}u_1\) and
+\(\mathcal R=\sqrt{\sigma_1}v_1^\top\), and compute
+\[
+ \overline F=\mathcal O^\dagger H_1\mathcal R^\dagger,\qquad
+ \overline C=\mathcal O_{1,1},\qquad
+ \overline L=\mathcal R_{1,1}.
+\]
+All three recovered parameters are scalars. The order 32, block size 16,
+and rank one are fixed before fitting; there is no hyperparameter search
+or stability correction.
+
+On each observed history, the two fitted means are
+\[
+ \widehat\mu_t^{\rm AR}=\sum_{j=1}^{32}\widehat B_jZ_{t-j},\qquad
+ \widehat\mu_t^{\rm SS}=\overline C\overline M_t,\qquad
+ \overline M_{t+1}=\overline F\overline M_t+\overline LZ_t,
+ \quad\overline M_0=0.
+\]
+The first 32 AR predictions are set to zero and occur before every
+evaluation block. Each model separately estimates its scalar innovation
+variance on the calibration block \(\mathcal I\):
+\[
+ \widehat\Omega
+ =\max\left\{10^{-8},\frac1{2000}
+ \sum_{t\in\mathcal I}(Z_t-\widehat\mu_t)^2\right\}.
+\]
+This is the uncentered residual second moment. Fitted parameters and
+this variance remain fixed throughout the test block.
+
+The population reference value for the exact state predictor is one.
+For AR(32), calculate the optimal residual variance under the
+\emph{stationary law}, whose distributions are unchanged by shifting
+all time indices. Before observing a finite window, the state variance is
+\(P_0=0.18^2/(1-0.98^2)=9/11\). If the current state has conditional
+variance \(P_j\), conditioning the Gaussian pair
+\((M_{t+1},Z_t)\) gives
+\[
+ P_{j+1}=\frac{0.8^2P_j}{1+P_j},\qquad
+ \Omega_{\rm AR(32)}=1+P_{32}
+ \approx1.000000156927612.
+\]
+The conditional mean is linear in the window, so this is also the
+population least-squares residual variance. The completion script
+saves this value; its tests independently check it by solving the
+population regression using the observation autocovariances.
+
+\subsection{Metrics and the four panels}
+
+For either fitted mean, its test excess mean squared error is
+\[
+ \operatorname{MSE}_{\rm excess}
+ =\frac1{10000}\sum_{t\in\mathcal T}(\widehat\mu_t-M_t)^2,
+\]
+where \(\mathcal T\) is the test block. It measures conditional-mean
+error and excludes the irreducible observation variance.
+Averaging the Gaussian conditional KL
+\(D(\mathcal N(M_t,1),\mathcal N(\widehat\mu_t,\widehat\Omega))\)
+over that block gives exactly
+\[
+ \operatorname{KL}_{\rm step}
+ =\frac12\left(\frac{1+\operatorname{MSE}_{\rm excess}}
+ {\widehat\Omega}-1+\log\widehat\Omega\right).
+\]
+The table reports arithmetic means of these metrics over all 50 seeds
+at each training size, together with the mean calibration estimate
+\(\widehat\Omega\). The AR generator is classified as unstable when
+its companion matrix has spectral radius at least one. For the state
+generator the criterion is
+\(\lvert\overline F+\overline L\overline C\rvert\ge1\);
+\(\lvert\overline F\rvert\) is recorded separately for prediction.
+Every fit is retained in the summaries.
+
+\Cref{fig:l5-synthetic} is constructed as follows.
+\begin{enumerate}[label=(\alph*),leftmargin=*]
+\item Plot \(M_t\), \(\widehat\mu_t^{\rm AR}\), and
+\(\widehat\mu_t^{\rm SS}\) for the first 160 test steps of the
+preselected seed 0, \(T=1024\) run: absolute indices 5024 through 5183,
+relabeled 1 through 160. These are conditional predictions on a common
+observed history, rather than freely generated trajectories.
+\item Plot each fitted mean minus \(M_t\) on the same segment.
+\item For the same fitted models, plot lags \(j=1,\ldots,64\):
+the true \(0.18(0.8)^{j-1}\), the fitted AR coefficients (zero for
+\(j>32\)), and \(\overline C\overline F^{j-1}\overline L\).
+\item Plot one point per trial, with AR excess MSE horizontally and
+state-predictor excess MSE vertically, on logarithmic axes. There are
+150 points, distinguished by training size. The diagonal marks equal
+errors; crosses identify unstable state generators.
+\end{enumerate}
+
+\subsection{Completion experiments}
+\label{app:completion-experiments}
+
+The script \path{scripts/lecture05_completions.py} reads the saved fitted
+parameters and covariance estimates and generates
+\cref{fig:l5-completion-fit,fig:l5-completion-memory}.
+The plotting script uses the resulting saved JSON without refitting
+or drawing new randomness.
+
+\paragraph{The fitted models.}
+Use seed 0 and \(T=1024\), as in \cref{fig:l5-synthetic}. The common
+prompt is the complete prefix \(Z_0,\ldots,Z_{5023}\): warmup, training,
+and calibration observations. Run the true and fitted state predictors
+through this prefix from their zero initial states; initialize the AR
+model with its final 32 observations. Keep all fitted parameters and
+calibration variances fixed. Generate three 300-step continuations
+using the \(3\times300\) array of standard normal draws from NumPy's
+\texttt{default\_rng(20260916)}. Every model uses the same row of this
+array for the corresponding path, scaled by its own innovation standard
+deviation. Subsequent state updates use the model's generated observations.
+
+The prediction bands are computed analytically. For a scalar innovations
+model with parameters \(a,c,\ell,\omega\) and predictive state \(r\)
+after the prompt, number future observations by \(h=1,2,\ldots\).
+Under its conditional continuation law,
+\[
+ \E[\widetilde Z_h]=ca^{h-1}r,\qquad
+ \operatorname{Var}(\widetilde Z_h)
+ =\omega\left(1+(c\ell)^2\sum_{j=0}^{h-2}a^{2j}\right),
+\]
+with an empty sum at \(h=1\). For an AR model with coefficients \(b_j\),
+define its response to one unit of innovation by
+\[
+ \psi_0=1,\qquad
+ \psi_k=\sum_{j=1}^{\min(k,p)}b_j\psi_{k-j}.
+\]
+Its future mean follows the AR recurrence with future innovations set to
+zero, and its variance at step \(h\) is
+\(\omega\sum_{k=0}^{h-1}\psi_k^2\).
+Each band is the conditional mean plus or minus
+\(1.959963984540054\) conditional standard deviations.
+These are pointwise prediction intervals given the original prompt.
+
+\paragraph{The constant hidden state.}
+The reference model is \(U\sim\mathcal N(0,1)\),
+\(Z_t=U+W_t\), with independent iid \(W_t\sim\mathcal N(0,1)\).
+Prescribe the prompt \(z_i=2+\xi_i\), \(1\le i\le1000\), using
+standard normal draws from \texttt{default\_rng(0)}.
+The level 2 is fixed by the experimental design; each model's continuation
+law is conditioned on this supplied prompt. The full-history posterior
+has \(m_n\approx1.9500\), \(v_n=1/1001\).
+Every future observation has conditional mean \(m_n\) and variance
+\(1+v_n\) given this prompt.
+
+For coupling with AR innovations, generate the full-history continuation
+by its exact sequential Gaussian predictor. Starting from \((m,v)=(m_n,v_n)\),
+at each step draw
+\[
+ z=m+\sqrt{1+v}\,\xi,\qquad
+ m_{\rm next}=m+\frac{v}{1+v}(z-m),\qquad
+ v_{\rm next}=\frac{v}{1+v}.
+\]
+This has the same joint continuation law as drawing \(U\) once from its
+posterior and then adding independent observation noises.
+The fixed-window model is the AR(10) recurrence in
+\cref{sec:completion-experiments}, with every coefficient \(1/11\)
+and innovation variance \(12/11\). Both use the same \(3\times400\)
+array of standard normal draws from \texttt{default\_rng(20260917)}.
+Their bands are obtained from the exact conditional variances above.
+All parameters are known in this comparison; neither model is fitted
+to this one prompt.
+The full-history state and true-process panels use the same conditional
+law and the same noise draws, so their means, bands, and paths agree
+exactly. Both figures order the panels as conditional means, true-process
+continuations, AR continuations, and state-model continuations.
+
+\subsection{Saved artifacts and reproduction commands}
+
+From the repository root, run:
+\begin{verbatim}
+python3 scripts/lecture05_synthetic.py
+python3 scripts/lecture05_completions.py
+python3 scripts/test_lecture05_synthetic.py
+python3 scripts/test_lecture05_completions.py
+python3 scripts/build_lecture_notes.py documents/scribes/lecture05.tex
+\end{verbatim}
+The experiment requires Python 3.9 or later and NumPy; the saved run
+used Python 3.9.6 and NumPy 1.22.0. It writes
+\texttt{documents/figures/lecture05-synthetic.json}, containing all
+150 fits and metrics, the displayed trajectory data, configuration,
+software versions, and SHA-256 hashes of both experiment source files.
+The adjacent \texttt{lecture05-synthetic-results.tex} and
+\texttt{lecture05-synthetic-plots.tex} are generated from these results.
+PGFPlots renders the figure during the lecture build.
+
+The completion script writes \texttt{lecture05-completions.json}
+in the same directory. It contains both
+prompts, every shared noise draw, all sampled paths, exact conditional
+means and variances, prediction bands, source hashes, and the input-data
+hash. Its generated figures are saved as
+\path{lecture05-completion-fit.tex} and
+\path{lecture05-completion-memory.tex}.
+To regenerate only the plots from the saved JSON, run
+\begin{verbatim}
+python3 scripts/lecture05_synthetic_plots.py
+python3 scripts/lecture05_completion_plots.py
+\end{verbatim}
+The plotting command uses only saved results. Output-directory options
+are documented in \path{scripts/lecture05_synthetic.md}.
+Numerical rounding may depend on NumPy and linear-algebra
+library versions; the JSON records the environment of the displayed run.
+
+\clearpage
+\begin{thebibliography}{99}
+\bibitem[Agarwal et al.(2024)]{agarwal2024}
+Naman Agarwal, Daniel Suo, Xinyi Chen, and Elad Hazan.
+\newblock Spectral State Space Models.
+\newblock 2024. \url{https://arxiv.org/abs/2312.06837v4}.
+
+\bibitem[Barron et al.(1998)]{barron1998}
+Andrew Barron, Jorma Rissanen, and Bin Yu.
+\newblock The minimum description length principle in coding and modeling.
+\newblock IEEE Transactions on Information Theory, 44(6):2743--2760, 1998.
+\newblock \url{https://doi.org/10.1109/18.720554}.
+
+\bibitem[Bick et al.(2024)]{bick2024}
+Aviv Bick, Kevin Y. Li, Eric P. Xing, J. Zico Kolter, and Albert Gu.
+\newblock Transformers to SSMs: Distilling Quadratic Knowledge to Subquadratic Models.
+\newblock NeurIPS, 2024. \url{https://arxiv.org/abs/2408.10189}.
+
+\bibitem[Dao and Gu(2024)]{dao2024}
+Tri Dao and Albert Gu.
+\newblock Transformers are SSMs: Generalized Models and Efficient Algorithms
+Through Structured State Space Duality.
+\newblock 2024. \url{https://arxiv.org/abs/2405.21060v1}.
+
+\bibitem[Dellaert and Kaess(2017)]{dellaert2017}
+Frank Dellaert and Michael Kaess.
+\newblock Factor Graphs for Robot Perception.
+\newblock Foundations and Trends in Robotics, 6(1--2):1--139, 2017.
+\newblock \url{https://www.cs.cmu.edu/~kaess/pub/Dellaert17fnt.html}.
+
+\bibitem[Dogariu et al.(2025)]{dogariu2025}
+Evan Dogariu, Anand Brahmbhatt, and Elad Hazan.
+\newblock Universal Learning of Nonlinear Dynamics.
+\newblock 2025. \url{https://arxiv.org/abs/2508.11990}.
+
+\bibitem[Douc et al.(2014)]{douc2014}
+Randal Douc, Eric Moulines, and Jimmy Olsson.
+\newblock Long-term stability of sequential Monte Carlo methods under verifiable conditions.
+\newblock Annals of Applied Probability, 24(5):1767--1802, 2014.
+\newblock \url{https://arxiv.org/abs/1203.6898}.
+
+\bibitem[Doucet and Johansen(2009)]{doucet2009}
+Arnaud Doucet and Adam M. Johansen.
+\newblock A Tutorial on Particle Filtering and Smoothing: Fifteen Years Later.
+\newblock Handbook of Nonlinear Filtering, 2009.
+\newblock \href{https://www.stats.ox.ac.uk/~doucet/doucet_johansen_tutorialPF.pdf}{Author's tutorial}.
+
+\bibitem[Dynamax(2026)]{dynamax}
+Dynamax contributors.
+\newblock State Space Model API: EM and SGD fitting.
+\newblock Documentation, accessed September 15, 2026.
+\newblock \url{https://probml.github.io/dynamax/api.html}.
+
+\bibitem[Hazan et al.(2017)]{hazan2017}
+Elad Hazan, Karan Singh, and Cyril Zhang.
+\newblock Learning Linear Dynamical Systems via Spectral Filtering.
+\newblock 2017. \url{https://arxiv.org/abs/1711.00946}.
+
+\bibitem[Ho and Kalman(1966)]{hokalman1966}
+B. L. Ho and Rudolf E. Kalman.
+\newblock Effective construction of linear state-variable models
+from input/output functions.
+\newblock Regelungstechnik, 14:545--548, 1966.
+\newblock \url{https://doi.org/10.1524/auto.1966.14.112.545}.
+
+\bibitem[Katharopoulos et al.(2020)]{katharopoulos2020}
+Angelos Katharopoulos, Apoorv Vyas, Nikolaos Pappas, and Fran\c{c}ois Fleuret.
+\newblock Transformers are RNNs: Fast Autoregressive Transformers with Linear Attention.
+\newblock ICML, 2020.
+\newblock \url{https://proceedings.mlr.press/v119/katharopoulos20a.html}.
+
+\bibitem[Lattimore and Szepesv\'ari(2020)]{lattimore2020}
+Tor Lattimore and Csaba Szepesv\'ari.
+\newblock Bandit Algorithms.
+\newblock Cambridge University Press, 2020.
+\newblock \url{https://tor-lattimore.com/downloads/book/book.pdf}.
+
+\bibitem[Li and Yorke(1975)]{li1975}
+Tien-Yien Li and James A. Yorke.
+\newblock Period Three Implies Chaos.
+\newblock American Mathematical Monthly, 82(10):985--992, 1975.
+\newblock \url{https://doi.org/10.1080/00029890.1975.11994008}.
+
+\bibitem[Mikusheva(2009)]{mikusheva2009}
+Anna Mikusheva; Paul Schrimpf, scribe.
+\newblock Filtering. State space models. Kalman filter.
+\newblock MIT 14.384, Lecture 21, revised November 24, 2009.
+\newblock \href{https://ocw.mit.edu/courses/14-384-time-series-analysis-fall-2013/3dcb917d20ece78852cd398a3f7b5e64_MIT14_384F13_lec21.pdf}{MIT OpenCourseWare lecture notes}.
+
+\bibitem[Pascanu et al.(2013)]{pascanu2013}
+Razvan Pascanu, Tomas Mikolov, and Yoshua Bengio.
+\newblock On the difficulty of training recurrent neural networks.
+\newblock ICML, 2013.
+\newblock \url{https://proceedings.mlr.press/v28/pascanu13.html}.
+
+\bibitem[Shi et al.(2026)]{shi2026hilp}
+Changyan Shi, Tim Pearce, Manan Tomar, Siddhartha Sen, and John Langford.
+\newblock Hierarchical Latent Prediction for Language Models.
+\newblock 2026. \url{https://arxiv.org/abs/2608.05806}.
+
+\bibitem[Tsiamis and Pappas(2019)]{tsiamis2019}
+Anastasios Tsiamis and George J. Pappas.
+\newblock Finite Sample Analysis of Stochastic System Identification.
+\newblock CDC, 2019.
+\newblock \url{https://arxiv.org/abs/1903.09122}.
+
+\bibitem[Tsiamis and Pappas(2020)]{tsiamis2020}
+Anastasios Tsiamis and George J. Pappas.
+\newblock Online Learning of the Kalman Filter with Logarithmic Regret.
+\newblock 2020. \url{https://arxiv.org/abs/2002.05141}.
+
+\bibitem[Wang et al.(2024)]{wang2024}
+Junxiong Wang, Daniele Paliotta, Avner May, Alexander M. Rush, and Tri Dao.
+\newblock The Mamba in the Llama: Distilling and Accelerating Hybrid Models.
+\newblock NeurIPS, 2024. \url{https://arxiv.org/abs/2408.15237}.
+
+\bibitem[Watanabe(2013)]{watanabe2013}
+Sumio Watanabe.
+\newblock A widely applicable Bayesian information criterion.
+\newblock Journal of Machine Learning Research, 14:867--897, 2013.
+\newblock \url{https://www.jmlr.org/papers/v14/watanabe13a.html}.
+
+\bibitem[Wu(1983)]{wu1983}
+C. F. Jeff Wu.
+\newblock On the Convergence Properties of the EM Algorithm.
+\newblock Annals of Statistics, 11(1):95--103, 1983.
+\newblock \url{https://doi.org/10.1214/aos/1176346060}.
+\end{thebibliography}
+
+\end{document}

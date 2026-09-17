@@ -1,0 +1,42 @@
+% Shared exercise chunk: l4-kl-directions
+\begin{exercisechunk}
+\item \textbf{Which errors do the KL directions penalize?}
+\label[exercise]{ex:kl-directions}
+\label[exercise]{prop:kl-directions}
+Let \(P,R\) be laws on a finite domain \(\cX\).
+\begin{enumerate}[(a),beginpenalty=10000]
+\item For \(0<\varepsilon<1\), set \(Q=(1-\varepsilon)P+\varepsilon R\).
+For \(X\sim P\), \(Z\sim R\), and \(Y\sim Q\), prove
+\begin{equation}
+ \KL(P,Q)\le-\log(1-\varepsilon),\qquad
+ \E[c(Y)]=(1-\varepsilon)\E[c(X)]+\varepsilon\E[c(Z)].
+ \label{eq:kl-contamination}
+\end{equation}
+If \(c=0\) under \(P\) and \(c=C_{\max}>0\) under \(R\),
+compute the generated cost and both KL directions exactly.
+\item For \(0<P(A)<1\), define the conditional law on \(\cX\) by
+\[
+ Q(x)=\frac{P(x)\I\{x\in A\}}{P(A)},\qquad x\in\cX.
+\]
+Prove
+\begin{equation}
+ \KL(Q,P)=-\log P(A),\qquad \KL(P,Q)=+\infty.
+ \label{eq:kl-omission}
+\end{equation}
+What fraction of the target probability can be omitted with reverse KL
+\(\log 2\)? If \(P\) is uniform on \(M\ge2\) zero-cost outcomes,
+compute reverse KL and task cost for an arbitrary \(Q\) supported there.
+\item Let \(B=\{x:c(x)>0\}\), \(P(B)=\varepsilon\in(0,1)\),
+and \(Q(B)=q\). Prove \cref{eq:reverse-failure-prob}, and deduce an
+upper bound on \(q\) when \(\KL(Q,P)\le K\).
+For fixed \(q\in(0,1)\), compare the limits of
+\(\operatorname{kl}(q,\varepsilon)\) and
+\(\operatorname{kl}(\varepsilon,q)\) as \(\varepsilon\to0\).
+Explain what changes when \(P(B)=0\).
+\end{enumerate}
+\begin{hints}
+For (b), use the disjoint-support mixture calculation following
+\cref{prop:positive-data}. For (c), apply data processing to
+\(x\mapsto\I\{x\in B\}\), then use the entropy bound for a bit.
+\end{hints}
+\end{exercisechunk}

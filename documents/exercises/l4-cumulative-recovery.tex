@@ -1,0 +1,21 @@
+% Shared exercise chunk: l4-cumulative-recovery
+\begin{exercisechunk}
+\item \textbf{Cumulative cost under recovery.}
+\label[exercise]{ex:cumulative-recovery}
+\label[exercise]{cor:cumulative-recovery}
+Use the notation and assumptions of \cref{thm:markov-stability}, with
+\(\rho<1\). For \(c_t:[N]\to[0,1]\), define
+\[
+ c_{\mathrm{sum}}(x_{1:T})=\sum_{t=1}^T c_t(x_t).
+\]
+Let \(X_{1:T}\sim P\) and \(Y_{1:T}\sim Q\). Prove
+\begin{equation}
+ \left|\E[c_{\mathrm{sum}}(X_{1:T})]
+       -\E[c_{\mathrm{sum}}(Y_{1:T})]\right|
+ \le\frac{e_1+\sum_{t=2}^T\varepsilon_t}{1-\rho}.
+ \label{eq:cumulative-recovery}
+\end{equation}
+\begin{hints}
+Sum the marginal bounds before bounding the geometric sums.
+\end{hints}
+\end{exercisechunk}

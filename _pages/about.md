@@ -21,23 +21,18 @@ For each apparent obstruction, we will ask three things:
 2. Under what structure does a result become nonbinding?
 3. What remains unresolved for current systems or otherwise?
 
-The course takes an open minded approach to investigate current approaches to build today's 
-undoubtly powerful AI systems.
-The course does not assume that present neural approaches will reach every meaningful notion of intelligence,
-and is not investigating the philosophical questions of what is even the meaning of intelligence.
-Rather, it takes a pragramatic approach of carefully looking at "what went into" building today's systems,
-and along the way also asks the questions of what may be missing, including some discussion around
-familiar objections against the current main paradigm. 
-We will make an effort to distinguish between the epistemic status of various claims.
-We will aim for arriving at claims that can be formulated as mathematically precise theorems -- as the
-ultimate source of "truth". Some amount of discussion of empirical evidence, plausible explanations, engineering judgments, and open questions will also fit the course.
+The course takes an open-minded, pragmatic approach to understanding how today's powerful AI systems are built. It does not assume that present neural approaches will reach every meaningful notion of intelligence, and it does not investigate the philosophical question of what intelligence means. We will examine what went into current systems, what may be missing, and which familiar objections to the current paradigm remain substantive. Throughout, we will distinguish proved results, empirical evidence, plausible explanations, engineering judgments, and open questions.
+
+We regard theorems as the ultimate source of truth. Once a statement has been proved from explicit assumptions, its truth does not change in light of new experiments or new empirical evidence. This permanence is one source of the value of theory. It is not the only one. A theorem may be perfectly true while telling us little about the system we hoped to understand. We must therefore ask both whether a result is correct and whether its definitions, assumptions, and conclusion isolate something important about modern AI.
+
+A useful theoretical result is often a mathematical fable. It describes a deliberately simplified setting in which an important lesson can be stated and proved exactly. The proof makes the result reliable; the theorem's definitions and assumptions determine what the result helps us understand.
 
 ## Learning goals
 
 By the end of the course, students should be able to:
 
 - explain the main components of the current LLM training and inference recipe;
-- use mathematical models to analyze next-token prediction, dependent data, and understand the role and limitations of overparametrization, gradient-based optimization, shared representations, and post-training;
+- use mathematical models to analyze next-token prediction and dependent data, and to understand the role and limitations of overparametrization, gradient-based optimization, shared representations, and post-training;
 - distinguish representational possibility from learnability, optimization, efficiency, and exact correctness;
 - identify the information or computational resource added by interaction, curricula, memory, search, tools, and verifiers;
 - read a theorem together with its assumptions and explain which part of a modern AI system it does—and does not—illuminate;

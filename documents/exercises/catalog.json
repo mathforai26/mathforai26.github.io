@@ -8,7 +8,9 @@
   {
     "id": "l1-greedy-decoding",
     "lecture": 1,
-    "reference_lectures": [2],
+    "reference_lectures": [
+      2
+    ],
     "number": 2,
     "file": "l1-greedy-decoding.tex"
   },
@@ -127,15 +129,21 @@
     "file": "l2-probability-rules.tex"
   },
   {
-    "id": "l2-bayes-not-minimax",
+    "id": "l2-probability-bounds",
     "lecture": 2,
     "number": 19,
+    "file": "l2-probability-bounds.tex"
+  },
+  {
+    "id": "l2-bayes-not-minimax",
+    "lecture": 2,
+    "number": 20,
     "file": "l2-bayes-not-minimax.tex"
   },
   {
     "id": "l2-prior-structure",
     "lecture": 2,
-    "number": 20,
+    "number": 21,
     "file": "l2-prior-structure.tex"
   },
   {
@@ -223,39 +231,129 @@
     "file": "l4-positionwise-loss.tex"
   },
   {
-    "id": "l4-fitting-support",
+    "id": "l4-optimization-certificate",
     "lecture": 4,
     "number": 13,
+    "file": "l4-optimization-certificate.tex"
+  },
+  {
+    "id": "l4-fitting-support",
+    "lecture": 4,
+    "number": 14,
     "file": "l4-fitting-support.tex"
+  },
+  {
+    "id": "l4-multistep-benefit",
+    "lecture": 4,
+    "number": 15,
+    "file": "l4-multistep-benefit.tex"
   },
   {
     "id": "l4-multistep",
     "lecture": 4,
-    "number": 14,
+    "number": 16,
     "file": "l4-multistep.tex"
+  },
+  {
+    "id": "l4-kl-directions",
+    "lecture": 4,
+    "number": 17,
+    "file": "l4-kl-directions.tex"
+  },
+  {
+    "id": "l4-reverse-variational",
+    "lecture": 4,
+    "number": 18,
+    "file": "l4-reverse-variational.tex"
   },
   {
     "id": "l4-stability",
     "lecture": 4,
-    "number": 15,
+    "number": 19,
     "file": "l4-stability.tex"
+  },
+  {
+    "id": "l4-cumulative-recovery",
+    "lecture": 4,
+    "number": 20,
+    "file": "l4-cumulative-recovery.tex"
   },
   {
     "id": "l4-persistent-memory",
     "lecture": 4,
-    "number": 16,
+    "number": 21,
     "file": "l4-persistent-memory.tex"
   },
   {
+    "id": "l5-feedback",
+    "lecture": 5,
+    "number": 1,
+    "file": "l5-feedback.tex",
+    "reference_lectures": [
+      4
+    ]
+  },
+  {
+    "id": "l5-kernels",
+    "lecture": 5,
+    "number": 2,
+    "file": "l5-kernels.tex",
+    "reference_lectures": [
+      4
+    ]
+  },
+  {
     "id": "l4-latent-likelihood",
-    "lecture": 4,
-    "number": 17,
-    "file": "l4-latent-likelihood.tex"
+    "lecture": 5,
+    "number": 3,
+    "file": "l4-latent-likelihood.tex",
+    "reference_lectures": [
+      4
+    ]
+  },
+  {
+    "id": "l5-em",
+    "lecture": 5,
+    "number": 4,
+    "file": "l5-em.tex",
+    "reference_lectures": [
+      4
+    ]
+  },
+  {
+    "id": "l5-sharing",
+    "lecture": 5,
+    "number": 5,
+    "file": "l5-sharing.tex",
+    "reference_lectures": [
+      4
+    ]
   },
   {
     "id": "l4-lds",
-    "lecture": 4,
-    "number": 18,
-    "file": "l4-lds.tex"
+    "lecture": 5,
+    "number": 6,
+    "file": "l4-lds.tex",
+    "reference_lectures": [
+      4
+    ]
+  },
+  {
+    "id": "l5-memory",
+    "lecture": 5,
+    "number": 7,
+    "file": "l5-memory.tex",
+    "reference_lectures": [
+      4
+    ]
+  },
+  {
+    "id": "l5-bptt",
+    "lecture": 5,
+    "number": 8,
+    "file": "l5-bptt.tex",
+    "reference_lectures": [
+      4
+    ]
   }
 ]

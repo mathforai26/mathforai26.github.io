@@ -1,5 +1,8 @@
 # Shared exercises
 
+For exercise design, organization, and placement in lecture notes, follow the
+[lecture-writing standards](../misc_files/lecture-writing-standards.md#exercises-and-solutions).
+
 Edit an exercise here, not in a lecture or generated homework. Each `.tex` file
 is one complete chunk: required introductory tools, the exercise with all its
 parts, and its hints. `catalog.json` records its stable ID, lecture, and order.

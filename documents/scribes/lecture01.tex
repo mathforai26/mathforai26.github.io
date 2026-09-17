@@ -9,15 +9,13 @@
 \usepackage{xcolor}
 \usepackage{microtype}
 
-% Build identity: keep this block in future lecture notes as well.
-% The timestamp is fixed at compilation start and appears on every page.
-\usepackage[showseconds=false,showzone=true]{datetime2}
-\DTMsetup{datesep=-,datetimesep={\space},timezonesep={\space UTC}}
+% Revision date: maintained by scripts/build_lecture_notes.py. Keep this command.
+\newcommand{\lecturerevised}{2026-09-16 09:57 UTC-06:00}
 \usepackage{eso-pic}
 \AddToShipoutPictureBG{%
   \AtPageLowerLeft{%
     \put(\LenToUnit{0.5\paperwidth},\LenToUnit{0.5in}){%
-      \makebox(0,0){\normalfont\footnotesize\color{black!60}Compiled: \DTMnow}%
+      \makebox(0,0){\normalfont\footnotesize\color{black!60}Last revised: \lecturerevised}%
     }%
   }%
 }
@@ -27,6 +25,14 @@
 \usepackage[nameinlink,noabbrev,capitalize]{cleveref}
 \crefname{exercise}{Exercise}{Exercises}
 \Crefname{exercise}{Exercise}{Exercises}
+
+% Short refinements that may be skipped on a first reading.
+\usepackage{enotez}
+\DeclareInstance{enotez-list}{lecture}{list}{format=\normalsize,number={#1.}}
+\setenotez{list-name=Endnotes,list-style=lecture,backref=true}
+\crefname{endnote}{Endnote}{Endnotes}
+\Crefname{endnote}{Endnote}{Endnotes}
+
 
 \definecolor{courseblue}{HTML}{17365D}
 \definecolor{diagramaccent}{HTML}{087FB5}
@@ -102,6 +108,9 @@ and further derivations and figures. The architecture comparison in
 \cref{app:transformer-arrangements} and tokenizer construction in
 \cref{app:tokenizer-construction} provide optional background. The motivation
 for learning and the first learning-theoretic results begin in Lecture~2.
+The optional architecture comparison precedes the take-home messages. Numbered
+endnotes, bibliographical notes, the glossary, exercises, the tokenizer
+appendix, and references follow in that order.
 
 \section{The model inside a harness}
 
@@ -393,7 +402,7 @@ Several heads allow a position to gather different kinds of information in
 parallel. An \emph{output projection} $W^O$ combines their retrieved features into an
 update at the model width. For $h$ heads, collect their parameters and a
 learned output projection~
-\footnote{
+\endnote{
 Following the literature we use the word projection to denote a linear map, even when
 this map does not have the properties of a mathematical projection, hoping that
 this will not cause confusion. If this difference becomes important, we will point it out.
@@ -583,7 +592,11 @@ h_t^0=(H^0_{t,:})^\top
 \label{eq:input-embedding}
 \end{equation}
 Rows of $E$ index vocabulary items and columns index model features;
-rows of $P$ and $H^0$ store the transposes of position and hidden vectors.
+rows of $P$ and $H^0$ store the transposes of position and hidden vectors.\endnote{\textbf{Position information without additive embeddings.}
+With $P=0$, $h_t^0=E^\top e_{x_{t-1}}$, so a token has the same input vector
+at every position.
+The causal mask also carries ordering information through its prefix
+restriction, so $P=0$ alone does not make the whole decoder insensitive to order.}\label{rem:position-placement}
 The one-hot notation makes the map explicit; an implementation performs a
 row lookup in $E$.
 
@@ -595,14 +608,6 @@ maximum context length $T_{\max}$, not the current input length $T$.
 
 The matrix $H^0$ starts the composition in \eqref{eq:block-composition};
 \cref{sec:output-readout} specifies its final readout.
-
-\begin{remark}[Position information when $P=0$]
-\label{rem:position-placement}
-With $P=0$, $h_t^0=E^\top e_{x_{t-1}}$, so a token has the same input vector
-at every position.
-The causal mask also carries ordering information through its prefix
-restriction, so $P=0$ alone does not make the whole decoder insensitive to order.
-\end{remark}
 
 \section{The component maps}
 \label{sec:component-maps}
@@ -1589,14 +1594,13 @@ a stopping rule fires.
 
 Greedy decoding is neither sampling from the model nor, in general, global
 optimization of the probability of the complete sequence. A locally most
-probable token can lead to poor later continuations.
-
+probable token can lead to poor later continuations.\endnote{\textbf{Special cases for greedy decoding.}
 There are narrow cases in which greedy decoding is justified. If the system
 must make exactly one token-valued decision and incurs zero--one loss, an
 argmax token is Bayes optimal. Greedy decoding is also harmless when every
 conditional distribution is effectively deterministic, or when a special
 problem has a greedy-choice property. None of these conditions holds in
-general for open-ended generation.
+general for open-ended generation.}
 
 \begin{remark}[Greedy decoding]
 \label{rem:greedy-decoding}
@@ -1679,7 +1683,14 @@ of permitted query--key pairs per causal head is
 \begin{equation}
 \sum_{i=1}^t i=\frac{t(t+1)}2,
 \end{equation}
-so computing the scores and weighted sums costs $\Theta(t^2d_h)$ arithmetic.
+so computing the scores and weighted sums costs $\Theta(t^2d_h)$ arithmetic.\endnote{\textbf{Arithmetic saved by a causal mask.}
+A straightforward full-pass implementation materializes a $t\times t$
+attention matrix. Skipping the masked upper triangle can save nearly half
+the score and attention--value arithmetic compared with the $t^2$ pairs of
+bidirectional attention. This applies when processing all positions together,
+as in training, prefill, and full-sequence scoring. Computing the full square
+and masking afterward gives no arithmetic saving. The whole-block saving is
+smaller because projections, normalization, and the FFN remain.}
 A cached decode step computes just $t$ scores and one weighted sum, costing
 $\Theta(td_h)$. Its cache holds $2td_h$ real numbers after $t$ positions;
 the projections and positionwise maps are evaluated only for the new position.
@@ -1693,14 +1704,6 @@ successive prefix lengths $t=1,\ldots,T$, the attention work per head is
 \end{equation}
 A longer initial prompt contributes its prefill cost; subsequent decode
 steps start at that prefix length.
-
-A straightforward full-pass implementation materializes a $t\times t$
-attention matrix. Skipping the masked upper triangle can save nearly half
-the score and attention--value arithmetic compared with the $t^2$ pairs of
-bidirectional attention. This applies when processing all positions together,
-as in training, prefill, and full-sequence scoring. Computing the full square
-and masking afterward gives no arithmetic saving. The whole-block saving is
-smaller because projections, normalization, and the FFN remain.
 
 \begin{remark}[Why are queries not cached?]
 \label{rem:uncached-queries}
@@ -1719,7 +1722,10 @@ prompt followed by any tokens generated so far. Practical systems come with a
 context window. Position handling, training range, cache memory, attention
 cost, and implementation choices can all constrain the maximum context
 length. The ability to accept $T$ tokens and the ability to use all $T$ tokens
-effectively are distinct capabilities.
+effectively are distinct capabilities.\endnote{\textbf{Observed long-context failures.}
+The terms \emph{lost in the middle} and \emph{context rot} refer to observed
+failures to use long contexts uniformly or reliably, sometimes well below a
+model's advertised maximum length.}\label{rem:long-context-failures}
 
 Making full use of a long context window can require sharply selecting a
 particular position. For one query $q$ attending to $T$ keys
@@ -1746,13 +1752,6 @@ $\alpha\in[0,1]^T$ is. For $\sum_{j=1}^T\alpha_j=1$, define
 It is $0$ for a deterministic distribution and $\log T$ for the uniform
 distribution. Thus small entropy describes concentrated attention and large
 entropy describes diffuse attention.
-
-\begin{remark}[Observed long-context failures]
-\label{rem:long-context-failures}
-The terms \emph{lost in the middle} and \emph{context rot} refer to observed
-failures to use long contexts uniformly or reliably, sometimes well below a
-model's advertised maximum length.
-\end{remark}
 
 \section{A few notes about training}
 
@@ -1840,6 +1839,17 @@ that use available hardware well, while hardware and software infrastructure
 are improved to support successful methods. These investments make further
 improvements to established designs especially attractive.
 
+This creates a tension between algorithm design and engineering requirements.
+An algorithm may have a cleaner objective, a stronger guarantee, or a lower
+asymptotic cost, yet be impractical because it uses memory irregularly, exposes
+too little parallel work, is numerically unstable, or lacks reliable software.
+Conversely, a method can become dominant partly because it runs efficiently on
+available hardware and has mature implementations, even when another method is
+preferable under an abstract computational model. Comparing methods therefore
+requires two separate questions: what does the algorithm establish, and what
+does a complete implementation require at the relevant scale? The answers can
+favor different designs.
+
 This resembles local search: build on a working system, change some components,
 and retain useful improvements. The architecture we studied reflects this
 history of choices and refinements. Its success gives us reasons to understand
@@ -1853,47 +1863,6 @@ are fundamental and which might disappear with scale or better implementation.
 This feedback between adoption and improvement can lead to technological
 lock-in: the ecosystem supporting a successful technology makes alternatives
 harder to adopt.
-
-\section{Take-home messages}
-
-\begin{itemize}[leftmargin=*]
-\item A deployed AI system places the language model inside a
-``harness'' that constructs context, can maintain state and invoke tools, and
-may make repeated model calls.
-\item A lossless tokenizer segments a sequence over a base alphabet into
-nonempty vocabulary strings. Its token sequence cannot be longer than the
-base-symbol sequence and is shorter whenever a selected token contains several
-base symbols. Tokens may lack semantic meaning.
-\item A probabilistic sequence model maps each finite token prefix to a
-next-token distribution. Repeated sampling defines a stochastic process;
-finite-sequence probabilities are products of the next-token conditionals.
-\item Our archetypical decoder transformer composes embedding, decoder
-blocks, and a readout. Each block combines causal attention, a positionwise
-FFN, and normalization maps through residual additions.
-LayerNorm and RMSNorm are examples of the normalization component.
-\item Absolute position embeddings are added once at the input. RoPE and
-relative-position biases instead modify the attention calculation in every
-layer that uses them.
-\item The learned conditional distribution and the decoding algorithm are
-different objects. An argmax is optimal for a single zero--one-loss decision.
-Repeated tokenwise argmax generally fails to optimize a sequence-level
-objective and is a poor default for open-ended generation.
-\item A full dense-attention pass on a length-$t$ prefix has quadratic
-arithmetic cost. An implementation of causal attention can skip nearly half
-the attention pairs used by bidirectional attention at the same length. During
-sequential generation, earlier keys and values remain unchanged and are
-cached. Each new query uses those rows plus the new key and value. For a
-fixed-length initial prompt, this changes total attention work from cubic
-to quadratic in the generated length. Old queries have no future use.
-\item Maximum context length is an input-capacity limit. Performance on some
-retrieval and reasoning tasks may deteriorate before the input reaches this
-limit. With bounded attention scores, a single softmax head cannot remain
-sharply concentrated as the context grows.
-\item The parameter vector $\theta$ contains the learned weights of the
-conditional model. The current activations, KV cache, tokenizer, decoding rule,
-and harness lie outside $\theta$. Lecture~2 takes up the question of why
-learning can produce useful values of $\theta$.
-\end{itemize}
 
 \section{Optional reading: three transformer architecture types}
 \label{app:transformer-arrangements}
@@ -2140,13 +2109,217 @@ for cross-attention. It separately grows a causal self-attention cache for the
 generated target. At step $t$, the model forms new queries for the current
 target position and reuses both caches.
 
-\section{Exercises}
+\section{Take-home messages}
 
-\exerciseinstructions
-\setcounter{courseexercise}{0}
-\input{../exercises/l1-rope.tex}
-\input{../exercises/l1-greedy-decoding.tex}
-\input{../exercises/l1-bounded-attention.tex}
+\begin{itemize}[leftmargin=*]
+\item A deployed AI system places the language model inside a
+``harness'' that constructs context, can maintain state and invoke tools, and
+may make repeated model calls.
+\item A lossless tokenizer segments a sequence over a base alphabet into
+nonempty vocabulary strings. Its token sequence cannot be longer than the
+base-symbol sequence and is shorter whenever a selected token contains several
+base symbols. Tokens may lack semantic meaning.
+\item A probabilistic sequence model maps each finite token prefix to a
+next-token distribution. Repeated sampling defines a stochastic process;
+finite-sequence probabilities are products of the next-token conditionals.
+\item Our archetypical decoder transformer composes embedding, decoder
+blocks, and a readout. Each block combines causal attention, a positionwise
+FFN, and normalization maps through residual additions.
+LayerNorm and RMSNorm are examples of the normalization component.
+\item Absolute position embeddings are added once at the input. RoPE and
+relative-position biases instead modify the attention calculation in every
+layer that uses them.
+\item The learned conditional distribution and the decoding algorithm are
+different objects. An argmax is optimal for a single zero--one-loss decision.
+Repeated tokenwise argmax generally fails to optimize a sequence-level
+objective and is a poor default for open-ended generation.
+\item A full dense-attention pass on a length-$t$ prefix has quadratic
+arithmetic cost. An implementation of causal attention can skip nearly half
+the attention pairs used by bidirectional attention at the same length. During
+sequential generation, earlier keys and values remain unchanged and are
+cached. Each new query uses those rows plus the new key and value. For a
+fixed-length initial prompt, this changes total attention work from cubic
+to quadratic in the generated length. Old queries have no future use.
+\item Maximum context length is an input-capacity limit. Performance on some
+retrieval and reasoning tasks may deteriorate before the input reaches this
+limit. With bounded attention scores, a single softmax head cannot remain
+sharply concentrated as the context grows.
+\item The parameter vector $\theta$ contains the learned weights of the
+conditional model. The current activations, KV cache, tokenizer, decoding rule,
+and harness lie outside $\theta$. Lecture~2 takes up the question of why
+learning can produce useful values of $\theta$.
+\item Algorithmic properties and engineering viability are separate criteria.
+A method with a stronger abstract guarantee may map poorly to available
+hardware, while a method with efficient and mature implementations may receive
+more development and become difficult to displace.
+\end{itemize}
+
+\printendnotes
+
+\section*{Bibliographical notes}
+\phantomsection
+
+The compiler analogy is literal at the level of the interface: a lexer maps a
+character stream into tokens. A programming-language specification determines
+compiler tokens; corpus frequencies help determine LLM tokens. See
+\citet{aho2006}. The supplementary appendix describes the BPE construction of
+\citet{sennrich2016}, the unigram formulation of \citet{kudo2018}, and the
+SentencePiece system of \citet{kudorichardson2018}.
+
+The transformer architecture was introduced by \citet{vaswani2017}. Their
+model combined encoder and decoder stacks; the equations in this lecture are a
+causal decoder specialization and use a pre-normalized block.
+Their Section~3.2.1 motivates the $1/\sqrt{d_h}$ attention-score scaling by
+the variance of a query--key dot product.
+\Cref{rem:attention-scaling} supplies an explicit random-initialization model
+for that calculation.
+
+The SwiGLU FFN architecture was introduced by \citet{shazeer2020}. It uses
+two hidden projections and coordinatewise gating; the paper also explains how
+to adjust the hidden width when comparing its parameter and operation counts
+with a two-layer MLP. SwiGLU is used, for example,
+in the Llama~3 architecture \citep{grattafiori2024}.
+
+Three early pretraining recipes made the architectural alternatives concrete.
+The original GPT work paired a causal decoder language model with
+task-specific supervised fine-tuning \citep{radford2018}. BERT instead
+pretrained a bidirectional encoder with a masked-token objective and then
+fine-tuned its representations \citep{devlin2019}. T5 retained the
+encoder--decoder architecture and expressed many tasks through one text-to-text
+interface \citep{raffel2020}. GPT-3 later demonstrated that a sufficiently
+large causal language model could use task descriptions and examples supplied
+in its context, without a gradient update at test time \citep{brown2020}.
+These are historically important successful recipes.
+
+The modular definitions in \Cref{app:transformer-arrangements} follow
+the encoder--decoder construction of \citet{vaswani2017} and the architectural
+comparisons of \citet{raffel2020}. The latter explain why parameter count and
+computation cannot both be matched by changing depth alone and report the
+strongest performance from an encoder--decoder model at approximately matched
+computation in their setting.
+
+Recent publicly released model families usually preserve the causal
+decoder-only interface while changing the surrounding recipe and internal
+details. Llama~3 is a dense example \citep{grattafiori2024}, Mistral~7B uses
+grouped-query and sliding-window attention \citep{jiang2023}, and DeepSeek-V3
+uses a mixture-of-experts architecture \citep{deepseek2024}. The term
+\emph{open-weight} asserts release of the numerical weights; training data,
+code, and licensing freedoms require separate verification.
+For a maintained visual catalogue of model-level architecture diagrams,
+configuration links, and compact fact sheets, see the LLM Architecture Gallery
+of \citet{raschka2026gallery}.
+Figures~\ref{fig:gpt2xl} and~\ref{fig:llama3} are independent LaTeX
+renderings of the architectures and dimensions catalogued there; the
+Llama~3 specifications were also checked against \citet{grattafiori2024}.
+
+The original paper used additive sinusoidal position vectors. Rotary position embeddings
+are due to \citet{su2021}; their position-dependent rotations of queries and
+keys expose relative displacement in the attention score.
+\Cref{eq:rope-frequencies} gives their fixed geometric frequency schedule.
+The bucketed learned
+relative-position bias in \eqref{eq:relative-position-bias} follows
+\citet{raffel2020}. \citet{press2022} propose ALiBi, which instead adds a fixed
+head-dependent linear penalty based on relative distance.
+
+\citet{shazeer2019} identified KV-cache bandwidth as a decoding bottleneck and
+introduced multi-query attention: multiple query heads share the same key and
+value heads. This reduces cached key--value data and the traffic required to
+read it. Grouped-query attention, introduced by \citet{ainslie2023}, provides
+an intermediate degree of sharing.
+
+\citet{dao2022} introduced FlashAttention, which computes exact dense
+attention by tiling and an online softmax. This reduces memory traffic and
+avoids materializing the full attention matrix while retaining the quadratic
+arithmetic of exact dense attention. The course returns to this
+distinction in Lecture~27.
+
+The bounded-score calculation in \cref{ex:bounded-attention} is elementary.
+\citet{chiang2022} study a related length-dependent loss of confidence and show
+that the obstruction depends on architectural details; one of their remedies
+scales attention logits with $\log T$. This is useful context for the exercise
+result.
+
+On the empirical capabilities of trained models across context-window lengths
+and locations of relevant information, \citet{liu2024} vary the position of
+relevant information in multi-document question answering and key--value
+retrieval, demonstrating the distinction between accepting a long context and
+using it reliably.
+\citet{hong2025} use the term ``context rot'' for performance degradation as
+input length grows across a broader collection of tasks and models.
+
+One way to study the division of work described in
+\cref{sec:composing-attention} is to write sequence computations as programs
+with explicit selection, aggregation, and positionwise operations.
+\citet{weiss2021} introduced the \emph{Restricted Access Sequence Processing}
+(RASP) language for this purpose, relating its programs to transformer heads
+and layers while abstracting away their implementation with weights and
+activations. \citet{zhou2024} introduced RASP-L for causal decoder-only
+transformers and proposed short-program length as an empirical predictor of
+algorithmic learnability and length generalization.
+The \hyperref[app:experimental-codebases]{codebases below} support
+experiments with these languages.
+
+\citet{arthur1989} studies competing technologies whose benefits increase
+with adoption. His model shows how early advantages can lead to technological
+lock-in. It provides a framework for the closing discussion of coevolution;
+that discussion's application to AI research is a qualitative analogy.
+
+For an analysis of how trained models use RoPE, see \citet{barbero2025}.
+Their study of Gemma~7B identifies heads with positional attention patterns,
+including attention to the preceding token, and examines how slowly rotating
+coordinates support content-based comparisons. They also discuss limitations
+of these behaviors when extending context length. This connects the rotation
+calculation in \cref{ex:rope} to mechanisms observed in a trained model.
+For the exercise's uniform-addressing task, independently uniform frequencies
+give a separation guarantee. For language modeling, a geometric schedule
+seems a more promising starting point because it deliberately supplies slow
+rotations for stable content comparisons. This is a task-dependent judgment,
+not a conclusion from a head-to-head empirical comparison of the schedules.
+
+Hoeffding's inequality (\cref{thm:hoeffding}) bounds deviations of sums of
+independent bounded random variables \citep{hoeffding1963}. Applying it to independent
+random rotation frequencies gives a probabilistic construction of relative
+addresses with uniformly separated scores over a prescribed finite context.
+
+\subsection*{Codebases for experiments}
+\phantomsection
+\label{app:experimental-codebases}
+
+The following codebases support experiments with the constructions in these notes.
+\begin{description}[style=nextline,leftmargin=1.5em,labelindent=0pt]
+\item[NumPy RASP-L]
+A small reference implementation for writing and testing causal RASP-L
+sequence programs: \url{https://github.com/apple/ml-np-rasp}.
+\item[RASP and Tracr]
+The original RASP interpreter displays selectors and intermediate sequence
+operations. Tracr compiles a subset of RASP into concrete transformer weights:
+\url{https://github.com/tech-srl/RASP} and
+\url{https://github.com/google-deepmind/tracr}.
+\item[nanochat]
+A compact end-to-end codebase containing tokenization, pretraining,
+fine-tuning, evaluation, and inference. It includes small CPU and
+Apple-Silicon configurations, although training a capable language model still
+requires substantial computation: \url{https://github.com/karpathy/nanochat}.
+\item[Hugging Face Transformers]
+A broad model-definition and checkpoint ecosystem, useful for loading models
+and comparing tokenizers, architectures, and generation rules:
+\url{https://github.com/huggingface/transformers}.
+\item[TransformerLens]
+An inspection library for GPT-style models, useful for recording activations
+and attention patterns or intervening inside a forward pass:
+\url{https://github.com/TransformerLensOrg/TransformerLens}.
+\item[llama.cpp]
+A local inference implementation that makes tokenization, quantization,
+decoding, and key--value-cache behavior accessible to experiments:
+\url{https://github.com/ggml-org/llama.cpp}.
+\end{description}
+
+
+
+
+
+
+\clearpage
 
 \section*{Glossary}
 
@@ -2412,7 +2585,15 @@ An empirical term for deteriorating task performance as input length grows,
 even within the supported context length.
 \end{description}
 
+\section{Exercises}
 
+\exerciseinstructions
+\setcounter{courseexercise}{0}
+\input{../exercises/l1-rope.tex}
+\input{../exercises/l1-greedy-decoding.tex}
+\input{../exercises/l1-bounded-attention.tex}
+
+\clearpage
 \appendix
 \renewcommand{\thesection}{\Alph{section}}
 \section{How tokenizers are constructed}
@@ -2442,167 +2623,6 @@ highest-scoring segmentation or sample among segmentations.
 \end{enumerate}
 
 \clearpage
-\section*{Bibliographical notes}
-\phantomsection
-
-The compiler analogy is literal at the level of the interface: a lexer maps a
-character stream into tokens. A programming-language specification determines
-compiler tokens; corpus frequencies help determine LLM tokens. See
-\citet{aho2006}. The supplementary appendix describes the BPE construction of
-\citet{sennrich2016}, the unigram formulation of \citet{kudo2018}, and the
-SentencePiece system of \citet{kudorichardson2018}.
-
-The transformer architecture was introduced by \citet{vaswani2017}. Their
-model combined encoder and decoder stacks; the equations in this lecture are a
-causal decoder specialization and use a pre-normalized block.
-Their Section~3.2.1 motivates the $1/\sqrt{d_h}$ attention-score scaling by
-the variance of a query--key dot product.
-\Cref{rem:attention-scaling} supplies an explicit random-initialization model
-for that calculation.
-
-The SwiGLU FFN architecture was introduced by \citet{shazeer2020}. It uses
-two hidden projections and coordinatewise gating; the paper also explains how
-to adjust the hidden width when comparing its parameter and operation counts
-with a two-layer MLP. SwiGLU is used, for example,
-in the Llama~3 architecture \citep{grattafiori2024}.
-
-Three early pretraining recipes made the architectural alternatives concrete.
-The original GPT work paired a causal decoder language model with
-task-specific supervised fine-tuning \citep{radford2018}. BERT instead
-pretrained a bidirectional encoder with a masked-token objective and then
-fine-tuned its representations \citep{devlin2019}. T5 retained the
-encoder--decoder architecture and expressed many tasks through one text-to-text
-interface \citep{raffel2020}. GPT-3 later demonstrated that a sufficiently
-large causal language model could use task descriptions and examples supplied
-in its context, without a gradient update at test time \citep{brown2020}.
-These are historically important successful recipes.
-
-The modular definitions in \Cref{app:transformer-arrangements} follow
-the encoder--decoder construction of \citet{vaswani2017} and the architectural
-comparisons of \citet{raffel2020}. The latter explain why parameter count and
-computation cannot both be matched by changing depth alone and report the
-strongest performance from an encoder--decoder model at approximately matched
-computation in their setting.
-
-Recent publicly released model families usually preserve the causal
-decoder-only interface while changing the surrounding recipe and internal
-details. Llama~3 is a dense example \citep{grattafiori2024}, Mistral~7B uses
-grouped-query and sliding-window attention \citep{jiang2023}, and DeepSeek-V3
-uses a mixture-of-experts architecture \citep{deepseek2024}. The term
-\emph{open-weight} asserts release of the numerical weights; training data,
-code, and licensing freedoms require separate verification.
-For a maintained visual catalogue of model-level architecture diagrams,
-configuration links, and compact fact sheets, see the LLM Architecture Gallery
-of \citet{raschka2026gallery}.
-Figures~\ref{fig:gpt2xl} and~\ref{fig:llama3} are independent LaTeX
-renderings of the architectures and dimensions catalogued there; the
-Llama~3 specifications were also checked against \citet{grattafiori2024}.
-
-The original paper used additive sinusoidal position vectors. Rotary position embeddings
-are due to \citet{su2021}; their position-dependent rotations of queries and
-keys expose relative displacement in the attention score.
-\Cref{eq:rope-frequencies} gives their fixed geometric frequency schedule.
-The bucketed learned
-relative-position bias in \eqref{eq:relative-position-bias} follows
-\citet{raffel2020}. \citet{press2022} propose ALiBi, which instead adds a fixed
-head-dependent linear penalty based on relative distance.
-
-\citet{shazeer2019} identified KV-cache bandwidth as a decoding bottleneck and
-introduced multi-query attention: multiple query heads share the same key and
-value heads. This reduces cached key--value data and the traffic required to
-read it. Grouped-query attention, introduced by \citet{ainslie2023}, provides
-an intermediate degree of sharing.
-
-\citet{dao2022} introduced FlashAttention, which computes exact dense
-attention by tiling and an online softmax. This reduces memory traffic and
-avoids materializing the full attention matrix while retaining the quadratic
-arithmetic of exact dense attention. The course returns to this
-distinction in Lecture~27.
-
-The bounded-score calculation in \cref{ex:bounded-attention} is elementary.
-\citet{chiang2022} study a related length-dependent loss of confidence and show
-that the obstruction depends on architectural details; one of their remedies
-scales attention logits with $\log T$. This is useful context for the exercise
-result.
-
-On the empirical capabilities of trained models across context-window lengths
-and locations of relevant information, \citet{liu2024} vary the position of
-relevant information in multi-document question answering and key--value
-retrieval, demonstrating the distinction between accepting a long context and
-using it reliably.
-\citet{hong2025} use the term ``context rot'' for performance degradation as
-input length grows across a broader collection of tasks and models.
-
-One way to study the division of work described in
-\cref{sec:composing-attention} is to write sequence computations as programs
-with explicit selection, aggregation, and positionwise operations.
-\citet{weiss2021} introduced the \emph{Restricted Access Sequence Processing}
-(RASP) language for this purpose, relating its programs to transformer heads
-and layers while abstracting away their implementation with weights and
-activations. \citet{zhou2024} introduced RASP-L for causal decoder-only
-transformers and proposed short-program length as an empirical predictor of
-algorithmic learnability and length generalization.
-The \hyperref[app:experimental-codebases]{codebases below} support
-experiments with these languages.
-
-\citet{arthur1989} studies competing technologies whose benefits increase
-with adoption. His model shows how early advantages can lead to technological
-lock-in. It provides a framework for the closing discussion of coevolution;
-that discussion's application to AI research is a qualitative analogy.
-
-For an analysis of how trained models use RoPE, see \citet{barbero2025}.
-Their study of Gemma~7B identifies heads with positional attention patterns,
-including attention to the preceding token, and examines how slowly rotating
-coordinates support content-based comparisons. They also discuss limitations
-of these behaviors when extending context length. This connects the rotation
-calculation in \cref{ex:rope} to mechanisms observed in a trained model.
-For the exercise's uniform-addressing task, independently uniform frequencies
-give a separation guarantee. For language modeling, a geometric schedule
-seems a more promising starting point because it deliberately supplies slow
-rotations for stable content comparisons. This is a task-dependent judgment,
-not a conclusion from a head-to-head empirical comparison of the schedules.
-
-Hoeffding's inequality (\cref{thm:hoeffding}) bounds deviations of sums of
-independent bounded random variables \citep{hoeffding1963}. Applying it to independent
-random rotation frequencies gives a probabilistic construction of relative
-addresses with uniformly separated scores over a prescribed finite context.
-
-\subsection*{Codebases for experiments}
-\phantomsection
-\label{app:experimental-codebases}
-
-The following codebases support experiments with the constructions in these notes.
-\begin{description}[style=nextline,leftmargin=1.5em,labelindent=0pt]
-\item[NumPy RASP-L]
-A small reference implementation for writing and testing causal RASP-L
-sequence programs: \url{https://github.com/apple/ml-np-rasp}.
-\item[RASP and Tracr]
-The original RASP interpreter displays selectors and intermediate sequence
-operations. Tracr compiles a subset of RASP into concrete transformer weights:
-\url{https://github.com/tech-srl/RASP} and
-\url{https://github.com/google-deepmind/tracr}.
-\item[nanochat]
-A compact end-to-end codebase containing tokenization, pretraining,
-fine-tuning, evaluation, and inference. It includes small CPU and
-Apple-Silicon configurations, although training a capable language model still
-requires substantial computation: \url{https://github.com/karpathy/nanochat}.
-\item[Hugging Face Transformers]
-A broad model-definition and checkpoint ecosystem, useful for loading models
-and comparing tokenizers, architectures, and generation rules:
-\url{https://github.com/huggingface/transformers}.
-\item[TransformerLens]
-An inspection library for GPT-style models, useful for recording activations
-and attention patterns or intervening inside a forward pass:
-\url{https://github.com/TransformerLensOrg/TransformerLens}.
-\item[llama.cpp]
-A local inference implementation that makes tokenization, quantization,
-decoding, and key--value-cache behavior accessible to experiments:
-\url{https://github.com/ggml-org/llama.cpp}.
-\end{description}
-
-
-
-
 \begin{thebibliography}{99}
 \bibitem[Arthur(1989)]{arthur1989}
 W. Brian Arthur.

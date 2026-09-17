@@ -1,0 +1,32 @@
+% Shared exercise chunk: l4-optimization-certificate
+\begin{exercisechunk}
+\item \textbf{Certifying an optimization tolerance.\suppmark}
+\label[exercise]{ex:optimization-certificate}
+Let \(f:\R^d\to\R\) be differentiable, with
+\(f_\star=\inf_{v\in\R^d}f(v)>-\infty\).
+For \(f(\theta)=\widehat L(Q_\theta)\) and
+\(\mathcal Q=\{Q_\theta:\theta\in\R^d\}\), the gap
+\(f(\theta)-f_\star\) is the optimization error in
+\cref{eq:approximate-fit-error}.
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Suppose \(f\) is \emph{\(\mu\)-strongly convex}, meaning that
+for a known \(\mu>0\) and every \(\theta,v\in\R^d\),
+\[
+ f(v)\ge f(\theta)+\nabla f(\theta)^\top(v-\theta)
+                 +\frac\mu2\|v-\theta\|_2^2.
+\]
+Prove
+\[
+ f(\theta)-f_\star\le\frac{\|\nabla f(\theta)\|_2^2}{2\mu}.
+\]
+For a desired per-sequence tolerance \(s>0\), give a sufficient
+gradient-norm threshold that certifies
+\(T\bigl(f(\theta)-f_\star\bigr)\le s\).
+\item Take \(d=1\) and \(f(\theta)=(\theta^2-1)^2\).
+Compute \(f'(0)\) and \(f(0)-f_\star\). Explain why a small gradient
+alone does not certify a small optimization error for a general loss.
+\end{enumerate}
+\begin{hints}
+For (a), minimize the quadratic lower bound over \(v-\theta\).
+\end{hints}
+\end{exercisechunk}

@@ -1,0 +1,23 @@
+\begin{exercisechunk}
+\item \textbf{Denoising coefficients by parameter sharing.}
+\label[exercise]{ex:l5-sharing}
+Let \(U\in\R^{p\times r}\) be known with \(U^\top U=I_r\).
+Suppose a preliminary estimate is
+\(\widehat b=b+\xi\), where \(\xi\sim\mathcal N(0,\sigma^2I_p/n)\).
+Set \(\widetilde b=UU^\top\widehat b\).
+\begin{enumerate}[(a),beginpenalty=10000]
+\item If \(b\) lies in the column space of \(U\), compute the expected
+squared coefficient errors of \(\widehat b\) and \(\widetilde b\).
+\item Let an independent test feature \(\Psi\) have mean zero and
+\(\E[\Psi\Psi^\top]=I_p\). Compute the corresponding prediction
+errors for predicting \(b^\top\Psi\).
+\item Realize a one-dimensional example using
+\(b_j=\theta\lambda^{j-1}\), \(j=1,\ldots,p\), with known
+\(|\lambda|<1\). Explain the relationship to a scalar recurrent predictor.
+\item For arbitrary \(b\), derive the bias--variance formula for
+\(\widetilde b\). Exactly when is its expected coefficient error
+smaller than that of \(\widehat b\)?
+\end{enumerate}
+The independent isotropic coefficient errors are a simplifying model,
+not an assertion about lagged time-series least squares.
+\end{exercisechunk}

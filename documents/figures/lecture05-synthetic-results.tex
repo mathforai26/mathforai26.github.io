@@ -1,0 +1,18 @@
+\begin{table}[htbp]
+\centering\small
+\begin{tabular}{rlrrrr}\toprule
+Training \(T\) & Model & Excess MSE & KL/step & \(\widehat\Omega\) & Unstable / 50\\\midrule
+256 & AR(32) & 0.1564 & 0.0727 & 1.1696 & 0\\
+256 & Rank-one state & 0.2693 & 0.1091 & 1.2904 & 2\\
+1024 & AR(32) & 0.0316 & 0.0158 & 1.0371 & 0\\
+1024 & Rank-one state & 0.0061 & 0.0033 & 1.0104 & 0\\
+4096 & AR(32) & 0.0074 & 0.0039 & 1.0027 & 0\\
+4096 & Rank-one state & 0.0011 & 0.0008 & 0.9961 & 0\\
+\bottomrule\end{tabular}
+\caption{Means over 50 trajectories. Excess MSE compares the fitted
+conditional mean with the true mean; irreducible variance is one.
+Both models estimate \(\widehat\Omega\) on the calibration block; the true
+innovation variance is one. KL uses each fitted variance. Unstable means generative
+spectral radius at least one; such fits are not discarded.}
+\label{tab:l5-synthetic}
+\end{table}
