@@ -113,6 +113,11 @@ Start from the [LaTeX scribe template]({{ '/documents/misc_files/scribe_template
 The [lecture-writing standards]({{ '/documents/misc_files/lecture-writing-standards.md' | relative_url }})
 give the conventions for drafting and reviewing notes.
 
+**Submission:** Send the completed scribe note to the instructor in a private
+message on the course Slack. Attach both the LaTeX source (`.tex`) and the
+compiled PDF (`.pdf`). Do not submit scribe notes through Canvas or post them
+in a public Slack channel.
+
 The note is due within two calendar days of the lecture: a Tuesday lecture is
 due by the end of Thursday, ideally by the end of Wednesday; a Thursday lecture
 is due by the end of Saturday, ideally by the end of Friday. The [course schedule]({% link _pages/schedule.md %}) links to each lecture's

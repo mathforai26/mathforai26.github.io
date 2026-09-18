@@ -28,6 +28,14 @@ The raw weights shown for the six homeworks are each 10 percentage points. The t
 
 Late homework is not accepted. The two-lowest-grade replacement covers ordinary illness, overload, and missed work.
 
+## Scribe-note submission
+
+Scribe notes are not submitted through Canvas. Send the completed note to the
+instructor in a private message on the [course Slack](https://cmput654fall2026.slack.com).
+Attach both the LaTeX source (`.tex`) and the compiled PDF (`.pdf`). The
+[syllabus]({% link _pages/syllabus.md %}) gives the deadline, template, and
+content requirements.
+
 ## What homework is for
 
 Homework serves three purposes:
