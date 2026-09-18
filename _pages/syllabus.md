@@ -109,6 +109,15 @@ bibliographical notes. During revision, check whether short
 ancillary remarks would fit there and whether the main text reads correctly
 without them.
 
+From the first draft, use **endnotes** for short remarks that refine the material
+and may be skipped on a first reading. An endnote is too short to require an
+appendix; substantial proofs and extended discussions belong in appendices. Keep definitions,
+assumptions, and explanations needed for the main argument in the main text.
+Collect endnotes immediately after the take-home messages, before the
+bibliographical notes and references. During revision, check whether short
+ancillary remarks would fit there and whether the main text reads correctly
+without them.
+
 Start from the [LaTeX scribe template]({{ '/documents/misc_files/scribe_template.tex' | relative_url }}).
 The [lecture-writing standards]({{ '/documents/misc_files/lecture-writing-standards.md' | relative_url }})
 give the conventions for drafting and reviewing notes.

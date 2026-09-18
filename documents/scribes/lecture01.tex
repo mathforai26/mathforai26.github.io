@@ -2803,4 +2803,309 @@ Generalization.
 \newblock \url{https://arxiv.org/abs/2310.16028}.
 \end{thebibliography}
 
+\clearpage
+
+\section*{Glossary}
+
+\begin{description}[style=nextline,leftmargin=1.5em,labelindent=0pt]
+\item[Harness]
+The surrounding program that constructs model inputs, calls the model,
+interprets outputs, invokes tools, and controls further model calls.
+\item[Task state]
+Information maintained by the harness between calls, such as conversation
+history, tool results, and progress on the task. Only the portion supplied
+to the model is visible to that call.
+\item[Prompt]
+The initial input supplied to a model call. In the text-only setting, it is a
+string that tokenization converts into the initial token sequence.
+\item[Prefix]
+The token sequence $x_{<t}$ conditioning the prediction at position $t$.
+During generation, it consists of the tokenized prompt followed by the tokens
+generated so far.
+\item[Context]
+Information available to the model for its current prediction, represented
+here by the token prefix. External task state influences the prediction only
+through what the harness supplies.
+\item[Context window]
+The span of tokens available to the model at a prediction step. In the
+full-prefix setting of this note, it contains the prompt and the tokens
+generated so far, subject to the maximum context length.
+\item[Maximum context length]
+The supported upper bound on the number of tokens in the context window.
+Prompt and generated tokens share this capacity. Accepting a context of this
+length does not guarantee effective use of every token.
+\item[Base alphabet; vocabulary; token]
+The base alphabet $\Sigma$ contains raw symbols, such as bytes. The vocabulary
+$\mathcal V=\{v_1,\ldots,v_V\}$ contains token strings over $\Sigma$.
+A token is one vocabulary item, represented inside the model by its index
+in $[V]$; it need not be a whole word.
+\item[Tokenizer; detokenizer]
+A tokenizer maps a string to a sequence of vocabulary indices. The
+detokenizer maps $(x_1,\ldots,x_T)$ to $v_{x_1}\cdots v_{x_T}$ in the
+text-only setup. It undoes lossless tokenization; the reverse composition
+need not recover the original token sequence.
+\item[Sequence orientation; matrix layout]
+In a sequence display, positions run left to right. In the matrices here,
+positions are stacked as rows and the columns index coordinates such as
+vocabulary items or learned features. Every vector is a column vector; a
+matrix row that stores a vector contains its transpose.
+\item[Stochastic process]
+A jointly distributed collection of random variables $(X_t)$ indexed by
+time or sequence position.
+\item[Probabilistic sequence model; stochastic sequence model]
+A map $p_\theta:[V]^*\to\Delta_V$ assigning a next-token distribution to
+each finite token prefix; see \cref{eq:sequence-model}.
+\item[Autoregressive model]
+A model specified through next-token conditional distributions
+$p_\theta(x_t\mid x_{<t})$. The probability of a fixed finite sequence is
+their product, as in \cref{eq:autoregressive-factorization}.
+\item[Pretraining; post-training; fine-tuning]
+Initial large-scale fitting on broad data; the stage of training that follows
+pretraining; and continued parameter training from an existing checkpoint. A
+post-training pipeline may contain several fine-tuning procedures.
+\item[Inference]
+Computing predictions with the model parameters held fixed. Inference can
+score a supplied sequence as well as support generation.
+\item[Generation]
+Repeatedly computing a next-token distribution, selecting a token by a
+decoding rule, and appending it to the prefix until a stopping rule applies.
+\item[Encoder-only; decoder-only; encoder--decoder transformer]
+A bidirectional stack that produces contextual representations of an input; a
+causal stack that places prompt and continuation in one sequence; and a
+two-stack architecture in which a causal decoder separately reads the
+representation produced by a bidirectional encoder.
+\item[Self-attention]
+Attention whose queries, keys, and values are computed from the same sequence
+of activations, with a mask specifying which source positions are available.
+\item[Cross-attention]
+Attention whose queries come from one sequence and whose keys and values
+come from another. Here decoder states query the encoder's source states;
+see \cref{eq:cross-attention-head}.
+\item[Transformer block]
+One repeated layer combining attention and a positionwise feed-forward network
+with residual connections and normalization. An encoder--decoder's decoder
+block also contains cross-attention.
+\item[Embedding]
+The learned vector assigned to a token: for token $v$, it is
+$E^\top e_v\in\R^d$. The same token uses the same input embedding at each
+occurrence; subsequent hidden vectors also depend on context.
+\item[Logit]
+For a binary probability $p\in(0,1)$, the logit is the log-odds
+$\operatorname{logit}(p)=\log(p/(1-p))$.
+In a multiclass model $p=\softmax(z)$, the real-valued scores $z_v$ are called
+logits: their differences satisfy $z_v-z_u=\log(p_v/p_u)$. A common
+additive shift of all logits leaves $p$ unchanged. See
+\cref{sec:output-readout} and Lecture~3 on logistic and softmax regression.
+\item[Softmax]
+The map from real scores $z\in\R^V$ to probabilities
+$p_v=\softmax(z)_v=e^{z_v}/\sum_{u=1}^V e^{z_u}$.
+In attention, the same map normalizes the scores over the available source
+positions for each query.
+\item[Categorical distribution]
+A distribution on finitely many outcomes, represented here by
+$p\in[0,1]^V$ with $\sum_{v=1}^V p_v=1$, where $p_v$ is the probability
+of token $v$.
+\item[Readout; output head]
+A map from a hidden representation to output predictions. The
+\emph{softmax readout} here is $h\mapsto\softmax(W_Uh+b_U)$: a learned
+affine map produces logits, and softmax converts them to token probabilities.
+\item[Parameter]
+A trainable numerical quantity in $\theta$, such as an embedding, projection
+weight, or bias. Its value is held fixed during the inference computations
+described here.
+\item[Activation; layer-position activation]
+An intermediate value computed for the current input, such as a hidden
+vector, query, key, or value. The layer-position activation
+$h_i^\ell=(H^\ell_{i,:})^\top$ is the hidden vector at position $i$
+after layer $\ell$.
+\item[Normalization map]
+A vector-to-vector map $N_\nu:\R^d\to\R^d$ with learned parameters $\nu$
+that adjusts feature scale and may also center features. Its positionwise lift
+acts separately at each sequence position. LayerNorm-type maps are examples; see
+\cref{eq:normalization-family}.
+\item[Layer normalization (LayerNorm)]
+Subtracting a vector's coordinate mean and dividing by
+$\sqrt{\text{coordinate variance}+\varepsilon}$, then applying learned
+coordinatewise scaling and shifting. It acts separately at each sequence
+position, across features. This is $N_{1,\gamma,\beta}$ in
+\cref{eq:normalization-family}.
+\item[Pre-normalized block]
+A block that normalizes the input to each attention or FFN
+sublayer before applying it. The sublayer output is then added to the
+unnormalized residual stream.
+\item[Root-mean-square normalization (RMSNorm)]
+Dividing $u$ by $\sqrt{d^{-1}\sum_{r=1}^d u_r^2+\varepsilon}$ and applying
+learned coordinatewise scaling. It is the choice $N_{0,\gamma,0}$ in
+\cref{eq:normalization-family}: centering and the shift are omitted.
+\item[Parameter sharing]
+Using the same learned parameters across positions and input sequence lengths,
+or in different model calls; see \cref{rem:parameter-reuse}.
+\item[Teacher forcing]
+Training next-token predictions using the observed preceding tokens as
+inputs, rather than feeding back the model's own generated tokens.
+\item[Backpropagation]
+Applying the chain rule backward through the computation graph to compute
+derivatives of a loss with respect to parameters and intermediate values.
+An optimizer uses the parameter gradients to update the model.
+\item[Weight tying]
+Sharing the input embedding matrix with the output readout matrix,
+$W_U=E$; see \cref{rem:weight-tying}.
+\item[Activation function]
+A nonlinear scalar function applied coordinatewise within a neural-network
+layer, such as ReLU or GELU. This is a function, whereas an activation is a
+computed value.
+\item[ReLU]
+The rectified linear unit, $\operatorname{ReLU}(z)=\max\{0,z\}$.
+\item[GELU]
+The Gaussian error linear unit, $\operatorname{GELU}(z)=z\Phi(z)$, where
+$\Phi$ is the standard normal cumulative distribution function.
+\item[SiLU; swish]
+The sigmoid linear unit, $\operatorname{SiLU}(z)=z/(1+e^{-z})$.
+This is the swish function used in \cref{rem:swiglu}.
+\item[SwiGLU]
+A gated FFN computing the map
+$W_o(\operatorname{SiLU}(W_g r)\odot(W_v r))$. The two input projections
+interact by coordinatewise multiplication before the output projection;
+see \cref{rem:swiglu}.
+\item[Attention head]
+A sequence-to-sequence map
+$\operatorname{Head}_{\eta,M}:\R^{T\times d}\to\R^{T\times d_h}$.
+Its parameters $\eta$, whose number is independent of $T$, specify the query,
+key, and value projections;
+the mask $M$ specifies available sources. It computes query--key weights
+and uses them to combine value vectors; see \cref{fig:attention-head}.
+\item[Query; key; value]
+The query $q_i$ is computed from an output position's activation. The key
+$k_j$ is computed from a source position's activation and is compared with
+$q_i$ to score that source. The value $v_j$ is the source vector used in
+the attention-weighted sum; its projection is generally distinct from the
+key projection.
+\item[Attention score]
+A real-valued comparison between query $i$ and source $j$, here the scaled
+inner product $q_i^\top k_j/\sqrt{d_h}$, possibly modified by positional
+rotations or an additive relative-position bias.
+\item[Attention weight]
+The coefficient $\alpha_{ij}=e^{s_{ij}}/\sum_{r\in S_i}e^{s_{ir}}$ for
+an available source $j\in S_i$, and zero for a masked source. Each query's
+weights sum to one; see \cref{eq:available-position-attention}.
+\item[Causal mask]
+The restriction $j\le i$ on sources available to query position $i$.
+It is implemented by adding $-\infty$ to future-position scores before
+softmax, giving those sources zero attention weight.
+\item[Causal dependence]
+The property that an activation at position $i$ depends only on input
+positions $j\le i$. In this transformer it follows from causal attention
+and positionwise operations, and permits reuse of earlier keys and values.
+\item[Multi-head attention (MHA)]
+Parallel attention heads whose outputs are concatenated and linearly
+projected back to the model dimension. In
+$\operatorname{SelfAttn}_{\xi,M}$, the learned parameters
+$\xi=(\eta_1,\ldots,\eta_h,W^O)$ include each head's projections and the
+output projection; $M$ specifies the mask. Standard MHA gives each query
+head its own key and value projections; see \cref{eq:self-attention-map}.
+\item[Grouped-query attention (GQA); multi-query attention (MQA)]
+GQA partitions query heads into groups that share key and value projections
+within each group. MQA uses one shared key/value head for all query heads.
+Both reduce the key/value data stored and read during cached decoding.
+\item[Residual connection; residual stream]
+A residual connection adds a sublayer's output to its input, $h\mapsto
+h+F(h)$. The residual stream is the sequence of hidden representations
+updated by these additions as they pass through the blocks.
+\item[Positionwise map; positionwise lift]
+The extension of $f:\R^d\to\R^r$ to sequences by applying the same
+function independently at every position, with shared parameters:
+$(f(H)_{i,:})^\top=f(h_i)$. See \cref{eq:positionwise-lift}.
+\item[Multilayer perceptron (MLP)]
+A feed-forward neural network composing learned affine maps and
+coordinatewise activation functions, such as ReLU or GELU. The example in
+\cref{eq:feed-forward-map} has two affine maps with an activation function
+between them.
+\item[Positionwise feed-forward network (FFN)]
+A neural network applied independently to each position's activation vector,
+using shared parameters. Feed-forward means that its computation graph has
+no directed cycles. Its input--output function is the positionwise map
+$\operatorname{FF}_\psi$, with learned parameters $\psi$. An MLP, a gated
+network such as SwiGLU, or a mixture of experts can implement this component;
+see \cref{sec:positionwise-ffn}.
+\item[Mixture of experts (MoE)]
+A layer combining expert maps using input-dependent router weights.
+In the sparse version here, each position evaluates only a small selected
+subset of experts and takes a weighted sum of their outputs.
+\item[Absolute position embedding]
+A vector assigned to an absolute sequence position and added to its token
+embedding. The position vectors may be learned or prescribed, for example
+by sinusoidal functions.
+\item[Relative-position bias]
+A scalar depending on the displacement $i-j$, or a bucket containing it,
+added to the query--key score. See \cref{eq:relative-position-bias}.
+\item[Rotary position embeddings (RoPE)]
+Position-dependent rotations applied to query and key coordinate pairs
+before their inner product. The paired rotations introduce dependence on
+relative displacement; see \cref{ex:rope}. RoPE does not itself mask sources.
+\item[Decoding rule; sampling; greedy decoding]
+A decoding rule selects a next token from the predicted distribution.
+Sampling draws a random token with those probabilities. Greedy decoding
+selects a token with maximum probability, with a rule for breaking ties;
+this need not maximize the probability of the complete sequence.
+\item[Prefill]
+The initial forward pass over all prompt tokens, which computes their keys
+and values and the distribution for the first generated token.
+\item[Decode step]
+An incremental forward pass for a newly appended token, using earlier cached
+keys and values to compute the distribution for the next token.
+\item[KV cache]
+Stored keys and values from earlier positions, separately for each layer
+and key/value head. Causal dependence lets later decode steps reuse them
+without recomputing the earlier positions; see \cref{sec:attention-cost}.
+\item[Attention entropy]
+The entropy $\Hent(\alpha)=-\sum_{j=1}^T\alpha_j\log\alpha_j$ of one
+query's attention weights, with $0\log0=0$. It ranges from $0$ for all mass
+on one source to $\log T$ for uniform weights on $T$ sources.
+\item[Lost in the middle]
+An observed pattern of worse performance when relevant information is in
+the middle of a long input rather than near its beginning or end.
+\item[Context rot]
+An empirical term for deteriorating task performance as input length grows,
+even within the supported context length.
+\end{description}
+
+\section{Exercises}
+
+\exerciseinstructions
+\setcounter{courseexercise}{0}
+\input{../exercises/l1-rope.tex}
+\input{../exercises/l1-greedy-decoding.tex}
+\input{../exercises/l1-bounded-attention.tex}
+
+\clearpage
+\appendix
+\renewcommand{\thesection}{\Alph{section}}
+\section{How tokenizers are constructed}
+\label{app:tokenizer-construction}
+
+Two common corpus-based constructions illustrate the main ideas.
+\begin{enumerate}[leftmargin=*]
+\item \emph{Byte-pair encoding (BPE).} Merging a frequent adjacent pair
+shortens the corpus's tokenization wherever that pair is replaced.
+Start with base symbols, count adjacent
+token pairs in the training corpus, merge a most frequent pair into a new
+vocabulary item, and repeat until the desired vocabulary size is reached. The
+learned merge order determines the segmentation of new text.
+\item \emph{Unigram tokenization.} To compare alternative segmentations,
+assign each candidate token string $v$ a probability $q(v)$.
+Start with a large collection of candidates and score a segmentation
+$x_1,\ldots,x_T$ by multiplying its token probabilities,
+or equivalently adding their logarithms:
+\begin{equation}
+\prod_{t=1}^T q(v_{x_t}),
+\qquad\text{or equivalently}\qquad
+\sum_{t=1}^T\log q(v_{x_t}).
+\end{equation}
+Fit the probabilities to the corpus, remove candidates whose deletion hurts
+the likelihood least, and repeat. At encoding time one may choose a
+highest-scoring segmentation or sample among segmentations.
+\end{enumerate}
+
+\clearpage
+
 \end{document}
