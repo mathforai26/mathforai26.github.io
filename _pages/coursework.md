@@ -15,7 +15,7 @@ Homework materials and submission links are added as assignments are released.
 |:--|--:|:--|:--|
 | Homework 0: mathematical readiness | 0% | Sun, Sep 6, 11:59 p.m. | [PDF]({{ '/documents/assignments/assignment0.pdf' | relative_url }}) · [LaTeX]({{ '/documents/assignments/assignment0.tex' | relative_url }}) · [Submit on Canvas](https://canvas.ualberta.ca/courses/37231/assignments/812892) |
 | Homework 1: prediction, generalization, and evaluation | 10% | Fri, Sep 18, 11:59 p.m. | [PDF]({{ '/documents/assignments/assignment1.pdf' | relative_url }}) · [LaTeX source bundle]({{ '/documents/assignments/assignment1-source.zip' | relative_url }}) · [Submit on Canvas](https://canvas.ualberta.ca/courses/37231/assignments/814320) |
-| Homework 2 | 10% | End of Week 5 | To be posted |
+| Homework 2: sequence objectives, state, and dependence | 10% | Fri, Oct 2, 11:59 p.m. | [PDF]({{ '/documents/assignments/assignment2.pdf' | relative_url }}) · [LaTeX source bundle]({{ '/documents/assignments/assignment2-source.zip' | relative_url }}) · [Submit on Canvas](https://canvas.ualberta.ca/courses/37231/assignments/817841) |
 | Research-question first draft | Part of 10% | End of Week 6 | [Template]({{ '/documents/misc_files/research_question_template.tex' | relative_url }}) |
 | Homework 3 | 10% | End of Week 7 | To be posted |
 | Homework 4 | 10% | End of Week 9 | To be posted |
