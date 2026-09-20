@@ -4,10 +4,10 @@
 \exerciseprofile{3}{2}{2}{\exproof\quad\excalculation\quad\exinterpretation}{%
 Compute the beta-mixing coefficient induced by overlapping iid windows and
 distinguish token independence from window independence.}
-Let \(\mathcal Z\) be a finite or countable alphabet, let
-\(p:\mathcal Z\to[0,1]\) satisfy \(\sum_{z\in\mathcal Z}p(z)=1\), and let
-\((Z_t)_{t\geq1}\) be iid \(\mathcal Z\)-valued random variables with law
-\(p\). Let \(L\geq2\) be an integer, and define the \(\mathcal Z^L\)-valued
+Let \(\cZ\) be a finite or countable alphabet, let
+\(p:\cZ\to[0,1]\) satisfy \(\sum_{z\in\cZ}p(z)=1\), and let
+\((Z_t)_{t\geq1}\) be iid \(\cZ\)-valued random variables with law
+\(p\). Let \(L\geq2\) be an integer, and define the \(\cZ^L\)-valued
 windows \(W_t=(Z_t,\ldots,Z_{t+L-1})\). For an integer \(a\geq1\), define the
 beta-mixing coefficient
 \[
@@ -21,10 +21,10 @@ windows separated by at least \(L\) starting positions are independent.
 Deduce that \(\beta_W(a)=0\) for \(a\geq L\).
 \item For \(1\leq a<L\), show that
 \[
- \beta_W(a)=1-\left(\sum_{z\in\mathcal Z}p(z)^2\right)^{L-a}.
+ \beta_W(a)=1-\left(\sum_{z\in\cZ}p(z)^2\right)^{L-a}.
 \]
 Explain from this formula why the coefficient is close to one when the
-collision probability \(\sum_{z\in\mathcal Z}p(z)^2\) is small or when the number \(L-a\)
+collision probability \(\sum_{z\in\cZ}p(z)^2\) is small or when the number \(L-a\)
 of shared positions is large, even though the underlying token process is
 independent.
 \end{enumerate}

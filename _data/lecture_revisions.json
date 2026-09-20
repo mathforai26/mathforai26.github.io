@@ -123,13 +123,13 @@
       "documents/exercises/course-exercises.sty": "cef739d3c993af37612181a6907ac919f7387d3ce06e7c3e441cd7f4c7c80f84",
       "documents/exercises/l6-duplication.tex": "ef2d35ed1252ddbbf73fa3710cd665f6389f160b65d920083b56a5f00c8f25df",
       "documents/exercises/l6-hoeffding-clt.tex": "c02e1b64163eab501cf0af23aa0d8dbffbfd827b943786806cc5d644418d0b17",
-      "documents/exercises/l6-overlapping-windows.tex": "d42d1e47273d9d61bbb715b7b7231b7619d9ef47ce73e3106d10357a3e5bd0f6",
-      "documents/exercises/l6-polynomial-mixing.tex": "a18d5e0f9631b184ba7544f3a725fa5d1b328caae275f40b3511b811ff9fdacc",
-      "documents/exercises/l6-resampling-dependence.tex": "54cc0cccb0d55940c53bec5af38c0c821ae4538ff4a3e60732f78da086723eb0",
+      "documents/exercises/l6-overlapping-windows.tex": "c66b8389cbff41a77d34969bf7cbed85b54441cb6ec06efee7e7a211ad6e162e",
+      "documents/exercises/l6-polynomial-mixing.tex": "ae6e70fdd4c39d5b993374d01f7b8f8704c8d89646d4eaf4a559aec32b34e49f",
+      "documents/exercises/l6-resampling-dependence.tex": "ee930e1abd27fa5e68a9bbc4ca62e66a0dea8b5fdd270c26a0b4e38fcfd85d49",
       "documents/exercises/l6-resampling.tex": "6feb8175deb855093c80adebdfe6dbd694e3dd3ee581736618640afb76538363",
-      "documents/exercises/l6-threshold-information.tex": "31ff3936b299d371ae9f6316a5ce52be5510d9320917c5e5328adfd5900de382",
-      "documents/scribes/lecture06.tex": "dfce5c85f4320f7b34ebbaf3c0250c89fbf7c54653f20d313cccba8ececd1e52"
+      "documents/exercises/l6-threshold-information.tex": "886f35044f507d588d0dc3ae0a132dfae300e0d7329aded753502483f0d36c88",
+      "documents/scribes/lecture06.tex": "e45d1bced9121b50370339bae72eb10598143d82aba4d21de47c838f3d229e11"
     },
-    "revised": "2026-09-20 10:36 UTC-06:00"
+    "revised": "2026-09-20 11:02 UTC-06:00"
   }
 }

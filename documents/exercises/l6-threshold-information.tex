@@ -4,16 +4,16 @@
 \exerciseprofile{2}{2}{2}{\exproof\quad\excalculation\quad\exinterpretation}{%
 Distinguish three information structures by deriving their requirements for
 identifying a threshold.}
-Let \(N\geq6\), let \(\mathcal K=\{2,\ldots,N-1\}\), and, for
-\(k\in\mathcal K\), define \(f_k(x)=\I\{x\geq k\}\) on \([N]\).
+Let \(N\geq6\), let \(\cK=\{2,\ldots,N-1\}\), and, for
+\(k\in\cK\), define \(f_k(x)=\I\{x\geq k\}\) on \([N]\).
 The goal is to identify \(k\) exactly from labeled examples.
 \begin{enumerate}[(a),beginpenalty=10000]
 \item A teacher knows \(k\) and may choose labeled examples. Prove that
-\(\{(k-1,0),(k,1)\}\) identifies \(k\) uniquely within \(\mathcal K\).
-Explain why no single labeled example identifies every \(k\in\mathcal K\).
+\(\{(k-1,0),(k,1)\}\) identifies \(k\) uniquely within \(\cK\).
+Explain why no single labeled example identifies every \(k\in\cK\).
 \item An active learner does not know \(k\), but may choose each query after
 observing the previous labels. Give a binary-search strategy that identifies
-every \(k\in\mathcal K\) using at most
+every \(k\in\cK\) using at most
 \(\lceil\log_2(N-2)\rceil\) queries. Prove that no active strategy can have a
 smaller worst-case number of binary-label queries.
 \item A passive learner receives \(X_1,\ldots,X_n\) independently and uniformly
