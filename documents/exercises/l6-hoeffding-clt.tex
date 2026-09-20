@@ -1,0 +1,37 @@
+\begin{exercisechunk}
+\item \textbf{Hoeffding bounds and the normal approximation.}
+\label[exercise]{ex:l6-hoeffding-clt}
+\exerciseprofile{2}{2}{2}{\excalculation\quad\exinterpretation}{%
+Distinguish the central-limit scale from fixed-size deviations and compare the
+conclusions supplied by the central limit theorem and Hoeffding's inequality.}
+Let \(X_1,\ldots,X_n\) be iid \(\operatorname{Bernoulli}(p)\) variables with
+\(p\in(0,1)\), and let \(\widehat p_n=n^{-1}\sum_{i=1}^nX_i\).
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Derive \(\E[\widehat p_n]\) and
+\(\operatorname{Var}(\widehat p_n)\), and state the central limit theorem for
+\(\sqrt n(\widehat p_n-p)\).
+\item Apply Hoeffding's inequality to show that, for every \(\epsilon>0\),
+\[
+ \P(\widehat p_n-p\geq\epsilon)\leq e^{-2n\epsilon^2}.
+\]
+\item Fix \(t>0\) and set
+\(\epsilon_n=t\sqrt{p(1-p)/n}\). Determine the limit of
+\(\P(\widehat p_n-p\geq\epsilon_n)\), and show that the Hoeffding bound in
+part~(b) becomes \(e^{-2t^2p(1-p)}\). Explain what the two conclusions say at
+the \(n^{-1/2}\) scale.
+\item Now fix \(\epsilon\in(0,1-p)\), and let
+\(Z_n\sim\mathcal N(p,p(1-p)/n)\). You may use
+\[
+ \lim_{x\to\infty}\frac{1}{x^2}\log(1-\Phi(x))=-\frac12.
+\]
+Show that
+\[
+ \lim_{n\to\infty}\frac1n
+ \log\P(Z_n-p\geq\epsilon)
+ =-\frac{\epsilon^2}{2p(1-p)}.
+\]
+Explain why the central limit theorem alone does not justify using this
+Gaussian rate for \(\P(\widehat p_n-p\geq\epsilon)\), and contrast this with
+the finite-sample conclusion in part~(b).
+\end{enumerate}
+\end{exercisechunk}

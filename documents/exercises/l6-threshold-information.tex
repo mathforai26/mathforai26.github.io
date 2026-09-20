@@ -1,0 +1,38 @@
+\begin{exercisechunk}
+\item \textbf{Teaching, active learning, and passive learning.}
+\label[exercise]{ex:l6-threshold-information}
+\exerciseprofile{2}{2}{2}{\exproof\quad\excalculation\quad\exinterpretation}{%
+Distinguish three information structures by deriving their requirements for
+identifying a threshold.}
+Let \(N\geq6\), let \(\mathcal K=\{2,\ldots,N-1\}\), and, for
+\(k\in\mathcal K\), define \(f_k(x)=\I\{x\geq k\}\) on \([N]\).
+The goal is to identify \(k\) exactly from labeled examples.
+\begin{enumerate}[(a),beginpenalty=10000]
+\item A teacher knows \(k\) and may choose labeled examples. Prove that
+\(\{(k-1,0),(k,1)\}\) identifies \(k\) uniquely within \(\mathcal K\).
+Explain why no single labeled example identifies every \(k\in\mathcal K\).
+\item An active learner does not know \(k\), but may choose each query after
+observing the previous labels. Give a binary-search strategy that identifies
+every \(k\in\mathcal K\) using at most
+\(\lceil\log_2(N-2)\rceil\) queries. Prove that no active strategy can have a
+smaller worst-case number of binary-label queries.
+\item A passive learner receives \(X_1,\ldots,X_n\) independently and uniformly
+from \([N]\), together with their labels. Fix \(k\in\{3,\ldots,N-2\}\).
+Prove that the observed labels identify \(k\) uniquely if and only if both
+\(k-1\) and \(k\) occur in the sample, and that the probability of this event is
+\[
+ 1-2\left(1-\frac1N\right)^n
+   +\left(1-\frac2N\right)^n.
+\]
+Deduce that \(n\geq N\log(2/\delta)\) suffices for this probability to be at
+least \(1-\delta\).
+\item Explain why the two-example teaching set is not evidence that dependence
+alone makes learning faster. State precisely what target information the
+teacher has that the active and passive learners do not.
+\end{enumerate}
+\begin{hints}
+For (b), maintain the set of thresholds consistent with all answers. For the
+lower bound, a depth-\(q\) binary decision tree has at most \(2^q\) leaves. For
+(c), use inclusion--exclusion and then a union bound.
+\end{hints}
+\end{exercisechunk}

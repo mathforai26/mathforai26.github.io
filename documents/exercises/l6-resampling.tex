@@ -1,0 +1,24 @@
+\begin{exercisechunk}
+\item \textbf{Sampling with and without replacement.}
+\label[exercise]{ex:l6-resampling}
+\exerciseprofile{2}{2}{3}{\exproof\quad\excalculation\quad\exinterpretation}{%
+Derive the laws induced by sampling indices with and without replacement and
+identify what these procedures do not change about the source data.}
+Fix a corpus \(x_1,\ldots,x_m\in\R\) and let
+\(\bar x=m^{-1}\sum_i x_i\).
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Draw \(I_1,\ldots,I_B\) independently and uniformly from \([m]\), and
+define \(C_i=\sum_{b=1}^B\I\{I_b=i\}\). Give the joint law of
+\((C_1,\ldots,C_m)\), and prove that
+\(B^{-1}\sum_iC_ix_i\) is conditionally unbiased for \(\bar x\).
+\item Take \(B=m\). Find the marginal law of \(C_i\) and its limit as
+\(m\to\infty\). Find the limiting probability that item \(i\) is omitted.
+Why does this calculation not show that the resampled items are independent
+population observations?
+\item Suppose instead that indices are sampled without replacement. Prove that
+sampling all \(m\) indices gives a uniformly random permutation. Show that the
+first \(B<m\) indices are a uniformly random ordered sample without replacement,
+or equivalently a uniformly random \(B\)-element subset followed by a uniformly
+random ordering.
+\end{enumerate}
+\end{exercisechunk}

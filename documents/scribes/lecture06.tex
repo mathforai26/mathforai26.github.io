@@ -1,0 +1,721 @@
+\documentclass[11pt,twoside]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage[inline,shortlabels]{enumitem}
+\usepackage{booktabs}
+\usepackage{xcolor}
+\usepackage{microtype}
+
+% Revision date: maintained by scripts/build_lecture_notes.py. Keep this command.
+\newcommand{\lecturerevised}{2026-09-20 10:36 UTC-06:00}
+\usepackage{eso-pic}
+\AddToShipoutPictureBG{%
+  \AtPageLowerLeft{%
+    \put(\LenToUnit{0.5\paperwidth},\LenToUnit{0.5in}){%
+      \makebox(0,0){\normalfont\footnotesize\color{black!60}Last revised: \lecturerevised}%
+    }%
+  }%
+}
+
+\usepackage[square,authoryear]{natbib}
+\usepackage[colorlinks=true,linkcolor=blue!60!black,
+  urlcolor=blue!60!black,citecolor=blue!60!black]{hyperref}
+\usepackage[nameinlink,capitalize]{cleveref}
+\hypersetup{pdftitle={Lecture 6: Data collection, dependence, and useful evidence},
+  pdfauthor={Csaba Szepesvari}}
+\crefname{exercise}{Exercise}{Exercises}
+\Crefname{exercise}{Exercise}{Exercises}
+
+\usepackage{enotez}
+\DeclareInstance{enotez-list}{lecture}{list}{format=\normalsize,number={#1.}}
+\setenotez{list-name=Endnotes,list-style=lecture,backref=true}
+\crefname{endnote}{Endnote}{Endnotes}
+\Crefname{endnote}{Endnote}{Endnotes}
+
+\definecolor{courseblue}{HTML}{17365D}
+\newcommand{\E}{\mathbb E}
+\newcommand{\I}{\mathbb I}
+\renewcommand{\P}{\mathbb P}
+\newcommand{\R}{\mathbb R}
+\newcommand{\KL}{D}
+\newcommand{\TV}{\mathrm{TV}}
+\makeatletter
+\@for\@letter:=A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z\do{%
+  \expandafter\edef\csname c\@letter\endcsname{\noexpand\mathcal{\@letter}}}
+\makeatother
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{example}[theorem]{Example}
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+
+\renewcommand{\thepage}{6--\arabic{page}}
+\renewcommand{\thesection}{6.\arabic{section}}
+\renewcommand{\theequation}{6.\arabic{equation}}
+\pagestyle{myheadings}
+\markboth{Lecture 6: Data collection, dependence, and useful evidence}
+{Lecture 6: Data collection, dependence, and useful evidence}
+\usepackage{../exercises/course-exercises}
+
+\begin{document}
+
+\begin{center}
+\fcolorbox{courseblue}{white}{%
+\begin{minipage}{0.92\textwidth}
+\vspace{1mm}
+\textbf{CMPUT 654: Mathematical Foundations of Modern AI Systems}
+\hfill Fall 2026
+
+\vspace{3mm}
+\begin{center}
+{\Large\bfseries Lecture 6: Data collection, dependence, and useful evidence}
+
+\vspace{1mm}
+September 17, 2026
+\end{center}
+
+\vspace{2mm}
+\textit{Lecturer: Csaba Szepesv\'ari}
+\hfill
+\textit{Note prepared by: Csaba Szepesv\'ari}
+\vspace{1mm}
+\end{minipage}}
+\end{center}
+
+\noindent Larkin Wisdom prepared a scribe of the September 17 lecture.
+Csaba Szepesv\'ari prepared and expanded the present notes.
+
+\medskip
+\noindent\textbf{Reading guide.}
+These notes ask how collected data become evidence about deployment. The main
+text follows the classroom discussion: corpus construction, the role of
+randomness, concentration in the iid model, exact copies, resampling, and
+beta-mixing. The public pretraining references, the longer resampling
+calculation, and the proof behind the mixing theorem were added after class.
+The exercises develop calculations that were posed but not completed in class.
+Lectures 1--5 provide the background on sequence prediction, loss, and
+state-space models.
+
+\section{A dataset is produced by a procedure}
+\label{sec:pipeline}
+
+Data is a major part of an ML system. The iid model deliberately suppresses
+most details of how data is obtained. Before using that model, we should ask
+where the data came from and what happened to it.
+
+Language-model pretraining commonly starts from web pages, books, code,
+scientific articles, conversations, and other text collections. A simplified
+pipeline is
+\[
+ \begin{gathered}
+ \text{sources}
+ \longrightarrow \text{extraction and parsing}
+ \longrightarrow \text{filtering and deduplication}\\
+ \longrightarrow \text{source mixture}
+ \longrightarrow \text{tokenization}
+ \longrightarrow \text{training sequences}.
+ \end{gathered}
+\]
+This pipeline raises a recurring question: does deduplication matter, when does
+it matter, and by how much? \Cref{sec:copies} answers it under a simple variance
+model.
+Extraction may remove HTML and recover the main text. Filters may use language,
+quality, safety, or document-type criteria. Exact and approximate
+deduplication remove repeated material. A mixture rule determines how much of
+each retained source is used. Tokenization turns text into token IDs.
+Finally, the tokens must be placed into sequences of the length used for
+training. Public descriptions of open-weight models document many, though not
+always all, of these choices; the bibliographical notes give examples.
+
+A common sequence-construction method concatenates documents, places a special
+boundary token between them, and cuts the resulting stream into fixed-length
+sequences. Other methods pack shorter documents without allowing attention
+across document boundaries or truncate long documents. These choices determine
+which prediction contexts training presents to the model. They can also make
+training contexts unlike deployment contexts: a training sequence may usually
+be full, whereas a deployed model must also predict after a short prompt.
+In a \emph{causally masked transformer}, the prediction at a position cannot
+use later tokens. A full training sequence therefore contains prediction
+problems with prefix lengths ranging from short to long. This is a
+transformer-specific mitigation, not a general answer to mismatch.
+
+The guiding principle is that training data must resemble deployment data in
+the respects needed for the desired behavior. Exact equality of distributions
+is not required, and post-training can alter behavior. It cannot generally
+recover abilities for which pretraining and post-training supply no relevant
+evidence. Pretraining only on Hungarian documents and deploying only in
+English preserves some common structure, but not enough to expect good English
+behavior.
+
+Three objects should remain separate:
+\begin{enumerate}[leftmargin=*]
+\item the \emph{realized corpus}, which is a fixed collection of documents and
+  sequences;
+\item the \emph{collection procedure}, which found, selected, filtered,
+  copied, and divided the sources; and
+\item a \emph{probability model}, which describes repeated collection, an
+  ordered source, evaluation cases, or future deployment.
+\end{enumerate}
+A list of files does not determine a probability model. The proposed unit---a
+token, window, document, conversation, user, or source---also matters. One book,
+one thousand independently written books, and one book stored one thousand
+times can all yield one thousand training sequences but provide different
+evidence.
+
+\section{Why introduce randomness?}
+\label{sec:randomness}
+
+A probability law specifies which future cases count and how they are
+weighted. A joint law additionally states how observations are related. It can
+therefore support quantitative claims about whether empirical averages are
+stable and whether they estimate deployment quantities.
+
+Randomness can enter in three distinct places:
+\begin{itemize}[leftmargin=*]
+\item \emph{collection randomness}: units are sampled from a stated
+  population or by a randomized experiment;
+\item \emph{source randomness}: a stochastic process models future documents,
+  interactions, or tokens; and
+\item \emph{algorithmic randomness}: shuffling, minibatch selection,
+  initialization, and decoding randomize computation.
+\end{itemize}
+Algorithmic randomness does not turn repeated source material into independent
+population evidence. Randomness may also be an effective mathematical
+description of a deterministic system, but establishing such a description is
+a separate problem.\endnote{Deterministic systems can exhibit statistical
+regularities. Statistical mechanics, dynamical systems, and pseudorandomness
+give precise versions in particular settings. Their existence does not by
+itself justify a stochastic model for a corpus.}\label{en:deterministic-randomness}
+
+Observations that are not independent are called \emph{dependent}. An iid
+model can be plausible when, for example, a machine independently selects
+problems from a fixed collection or unrelated users independently initiate
+conversations under stable conditions. These remain modeling claims about the
+chosen units and procedure.
+
+Independence is also not necessary for learning. For the threshold class
+\(f_k(x)=\I\{x\geq k\}\), the two labeled examples
+\((k-1,0)\) and \((k,1)\) identify an interior threshold exactly. This is a
+deterministic teaching set: the teacher knows the target and chooses examples
+that identify it. This differs from active learning, where the learner does not
+know the target but may choose which labels to request, and from passive
+learning, where the learner receives examples from a fixed sampling law. For
+thresholds on a finite ordered set, teaching uses two target-dependent examples,
+active learning permits binary search, and passive learning must wait for the
+sampling law to reveal points near the threshold. Dependence alone does not
+explain these differences; the information available when examples are chosen
+does.
+
+Expert curation for language models can resemble teaching when examples are
+selected to communicate a desired capability. The analogy concerns data
+selection: a target-aware example can be more informative than a passive draw.
+It does not imply that one or a few examples suffice for a model to learn or
+transfer a proof. The model class, optimization procedure, and relation between
+training and deployment tasks still matter.
+
+A dependent process can also provide quantitative coverage. Suppose the
+deployment law on \([N]\) is \(P\), and, for every interval \(I\subseteq[N]\),
+\begin{equation}
+ \P(X_i\in I\mid X_1,\ldots,X_{i-1})\geq \alpha P(I)
+ \quad\text{almost surely}.
+ \label{eq:conditional-coverage}
+\end{equation}
+For the threshold learner from Lecture 2, let \(L\) denote the deployment
+probability of its error interval. The event \(L>\epsilon\) requires the sample
+to miss a fixed interval, determined by \(P\), the target, and \(\epsilon\),
+whose \(P\)-mass exceeds \(\epsilon\). Each observation has conditional
+probability at least \(\alpha\epsilon\) of hitting that interval. Iterated
+conditioning gives
+\begin{equation}
+ \P(L>\epsilon)
+ \leq (1-\alpha\epsilon)^n
+ \leq \exp(-\alpha n\epsilon).
+ \label{eq:conditional-coverage-bound}
+\end{equation}
+Thus independence is one sufficient explanation for accumulating evidence,
+not the definition of learnability.
+
+\section{The iid calculation}
+\label{sec:iid}
+
+Let \(X_1,\ldots,X_n\) be iid with law \(P\). For a fixed parameter
+\(\theta\), define the \emph{population loss} and \emph{empirical loss} by
+\begin{equation}
+ L(\theta)=\E[\ell(\theta;X)],
+ \qquad
+ \widehat L_n(\theta)=\frac1n\sum_{i=1}^n\ell(\theta;X_i).
+ \label{eq:risks}
+\end{equation}
+If \(0\leq\ell(\theta;X)\leq1\), Hoeffding's inequality gives
+\begin{equation}
+ \P\!\left(\left|\widehat L_n(\theta)-L(\theta)\right|>\epsilon\right)
+ \leq 2e^{-2n\epsilon^2}.
+ \label{eq:hoeffding}
+\end{equation}
+This is a \emph{concentration} statement: the empirical average is unlikely to
+be far from its expectation. The systematic study of such behavior is called
+measure concentration.
+
+The variance explains the first-order scale. Writing
+\(\sigma_\theta^2=\operatorname{Var}(\ell(\theta;X))\), independence gives
+\begin{equation}
+ \operatorname{Var}(\widehat L_n(\theta))
+ =\frac{\sigma_\theta^2}{n}.
+ \label{eq:iid-variance}
+\end{equation}
+When \(0<\sigma_\theta^2<\infty\), the central limit theorem further gives
+\[
+ \sqrt n\bigl(\widehat L_n(\theta)-L(\theta)\bigr)
+ \ \Longrightarrow\ \mathcal N(0,\sigma_\theta^2).
+\]
+Equivalently, for large \(n\), the deviation
+\(\widehat L_n(\theta)-L(\theta)\) is approximately
+\(\mathcal N(0,\sigma_\theta^2/n)\).
+These statements concern a fixed \(\theta\). Applying them to a parameter
+chosen from the same data requires a uniform, stability, information, or other
+generalization argument.
+
+The copied process \(Y_i=U\), where
+\(U\sim\operatorname{Bernoulli}(1/2)\), shows what independence prevents.
+Every \(Y_i\) has the same marginal law, but
+\(n^{-1}\sum_iY_i=U\) for every \(n\). The empirical average does not
+concentrate around \(1/2\).
+
+\section{Exact copies and effective sample size}
+\label{sec:copies}
+
+We can now answer the question raised at the start of class: does
+deduplication matter, when does it matter, and by how much?
+
+Let \(X_1,\ldots,X_m\) be independent source units with common loss variance
+\(\sigma_\theta^2\). Suppose unit \(i\) occurs \(c_i\geq1\) times in the
+stored corpus, and let \(N=\sum_{i=1}^m c_i\). The stored-data average is
+\begin{equation}
+ \widehat L_{\rm copy}(\theta)
+ =\frac1N\sum_{i=1}^m c_i\ell(\theta;X_i).
+ \label{eq:copy-average}
+\end{equation}
+Independence of the \(m\) source units gives
+\begin{equation}
+ \operatorname{Var}(\widehat L_{\rm copy}(\theta))
+ =\sigma_\theta^2\frac{\sum_{i=1}^m c_i^2}{N^2}
+ =\frac{\sigma_\theta^2}{n_{\rm eff}},
+ \qquad
+ n_{\rm eff}=\frac{N^2}{\sum_{i=1}^m c_i^2}.
+ \label{eq:copy-neff}
+\end{equation}
+The \emph{effective sample size} is the independent sample size that would
+give the same variance under this model. Cauchy--Schwarz gives
+\begin{equation}
+ 1\leq n_{\rm eff}\leq m,
+ \label{eq:neff-bounds}
+\end{equation}
+with \(n_{\rm eff}=m\) exactly when all multiplicities are equal. If one
+source dominates, \(n_{\rm eff}\) can be close to one.
+
+Deduplicating to one copy of every source gives variance
+\(\sigma_\theta^2/m\). Hence
+\[
+ \frac{\operatorname{Var}(\widehat L_{\rm copy})}
+      {\sigma_\theta^2/m}
+ =m\frac{\sum_i c_i^2}{N^2}
+ =1+\operatorname{CV}(c_1,\ldots,c_m)^2,
+\]
+where \(\operatorname{CV}\) is the empirical coefficient of variation using
+denominator \(m\). Equal duplication wastes storage and computation but does
+not reduce effective sample size below \(m\). Unequal duplication also reduces
+effective sample size and changes the empirical weights. If multiplicity is
+intended to represent deployment frequency, deduplication changes the target;
+Lecture 7 studies that weighting question.
+
+Near copies require the more general covariance calculation below. Their value
+depends on the statistic: two variants can be nearly identical for one learned
+feature and materially different for another.
+
+\section{Covariance is the general calculation}
+\label{sec:covariance}
+
+Let \(G_t\) be a scalar loss, score, or projection of a gradient contribution
+at position \(t\). No independence assumption is needed for
+\begin{equation}
+ \operatorname{Var}\!\left(\frac1T\sum_{t=1}^T G_t\right)
+ =\frac1{T^2}\sum_{s,t=1}^T\operatorname{Cov}(G_s,G_t).
+ \label{eq:covariance-sum}
+\end{equation}
+Define
+\[
+ S_T=\sum_{t=1}^T\operatorname{Var}(G_t),
+ \qquad
+ \Gamma_T=\sum_{s,t=1}^T\operatorname{Cov}(G_s,G_t).
+\]
+When \(S_T>0\) and \(\Gamma_T>0\), variance matching gives the
+statistic-dependent effective sample size
+\begin{equation}
+ T_{\rm eff}(G)=T\frac{S_T}{\Gamma_T}.
+ \label{eq:general-neff}
+\end{equation}
+Independence gives \(T_{\rm eff}=T\). Positive covariance usually reduces it;
+negative covariance can increase it. There is no single effective sample size
+for a corpus without specifying the quantity being averaged.
+
+This distinction matters for sequences. A single long trajectory may contain
+many effective observations of a shared transition parameter but only one
+draw from its initial-state law. A book may repeatedly inform local syntax
+while retaining the same notation convention throughout. Overlapping context
+windows share most of their tokens; \cref{ex:l6-overlapping-windows} asks for
+their exact dependence range in a simple model.
+
+\section{What resampling changes}
+\label{sec:resampling}
+
+Fix a realized corpus \(x_1,\ldots,x_m\). Sampling indices independently with
+replacement produces conditionally independent draws from its empirical law.
+It does not create new independent evidence about the population that produced
+the corpus. As the number of resampled draws grows with the corpus fixed, the
+random frequencies approach the original empirical frequencies, so the same
+empirical average is recovered.
+
+Sampling all \(m\) indices without replacement is a random shuffle. Sampling
+\(B<m\) without replacement is equivalently a random shuffle followed by
+truncation. Random minibatches can change the optimization path, but repeated
+minibatch training still targets the original empirical objective. Sparse
+subsampling may separate nearby observations in a dependent sequence, at the
+cost of discarding data and adding variability. The appendix makes these
+claims precise; \cref{ex:l6-resampling} asks you to compare sampling with and
+without replacement.
+
+\section{Controlled dependence through beta-mixing}
+\label{sec:mixing}
+
+There are many ways to quantify dependence. For a one-sided process
+\(X_1,X_2,\ldots\), let \(\mathcal L(Y)\) denote the distribution of a
+random element \(Y\). Define the \emph{absolute-regularity}, or
+\emph{beta-mixing}, coefficient
+\begin{equation}
+ \beta(a)=\sup_{t\geq1}
+ \left\|
+ \mathcal L(X_{1:t},X_{t+a:\infty})
+ -\mathcal L(X_{1:t})\otimes\mathcal L(X_{t+a:\infty})
+ \right\|_{\TV},
+ \qquad a\geq1.
+ \label{eq:beta}
+\end{equation}
+Here \(\|P-Q\|_{\TV}=\sup_A|P(A)-Q(A)|\). Small \(\beta(a)\) means that an
+observed past and a future separated from it by a gap of \(a-1\) positions are
+close to independent in a strong, distributional sense.
+
+Select positions \(t_j=1+(j-1)a\), for \(j=1,\ldots,q\), where
+\(q=1+\lfloor(n-1)/a\rfloor\). Assume the selected observations have common
+marginal law \(P\). The independent-points comparison proved in
+\cref{app:mixing-proof} is
+\begin{equation}
+ \left\|\mathcal L(X_{t_1},\ldots,X_{t_q})-P^{\otimes q}\right\|_{\TV}
+ \leq(q-1)\beta(a).
+ \label{eq:independent-points}
+\end{equation}
+
+\begin{theorem}[Finite-class consistency under beta-mixing]
+\label{thm:mixing-finite-class}
+Let \(\cF\) be finite, let the target \(f\in\cF\), and, for \(X\sim P\),
+define \(L_P(g,f)=P(g(X)\neq f(X))\). If a learner returns a function
+\(\widehat f\in\cF\) consistent with all labeled observations
+\((X_i,f(X_i))\), \(i\in[n]\), then
+\begin{equation}
+ \P\bigl(L_P(\widehat f,f)>\epsilon\bigr)
+ \leq |\cF|(1-\epsilon)^q+(q-1)\beta(a).
+ \label{eq:mixing-bound}
+\end{equation}
+\end{theorem}
+
+\begin{proof}
+Let \(E\) be the event that some \(g\in\cF\) with
+\(L_P(g,f)>\epsilon\) is consistent at every selected position. Full-sample
+consistency implies the failure event is contained in \(E\). By
+\cref{eq:independent-points} and the iid finite-class argument from Lecture 2,
+\[
+ \P(E)\leq P^{\otimes q}(E)+(q-1)\beta(a)
+ \leq |\cF|(1-\epsilon)^q+(q-1)\beta(a).
+\]
+\end{proof}
+
+Larger gaps reduce the dependence term but leave fewer selected observations.
+For example, if \(\beta(a)\leq e^{-a}\), choosing
+\(a=\lceil\log(2n/\delta)\rceil\) makes the dependence term at most
+\(\delta/2\). The remaining term behaves as though the sample size were
+roughly \(n/\log(n/\delta)\): this blocking argument loses only a logarithmic
+factor compared with iid sampling. \Cref{ex:l6-polynomial-mixing} asks what the
+same argument gives under polynomial decay.
+
+Finite irreducible aperiodic Markov chains mix geometrically. On a compact
+Polish state space, irreducibility and the strong Feller property make the
+whole state space a small set; with an appropriate aperiodicity condition,
+this gives a Doeblin route to geometric ergodicity and hence exponential
+beta-mixing. On a noncompact state space, the same argument only makes compact
+sets small, so a return or drift condition is generally needed. Ergodic chains
+can mix polynomially or more slowly. The point here is the distinction between
+the clean compact case and the additional control needed on noncompact spaces,
+not a catalogue of minimal conditions.
+
+Mixing is highly relevant when learning from one long reinforcement-learning
+trajectory or another continuing process. It is not automatically a realistic
+global model of a web corpus. A book can introduce notation at the beginning
+and use it to the end. An author, topic, task, or other slowly evolving state
+can create arbitrarily long unconditional dependence even if local residuals
+forget quickly after conditioning on that state. A state-space account with
+slow and fast components may then be more informative. Mixing must always be
+checked for the process and statistic to which a theorem is applied.
+
+\section{Dependence is also predictive information}
+\label{sec:signal}
+
+The prefix--target pairs in one document are dependent and strongly overlap.
+That dependence is not merely a defect: earlier tokens contain information
+about later ones. A sequence model reuses parameters across positions so that
+many different contexts can constrain shared predictive structure. The same
+trajectory can therefore provide useful evidence without becoming a collection
+of iid examples.
+
+Parameter sharing alone does not prove that the shared regularity is correct,
+that training covers deployment contexts, or that optimization recovers it.
+The relevant question is whether the observed dependent data constrain the
+particular shared object needed at deployment.
+
+Evaluation uses the same logic. Define the intended deployment unit and source;
+keep exact copies, near copies, and overlapping chunks from crossing the
+training--test boundary; and remember that repeated selection on a test set
+makes it part of development. A common law \(P\) for iid training and test
+examples is the strongest simple stability model, not a default fact about
+data.
+
+\section{Take-home messages}
+\label{sec:take-home}
+
+\begin{itemize}[leftmargin=*]
+\item A corpus is the output of a collection and processing pipeline. A
+  probability model is an additional analytical choice.
+\item Independence gives useful quantitative concentration, but deterministic
+  teaching and dependent coverage show that it is not necessary for learning.
+\item Exact duplication changes empirical weights and can reduce effective
+  sample size. The variance formula states precisely when deduplication helps.
+\item The covariance of the statistic being averaged determines how much
+  evidence dependent observations provide.
+\item Resampling or shuffling a fixed corpus does not create new population
+  evidence.
+\item Mixing and blocking recover weakened iid guarantees under controlled
+  dependence. Persistent state can make unconditional mixing inappropriate.
+\item Dependence within a sequence is predictive signal. Evaluation is useful
+  only for the deployment claim represented by its construction.
+\end{itemize}
+
+\clearpage
+\printendnotes
+
+\section*{Bibliographical notes}
+
+Public pretraining accounts illustrate which pipeline details are documented.
+Dolma describes source-specific extraction, filtering, deduplication, and
+mixture construction \citep{soldaini2024}. FineWeb reports large-scale web
+filtering and deduplication studies \citep{penedo2024}. The Llama 3 report
+describes its data mixture and filtering at a higher level
+\citep{dubey2024}. Sequence packing and document-boundary choices are analyzed
+explicitly by \citet{ding2024}.
+
+Hoeffding's inequality is from \citet{hoeffding1963}. The independent-block
+method for mixing empirical processes is developed by \citet{yu1994}.
+The exercise contrasting the central limit theorem with exponential tail
+bounds is adapted from the distinction developed in Exercises~5.10 and~5.13 of
+\citet{lattimore2020}.
+\citet{hairer2002} proves that every compact set is small for an irreducible
+strong Feller chain. If the state space is compact, this applies to the whole
+space. \citet{bradley2005} surveys strong mixing conditions and records that
+geometric ergodicity of a stationary Markov chain implies exponential
+beta-mixing. These results give the sufficient route stated in the text; they
+are not presented as minimal conditions.
+
+\section*{Glossary}
+
+\begin{description}[style=nextline,leftmargin=1.5em,labelindent=0pt]
+\item[Absolute regularity or beta-mixing]
+The total-variation distance in \cref{eq:beta} between the joint law of a past
+and a separated future and the product of their marginal laws.
+\item[Collection procedure]
+The operations that find, select, filter, copy, and divide sources into the
+realized data.
+\item[Concentration]
+The property that a random quantity, such as an empirical average, is unlikely
+to be far from a specified central value.
+\item[Effective sample size]
+The independent sample size whose variance matches that of a specified
+dependent or unequally weighted average.
+\item[Empirical loss]
+The average loss on the realized training observations, as in
+\cref{eq:risks}.
+\item[Population loss]
+Expected loss under a stated law representing the cases of interest.
+\item[Realized corpus]
+The fixed collection of documents, tokens, or sequences actually available.
+\item[Resampling with replacement]
+Independent draws from the empirical distribution of a fixed dataset.
+\end{description}
+
+\section{Exercises}
+\label{sec:exercises}
+
+\exerciseinstructions
+\setcounter{courseexercise}{0}
+\input{../exercises/l6-threshold-information.tex}
+\input{../exercises/l6-hoeffding-clt.tex}
+\input{../exercises/l6-duplication.tex}
+\exercisegroup{Sampling from a finite corpus}
+\input{../exercises/l6-resampling.tex}
+\input{../exercises/l6-resampling-dependence.tex}
+\input{../exercises/l6-overlapping-windows.tex}
+\input{../exercises/l6-polynomial-mixing.tex}
+
+\appendix
+
+\section{Resampling a fixed corpus}
+\label{app:resampling}
+
+Fix numbers \(x_1,\ldots,x_m\), let
+\(\bar x=m^{-1}\sum_i x_i\), and draw \(I_1,\ldots,I_B\) independently and
+uniformly from \([m]\). Define counts
+\(C_i=\sum_{b=1}^B\I\{I_b=i\}\) and
+\[
+ \bar X^*=\frac1B\sum_{b=1}^B x_{I_b}
+ =\frac1B\sum_{i=1}^m C_i x_i.
+\]
+Conditionally on the corpus,
+\[
+ (C_1,\ldots,C_m)\sim\operatorname{Multinomial}
+ \left(B;\frac1m,\ldots,\frac1m\right),
+ \qquad
+ \E[\bar X^*\mid x_{1:m}]=\bar x.
+\]
+For \(B=m\), each \(C_i\sim\operatorname{Binomial}(m,1/m)\) and converges in
+law to \(\operatorname{Poisson}(1)\) as \(m\to\infty\). Thus the expected
+fraction of the corpus omitted by one bootstrap resample approaches
+\(e^{-1}\). If
+\(B=Em\) and \(E\) grows, then \(C_i/E\) concentrates near one: repeated
+resampling reconstructs the original empirical weights.
+
+Now let \(X_1,\ldots,X_m\) be random and possibly dependent, and set
+\(Y_b=X_{I_b}\). Two resampled observations are independent conditional on
+the corpus, but unconditionally
+\begin{equation}
+ \operatorname{Cov}(Y_1,Y_2)
+ =\operatorname{Var}(\bar X)
+ =\frac1{m^2}\sum_{r,s=1}^m\operatorname{Cov}(X_r,X_s).
+ \label{eq:resampling-covariance}
+\end{equation}
+The law of total variance gives
+\begin{equation}
+ \operatorname{Var}(\bar X^*)
+ =\operatorname{Var}(\bar X)
+ +\frac1B\E\!\left[\frac1m\sum_{i=1}^m(X_i-\bar X)^2\right].
+ \label{eq:resampling-variance}
+\end{equation}
+The second term is nonnegative. Averaging out the resampling randomness---the
+Rao--Blackwell step---returns \(\bar X\). Resampling cannot erase the first
+term, which contains the original dependence.
+
+Small or structured subsamples can still change a statistical procedure. For
+example, taking well-separated positions from a time series can lower pairwise
+dependence, but it also uses fewer positions. Whether the tradeoff helps
+depends on the estimator and the dependence structure; it is not a consequence
+of replacement sampling itself.
+
+\section{Proof of the independent-points comparison}
+\label{app:mixing-proof}
+
+\begin{proposition}[Independent-points comparison]
+Under the assumptions preceding \cref{eq:independent-points},
+\[
+ \left\|\mathcal L(X_{t_1},\ldots,X_{t_q})-P^{\otimes q}\right\|_{\TV}
+ \leq(q-1)\beta(a).
+\]
+\end{proposition}
+
+\begin{proof}
+Let \(Z_j=X_{t_j}\),
+\(Q_j=\mathcal L(Z_1,\ldots,Z_j)\), and
+\(d_j=\|Q_j-P^{\otimes j}\|_{\TV}\). Restricting the distributions in
+\cref{eq:beta} to \((Z_1,\ldots,Z_j)\) gives
+\[
+ \|Q_j-Q_{j-1}\otimes P\|_{\TV}\leq\beta(a).
+\]
+Taking the product of both measures with the same probability law preserves
+total variation distance. Since \(Q_1=P\), the triangle inequality gives
+\[
+ d_1=0,
+ \qquad
+ d_j\leq\beta(a)+d_{j-1}.
+\]
+Iteration yields \(d_q\leq(q-1)\beta(a)\).
+\end{proof}
+
+\clearpage
+\begin{thebibliography}{99}
+
+\bibitem[Bradley(2005)]{bradley2005}
+Richard C. Bradley.
+\newblock Basic properties of strong mixing conditions. A survey and some open
+questions.
+\newblock Probability Surveys, 2:107--144, 2005.
+\newblock \url{https://doi.org/10.1214/154957805100000104}.
+
+\bibitem[Ding et al.(2024)]{ding2024}
+Hantian Ding, Zijian Wang, Giovanni Paolini, Varun Kumar, Anoop Deoras,
+Dan Roth, and Stefano Soatto.
+\newblock Fewer truncations improve language modeling.
+\newblock 2024. \url{https://arxiv.org/abs/2404.10830}.
+
+\bibitem[Dubey et al.(2024)]{dubey2024}
+Abhimanyu Dubey, Abhinav Jauhri, Abhinav Pandey, and others.
+\newblock The Llama 3 herd of models.
+\newblock 2024. \url{https://arxiv.org/abs/2407.21783}.
+
+\bibitem[Hairer(2002)]{hairer2002}
+Martin Hairer.
+\newblock Exponential mixing for a stochastic PDE driven by degenerate noise.
+\newblock Nonlinearity, 15(2):271--279, 2002.
+\newblock \url{https://arxiv.org/abs/math-ph/0103039}.
+
+\bibitem[Hoeffding(1963)]{hoeffding1963}
+Wassily Hoeffding.
+\newblock Probability inequalities for sums of bounded random variables.
+\newblock Journal of the American Statistical Association, 58(301):13--30,
+1963. \url{https://doi.org/10.1080/01621459.1963.10500830}.
+
+\bibitem[Lattimore and Szepesv\'ari(2020)]{lattimore2020}
+Tor Lattimore and Csaba Szepesv\'ari.
+\newblock \emph{Bandit Algorithms}.
+\newblock Cambridge University Press, 2020.
+\newblock \url{https://tor-lattimore.com/downloads/book/book.pdf}.
+
+\bibitem[Penedo et al.(2024)]{penedo2024}
+Guilherme Penedo, Hynek Kydl\'i\v{c}ek, Loubna Ben Allal, and others.
+\newblock The FineWeb datasets: Decanting the web for the finest text data at
+scale.
+\newblock 2024. \url{https://arxiv.org/abs/2406.17557}.
+
+\bibitem[Soldaini et al.(2024)]{soldaini2024}
+Luca Soldaini, Rodney Kinney, Akshita Bhagia, and others.
+\newblock Dolma: An open corpus of three trillion tokens for language model
+pretraining research.
+\newblock 2024. \url{https://arxiv.org/abs/2402.00159}.
+
+\bibitem[Yu(1994)]{yu1994}
+Bin Yu.
+\newblock Rates of convergence for empirical processes of stationary mixing
+sequences.
+\newblock Annals of Probability, 22(1):94--116, 1994.
+\newblock \url{https://doi.org/10.1214/aop/1176988849}.
+
+\end{thebibliography}
+
+\end{document}

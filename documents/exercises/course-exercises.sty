@@ -1,15 +1,115 @@
 \NeedsTeXFormat{LaTeX2e}
 % Shared exercise formatting; loaded from both relative and bundle-local paths.
 \RequirePackage{enumitem}
+\RequirePackage{fontawesome5}
+\RequirePackage{xcolor}
+\definecolor{exerciseprofile}{RGB}{55,72,84}
+\newcommand{\exprofileempty}[1]{\textcolor{exerciseprofile!22}{#1}}
+\newcommand{\exprofileslot}[1]{\makebox[1.15em][c]{#1}}
+\newcommand{\exprofileblank}{\exprofileslot{}}
+\newcommand{\exprofilerowthree}[3]{%
+  \makebox[6.9em][l]{\exprofileslot{#1}\exprofileslot{#2}
+    \exprofileslot{#3}\exprofileblank\exprofileblank\exprofileblank}}
+\newcommand{\exprofilerowfour}[4]{%
+  \makebox[6.9em][l]{\exprofileslot{#1}\exprofileslot{#2}
+    \exprofileslot{#3}\exprofileslot{#4}\exprofileblank\exprofileblank}}
+\newcommand{\exprofilerowfive}[5]{%
+  \makebox[6.9em][l]{\exprofileslot{#1}\exprofileslot{#2}
+    \exprofileslot{#3}\exprofileslot{#4}\exprofileslot{#5}
+    \exprofileblank}}
+\newcommand{\exdifficulty}[1]{%
+  \ifcase#1\relax
+  \or\exprofilerowfour{\faMountain}{\exprofileempty{\faMountain}}
+    {\exprofileempty{\faMountain}}{\exprofileempty{\faMountain}}
+  \or\exprofilerowfour{\faMountain}{\faMountain}
+    {\exprofileempty{\faMountain}}{\exprofileempty{\faMountain}}
+  \or\exprofilerowfour{\faMountain}{\faMountain}{\faMountain}
+    {\exprofileempty{\faMountain}}
+  \or\exprofilerowfour{\faMountain}{\faMountain}{\faMountain}{\faMountain}
+  \else\PackageError{course-exercises}{Difficulty must be 1--4}{}\fi}
+\newcommand{\extechnical}[1]{%
+  \ifcase#1\relax
+  \or\exprofilerowthree{\faCog}{\exprofileempty{\faCog}}
+    {\exprofileempty{\faCog}}
+  \or\exprofilerowthree{\faCog}{\faCog}{\exprofileempty{\faCog}}
+  \or\exprofilerowthree{\faCog}{\faCog}{\faCog}
+  \else\PackageError{course-exercises}{Technical load must be 1--3}{}\fi}
+\newcommand{\extime}[1]{%
+  \ifcase#1\relax
+  \or\exprofilerowfour{\faHourglassHalf}{\exprofileempty{\faHourglassHalf}}
+    {\exprofileempty{\faHourglassHalf}}{\exprofileempty{\faHourglassHalf}}
+  \or\exprofilerowfour{\faHourglassHalf}{\faHourglassHalf}
+    {\exprofileempty{\faHourglassHalf}}{\exprofileempty{\faHourglassHalf}}
+  \or\exprofilerowfour{\faHourglassHalf}{\faHourglassHalf}{\faHourglassHalf}
+    {\exprofileempty{\faHourglassHalf}}
+  \or\exprofilerowfour{\faHourglassHalf}{\faHourglassHalf}
+    {\faHourglassHalf}{\faHourglassHalf}
+  \else\PackageError{course-exercises}{Time must be 1--4}{}\fi}
+\newcommand{\exproof}{\faPenNib}
+\newcommand{\excalculation}{\faCalculator}
+\newcommand{\exconstruction}{\faPuzzlePiece}
+\newcommand{\excomputation}{\faCode}
+\newcommand{\exinterpretation}{\faSearch}
+\newcommand{\exworktypes}[1]{%
+  \begingroup
+  \def\exproofmark{\exprofileempty{\faPenNib}}%
+  \def\excalculationmark{\exprofileempty{\faCalculator}}%
+  \def\exconstructionmark{\exprofileempty{\faPuzzlePiece}}%
+  \def\excomputationmark{\exprofileempty{\faCode}}%
+  \def\exinterpretationmark{\exprofileempty{\faSearch}}%
+  \def\exproof{\def\exproofmark{\faPenNib}}%
+  \def\excalculation{\def\excalculationmark{\faCalculator}}%
+  \def\exconstruction{\def\exconstructionmark{\faPuzzlePiece}}%
+  \def\excomputation{\def\excomputationmark{\faCode}}%
+  \def\exinterpretation{\def\exinterpretationmark{\faSearch}}%
+  \let\quad\relax
+  #1\unskip
+  \exprofilerowfive{\exproofmark}{\excalculationmark}{\exconstructionmark}
+    {\excomputationmark}{\exinterpretationmark}%
+  \endgroup}
+\newcommand{\exerciseprofile}[5]{%
+  \vadjust{\nobreak\vbox to 0pt{%
+    \vskip-0.82\baselineskip
+    \hbox to 0pt{\hss
+      \parbox[t]{5.2em}{\raggedright\scriptsize\color{exerciseprofile}%
+       \mbox{\exdifficulty{#1}}\\[0.45ex]
+       \mbox{\extechnical{#2}}\\[0.45ex]
+       \mbox{\extime{#3}}\\[0.45ex]
+       \mbox{\exworktypes{#4}}}%
+      \hspace{0.8em}}%
+    \vss}}%
+  \par
+  \nobreak\smallskip
+  {\small\color{exerciseprofile}\faBullseye\ #5\par}%
+  \smallskip}
+\newcommand{\exerciseprofilelegend}{%
+  \par\noindent\textbf{Exercise profiles.}
+  Filled mountains show difficulty on a four-mountain scale: one is a direct
+  application, two uses a familiar method, three combines ideas, and four is a
+  substantial challenge. Filled cogs show technical load on a three-cog scale:
+  one is light, two is sustained, and three is dense. Filled hourglasses show
+  estimated time: one is under 20 minutes, two is 20--45 minutes, three is
+  45--90 minutes, and four is more than 90 minutes. Pale pictograms show the
+  unused part of each scale. The work row uses the canonical order
+  \faPenNib\ proof, \faCalculator\ calculation, \faPuzzlePiece\ construction,
+  \faCode\ computation, and \faSearch\ interpretation; pale icons mark work
+  types not used. \faBullseye\ marks the intended learning outcome. Time
+  estimates cover the non-optional parts.
+  Ratings are not prerequisites or grading weights.
+  \par\medskip}
 \newcommand{\exerciseinstructions}{%
   \par\noindent\textbf{General instructions.}
   Justify every answer, including yes/no answers, even when the question
-  does not explicitly ask for a justification.\par\medskip}
+  does not explicitly ask for a justification.\par\medskip
+  \exerciseprofilelegend}
 \newcounter{courseexercise}
 \newenvironment{exercisechunk}
-  {\begin{enumerate}[leftmargin=*,itemsep=0.7em,topsep=0.4em,
+  {\begin{enumerate}[label=\textbf{Exercise~\arabic*:},wide=0pt,
+     ref=\arabic*,labelsep=0.5em,itemsep=0.7em,topsep=0.4em,
      start=\numexpr\value{courseexercise}+1\relax]}
   {\setcounter{courseexercise}{\value{enumi}}\end{enumerate}}
+\newcommand{\exercisegroup}[1]{%
+  \par\addvspace{0.8em}\noindent{\large\bfseries #1}\par\smallskip}
 \newenvironment{hints}
   {\par\addvspace{0.2cm}\noindent\textsc{Hints}\enspace\ignorespaces}
   {\par\addvspace{0.2cm}}

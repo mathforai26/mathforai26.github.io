@@ -1,0 +1,29 @@
+\begin{exercisechunk}
+\item \textbf{The cost of polynomial beta-mixing.}
+\label[exercise]{ex:l6-polynomial-mixing}
+\exerciseprofile{2}{2}{2}{\exproof\quad\excalculation\quad\exinterpretation}{%
+Convert a polynomial mixing rate into a sample-size bound and compare its
+dependence on accuracy with iid and geometric-mixing bounds.}
+Assume the setting of \cref{thm:mixing-finite-class} and
+\(\beta(a)\leq Ca^{-r}\) for constants \(C,r>0\). Let
+\(A=\log(2|\cF|/\delta)\).
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Starting from \cref{eq:mixing-bound}, give sufficient conditions on
+the selected-sample size \(q\) and gap \(a\) that make each term at most
+\(\delta/2\).
+\item Use \(q\leq n/a+1\) and a suitable choice of \(q,a\) to show, up to
+universal constants and integer rounding, that it suffices to take
+\[
+ n\gtrsim
+ \left(\frac{A}{\epsilon}\right)^{1+1/r}
+ \left(\frac{C}{\delta}\right)^{1/r}.
+\]
+\item Compare the dependence on \(\epsilon\) with iid sampling and with
+geometric beta-mixing. Is the degradation exponential in \(1/\epsilon\)?
+\end{enumerate}
+\begin{hints}
+Use \((1-\epsilon)^q\leq e^{-\epsilon q}\). First choose
+\(q\asymp A/\epsilon\), then choose \(a\) so that
+\(qCa^{-r}\lesssim\delta\), and finally take \(n\) of order \(qa\).
+\end{hints}
+\end{exercisechunk}

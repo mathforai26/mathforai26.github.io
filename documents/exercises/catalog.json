@@ -355,5 +355,49 @@
     "reference_lectures": [
       4
     ]
+  },
+  {
+    "id": "l6-threshold-information",
+    "lecture": 6,
+    "number": 1,
+    "file": "l6-threshold-information.tex"
+  },
+  {
+    "id": "l6-hoeffding-clt",
+    "lecture": 6,
+    "number": 2,
+    "file": "l6-hoeffding-clt.tex"
+  },
+  {
+    "id": "l6-duplication",
+    "lecture": 6,
+    "number": 3,
+    "file": "l6-duplication.tex"
+  },
+  {
+    "id": "l6-resampling",
+    "lecture": 6,
+    "number": 4,
+    "file": "l6-resampling.tex",
+    "group": "Sampling from a finite corpus"
+  },
+  {
+    "id": "l6-resampling-dependence",
+    "lecture": 6,
+    "number": 5,
+    "file": "l6-resampling-dependence.tex",
+    "group": "Sampling from a finite corpus"
+  },
+  {
+    "id": "l6-overlapping-windows",
+    "lecture": 6,
+    "number": 6,
+    "file": "l6-overlapping-windows.tex"
+  },
+  {
+    "id": "l6-polynomial-mixing",
+    "lecture": 6,
+    "number": 7,
+    "file": "l6-polynomial-mixing.tex"
   }
 ]

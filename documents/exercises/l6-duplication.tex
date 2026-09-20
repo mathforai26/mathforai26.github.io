@@ -1,0 +1,32 @@
+\begin{exercisechunk}
+\item \textbf{Exact duplication and effective sample size.}
+\label[exercise]{ex:l6-duplication}
+\exerciseprofile{2}{2}{3}{\exproof\quad\excalculation\quad\exinterpretation}{%
+Derive how unequal duplication changes variance and effective sample size, and
+state what this calculation does not establish about learning performance.}
+Let \(X_1,\ldots,X_m\) be independent, and suppose
+\(Z_i=\ell(\theta;X_i)\) has variance \(\sigma_\theta^2>0\) for every
+\(i\). Unit \(i\) is stored \(c_i\geq1\) times. Set
+\(N=\sum_{i=1}^m c_i\) and
+\(\widehat L=N^{-1}\sum_{i=1}^m c_iZ_i\).
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Derive \(\operatorname{Var}(\widehat L)\) and the effective sample size
+\(n_{\rm eff}\) in \cref{eq:copy-neff}.
+\item Prove \(1\leq n_{\rm eff}\leq m\). State exactly when the upper bound
+is attained.
+\item Calculate \(n_{\rm eff}\) when (i) \(c_i=c\) for every \(i\), and
+(ii) \(c_1=r\) and \(c_i=1\) for \(i\geq2\). Find the limit in (ii) as
+\(r\to\infty\) with \(m\) fixed.
+\item Let \(\bar c=N/m\) and
+\(\operatorname{CV}^2=m^{-1}\sum_i(c_i-\bar c)^2/\bar c^2\). Prove
+\[
+ \frac{\operatorname{Var}(\widehat L)}{\sigma_\theta^2/m}
+ =1+\operatorname{CV}^2.
+\]
+Explain what this ratio does and does not establish about deduplication.
+\end{enumerate}
+\begin{hints}
+For (b), apply Cauchy--Schwarz to \(\sum_i c_i\). For the lower bound,
+compare \((\sum_i c_i)^2\) and \(\sum_i c_i^2\).
+\end{hints}
+\end{exercisechunk}
