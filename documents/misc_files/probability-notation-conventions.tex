@@ -377,17 +377,26 @@ Use plain \(\E[U]\) when \(U\) belongs to the ambient experiment. The setup
 must identify the random quantities and their joint law before the expectation
 appears.
 
-When \(P\) is a named law and \(f\) is an integrable function on its space,
-the law-indexed expectation is
+Suppose that \(P\) is a probability law on \((\mathcal Z,\mathcal H)\). The
+subscript in \(\E_P\) says to use \(P\) as the probability measure. Formally,
+we may replace the ambient probability space by the canonical probability
+space
+\[
+ (\mathcal Z,\mathcal H,P)
+\]
+and regard the identity map \(z\mapsto z\) as its canonical random element.
+For an integrable function \(f:\mathcal Z\to\R\), the resulting expectation
+is
 \begin{equation}
- \E_P[f]:=\int f\,dP.
+ \E_P[f]:=\int_{\mathcal Z} f(z)\,P(dz).
  \label{eq:law-expectation}
 \end{equation}
 On a finite space,
 \[
  \E_P[f]=\sum_z P(z)f(z).
 \]
-Thus, if \(Z\) has law \(P\),
+If \(Z\) is a random element in the original ambient experiment and
+\(\Law(Z)=P\), then
 \[
  \E_P[f]=\E[f(Z)].
 \]
@@ -402,10 +411,6 @@ Do not use a sampling declaration as an expectation subscript, as in
 Write \(\E_P[h]\) when the integrand is a function on the space of \(P\), or
 declare \(\Law(Z)=P\) and write \(\E[h(Z)]\).
 
-Equation~\eqref{eq:law-expectation} is equivalent to the law-level notation
-\[
- \E_P[h]=\int h\,dP.
-\]
 The notation \(P(dz)\) in an integral is measure-integration notation; \(dz\)
 is not an event supplied as an ordinary argument to \(P\). Use this notation
 only when the measure-theoretic form serves the argument. Prefer masses and
