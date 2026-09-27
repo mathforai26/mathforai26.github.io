@@ -14,9 +14,3 @@ follow these conventions.
 
 [Download the PDF]({{ '/documents/misc_files/probability-notation-conventions.pdf' | relative_url }}) ·
 [Download the LaTeX source]({{ '/documents/misc_files/probability-notation-conventions.tex' | relative_url }})
-
-The reference also explains the notation used for autoregressive models in
-Lecture 1. In particular, a model-specified kernel
-\(p_\theta(v\mid x_{<t})\) is distinguished from an event probability under
-the ambient measure \(\mathbb P\), and matrix symbols such as
-\(P_{\max}\) are typed by their definitions and dimensions.
