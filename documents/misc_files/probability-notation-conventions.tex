@@ -69,21 +69,33 @@ convention must be introduced explicitly and used consistently.
 
 \section{The main objects have different types}
 
-Probability theory describes an experiment using \emph{events}, such as
-``the prediction is correct,'' and \emph{random quantities}, such as the
-training sample or the learned predictor. The probability \(\P(E)\) is a
-number assigned to an event \(E\). A random quantity \(Z\) has a
-\emph{law}, written \(\Law(Z)\), which assigns probabilities to possible
-sets of values of \(Z\). This is the part of the formal setup needed for the
-calculations in these notes.\footnote{Formally, an experiment is a probability
-space \((\Omega,\mathcal G,\P)\). An event belongs to \(\mathcal G\), and a
-random element is a measurable map
-\(Z:(\Omega,\mathcal G)\to(\mathcal Z,\mathcal H)\). Measurability ensures
-that \(\{Z\in A\}\) is an event whenever \(A\in\mathcal H\). On finite
-spaces, every subset is allowed, so this condition requires no additional
-work.}
+An experiment has a set \(\Omega\) of possible outcomes. An \emph{event}
+\(E\) is a subset of \(\Omega\), such as the set of outcomes on which the
+prediction is correct. The probability \(\P(E)\) is a number assigned to this
+event.
 
-The following expressions have different input and output types.
+A \emph{random variable}, or more generally a \emph{random element}, is a map
+\[
+ Z:\Omega\longrightarrow\mathcal Z.
+\]
+It assigns a value \(Z(\omega)\in\mathcal Z\) to each possible outcome
+\(\omega\in\Omega\). The training sample and the learned predictor are random
+elements when they depend on the outcome of the experiment. A random element
+\(Z\) has a \emph{law}, written \(\Law(Z)\), which assigns probabilities to
+sets of possible values in \(\mathcal Z\).\footnote{There are technical
+restrictions on the permitted subsets and maps. Formally, one specifies a
+sigma-algebra \(\mathcal G\) of permitted events in \(\Omega\), a
+sigma-algebra \(\mathcal H\) of permitted subsets of \(\mathcal Z\), and
+requires \(Z\) to be measurable: \(\{Z\in A\}\in\mathcal G\) for every
+\(A\in\mathcal H\).
+These restrictions ensure that the probabilities under discussion are
+defined. They do not change the basic types used here: events are subsets of
+\(\Omega\), random elements are maps from \(\Omega\), and laws assign
+probabilities to sets of values. On finite spaces, every subset may be used,
+so the restrictions require no additional work.}
+
+Probability measures, laws, kernels, and expectations are built from these
+basic types. The following table records their input and output types.
 
 \begin{center}
 \renewcommand{\arraystretch}{1.25}
