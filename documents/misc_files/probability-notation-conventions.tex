@@ -83,16 +83,18 @@ It assigns a value \(Z(\omega)\in\mathcal Z\) to each possible outcome
 elements when they depend on the outcome of the experiment. A random element
 \(Z\) has a \emph{law}, written \(\Law(Z)\), which assigns probabilities to
 sets of possible values in \(\mathcal Z\).\footnote{There are technical
-restrictions on the permitted subsets and maps. Formally, one specifies a
+restrictions on the permitted subsets and maps. If \(\Omega\) is finite or
+countable, every subset may be declared an event, and a probability law is
+specified by assigning masses to the individual outcomes. The issue arises
+for uncountable spaces such as \(\mathbb R\). For example, length on
+\([0,1]\) cannot be extended to every subset while preserving countable
+additivity and translation invariance. One therefore specifies a
 sigma-algebra \(\mathcal G\) of permitted events in \(\Omega\), a
 sigma-algebra \(\mathcal H\) of permitted subsets of \(\mathcal Z\), and
 requires \(Z\) to be measurable: \(\{Z\in A\}\in\mathcal G\) for every
-\(A\in\mathcal H\).
-These restrictions ensure that the probabilities under discussion are
-defined. They do not change the basic types used here: events are subsets of
-\(\Omega\), random elements are maps from \(\Omega\), and laws assign
-probabilities to sets of values. On finite spaces, every subset may be used,
-so the restrictions require no additional work.}
+\(A\in\mathcal H\). These restrictions do not change the basic types used
+here: events are subsets of \(\Omega\), random elements are maps from
+\(\Omega\), and laws assign probabilities to sets of values.}
 
 Probability measures, laws, kernels, and expectations are built from these
 basic types. The following table records their input and output types.
