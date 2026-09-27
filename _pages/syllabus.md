@@ -111,7 +111,10 @@ without them.
 
 Start from the [LaTeX scribe template]({{ '/documents/misc_files/scribe_template.tex' | relative_url }}).
 The [lecture-writing standards]({{ '/documents/misc_files/lecture-writing-standards.md' | relative_url }})
-give the conventions for drafting and reviewing notes.
+give the conventions for drafting and reviewing notes. Follow the
+[probability notation conventions]({% link _pages/probability-notation.md %})
+for probability measures, laws, mass functions, predictive kernels,
+conditioning, and expectation.
 
 **Submission:** Send the completed scribe note to the instructor in a private
 message on the course Slack. Attach both the LaTeX source (`.tex`) and the

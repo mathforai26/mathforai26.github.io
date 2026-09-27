@@ -16,6 +16,8 @@ Public site: <https://mathforai26.github.io/>
 Lecture authors and editors should follow the
 [lecture-writing standards](documents/misc_files/lecture-writing-standards.md),
 including the placement of short optional refinements in endnotes. The
+[probability notation conventions](documents/misc_files/probability-notation-conventions.tex)
+apply to lecture notes, exercises, and solutions. The
 [scribe template](documents/misc_files/scribe_template.tex) includes endnote
 support; [AGENTS.md](AGENTS.md) requires these rules when agents write new
 notes and revise existing ones.

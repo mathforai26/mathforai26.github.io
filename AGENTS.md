@@ -4,6 +4,9 @@
   instead of metaphor or flourish.
 - Before writing or revising lecture notes, read and apply
   [the lecture-writing standards](documents/misc_files/lecture-writing-standards.md).
+  Follow the
+  [probability notation conventions](documents/misc_files/probability-notation-conventions.tex)
+  for every probability argument.
   Use [the scribe template](documents/misc_files/scribe_template.tex) for new notes.
 - From the first draft, place short optional refinements in endnotes. During
   revision, review existing ancillary remarks for the same purpose. An endnote

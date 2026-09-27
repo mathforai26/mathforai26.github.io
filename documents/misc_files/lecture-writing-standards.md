@@ -39,6 +39,11 @@ guide consistent with its actual placement.
 
 ## Exposition and notation
 
+Follow the course-wide
+[probability notation conventions](probability-notation-conventions.tex) for
+probability measures, laws, mass functions, predictive kernels, conditioning,
+expectation, and accepted shorthand.
+
 - Preserve the substance of the instructor's corrections. Improve wording
   only while retaining the clarification, qualification, or distinction it
   introduced. Compare revisions against the current source, not an older draft.

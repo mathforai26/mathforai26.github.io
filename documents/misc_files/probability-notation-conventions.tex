@@ -1,0 +1,451 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,mathtools}
+\usepackage[inline,shortlabels]{enumitem}
+\usepackage{booktabs,array}
+\usepackage{xcolor}
+\usepackage{microtype}
+\usepackage[colorlinks=true,linkcolor=blue!60!black,
+  urlcolor=blue!60!black]{hyperref}
+\usepackage[nameinlink,capitalize,noabbrev]{cleveref}
+
+\definecolor{courseblue}{HTML}{17365D}
+\newcommand{\E}{\mathbb E}
+\newcommand{\I}{\mathbb I}
+\renewcommand{\P}{\mathbb P}
+\newcommand{\Law}{\mathcal L}
+\newcommand{\R}{\mathbb R}
+
+\hypersetup{
+  pdftitle={CMPUT 654 probability notation conventions},
+  pdfauthor={Csaba Szepesvari}
+}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.55em}
+
+\begin{document}
+
+\begin{center}
+\fcolorbox{courseblue}{white}{%
+\begin{minipage}{0.92\textwidth}
+\vspace{1mm}
+\textbf{CMPUT 654: Mathematical Foundations of Modern AI Systems}
+\hfill Fall 2026
+
+\vspace{3mm}
+\begin{center}
+{\Large\bfseries Probability notation conventions}
+
+\vspace{1mm}
+Course reference for lecture notes and solutions
+\end{center}
+
+\vspace{2mm}
+\textit{Last revised: September 26, 2026}
+\vspace{1mm}
+\end{minipage}}
+\end{center}
+
+\section{Purpose}
+
+Probability notation is meaningful only after the types of its objects are
+clear. These conventions distinguish an underlying probability measure, a
+random element, its law, a probability mass function, and a predictive
+kernel. They also specify the shorthand accepted in this course.
+
+The conventions apply to lecture notes, exercises, solutions, and homework.
+They are defaults for mathematical writing in the course; a different
+convention must be introduced explicitly and used consistently.
+
+\section{The main objects have different types}
+
+Let
+\[
+ (\Omega,\mathcal G,\P)
+\]
+be a probability space and let
+\[
+ Z:(\Omega,\mathcal G)\longrightarrow(\mathcal Z,\mathcal H)
+\]
+be a random element. The following expressions have different domains and
+codomains.
+
+\begin{center}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{>{\(}l<{\)}p{0.36\textwidth}p{0.34\textwidth}}
+\toprule
+\text{Notation} & \text{Argument} & \text{Value}\\
+\midrule
+\P & an event in \(\mathcal G\) & a number in \([0,1]\)\\
+\Law & a random element or tuple of random elements & a probability law\\
+P,Q & a measurable set in the space on which the named law is defined & a number in \([0,1]\)\\
+\E & an integrable real-valued random variable & a real number\\
+p,q & as declared; commonly a mass function, density, probability vector, or kernel & a number or probability vector\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The fundamental relation between the ambient probability measure and a law is
+\begin{equation}
+ \Law(Z)(A)=\P(Z\in A),
+ \qquad A\in\mathcal H.
+ \label{eq:law}
+\end{equation}
+We may name this law
+\[
+ P_Z=\Law(Z).
+\]
+Thus \(\P\) acts on events in \(\Omega\), while \(P_Z\) acts on measurable
+sets in \(\mathcal Z\).
+
+Capital letters do not determine an object's type by themselves. For example,
+Lecture~1 uses \(P_{\max}\) for a position-embedding matrix and
+\(Q,K,V\) for attention matrices. Their dimensions declare their types. In a
+single scope, do not use the same symbol for both a probability law and a
+matrix.
+
+\section{The ambient probability measure}
+
+The symbol \(\P\) denotes the probability measure of the stated experiment.
+All random quantities in an argument are jointly defined on that experiment
+unless another probability measure is explicitly introduced.
+
+Formally, \(\P\) takes an event. The course accepts the standard inverse-image
+shorthand
+\begin{align}
+ \P(X=x)
+ &:=\P\bigl(\{\omega:X(\omega)=x\}\bigr),
+ \label{eq:event-equality}\\
+ \P(X\in A)
+ &:=\P\bigl(\{\omega:X(\omega)\in A\}\bigr),
+ \label{eq:event-membership}\\
+ \P(X\in A,Y\in B)
+ &:=\P\bigl(\{X\in A\}\cap\{Y\in B\}\bigr).
+ \label{eq:event-joint}
+\end{align}
+We also use
+\begin{equation}
+ \P(E,F):=\P(E\cap F)
+ \label{eq:event-comma}
+\end{equation}
+when \(E\) and \(F\) are events. The comma in \cref{eq:event-comma}
+means intersection. By contrast, the comma in \(\Law(X,Y)\) constructs the
+random tuple \((X,Y)\).
+
+Expressions such as \(\P(X)\) are meaningful only when \(X\) itself denotes
+an event. Prose cannot repair an ambiguous expression. In particular, a
+sentence saying that a probability is ``over the initialization'' should be
+unnecessary: the joint experiment and its random quantities must already make
+the meaning of \(\P\) unique.
+
+Use the course macro \verb|\P|. Do not introduce decorated probability
+operators such as \(\P_{w,b}\) or \(\P_{X\sim P}\). If the experiment changes,
+state the new probability measure or joint law before using probability
+notation.
+
+\section{Laws and the law operator}
+
+The operator \(\Law\) takes random elements and returns their distribution.
+In particular,
+\[
+ \Law(X)
+ \quad\text{and}\quad
+ \Law(X,Y):=\Law((X,Y))
+\]
+are the marginal law of \(X\) and the joint law of \((X,Y)\). The expression
+\(\Law(E)\) is inappropriate when \(E\) is an event; the relevant object is
+the number \(\P(E)\), or the Bernoulli law \(\Law(\I(E))\) when that law is
+actually needed.
+
+In future course material, reserve \(\mathcal L\) for this law operator. Use
+another symbol, such as \(\mathcal A\), for a learning algorithm.
+
+If a law is named \(P\), then \(P(A)\) is the probability assigned to the
+measurable set \(A\). For a finite space we use
+\begin{equation}
+ P(x):=P(\{x\}),
+ \qquad
+ P(x,y):=P(\{(x,y)\}).
+ \label{eq:finite-mass}
+\end{equation}
+If \(c\) is a measurable function on the space carrying \(P\), we also accept
+the preimage shorthand
+\[
+ P(c=0):=P(\{z:c(z)=0\}),
+ \qquad
+ P(c\in A):=P(c^{-1}(A)).
+\]
+
+When \(P\) is a named law on a canonical product space and \(X,Y\) are its
+coordinate maps, expressions such as
+\[
+ P(X=x),
+ \qquad
+ P(Y=y\mid X=x)
+\]
+are accepted shorthand for event probabilities computed under \(P\). This
+notation returns numbers. It does not name the law of \((X,Y)\).
+
+Consequently,
+\[
+ P_{\rm tr}(X,Y)\ne P_{\rm dep}(X,Y)
+\]
+should not be used to say that two joint laws differ. If the joint laws have
+already been named, write
+\[
+ P_{\rm tr}\ne P_{\rm dep}.
+\]
+If they have not been named, write the law of the relevant tuple, for example
+\(\Law(X,Y)\).
+
+The established generic notation for a marginal is \(P_Z=\Law(Z)\). When a
+joint law already carries a tag, introduce its marginal explicitly, for
+example
+\[
+ P_{{\rm tr},X}
+ \quad\text{or}\quad
+ \mu_{\rm tr}.
+\]
+Do not introduce a new convention such as \(P_{\rm tr}^X\) without a reason.
+
+\section{Mass functions, probability vectors, and predictive kernels}
+
+On a finite set \(\mathcal X\), a probability mass function is a function
+\[
+ p:\mathcal X\to[0,1],
+ \qquad
+ \sum_{x\in\mathcal X}p(x)=1.
+\]
+It determines a law \(P\) by
+\[
+ P(A)=\sum_{x\in A}p(x).
+\]
+Finite-space writing often identifies the law and its mass function when the
+meaning is clear. Lowercase notation emphasizes that \(p(x)\) is a number.
+
+A probability vector is the same information with a fixed enumeration of the
+outcomes. Lecture~1 writes
+\[
+ p=(p_v)_{v=1}^V\in\Delta_V.
+\]
+Here \(p_v\) is a coordinate of a deterministic vector, not an application of
+the ambient probability measure \(\P\).
+
+A predictive kernel assigns a probability distribution to every allowed
+input. Lecture~1 defines
+\[
+ p_\theta:[V]^*\to\Delta_V,
+ \qquad
+ x_{<t}\longmapsto p_\theta(\,\cdot\mid x_{<t}).
+\]
+Therefore
+\[
+ p_\theta(v\mid x_{<t})
+\]
+is the mass assigned to token \(v\) by the distribution selected at prefix
+\(x_{<t}\). The vertical bar separates the output value from the kernel input.
+It does not assert that an ambient joint experiment was defined first and then
+conditioned.
+
+Sampling successively from the kernel constructs a stochastic process. The
+statement
+\[
+ X_t\sim p_\theta(\,\cdot\mid X_{<t})
+\]
+is a sampling instruction. More explicitly, it requires
+\[
+ \Law(X_t\mid X_{<t}=x_{<t})
+ =p_\theta(\,\cdot\mid x_{<t})
+\]
+at every prefix to which the construction assigns positive probability.
+The resulting joint mass of a fixed prefix is
+\[
+ p_\theta(x_{1:T})
+ =\prod_{t=1}^T p_\theta(x_t\mid x_{<t}).
+\]
+
+Thus \(p_\theta\) can denote a model-specified kernel or the joint mass it
+induces, with the argument making the role clear. It does not replace \(\P\)
+for events in a training or sampling experiment.
+
+\section{Conditioning}
+
+For events \(E,C\) with \(\P(C)>0\),
+\begin{equation}
+ \P(E\mid C)=\frac{\P(E\cap C)}{\P(C)}.
+ \label{eq:conditional-probability}
+\end{equation}
+The notation
+\[
+ \P(Y=y\mid X=x)
+\]
+conditions the event \(\{Y=y\}\) on \(\{X=x\}\).
+
+For jointly distributed random elements \(X,Y\),
+\[
+ \Law(Y\mid X=x)
+\]
+is a probability law on the value space of \(Y\). In the finite case, for
+every set \(B\),
+\[
+ \Law(Y\mid X=x)(B)=\P(Y\in B\mid X=x).
+\]
+The notes work mainly with finite or Euclidean spaces, where the required
+conditional laws are available. At values \(x\) with \(\P(X=x)=0\), the joint
+law does not determine the elementary ratio in
+\cref{eq:conditional-probability}. A conditional law there requires a chosen
+version or a conditional target specified separately for every input.
+
+Avoid a bare expression such as
+\[
+ P(Y\mid X)=Q(Y\mid X)
+\]
+unless both sides have been defined as kernels. In a finite space, an explicit
+statement is
+\[
+ P(Y=y\mid X=x)=Q(Y=y\mid X=x)
+\]
+for the stated values of \(x,y\). If equality is required at inputs outside
+the support of one law, introduce a common kernel directly.
+
+Condition only when the conditional object is used. If a calculation divides
+by \(\P(C)\) and later multiplies by \(\P(C)\), a direct unconditional
+factorization is usually clearer and also covers \(\P(C)=0\).
+
+\section{Expectation}
+
+If \(U\) is integrable, then
+\[
+ \E[U]=\int_\Omega U(\omega)\,\P(d\omega).
+\]
+The course uses plain \(\E[\cdot]\). The setup must identify the random
+quantities and their joint law before the expectation appears. Do not use
+decorated forms such as
+\[
+ \E_{Z\sim P}[h(Z)]
+\]
+to compensate for a missing setup.
+
+When several named laws must be compared, either introduce corresponding
+random elements unambiguously or write the law-level calculation directly:
+\[
+ \sum_z P(z)h(z),
+ \qquad
+ \sum_z Q(z)h(z),
+\]
+or, on a general space,
+\[
+ \int h\,dP,
+ \qquad
+ \int h\,dQ.
+\]
+The notation \(P(dz)\) in an integral is measure-integration notation; \(dz\)
+is not an event supplied as an ordinary argument to \(P\). Use this notation
+only when the measure-theoretic form serves the argument. Prefer masses and
+sums for finite spaces.
+
+Conditional expectation follows the same ambient experiment:
+\[
+ \E[U\mid C]
+ =\frac{\E[U\I(C)]}{\P(C)}
+\]
+when \(\P(C)>0\). The expression \(\E[U\mid X]\) is a random variable.
+
+\section{Random and fixed quantities}
+
+Use uppercase letters for random quantities and lowercase letters for fixed
+values when this convention is available. Thus \(X=x\) denotes an event;
+it does not turn \(X\) into a fixed quantity. A phrase such as ``fix \(x\)''
+must precede calculations that treat \(x\) as fixed.
+
+State joint laws and independence before using them. Separate notation does
+not imply independence, and conditioning can destroy independence. When an
+independence claim is used, show the corresponding factorization at the point
+of use.
+
+\section{Accepted shorthand and rejected expressions}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{p{0.29\textwidth}p{0.28\textwidth}p{0.34\textwidth}}
+\toprule
+Expression & Status & Meaning or repair\\
+\midrule
+\(\P(X=x)\) & accepted & probability of the event \(\{X=x\}\)\\
+\(\P(E,F)\) & accepted & \(\P(E\cap F)\) for events \(E,F\)\\
+\(\P(X)\) & rejected in general & meaningful only if \(X\) denotes an event\\
+\(\Law(X,Y)\) & accepted & joint law of the tuple \((X,Y)\)\\
+\(\Law(E)\) & rejected for an event & use \(\P(E)\) or \(\Law(\I(E))\)\\
+\(P(x)\) & accepted on a finite space & \(P(\{x\})\)\\
+\(P(c=0)\) & accepted & \(P(\{z:c(z)=0\})\)\\
+\(P(X=x)\) & accepted with setup & event probability under the named law \(P\)\\
+\(P(X,Y)\) as a joint law & rejected & use \(P\) or \(\Law(X,Y)\)\\
+\(p_\theta(v\mid x)\) & accepted & value of a model-specified predictive kernel\\
+\(P(dx)\) & restricted & integration notation, introduced only when useful\\
+\(\E_{X\sim P}[h(X)]\) & rejected by course convention & specify the law in the setup and use \(\E[h(X)]\), or write an integral\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Every shorthand must expand to a well-typed formal expression. Shorthand does
+not license a probability measure to accept a random variable, or a law
+operator to accept an event.
+
+\section{Example: covariate shift}
+
+Let \(\mathcal X\) and \(\mathcal Y\) be finite. Specify a conditional target
+\[
+ p^\star(\,\cdot\mid x)\in\Delta_{\mathcal Y}
+ \qquad\text{for every }x\in\mathcal X,
+\]
+and two input laws \(\mu_{\rm tr}\) and \(\mu_{\rm dep}\). Define the training
+and deployment joint laws through their masses:
+\begin{equation}
+ P_{\rm tr}(x,y)=\mu_{\rm tr}(x)p^\star(y\mid x),
+ \qquad
+ P_{\rm dep}(x,y)=\mu_{\rm dep}(x)p^\star(y\mid x).
+ \label{eq:covariate-shift}
+\end{equation}
+There is \emph{covariate shift} when
+\[
+ \mu_{\rm tr}\ne\mu_{\rm dep}
+\]
+while the same conditional target \(p^\star\) appears in both factorizations.
+The values of \(p^\star(\,\cdot\mid x)\) at inputs absent from training are
+part of the specified prediction problem; they are not identified by the
+training joint law.
+
+There is \emph{general distribution shift} whenever
+\[
+ P_{\rm tr}\ne P_{\rm dep}.
+\]
+General distribution shift may change the input law, the conditional target,
+or both.
+
+\section{Checklist for new writing}
+
+Before finalizing a probability argument, check the following.
+
+\begin{enumerate}[leftmargin=*]
+\item Every symbol has a declared type: random element, event, law, mass
+function, density, probability vector, kernel, matrix, or number.
+\item Every use of \(\P\) has a unique probability space and joint experiment.
+\item Every displayed argument of \(\P\) expands to an event.
+\item Every displayed argument of a named law expands to a measurable set, or
+uses one of the finite-space or preimage shorthands above.
+\item \(\Law\) is used for the law of a random element or tuple, not for an
+event probability.
+\item Conditional laws at zero-probability inputs are either unnecessary or
+specified through an explicit version or target kernel.
+\item Expectations use plain \(\E[\cdot]\), with the law determined by the
+setup.
+\item Independence and changes of measure are stated before they are used.
+\item Finite-space arguments use masses and sums unless measure notation adds
+substantive value.
+\item Every accepted shorthand can be expanded into a well-typed formal
+expression.
+\end{enumerate}
+
+\end{document}
