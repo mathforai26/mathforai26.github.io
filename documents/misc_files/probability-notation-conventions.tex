@@ -43,7 +43,7 @@ Course reference for lecture notes and solutions
 \end{center}
 
 \vspace{2mm}
-\textit{Last revised: September 26, 2026}
+\textit{Last revised: September 27, 2026}
 \vspace{1mm}
 \end{minipage}}
 \end{center}
@@ -55,22 +55,35 @@ clear. These conventions distinguish an underlying probability measure, a
 random element, its law, a probability mass function, and a predictive
 kernel. They also specify the shorthand accepted in this course.
 
+Standard probability notation lets us state the experiment once and then
+calculate without repeatedly annotating every probability and expectation.
+Inconsistent shorthand common in machine-learning writing can use the same
+expression for a probability, a law, and a density, or leave the source of
+randomness implicit. Such notation becomes ambiguous as soon as a calculation
+contains data, initialization, and algorithmic randomness. The distinctions
+below prevent this ambiguity.
+
 The conventions apply to lecture notes, exercises, solutions, and homework.
 They are defaults for mathematical writing in the course; a different
 convention must be introduced explicitly and used consistently.
 
 \section{The main objects have different types}
 
-Let
-\[
- (\Omega,\mathcal G,\P)
-\]
-be a probability space and let
-\[
- Z:(\Omega,\mathcal G)\longrightarrow(\mathcal Z,\mathcal H)
-\]
-be a random element. The following expressions have different domains and
-codomains.
+Probability theory describes an experiment using \emph{events}, such as
+``the prediction is correct,'' and \emph{random quantities}, such as the
+training sample or the learned predictor. The probability \(\P(E)\) is a
+number assigned to an event \(E\). A random quantity \(Z\) has a
+\emph{law}, written \(\Law(Z)\), which assigns probabilities to possible
+sets of values of \(Z\). This is the part of the formal setup needed for the
+calculations in these notes.\footnote{Formally, an experiment is a probability
+space \((\Omega,\mathcal G,\P)\). An event belongs to \(\mathcal G\), and a
+random element is a measurable map
+\(Z:(\Omega,\mathcal G)\to(\mathcal Z,\mathcal H)\). Measurability ensures
+that \(\{Z\in A\}\) is an event whenever \(A\in\mathcal H\). On finite
+spaces, every subset is allowed, so this condition requires no additional
+work.}
+
+The following expressions have different input and output types.
 
 \begin{center}
 \renewcommand{\arraystretch}{1.25}
@@ -78,10 +91,10 @@ codomains.
 \toprule
 \text{Notation} & \text{Argument} & \text{Value}\\
 \midrule
-\P & an event in \(\mathcal G\) & a number in \([0,1]\)\\
+\P & an event & a number in \([0,1]\)\\
 \Law & a random element or tuple of random elements & a probability law\\
-P,Q & a measurable set in the space on which the named law is defined & a number in \([0,1]\)\\
-\E & an integrable real-valued random variable & a real number\\
+P,Q & as declared; commonly a set supplied to a law, or a value and input supplied to a kernel & a number in \([0,1]\)\\
+\E,\E_P & an integrable random variable, or an integrable function when the law \(P\) is named & a real number\\
 p,q & as declared; commonly a mass function, density, probability vector, or kernel & a number or probability vector\\
 \bottomrule
 \end{tabular}
@@ -90,15 +103,15 @@ p,q & as declared; commonly a mass function, density, probability vector, or ker
 The fundamental relation between the ambient probability measure and a law is
 \begin{equation}
  \Law(Z)(A)=\P(Z\in A),
- \qquad A\in\mathcal H.
+ \qquad \text{for every allowed set }A\text{ of values of }Z.
  \label{eq:law}
 \end{equation}
 We may name this law
 \[
  P_Z=\Law(Z).
 \]
-Thus \(\P\) acts on events in \(\Omega\), while \(P_Z\) acts on measurable
-sets in \(\mathcal Z\).
+Thus \(\P\) acts on events of the experiment, while \(P_Z\) acts on sets in
+the value space of \(Z\).
 
 Capital letters do not determine an object's type by themselves. For example,
 Lecture~1 uses \(P_{\max}\) for a position-embedding matrix and
@@ -298,17 +311,43 @@ law does not determine the elementary ratio in
 \cref{eq:conditional-probability}. A conditional law there requires a chosen
 version or a conditional target specified separately for every input.
 
-Avoid a bare expression such as
+Suppose that \(P\) and \(Q\) have been defined as kernels from the value space
+of \(X\) to probability laws on the value space of \(Y\). In a discrete space,
+\[
+ P(Y\mid X)
+ \]
+is then a random variable: at outcome \(\omega\), its value is
+\(P(Y(\omega)\mid X(\omega))\). Consequently,
 \[
  P(Y\mid X)=Q(Y\mid X)
 \]
-unless both sides have been defined as kernels. In a finite space, an explicit
-statement is
+is a valid equality of random variables, understood up to almost-sure
+equality under the ambient probability measure \(\P\). It says that the two
+kernels agree when evaluated at the random pair \((X,Y)\). It does not imply
+that the kernels agree at values that the pair does not visit.
+
+Similarly, for one fixed pair \((x,y)\), the scalar equality
 \[
- P(Y=y\mid X=x)=Q(Y=y\mid X=x)
+ P(y\mid x)=Q(y\mid x)
 \]
-for the stated values of \(x,y\). If equality is required at inputs outside
-the support of one law, introduce a common kernel directly.
+compares only those two numbers. It does not assert equality elsewhere.
+
+When the intended statement is equality of the kernels, declare their common
+domain and codomain and write the preferred form
+\[
+ P=Q.
+\]
+In a discrete space, this equality expands to
+\[
+ P(y\mid x)=Q(y\mid x)
+ \qquad\text{for every }x,y.
+\]
+On a general output space, it expands to
+\[
+ P(B\mid x)=Q(B\mid x)
+ \qquad\text{for every input }x
+ \text{ and every allowed output set }B.
+\]
 
 Condition only when the conditional object is used. If a calculation divides
 by \(\P(C)\) and later multiplies by \(\P(C)\), a direct unconditional
@@ -320,26 +359,38 @@ If \(U\) is integrable, then
 \[
  \E[U]=\int_\Omega U(\omega)\,\P(d\omega).
 \]
-The course uses plain \(\E[\cdot]\). The setup must identify the random
-quantities and their joint law before the expectation appears. Do not use
-decorated forms such as
+Use plain \(\E[U]\) when \(U\) belongs to the ambient experiment. The setup
+must identify the random quantities and their joint law before the expectation
+appears.
+
+When \(P\) is a named law and \(f\) is an integrable function on its space,
+the law-indexed expectation is
+\begin{equation}
+ \E_P[f]:=\int f\,dP.
+ \label{eq:law-expectation}
+\end{equation}
+On a finite space,
+\[
+ \E_P[f]=\sum_z P(z)f(z).
+\]
+Thus, if \(Z\) has law \(P\),
+\[
+ \E_P[f]=\E[f(Z)].
+\]
+The notation \(\E_P[f]\) is useful when \(P\) is itself one of the objects
+being compared, as in \(\E_P[c]-\E_Q[c]\).
+
+Do not use a sampling declaration as an expectation subscript, as in
 \[
  \E_{Z\sim P}[h(Z)]
+ .
 \]
-to compensate for a missing setup.
+Write \(\E_P[h]\) when the integrand is a function on the space of \(P\), or
+declare \(\Law(Z)=P\) and write \(\E[h(Z)]\).
 
-When several named laws must be compared, either introduce corresponding
-random elements unambiguously or write the law-level calculation directly:
+Equation~\eqref{eq:law-expectation} is equivalent to the law-level notation
 \[
- \sum_z P(z)h(z),
- \qquad
- \sum_z Q(z)h(z),
-\]
-or, on a general space,
-\[
- \int h\,dP,
- \qquad
- \int h\,dQ.
+ \E_P[h]=\int h\,dP.
 \]
 The notation \(P(dz)\) in an integral is measure-integration notation; \(dz\)
 is not an event supplied as an ordinary argument to \(P\). Use this notation
@@ -384,7 +435,8 @@ Expression & Status & Meaning or repair\\
 \(P(X,Y)\) as a joint law & rejected & use \(P\) or \(\Law(X,Y)\)\\
 \(p_\theta(v\mid x)\) & accepted & value of a model-specified predictive kernel\\
 \(P(dx)\) & restricted & integration notation, introduced only when useful\\
-\(\E_{X\sim P}[h(X)]\) & rejected by course convention & specify the law in the setup and use \(\E[h(X)]\), or write an integral\\
+\(\E_P[h]\) & accepted & \(\int h\,dP\)\\
+\(\E_{X\sim P}[h(X)]\) & rejected by course convention & use \(\E_P[h]\), or specify \(\Law(X)=P\) and use \(\E[h(X)]\)\\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -439,8 +491,8 @@ uses one of the finite-space or preimage shorthands above.
 event probability.
 \item Conditional laws at zero-probability inputs are either unnecessary or
 specified through an explicit version or target kernel.
-\item Expectations use plain \(\E[\cdot]\), with the law determined by the
-setup.
+\item Expectations use \(\E[U]\) for the ambient experiment and
+\(\E_P[f]\) when the named law \(P\) is part of the claim.
 \item Independence and changes of measure are stated before they are used.
 \item Finite-space arguments use masses and sums unless measure notation adds
 substantive value.
