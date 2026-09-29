@@ -1,0 +1,28 @@
+\begin{exercisechunk}
+\item \textbf{Representing parity with one ReLU layer.}
+\label[exercise]{ex:l7-parity-representation}
+\exerciseprofile{2}{2}{2}{\exproof\quad\excalculation}{%
+Verify that a width-$(|S|+1)$ ReLU network represents a fixed parity exactly.}
+Fix $S\subseteq[d]$, write $k=|S|$, and let $\mathbf 1_S\in\{0,1\}^d$ be
+the indicator vector of $S$. Consider
+\begin{equation*}
+N(x)=[-\mathbf 1_S^\top x+k+1]_+
++\sum_{j=1}^k4j(-1)^j
+[-\mathbf 1_S^\top x+k+1-2j]_+.
+\end{equation*}
+Prove that
+\[
+N(x)=\chi_S(x)
+\qquad\text{for every }x\in\{-1,1\}^d.
+\]
+Conclude that the network in \cref{prop:parity-representation} needs at most
+$k+1$ hidden units.
+
+\begin{hints}
+Let $a$ be the number of negative coordinates of $x$ indexed by $S$. First
+show that $-\mathbf 1_S^\top x+k+1=2a+1$ and identify which ReLU terms are
+active. If $\widetilde N(a)$ denotes the resulting value, compare
+$\widetilde N(a)$ with $\widetilde N(a-1)$. Pair consecutive terms when
+evaluating $\sum_{j=1}^{a-1}j(-1)^j$.
+\end{hints}
+\end{exercisechunk}

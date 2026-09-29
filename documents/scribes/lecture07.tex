@@ -1,0 +1,836 @@
+\documentclass[11pt,twoside]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage[inline,shortlabels]{enumitem}
+\usepackage{booktabs}
+\usepackage{xcolor}
+\usepackage{microtype}
+
+% Revision date: maintained by scripts/build_lecture_notes.py. Keep this command.
+\newcommand{\lecturerevised}{2026-09-28 20:44 UTC-06:00}
+\usepackage{eso-pic}
+\AddToShipoutPictureBG{%
+  \AtPageLowerLeft{%
+    \put(\LenToUnit{0.5\paperwidth},\LenToUnit{0.5in}){%
+      \makebox(0,0){\normalfont\footnotesize\color{black!60}Last revised: \lecturerevised}%
+    }%
+  }%
+}
+
+\usepackage[square,authoryear]{natbib}
+\usepackage[colorlinks=true,linkcolor=blue!60!black,
+  urlcolor=blue!60!black,citecolor=blue!60!black]{hyperref}
+\usepackage[nameinlink,capitalize]{cleveref}
+\crefname{exercise}{Exercise}{Exercises}
+\Crefname{exercise}{Exercise}{Exercises}
+\hypersetup{pdftitle={Lecture 7: Distribution shift and helping models learn},
+  pdfauthor={Csaba Szepesvari}}
+
+\usepackage{../exercises/course-exercises}
+
+\usepackage{enotez}
+\DeclareInstance{enotez-list}{lecture}{list}{format=\normalsize,number={#1.}}
+\setenotez{list-name=Endnotes,list-style=lecture,backref=true}
+\crefname{endnote}{Endnote}{Endnotes}
+\Crefname{endnote}{Endnote}{Endnotes}
+
+\definecolor{courseblue}{HTML}{17365D}
+\newcommand{\E}{\mathbb E}
+\newcommand{\I}{\mathbb I}
+\renewcommand{\P}{\mathbb P}
+\newcommand{\Law}{\mathcal L}
+\newcommand{\R}{\mathbb R}
+\newcommand{\KL}{D}
+\newcommand{\TV}{\mathrm{TV}}
+\makeatletter
+\@for\@letter:=A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z\do{%
+  \expandafter\edef\csname c\@letter\endcsname{\noexpand\mathcal{\@letter}}}
+\makeatother
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{lemma}[theorem]{Lemma}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{example}[theorem]{Example}
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+
+\renewcommand{\thepage}{7--\arabic{page}}
+\renewcommand{\thesection}{7.\arabic{section}}
+\renewcommand{\theequation}{7.\arabic{equation}}
+\pagestyle{myheadings}
+\markboth{Lecture 7: Distribution shift and helping models learn}
+{Lecture 7: Distribution shift and helping models learn}
+
+\begin{document}
+
+\begin{center}
+\fcolorbox{courseblue}{white}{%
+\begin{minipage}{0.92\textwidth}
+\vspace{1mm}
+\textbf{CMPUT 654: Mathematical Foundations of Modern AI Systems}
+\hfill Fall 2026
+
+\vspace{3mm}
+\begin{center}
+{\Large\bfseries Lecture 7: Distribution shift and helping models learn}
+
+\vspace{1mm}
+September 24, 2026
+\end{center}
+
+\vspace{2mm}
+\textit{Lecturer: Csaba Szepesv\'ari}
+\hfill
+\textit{Note prepared by: Csaba Szepesv\'ari}
+\vspace{1mm}
+\end{minipage}}
+\end{center}
+
+\noindent\textbf{Reading guide.}
+The guiding question is: when does a change in the data law change what should
+be learned, and when can a change in the supplied data make learning easier?
+The first part distinguishes covariate shift from general distribution shift
+and explains why correct specification and coverage determine whether a shift
+is harmful. The second part organizes data selection as communication between
+a teacher and a student. The third part uses parity to illustrate a difficulty
+in teaching a neural network a desired behavior. Direct final-answer training
+can fail even when the network can represent the target. A modified training
+task exposes intermediate computations while preserving the desired final
+answer. The lecture stated the negative result, explained its proof mechanism,
+and previewed the intermediate-supervision construction. Lecture 8 supplies
+the complete gradient and trajectory argument and develops the positive
+constructions.
+The prerequisites are conditional expectation, KL divergence, total
+variation, Pinsker's inequality, Hoeffding's inequality, ReLU networks, and
+elementary linear algebra. The brief finite-field and Fourier explanations
+below supply the additional background used in the parity proof.
+
+\section{Distribution shift depends on the prediction problem}
+\label{sec:shift}
+
+Let $P_{\rm tr}$ and $P_{\rm dep}$ be the training and deployment laws on
+$\cX\times\cY$. Write $\mu_{\rm tr}$ and $\mu_{\rm dep}$ for their input
+marginals.
+
+For a fixed predictor $f$, let $c_f:\cX\times\cY\to[0,1]$ be its downstream
+cost and write
+\[
+ J_P(f)=\E_P[c_f(X,Y)].
+\]
+
+\begin{proposition}[Total variation controls every fixed bounded cost]
+\label{prop:tv-fixed-cost}
+For every fixed predictor $f$,
+\begin{equation}
+ J_{P_{\rm dep}}(f)-J_{P_{\rm tr}}(f)
+ \le \TV(P_{\rm dep},P_{\rm tr}).
+\label{eq:tv-fixed-cost-one-sided}
+\end{equation}
+Consequently,
+\begin{equation}
+ \left|J_{P_{\rm dep}}(f)-J_{P_{\rm tr}}(f)\right|
+ \le \TV(P_{\rm dep},P_{\rm tr}).
+\label{eq:tv-fixed-cost}
+\end{equation}
+\end{proposition}
+
+\begin{proof}
+Take a measure $\nu$ dominating both laws and let $p_{\rm dep}$ and
+$p_{\rm tr}$ be their densities. Then
+\begin{align*}
+J_{P_{\rm dep}}(f)-J_{P_{\rm tr}}(f)
+&=\int c_f(z)\bigl(p_{\rm dep}(z)-p_{\rm tr}(z)\bigr)\,\nu(dz)\\
+&\le \int_{\{p_{\rm dep}\ge p_{\rm tr}\}}
+       \bigl(p_{\rm dep}(z)-p_{\rm tr}(z)\bigr)\,\nu(dz)\\
+&=\TV(P_{\rm dep},P_{\rm tr}).
+\end{align*}
+Interchanging the two laws gives the absolute-value bound.
+\end{proof}
+
+The bound is uniform over all costs in $[0,1]$. For the particular cost of a
+particular predictor, the exact difference is the signed integral in the first
+line of the proof. It can be small even when the total-variation distance is
+large, because the cost can be small where the laws differ.
+
+\begin{definition}[Covariate shift and general distribution shift]
+There is \emph{covariate shift} when the two joint laws admit the
+factorizations
+\begin{equation}
+ P_{\rm tr}(dx,dy)=\mu_{\rm tr}(dx)K(dy\mid x),
+ \qquad
+ P_{\rm dep}(dx,dy)=\mu_{\rm dep}(dx)K(dy\mid x)
+ \label{eq:covariate-shift}
+\end{equation}
+for one conditional kernel $K$, while $\mu_{\rm tr}\ne\mu_{\rm dep}$.
+This definition also specifies the conditional target at inputs that occur
+under only one of the two marginals. There is \emph{general distribution shift}
+when $P_{\rm tr}\ne P_{\rm dep}$; the conditional law of $Y$ given $X$ may
+change as well.
+\end{definition}
+
+Covariate shift changes how often inputs occur while preserving the desired
+prediction at each input. General distribution shift may also change the
+desired prediction. This classification depends on what is included in $X$.
+
+\begin{proposition}[A source indicator can turn conditional shift into covariate shift]
+Suppose that $X,Y$, and the source indicator $J$ take values in finite sets.
+For each source $j$, let $\mu_j$ be its input law and $K_j$ its conditional
+kernel, so that $P_j(x,y)=\mu_j(x)K_j(y\mid x)$. For mixture weights
+$\alpha_j$, define the joint law
+\[
+ P_\alpha(x,y,j)=\alpha_jP_j(x,y),
+ \qquad \alpha_j\ge0,
+ \qquad \sum_j\alpha_j=1.
+\]
+If the predictor observes only $X$, its conditional kernel is, at every $x$
+with positive $P_\alpha$-probability,
+\begin{equation}
+ K_\alpha(y\mid x)=\sum_jK_j(y\mid x)P_\alpha(j\mid x),
+ \label{eq:source-hidden}
+\end{equation}
+which generally changes with the mixture weights. If the predictor observes
+$(X,J)$, then
+\begin{equation}
+ \widetilde K_\alpha(y\mid x,j)=K_j(y\mid x),
+ \label{eq:source-visible}
+\end{equation}
+which is independent of the mixture weights.
+\end{proposition}
+
+The same corpus change can therefore be general shift for one prediction
+problem and covariate shift for another. Source metadata is useful only if the
+model receives it, preserves it, or can infer it from the context.
+
+\begin{example}[Benign and harmful changes]
+Increasing the proportion of mathematics prompts is covariate shift if the
+desired answer to every prompt is unchanged. Combining sources that use
+incompatible conventions changes the conditional law of $Y$ given $X$ when
+the source is hidden. A
+recommender system can create a further effect: its outputs change what users
+consume, which can later change their preferences and hence the conditional
+law of feedback.
+\end{example}
+
+Evaluation has the same dependence on its law. For a loss $\ell$, an
+evaluation set drawn from $P_{\rm eval}$ estimates
+\[
+ L_{P_{\rm eval}}(f)=\E_{P_{\rm eval}}[\ell(f(X),Y)].
+\]
+It estimates deployment risk when its construction represents the deployment
+law, or when a separate argument relates the two laws. Curation is therefore
+part of evaluation as well as training.
+
+\section{Correct specification, misspecification, and coverage}
+\label{sec:specification}
+
+For a joint law $P$ on $\cX\times\cY$, let $X,Y$ denote its coordinate maps
+and define the population risk
+\[
+ L_P(f)=\E_P[\ell(f(X),Y)].
+\]
+
+\begin{definition}[Correct specification and misspecification]
+A conditional model class $\cF$ is \emph{correctly specified} for $P$ if it
+contains a predictor that attains the optimal conditional decision at every
+input $x\in\cX$. It is \emph{misspecified} if no member of the class does so.
+\end{definition}
+
+Correct specification is a claim about the interaction among the target
+conditional law, the loss, and the model class. It is stronger than saying
+that the class contains a predictor with small average training risk.
+
+\begin{proposition}[A common pointwise optimum survives covariate shift]
+\label{prop:pointwise-optimum}
+Suppose $P$ and $Q$ share a conditional kernel $K(dy\mid x)$ as in
+\cref{eq:covariate-shift}, and write $\mu_P$ and $\mu_Q$ for their input
+marginals. If $f^\star\in\cF$ satisfies, for every
+$x\in\cX$ and every $f\in\cF$,
+\[
+ \int \ell(f^\star(x),y)K(dy\mid x)
+ \le \int \ell(f(x),y)K(dy\mid x),
+\]
+then $f^\star$ minimizes both $L_P$ and $L_Q$.
+\end{proposition}
+
+\begin{proof}
+\begin{align*}
+L_Q(f)-L_Q(f^\star)
+&=\int_{\cX}\left[
+  \int_{\cY}\bigl(\ell(f(x),y)-\ell(f^\star(x),y)\bigr)K(dy\mid x)
+  \right]\mu_Q(dx)\\
+&\ge0.
+\end{align*}
+Replacing $\mu_Q$ by $\mu_P$ proves the same claim for $P$.
+\end{proof}
+
+For conditional log loss, let $p^\star(\cdot\mid x)$ be the true conditional
+law and $q_f(\cdot\mid x)$ the model prediction under $P$.
+\begin{equation}
+L_P(f)=H_P(Y\mid X)+
+\E_P\!\left[
+\KL\bigl(p^\star(\cdot\mid X)\Vert q_f(\cdot\mid X)\bigr)
+\right].
+\label{eq:conditional-logloss}
+\end{equation}
+If one model represents $p^\star(\cdot\mid x)$ at every deployment input,
+changing the input mixture does not change this population optimum. The
+mixture can still change the number of observations at each input, the
+conditioning of the optimization problem, and which optimum is selected in an
+overparameterized class.
+
+\begin{proposition}[Misspecification makes the mixture part of the target]
+\label{prop:misspecified-mixture}
+Let $\cX=\{a,b\}$, $\cY=\{0,1\}$, and define a conditional kernel $K$ by
+\[
+K(1\mid a)=0.1,
+\qquad
+K(1\mid b)=0.9.
+\]
+For $\lambda\in[0,1]$, let $\mu_\lambda(a)=\lambda$,
+$\mu_\lambda(b)=1-\lambda$, and
+$P_\lambda(x,y)=\mu_\lambda(x)K(y\mid x)$. Restrict the model to one
+probability $q$ at both inputs. The log-loss minimizer under $P_\lambda$ is
+\[
+q_\lambda^\star=0.9-0.8\lambda.
+\]
+\end{proposition}
+
+\begin{proof}
+Write $r_\lambda=P_\lambda(Y=1)=0.9-0.8\lambda$. The risk is
+\[
+L_{P_\lambda}(q)
+=-r_\lambda\log q-(1-r_\lambda)\log(1-q).
+\]
+Therefore
+\[
+\frac{d}{dq}L_{P_\lambda}(q)
+=-\frac{r_\lambda}{q}+\frac{1-r_\lambda}{1-q},
+\]
+and the unique stationary point is $q=r_\lambda$.
+\end{proof}
+
+The restricted model must compromise between the two contexts. Their weights
+determine the compromise. In a sufficiently expressive language model, the
+same parameters may represent both mathematics and literature conditionals,
+so a moderate mixture change need not change the ideal predictor. This is an
+inductive-bias claim about the shared representation; it does not follow from
+model size alone.
+
+A \emph{minimum-coverage condition} supplies a separate requirement. The
+density-ratio condition below is one sufficient, model-independent form of
+coverage; it is stronger than necessary for structured model classes.
+
+\begin{proposition}[Minimum coverage transfers excess risk]
+\label{prop:coverage}
+Assume covariate shift with input marginals $\mu_{\rm tr}$ and
+$\mu_{\rm dep}$, and let
+\[
+\Delta_f(x)=
+\int\bigl(\ell(f(x),y)-\ell(f^\star(x),y)\bigr)K(dy\mid x)\ge0.
+\]
+If $\rho\in(0,1]$, $\mu_{\rm dep}$ is absolutely continuous with respect to
+$\mu_{\rm tr}$ and
+\[
+\frac{d\mu_{\rm dep}}{d\mu_{\rm tr}}(x)\le\rho^{-1}
+\quad \mu_{\rm tr}\text{-almost surely},
+\]
+then
+\begin{equation}
+L_{P_{\rm dep}}(f)-L_{P_{\rm dep}}(f^\star)
+\le
+\rho^{-1}\!\left(
+L_{P_{\rm tr}}(f)-L_{P_{\rm tr}}(f^\star)
+\right).
+\label{eq:coverage-transfer}
+\end{equation}
+\end{proposition}
+
+\begin{proof}
+Let $\omega=d\mu_{\rm dep}/d\mu_{\rm tr}$. Then
+\[
+\int\Delta_f(x)\,\mu_{\rm dep}(dx)
+=\E_{\mu_{\rm tr}}[\omega\Delta_f]
+\le\rho^{-1}\E_{\mu_{\rm tr}}[\Delta_f].
+\]
+\end{proof}
+
+If deployment assigns positive mass to a region absent from training, no
+finite $\rho$ exists. This does not make correct prediction there impossible.
+A structured class can identify behavior at unseen inputs from observations
+elsewhere. For example, a linear predictor can be identified when the training
+covariates cover the parameter directions needed at deployment, even if the
+individual deployment inputs were never observed. Thus the necessary notion
+of coverage depends on the model and the prediction problem: it must identify
+the relevant degrees of freedom, rather than literally include every
+deployment input. The density-ratio condition avoids this structural analysis
+by imposing a stronger distribution-level requirement.
+The term \emph{domain adaptation} commonly refers to methods that use source
+data together with information about a different target domain, often
+unlabeled target inputs, to obtain a predictor for the target law.
+
+\section{Learning as communication between teacher and student}
+\label{sec:teacher-student}
+
+Data selection can be described as a communication protocol. A
+\emph{teacher} sends data or feedback; a \emph{student} updates its internal
+state and may send queries or predictions. A useful classification separates
+four questions.
+
+\begin{center}
+\begin{tabular}{p{0.22\textwidth}p{0.68\textwidth}}
+\toprule
+Dimension & Question \\
+\midrule
+Objective information & Does the teacher know the target predictor, desired
+behavior, or only a verifier? What does the student know? \\
+Student information & Does the teacher know the student's representation or
+hypothesis class, update algorithm, current state, or only observed outputs? \\
+Control of communication & Who chooses the next input, label, intermediate
+state, correction, or evaluation: the teacher, the student, or both? \\
+Number of turns & Is the data fixed in one batch, or can later messages depend
+on the transcript and the student's current state? \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+These dimensions are independent. In a \emph{passive learning} protocol, the
+student receives data selected without using its queries or current state.
+\emph{Data curation} selects examples or changes their weights;
+\emph{task curation} changes the supervised task; and a \emph{curriculum}
+controls the order or difficulty of the supplied examples or tasks. Any of
+these choices can be fixed in advance or adapted over several turns.
+
+\emph{Active learning} usually gives the student control over queries whose
+answers are supplied by an oracle. In \emph{active teaching}, the teacher
+chooses the next message using the interaction so far. \emph{Machine teaching}
+usually gives the teacher a target and a model of the student, and asks the
+teacher to choose effective training data. In a multi-turn protocol, either
+side or both sides can adapt to the transcript. Thus ``active'' identifies who
+selects the next message in the protocol.
+
+The teacher's information is a resource. Knowing the target and the student's
+update rule can reduce the required number of examples. It can also make a
+teaching strategy brittle when the assumed student differs from the actual
+one. The student's ability to query is another resource. It can expose the
+specific uncertainty that the current data leave unresolved.
+
+The communication channel also matters. Reordering final-answer examples
+changes the optimization path. Replacing
+\[
+(x,y)
+\quad\text{by}\quad
+(x,z_1,\ldots,z_r,y)
+\]
+adds information about intermediate computations. Mathematical reasoning is
+a favorable setting because problems can often be generated, final answers
+can often be verified, intermediate states may be checkable, and computation
+length can be controlled.
+
+When learning is modeled through a hypothesis class, correct specification
+says that the desired behavior is represented. It does not imply that the
+student's update rule can find that behavior. Changing the communicated data
+or the supervised task can change this optimization problem while preserving
+the desired final output.
+
+The parity example applies this distinction between the desired behavior and
+the training task used to teach it. The desired final output remains parity.
+What the teacher reveals during training will change.
+
+\clearpage
+\section{Parity as a test case for teaching a computation}
+\label{sec:parity-setup}
+
+This example illustrates one difficulty in teaching a neural network a
+desired behavior and one way to overcome it. The direct approach supplies
+input--output pairs and trains the network to predict only the final answer.
+The result in \cref{sec:parity-result} shows that a specified version of this
+approach can fail. This does not imply that every way of teaching a neural
+network to produce the same answer must fail. In \cref{sec:intermediate-preview}, the
+training task will expose intermediate computations, and completing the
+modified task will still produce the original final answer.
+
+The same parity problem has two useful representations. For
+$b\in\{0,1\}^d$, define
+\[
+ \operatorname{parity}_S(b)=\bigoplus_{j\in S}b_j.
+\]
+Set $x_j=(-1)^{b_j}$. Then
+\begin{equation}
+ (-1)^{\operatorname{parity}_S(b)}
+ =\prod_{j\in S}x_j.
+\label{eq:parity-representations}
+\end{equation}
+The bit representation makes XOR computation and linear algebra over
+$\mathbb F_2$ explicit. The sign representation makes products, correlations,
+and the ReLU gradient calculation explicit.
+
+For $S\subseteq[d]$ and $x\in\{-1,1\}^d$, define
+\[
+\chi_S(x)=\prod_{j\in S}x_j.
+\]
+Fix $S$ and define the data law $P_S$ on
+$\{-1,1\}^d\times\{-1,1\}$ by
+\[
+ P_S(x,y)=2^{-d}\I\{y=\chi_S(x)\}.
+\]
+Let $X,Y$ be the coordinate maps under $P_S$. Thus $X$ is uniform on the
+Boolean cube and $Y=\chi_S(X)$ with $P_S$-probability one.
+
+We note in passing that for any $0<\delta<1$,
+after seeing $\Omega(d+ \log(1/\delta))$ labeled examples
+where the inputs come from the uniform distribution,
+$S$ can be determined with probability $1-\delta$ in a computationally
+efficient manner (see
+\cref{ex:l7-parity-identification}).
+As we shall see, training a neural network with gradient descent
+to do the same does not succeed. However, before that, we establish that the target
+lies  in the network class considered in the negative result: without this result,
+the negative result would not make sense.
+
+\subsection{A small ReLU network represents the fixed parity}
+
+Consider the one-hidden-layer ReLU network
+\begin{equation}
+N_\theta(x)=\sum_{r=1}^m u_r[w_r^\top x+b_r]_+.
+\label{eq:relu-network}
+\end{equation}
+
+\begin{proposition}[Parity has a small ReLU representation]
+\label{prop:parity-representation}
+For every $S$, a network of the form \cref{eq:relu-network} with width at
+most $|S|+1$ represents $\chi_S$ on the Boolean cube.
+\end{proposition}
+
+\Cref{ex:l7-parity-representation} asks you to verify an explicit
+width-$(|S|+1)$ construction.
+
+\section{Direct gradient training can fail for a fixed parity}
+\label{sec:parity-result}
+
+For a score $f$, define its \emph{signed correlation loss}
+\[
+\cC(f)=-\E_{P_S}[Yf(X)],
+\]
+and define the parameter objective
+\begin{equation}
+F(\theta)=\cC(N_\theta)=-\E_{P_S}[Y N_\theta(X)].
+\label{eq:correlation-objective}
+\end{equation}
+For a hard predictor $h:\{-1,1\}^d\to\{-1,1\}$, define its classification
+risk by $R_{01}(h)=P_S(h(X)\ne Y)$. For binary-valued predictions,
+$\cC(h)=2R_{01}(h)-1$. The identity does not extend to a real-valued score
+$f$: an arbitrarily small score can have the correct sign everywhere.
+\Cref{ex:l7-correlation-loss} asks you to prove these claims and derive the
+corresponding decompositions for squared and logistic loss. The main result
+below analyzes perturbed gradient descent on $F$ itself. Its classification
+conclusion follows from symmetry of the entire parameter law, rather than
+from the numerical value of $\cC(N_\theta)$.
+
+On an ambient probability space, let $\Theta_0,\Xi_0,\ldots,\Xi_{T-1}$ be
+mutually independent, with
+\[
+ \Law(\Theta_0)=\cN(0,\sigma^2I),
+ \qquad
+ \Law(\Xi_t)=\cN(0,\sigma^2I).
+\]
+Starting from $\Theta_0$, run \emph{perturbed gradient descent}
+\begin{equation}
+\Theta_{t+1}=\Theta_t-\eta\nabla F(\Theta_t)-\Xi_t.
+\label{eq:perturbed-gd}
+\end{equation}
+Define the comparison process obtained by deleting the gradient:
+\begin{equation}
+\Theta^{(0)}_0=\Theta_0,
+\qquad
+\Theta^{(0)}_{t+1}=\Theta^{(0)}_t-\Xi_t.
+\label{eq:gaussian-walk}
+\end{equation}
+The independent Gaussian increments make the comparison process Gaussian at
+every time. This symmetry is the reason the small-gradient estimate can be
+applied repeatedly along the comparison path.
+
+The proof of the main result uses the following comparison between the trained
+parameter path and the Gaussian walk.
+
+\begin{lemma}[Path comparison]
+\label{lem:path-comparison}
+Let $d>30$, $k=|S|$, and $A>0$. Let
+\(m,T\in\mathbb N\) and \(\eta,\sigma>0\), and assume
+\begin{equation}
+m,T,\eta,\sigma,\sigma^{-1}\le d^A,
+\qquad
+k\ge(288A+144)\log d.
+\label{eq:hardness-conditions}
+\end{equation}
+Then
+\begin{equation}
+\TV\!\left(
+\Law(\Theta_0,\ldots,\Theta_T),
+\Law(\Theta^{(0)}_0,\ldots,\Theta^{(0)}_T)
+\right)
+\le e^{-k/36}.
+\label{eq:path-tv}
+\end{equation}
+\end{lemma}
+
+The comparison process is independent of $S$. The lemma says that the
+gradient changes the law of a polynomial-length parameter path by only an
+exponentially small amount, even though the network class contains the target.
+
+The symmetry of the comparison process now gives the main result.
+
+\begin{theorem}[Classification advantage occurs with probability at most one half]
+\label{thm:classification}
+Let $d>30$, $k=|S|$, and $A>0$. Let
+\(m,T\in\mathbb N\) and \(\eta,\sigma>0\), and assume
+\[
+m,T,\eta,\sigma,\sigma^{-1}\le d^A,
+\qquad
+k\ge(288A+144)\log d.
+\]
+Let $h_\theta(x)=\operatorname{sign}(N_\theta(x))$, with fair tie-breaking
+when $N_\theta(x)=0$. Equivalently,
+\[
+R_{01}(h_\theta)
+=P_S(YN_\theta(X)<0)+\frac12P_S(N_\theta(X)=0).
+\]
+Then, for every $\gamma>0$,
+\begin{equation}
+\P\!\left(R_{01}(h_{\Theta_T})\le\frac12-\gamma\right)
+\le\frac12+e^{-k/36},
+\label{eq:classification-probability}
+\end{equation}
+and
+\begin{equation}
+\left|\E[R_{01}(h_{\Theta_T})]-\frac12\right|
+\le e^{-k/36}.
+\label{eq:classification-expectation}
+\end{equation}
+\end{theorem}
+
+The expectation bound permits a symmetric mixture of very accurate and very
+inaccurate classifiers. The probability bound gives the corresponding
+reliability statement: the chance of achieving any fixed positive advantage
+over random guessing is at most one half, up to the exponentially small term.
+
+
+\section{Why the comparison theorem is plausible}
+\label{sec:proof-roadmap}
+
+The proof of \cref{lem:path-comparison} has two parts. First, when the
+parameters have an isotropic Gaussian law, the expected norm of the
+parity-dependent gradient is exponentially small in $k$. The calculation
+expresses each gradient coordinate through correlations between a random
+threshold and a degree-$k$ Boolean Fourier character. Low-degree terms cancel,
+leaving only an exponentially small remainder.
+
+Second, the comparison process in \cref{eq:gaussian-walk} is Gaussian at every
+time. The small-gradient estimate can therefore be applied repeatedly along
+this path. A KL chain-rule calculation compares the actual update kernel with
+an auxiliary kernel that deletes sufficiently small gradients. Pinsker's
+inequality and a coupling of the auxiliary process with the Gaussian walk then
+give \cref{eq:path-tv}. The sign symmetry of the Gaussian walk yields the
+classification statement in \cref{thm:classification}.
+
+This argument explains the obstruction. The network class contains the fixed
+parity, but typical Gaussian parameters lie in a region where the objective
+supplies exponentially little information about the direction in which the
+parameters should move. Lecture 8 gives the complete calculation.
+
+\section{Changing the training task}
+\label{sec:intermediate-preview}
+
+The lower bound concerns direct training on final parity labels. It does not
+apply to every way of teaching a neural network to compute parity. Write
+$x_i=(-1)^{b_i}$ with $b_i\in\{0,1\}$ and define the running parities
+\[
+z_1=b_1,
+\qquad
+z_i=z_{i-1}\oplus b_i.
+\]
+The final value $z_d$ determines the original parity, while every intermediate
+label demonstrates the same two-bit XOR rule. Thus intermediate supervision
+changes the learning problem while preserving the required final answer.
+
+Lecture 8 develops three versions of this idea: composing an explicitly
+learned XOR gate, exposing the hidden first decision in the path-star task,
+and a constructed transformer result in which successive gradient updates
+learn retrieval and combination.
+
+\section{Take-home messages}
+\label{sec:take-home}
+
+\begin{itemize}[leftmargin=*]
+\item Total variation uniformly controls the change in every fixed bounded
+downstream cost. A particular cost can remain stable even when this uniform
+bound is large.
+\item Covariate shift preserves the conditional target; general distribution
+shift need not. The distinction depends on the information included in the
+input.
+\item Under correct specification, a common pointwise optimum survives a
+change in input frequencies. Under misspecification, mixture weights determine
+the best compromise.
+\item Correct inductive bias and coverage address separate requirements. A
+density-ratio bound quantifies one sufficient minimum-coverage condition.
+\item Teaching and active learning describe different control structures.
+The relevant dimensions are what each party knows, who selects each message,
+what the communication contains, and whether later messages adapt to earlier
+ones.
+\item Noiseless examples identify an unknown parity efficiently, and a small
+ReLU network represents every fixed parity. For the specified perturbed
+population-gradient method, the expected zero--one risk remains within
+$e^{-k/36}$ of $1/2$, and the probability of achieving any fixed positive
+advantage is at most $1/2+e^{-k/36}$.
+\item The lower bound concerns one direct training method. Running-parity
+labels preserve the final computation while supplying repeated supervision
+for a two-bit rule.
+\end{itemize}
+
+\printendnotes
+
+\section*{Bibliographical notes}
+
+The distinction among covariate shift, other forms of dataset shift, and
+domain adaptation is developed in the collection edited by
+\citet{quinonero2009}. The density-ratio calculation in
+\cref{prop:coverage} is elementary; stronger domain-adaptation results replace
+the pointwise ratio by discrepancies adapted to a hypothesis class.
+
+The teacher--student terminology follows the separation between active
+learning and machine teaching used by \citet{zhu2015} and
+\citet{liu2017}. The dimensions in \cref{sec:teacher-student} are the
+organizational scheme used in this lecture. Other taxonomies use different
+dimensions and terminology.
+
+\Cref{lem:path-comparison,thm:classification} are based on the fixed-parity
+lower bound of \citet{shoshani2025}. Lecture 8 gives the Gaussian threshold and trajectory calculations at the
+center of their argument. The discussion of
+teacher-forced intermediate parity refers to \citet{wen2025}; the path-star
+example and the forward-prediction shortcut are from \citet{hu2025}.
+
+\section*{Glossary}
+
+\begin{description}[style=nextline,leftmargin=1.5em,labelindent=0pt]
+\item[Active learning]
+A protocol in which the student selects queries and receives their labels or
+answers from an oracle.
+\item[Active teaching]
+A protocol in which the teacher adapts its next message to the interaction so
+far.
+\item[Covariate shift]
+A change in the input marginal while the conditional law of the target given
+the input remains fixed.
+\item[Correct specification]
+The model class contains a predictor attaining the optimal conditional
+decision at every input in the input space.
+\item[Curriculum]
+A choice of the order or difficulty of training examples or tasks, fixed in
+advance or adapted during training.
+\item[Data and task curation]
+Selection or weighting of training examples, or modification of the supervised
+task, to influence what the student learns.
+\item[Domain adaptation]
+Learning for a target domain using source data and some information about the
+target domain.
+\item[Downstream cost]
+The expected cost of using a fixed predictor under a specified evaluation or
+deployment law.
+\item[General distribution shift]
+A change in the joint law of input and target, possibly including the
+conditional law of the target given the input.
+\item[Intermediate supervision]
+Training labels reveal intermediate computations whose final result is the
+original target behavior.
+\item[Inductive bias]
+Structure in the model class or learning rule that determines how observations
+at some inputs constrain predictions at other inputs.
+\item[Machine teaching]
+Selection of training information by a teacher that has a target and a model
+of the student's learning process.
+\item[Minimum coverage]
+A condition ensuring that training data identify the degrees of freedom needed
+at deployment. \Cref{prop:coverage} uses a stronger, model-independent bounded
+density-ratio condition.
+\item[Misspecification]
+The model class cannot attain the optimal conditional decision at every
+input in the input space.
+\item[Perturbed gradient descent]
+The population-gradient update in \cref{eq:perturbed-gd}, with an independent
+Gaussian perturbation added at every step.
+\item[Passive learning]
+A protocol in which the student receives data selected without using its
+queries or current state.
+\item[Representation capacity]
+The set of input--output functions expressible by a model class, independently
+of whether a specified training procedure can find them.
+\item[Signed correlation loss]
+The objective $\cC(f)=-\E_{P_S}[Yf(X)]$, which isolates the target-dependent
+term in the squared-loss and logistic-loss decompositions derived in
+\cref{ex:l7-correlation-loss}.
+\item[Teacher and student]
+The teacher supplies data or feedback. The student updates its state and may
+send queries or predictions in a multi-turn protocol.
+\item[Total variation]
+The uniform discrepancy over event probabilities. Equivalently, it is the
+largest possible expectation difference over costs taking values in $[0,1]$.
+\item[Zero--one risk]
+The probability that a binary-valued predictor differs from the binary label.
+\end{description}
+
+\section{Exercises}
+\label{sec:exercises}
+
+\exerciseinstructions
+\setcounter{courseexercise}{0}
+\input{../exercises/l7-covariate-coverage.tex}
+\input{../exercises/l7-parity-identification.tex}
+\input{../exercises/l7-parity-representation.tex}
+\input{../exercises/l7-correlation-loss.tex}
+
+\clearpage
+\begin{thebibliography}{99}
+
+\bibitem[Hu et al.(2025)]{hu2025}
+Edward S. Hu, Kwangjun Ahn, Qinghua Liu, Haoran Xu, Manan Tomar,
+Ada Langford, Dinesh Jayaraman, Alex Lamb, and John Langford.
+\newblock Learning to achieve goals with belief state transformers.
+\newblock 2025. \url{https://arxiv.org/abs/2410.23506}.
+
+\bibitem[Wen et al.(2025)]{wen2025}
+Kaiyue Wen, Huaqing Zhang, Hongzhou Lin, and Jingzhao Zhang.
+\newblock From sparse dependence to sparse attention: Unveiling how
+chain-of-thought enhances transformer sample efficiency.
+\newblock International Conference on Learning Representations, 2025.
+\newblock \url{https://arxiv.org/abs/2410.05459}.
+
+\bibitem[Liu et al.(2017)]{liu2017}
+Weiyang Liu, Bo Dai, Ahmad Humayun, Charlene Tay, Chen Yu, Linda B. Smith,
+James M. Rehg, and Le Song.
+\newblock Iterative machine teaching.
+\newblock International Conference on Machine Learning, 2017.
+\newblock \url{https://proceedings.mlr.press/v70/liu17b.html}.
+
+\bibitem[Qui\~nonero-Candela et al.(2009)]{quinonero2009}
+Joaquin Qui\~nonero-Candela, Masashi Sugiyama, Anton Schwaighofer, and
+Neil D. Lawrence, editors.
+\newblock \emph{Dataset Shift in Machine Learning}.
+\newblock MIT Press, 2009.
+
+\bibitem[Shoshani and Shamir(2025)]{shoshani2025}
+Itamar Shoshani and Ohad Shamir.
+\newblock Hardness of learning fixed parities with neural networks.
+\newblock 2025. \url{https://arxiv.org/abs/2501.00817}.
+
+\bibitem[Zhu(2015)]{zhu2015}
+Xiaojin Zhu.
+\newblock Machine teaching: An inverse problem to machine learning and an
+approach toward optimal education.
+\newblock AAAI Conference on Artificial Intelligence, 2015.
+
+\end{thebibliography}
+
+\end{document}

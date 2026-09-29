@@ -1,0 +1,44 @@
+\begin{exercisechunk}
+\item \textbf{What signed correlation controls.}
+\label[exercise]{ex:l7-correlation-loss}
+\exerciseprofile{2}{2}{2}{\exproof\quad\excalculation\quad\exconstruction\quad\exinterpretation}{%
+Relate signed correlation to classification and to the gradients of standard
+surrogate losses.}
+Under the fixed-parity law $P_S$, recall
+\[
+\cC(f)=-\E_{P_S}[Yf(X)].
+\]
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Let $h:\{-1,1\}^d\to\{-1,1\}$. Prove
+\[
+\cC(h)=2R_{01}(h)-1,
+\qquad
+R_{01}(h)=P_S(h(X)\ne Y).
+\]
+\item For $\varepsilon>0$, set $f_\varepsilon=\varepsilon\chi_S$. Compute
+$\cC(f_\varepsilon)$ and $R_{01}(\operatorname{sign}(f_\varepsilon))$.
+Explain why a correlation value close to zero does not determine the
+classification risk of the sign of a real-valued score.
+\item For any score $f:\{-1,1\}^d\to\R$, derive
+\[
+\E_{P_S}[(f(X)-Y)^2]
+=1+\E_{P_S}[f(X)^2]+2\cC(f).
+\]
+\item Derive
+\[
+\E_{P_S}[\log(1+e^{-Yf(X)})]
+=\E_{P_S}\!\left[\log\!\left(2\cosh\frac{f(X)}2\right)\right]
++\frac12\cC(f).
+\]
+If $f=f_\theta$ is differentiable in $\theta$, differentiate the identities
+in parts (c) and (d) and identify every term in addition to
+$\nabla_\theta\cC(f_\theta)$.
+\end{enumerate}
+\begin{hints}
+For (a), determine the value of $Yh(X)$ on the correct and incorrect events.
+For (d), verify the pointwise identity
+\[
+\log(1+e^{-z})=\log\!\left(2\cosh\frac z2\right)-\frac z2.
+\]
+\end{hints}
+\end{exercisechunk}

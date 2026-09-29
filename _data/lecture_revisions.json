@@ -131,5 +131,16 @@
       "documents/scribes/lecture06.tex": "3b6797b84a640566677701a9e4af191dc359701c603d9e3f53eb7bde2b5d4261"
     },
     "revised": "2026-09-20 11:32 UTC-06:00"
+  },
+  "lecture07": {
+    "inputs": {
+      "documents/exercises/course-exercises.sty": "8b55005e025860aad67dba6a85a880872d8bdad5e23d7c65630067d32cf5f859",
+      "documents/exercises/l7-correlation-loss.tex": "638e0431bb41802381b7c32fcdf02c45d462506d962fafc0939e35382798b198",
+      "documents/exercises/l7-covariate-coverage.tex": "76c852995998c4561e5afd969c145c6ff45fc67db703249c841bfc82853d6b1e",
+      "documents/exercises/l7-parity-identification.tex": "fda2b52efd21dfdd47cdc1190812b5804a1f09b017939f6186efd097d11d3496",
+      "documents/exercises/l7-parity-representation.tex": "758f1bdc06863d5bef624a70b74931743d6db5646ae9b62a73a9aaa03389fab6",
+      "documents/scribes/lecture07.tex": "f5d02ea47f66d00c2d55d6a3ebdafd34c5f0301d58d062f9aab307a7f6730140"
+    },
+    "revised": "2026-09-28 20:44 UTC-06:00"
   }
 }

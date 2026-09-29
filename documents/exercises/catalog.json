@@ -399,5 +399,29 @@
     "lecture": 6,
     "number": 7,
     "file": "l6-polynomial-mixing.tex"
+  },
+  {
+    "id": "l7-covariate-coverage",
+    "lecture": 7,
+    "number": 1,
+    "file": "l7-covariate-coverage.tex"
+  },
+  {
+    "id": "l7-parity-identification",
+    "lecture": 7,
+    "number": 2,
+    "file": "l7-parity-identification.tex"
+  },
+  {
+    "id": "l7-parity-representation",
+    "lecture": 7,
+    "number": 3,
+    "file": "l7-parity-representation.tex"
+  },
+  {
+    "id": "l7-correlation-loss",
+    "lecture": 7,
+    "number": 4,
+    "file": "l7-correlation-loss.tex"
   }
 ]

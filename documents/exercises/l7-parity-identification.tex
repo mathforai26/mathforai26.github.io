@@ -1,0 +1,50 @@
+\begin{exercisechunk}
+\item \textbf{Learning noiseless parity from linear equations.}
+\label[exercise]{ex:l7-parity-identification}
+\exerciseprofile{2}{2}{2}{\exproof\quad\excalculation}{%
+Reduce noiseless parity recovery to linear equations over $\mathbb F_2$ and
+prove a high-probability recovery guarantee.}
+Let $S\subseteq[d]$ be unknown, and let
+$(X^{(1)},Y^{(1)}),\ldots,(X^{(n)},Y^{(n)})$ be independent with law $P_S$
+as defined in \cref{sec:parity-setup}.
+
+You may use the following standard linear-algebra fact without proof. Given
+$A\in\mathbb F_2^{n\times d}$ and $b\in\mathbb F_2^n$, there is an algorithm
+that determines in a polynomial number of arithmetic operations whether
+$Az=b$ has a unique solution $z\in\mathbb F_2^d$ and returns that solution
+when it is unique. If $z$ is one solution, then it is unique if and only if
+\[
+Aa\ne0
+\qquad\text{for every }a\in\mathbb F_2^d\setminus\{0\}.
+\]
+The usual linear-system theorem over $\mathbb R$ remains valid with
+$\mathbb F_2$ in place of $\mathbb R$ because both are fields.
+For background, see Sections 2--4 of David Vogan's
+\href{https://math.mit.edu/~dav/gauss.pdf}{notes on Gaussian elimination}.
+
+Construct an algorithm that uses a polynomial number of arithmetic operations
+and whose output $\widehat S$ satisfies
+\[
+\P(\widehat S\ne S)<2^{d-n}.
+\]
+Then prove that, for every $\delta\in(0,1)$, the algorithm recovers $S$ with
+probability at least $1-\delta$ whenever
+\[
+n\ge d+\left\lceil\log_2\frac1\delta\right\rceil.
+\]
+\begin{hints}
+Write
+\[
+X_j^{(i)}=(-1)^{U_{ij}},
+\qquad
+Y^{(i)}=(-1)^{V_i},
+\qquad
+s_j=\I\{j\in S\}.
+\]
+With arithmetic over $\mathbb F_2$, the examples give
+$\mathbf v=\mathbf U\mathbf s$. Apply the stated linear-system procedure. To
+bound its failure probability, first fix a nonzero
+$a\in\mathbb F_2^d$ and calculate $\P(\mathbf Ua=0)$. Then use a union bound
+over the $2^d-1$ possible choices of $a$.
+\end{hints}
+\end{exercisechunk}

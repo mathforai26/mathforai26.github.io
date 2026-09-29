@@ -1,0 +1,33 @@
+\begin{exercisechunk}
+\item \textbf{A common target still requires coverage.}
+\label[exercise]{ex:l7-covariate-coverage}
+\exerciseprofile{2}{2}{2}{\exproof\quad\exconstruction\quad\exinterpretation}{%
+Separate preservation of the pointwise target from identification of that
+target by the training law.}
+Let \(\cX=\{a,b\}\), \(\cY=\{0,1\}\), and let the loss be zero--one loss.
+Suppose the training and deployment laws share the deterministic conditional
+kernel
+\[
+ K(1\mid a)=0,
+ \qquad
+ K(1\mid b)=1.
+\]
+The model class contains every function from \(\cX\) to \(\cY\).
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Prove directly from the two conditional risks that
+\(f^\star(a)=0\), \(f^\star(b)=1\) minimizes population risk under every
+input marginal on \(\cX\).
+\item Let \(\mu_{\rm tr}(a)=1\) and \(\mu_{\rm dep}(b)=1\). Construct a
+predictor with zero training risk and deployment risk one. Explain why the
+training risk cannot distinguish this predictor from \(f^\star\).
+\item Now assume
+\(d\mu_{\rm dep}/d\mu_{\rm tr}\le \rho^{-1}\) for some
+\(\rho\in(0,1]\). Prove the excess-risk bound in
+\cref{prop:coverage} for this finite input space. Identify the step that fails
+for the laws in part (b).
+\end{enumerate}
+\begin{hints}
+For (c), write deployment excess risk as a sum over \(x\in\{a,b\}\) and
+insert the density ratio into each summand.
+\end{hints}
+\end{exercisechunk}
