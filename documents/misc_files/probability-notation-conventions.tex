@@ -43,7 +43,7 @@ Course reference for lecture notes and solutions
 \end{center}
 
 \vspace{2mm}
-\textit{Last revised: September 27, 2026}
+\textit{Last revised: September 29, 2026}
 \vspace{1mm}
 \end{minipage}}
 \end{center}
@@ -138,6 +138,19 @@ matrix.
 The symbol \(\P\) denotes the probability measure of the stated experiment.
 All random quantities in an argument are jointly defined on that experiment
 unless another probability measure is explicitly introduced.
+
+\paragraph{Declare random variables directly.}
+Prefer to introduce a probabilistic setup through random variables and the
+assumptions needed about their joint behavior. These may specify
+distributions, dependence or independence, or deterministic relations.
+Use the types and context already established when stating these
+assumptions. Use \(\P\) and \(\E\) for this experiment. Introduce named
+laws or explicit sample spaces when those objects serve the argument.
+
+For example, ``\(X\) is uniform'' specifies its distribution when the
+declared codomain and context determine the uniform law. If that codomain
+is \(\{-1,1\}^d\), the statement means \(\P(X=x)=2^{-d}\) for every
+\(x\in\{-1,1\}^d\).
 
 Formally, \(\P\) takes an event. The course accepts the standard inverse-image
 shorthand
@@ -500,6 +513,10 @@ or both.
 Before finalizing a probability argument, check the following.
 
 \begin{enumerate}[leftmargin=*]
+\item The probabilistic setup is introduced through random variables and
+the assumptions needed about them, using established types and context.
+Named laws and explicit sample spaces are introduced when they serve the
+argument.
 \item Every symbol has a declared type: random element, event, law, mass
 function, density, probability vector, kernel, matrix, or number.
 \item Every use of \(\P\) has a unique probability space and joint experiment.
