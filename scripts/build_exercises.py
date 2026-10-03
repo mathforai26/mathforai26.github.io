@@ -70,11 +70,11 @@ def build(folder, entries, title, revision, instructions, solutions, book=False)
     if not book:
         lines.append(r'\renewcommand{\thetheorem}{\arabic{theorem}}')
     if not solutions:
-        lines += [r'\newcommand{\studentname}{YOUR NAME}', r'\newcommand{\studentid}{YOUR STUDENT ID}']
+        lines += [r'\newcommand{\studentname}{YOUR NAME}', r'\newcommand{\studentccid}{YOUR CCID}']
     lines += [r'\begin{document}',r'\begin{center}\Large\bfseries '+tex(title)+r'\end{center}',
               tex(instructions)+r'\par\medskip',r'\exerciseinstructions']
     if not solutions:
-        lines.append(r'\noindent Name: \studentname\quad Student ID: \studentid\par\medskip')
+        lines.append(r'\noindent Name: \studentname\quad CCID: \studentccid\par\medskip')
     current = None
     for e in entries:
         ident = e['id']
