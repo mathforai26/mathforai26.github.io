@@ -1,0 +1,55 @@
+\begin{exercisechunk}
+\item \textbf{Random examples, memory, and teacher-chosen examples.}\suppmark
+\label[exercise]{ex:l8-parity-memory}
+\exerciseprofile{3}{2}{3}{\exproof\quad\excalculation\quad\exconstruction\quad\exinterpretation}{%
+Identify the roles of working memory, target uncertainty, and control of
+examples in a parity-learning lower bound.}
+An unknown set $S\subseteq[d]$ has size $k\le d/2$. A labeled example is
+$(U,V)\in\mathbb F_2^d\times\mathbb F_2$, with
+\[
+V=\sum_{j\in S}U_j \pmod2.
+\]
+A streaming learner processes the examples in order, keeping a state of
+at most $M$ bits between examples. In a $q$-pass algorithm it traverses
+the same sequence $q$ times in the same order.
+
+You may use the following consequence of the constant-pass learning theorem
+without proof. Fix $q\in\mathbb N$. Choose $S$ uniformly among the
+$k$-subsets, and independently choose the input examples uniformly and
+independently from $\mathbb F_2^d$. If $k\to\infty$ and $M=o(dk)$, then
+achieving $\P(\widehat S=S)\ge2/3$ requires $2^{\Omega(k)}$ examples.
+The constants may depend on $q$.
+
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Suppose all state retained by a training algorithm can be stored in
+$O(D^2+Dm)$ numbers of $O(\log d)$ bits each. Set
+\[
+k=\left\lfloor\frac d{(\log d)^4}\right\rfloor,\qquad
+D=\left\lceil k(\log d)^{11/10}\right\rceil,\qquad m=2k.
+\]
+As $d\to\infty$, show that the memory bound is $o(dk)$ and that the
+theorem requires more than any polynomial number of random examples to
+recover $S$ with probability at least $2/3$ in a fixed number of passes.
+
+\item A linear-system learner can store $n=d+2$ examples in an augmented
+matrix over $\mathbb F_2$. State its storage in bits and explain why its
+polynomial sample guarantee is consistent with the stated lower bound.
+You may use the Lecture 7 guarantee
+$\P(\widehat S\ne S)<2^{d-n}$ and an in-place linear-system solver.
+Next, construct a teacher-chosen set of $d$ inputs that permits exact
+recovery of every $S$ while retaining only $O(d)$ bits. The teacher
+chooses the inputs before seeing any labels.
+
+\item Compare the supplied memory theorem with the fixed-parity result
+in \cref{thm:classification}. State, for each, the quantifier on $S$ and
+the restrictions on the learner. Explain why the memory theorem permits
+the teacher-chosen protocol in (b), and why it cannot establish failure
+for a learner told $S$ in advance.
+\end{enumerate}
+\begin{hints}
+For (a), divide $(D^2+Dm)\log d$ by $dk$.
+For (b), consider the standard basis of $\mathbb F_2^d$.
+For (c), distinguish information supplied to the learner from knowledge
+held by the person choosing the task.
+\end{hints}
+\end{exercisechunk}

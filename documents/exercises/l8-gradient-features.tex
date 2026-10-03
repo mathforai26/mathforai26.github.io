@@ -1,0 +1,64 @@
+\begin{exercisechunk}
+\item \textbf{Which correlations determine the gradient?}
+\label[exercise]{ex:l8-gradient-features}
+\exerciseprofile{2}{2}{3}{\exproof\quad\excalculation\quad\exinterpretation}{%
+Identify the features that govern a local gradient step and quantify the
+sampling error in estimating their correlations.}
+Use the ReLU network, fixed parity $Y=\chi_S(X)$, and objective $F$ from
+\cref{sec:recap}. Fix $\theta$ such that $w_r^\top x+b_r\ne0$ for all
+$r\in[m]$ and $x\in\{-1,1\}^d$. Define the vector of
+\emph{parameter derivative features}
+\[
+\Phi_\theta(x)=\nabla_\theta N_\theta(x)\in\R^p.
+\]
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Prove
+\[
+\max_{\|v\|\le1}\lim_{t\downarrow0}
+\frac{F(\theta)-F(\theta+tv)}{t}
+=\|\E[Y\Phi_\theta(X)]\|.
+\]
+Give a maximizing $v$, including the case when the expectation is zero.
+Explain the meaning of an upper bound $\|\E[Y\Phi_\theta(X)]\|\le\varepsilon$
+for first-order improvement in a unit parameter direction.
+
+\item Write the coordinates of $\Phi_\theta(x)$ corresponding to
+$u_r$, $w_{rj}$, and $b_r$. Express their correlations with $Y$ using
+$q_B(w,b)=\E[\chi_B(X)\I\{w^\top X+b>0\}]$:
+\[
+\begin{aligned}
+\E[Y\Phi_{\theta,u_r}(X)]
+ &=\sum_{j=1}^d w_{rj}q_{S\mathbin\triangle\{j\}}(w_r,b_r)
+   +b_rq_S(w_r,b_r),\\
+\E[Y\Phi_{\theta,w_{rj}}(X)]
+ &=u_rq_{S\mathbin\triangle\{j\}}(w_r,b_r),\\
+\E[Y\Phi_{\theta,b_r}(X)]&=u_rq_S(w_r,b_r).
+\end{aligned}
+\]
+Identify which coordinates are the hidden-unit outputs and which involve
+the activation indicators.
+
+\item Fix $w\in\R^d$ such that $w^\top x\ne0$ for every cube point $x$,
+and fix $j\in[d]$. Let $X^{(1)},\ldots,X^{(n)}$ be independent uniform
+cube points and set
+\[
+q=q_{S\mathbin\triangle\{j\}}(w,0),
+\qquad
+\widehat q_n=\frac1n\sum_{i=1}^n
+\chi_S(X^{(i)})X_j^{(i)}\I\{w^\top X^{(i)}>0\}.
+\]
+Prove
+\[
+\E[(\widehat q_n-q)^2]=\frac{1/2-q^2}{n}.
+\]
+If $0<|q|\le e^{-ck}\le1/2$, where $c>0$, prove that the requirement
+$\sqrt{\E[(\widehat q_n-q)^2]}\le |q|$ implies
+$n\ge e^{2ck}/4$.
+\end{enumerate}
+\begin{hints}
+For (a), differentiate along the line $\theta+tv$.
+For (b), use $[z]_+=z\I\{z>0\}$ and
+$\chi_S(x)x_j=\chi_{S\mathbin\triangle\{j\}}(x)$.
+For (c), pair $x$ with $-x$ when calculating the second moment of one summand.
+\end{hints}
+\end{exercisechunk}

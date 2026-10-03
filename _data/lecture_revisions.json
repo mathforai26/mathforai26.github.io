@@ -142,5 +142,19 @@
       "documents/scribes/lecture07.tex": "f5d02ea47f66d00c2d55d6a3ebdafd34c5f0301d58d062f9aab307a7f6730140"
     },
     "revised": "2026-09-28 20:44 UTC-06:00"
+  },
+  "lecture08": {
+    "inputs": {
+      "documents/exercises/course-exercises.sty": "8b55005e025860aad67dba6a85a880872d8bdad5e23d7c65630067d32cf5f859",
+      "documents/exercises/l7-path-comparison.tex": "8e1ef1e7ea4d7cf8c5f371c5b2f9b72f1816af21d15b955a526b5cd9a8af2380",
+      "documents/exercises/l8-activation-generalization.tex": "01f823ef778d1188cc7d7e9488dc08d37fe78c46211cea8fb258d770002b0d5d",
+      "documents/exercises/l8-gradient-features.tex": "d4df11e897700b1ea58cd0c457b5d976f247fb82c6b8f9dba6caebe8cf66bbf3",
+      "documents/exercises/l8-learning-xor.tex": "ae801fdd9330966a7c32e53280bdf1a17a732fb5a766192e9abcb36632fba64d",
+      "documents/exercises/l8-parity-memory.tex": "31624729752192a021f96c4a6137d43ecbd02db03d5bd973e8a3909bb26f9375",
+      "documents/exercises/l8-parity-orthogonality.tex": "550787331b245a97e863e8268b2817189d9ef2aa9b3e5794f6d45a63fc6208ff",
+      "documents/exercises/l8-squared-loss-gap.tex": "f06e0574cabf6e6ab418a73718bb1db0375752e6b3fa04fcadaeeda5e48f1e03",
+      "documents/scribes/lecture08.tex": "804a34e6411de192daa42c1fc6ee239da83c99ecbadffedd48dad40645ad546a"
+    },
+    "revised": "2026-10-03 01:15 UTC-06:00"
   }
 }

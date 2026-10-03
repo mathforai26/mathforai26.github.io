@@ -1,0 +1,86 @@
+\begin{exercisechunk}
+\item \textbf{From small gradients to close trajectory laws.}
+\label[exercise]{ex:l7-path-comparison}
+\exerciseprofile{2}{2}{2}{\exproof\quad\excalculation}{%
+Combine Gaussian KL, Pinsker's inequality, and a coupling to compare two
+stochastic optimization trajectories.}
+Let $F:\R^p\to\R$ be differentiable, and fix
+$T\in\mathbb N$, $\eta,\sigma,\varepsilon>0$. Let the $\R^p$-valued random
+vectors $\Theta_0,\Xi_0,\ldots,\Xi_{T-1}$ be mutually independent, with
+\[
+ \Law(\Theta_0)=\cN(0,\sigma^2I_p),
+ \qquad
+ \Law(\Xi_t)=\cN(0,\sigma^2I_p).
+\]
+Define
+\[
+ [g]_\varepsilon=
+ \begin{cases}
+  0,&\|g\|\le\varepsilon,\\
+  g,&\|g\|>\varepsilon,
+ \end{cases}
+\]
+and, using the same initialization and increments, define three processes by
+\[
+\begin{aligned}
+ \Theta_{t+1}&=\Theta_t-\eta\nabla F(\Theta_t)-\Xi_t,\\
+ \overline\Theta_0&=\Theta_0,\qquad
+ \overline\Theta_{t+1}
+   =\overline\Theta_t-\eta[\nabla F(\overline\Theta_t)]_\varepsilon-\Xi_t,\\
+ \Theta_0^{(0)}&=\Theta_0,\qquad
+ \Theta_{t+1}^{(0)}=\Theta_t^{(0)}-\Xi_t,
+ \qquad 0\le t<T.
+\end{aligned}
+\]
+For any process $V_0,\ldots,V_T$, write
+$V_{0:T}=(V_0,\ldots,V_T)$.
+Let
+\[
+ \mathsf P=\Law(\Theta_{0:T}),
+ \qquad
+ \mathsf R=\Law(\overline\Theta_{0:T}),
+ \qquad
+ \mathsf G=\Law(\Theta^{(0)}_{0:T}).
+\]
+Suppose
+\[
+ \P\!\left(
+ \max_{0\le t\le T}\|\nabla F(\Theta_t^{(0)})\|>\varepsilon
+ \right)\le\delta.
+\]
+\begin{enumerate}[(a),beginpenalty=10000]
+\item For a fixed common history \(\vartheta_{0:t}\), compute the KL divergence
+between the next-step Gaussian kernels of \(\mathsf P\) and \(\mathsf R\).
+Use the KL chain rule to prove
+\[
+ \KL(\mathsf P,\mathsf R)
+ \le \frac{T\eta^2\varepsilon^2}{2\sigma^2}.
+\]
+\item Apply Pinsker's inequality to prove
+\[
+ \TV(\mathsf P,\mathsf R)
+ \le \frac{\eta\varepsilon\sqrt T}{2\sigma}.
+\]
+\item Couple the auxiliary process and the Gaussian walk by using the same
+initial condition and Gaussian increments. Prove
+\(\TV(\mathsf R,\mathsf G)\le\delta\).
+\item Combine the two bounds to obtain a bound on
+$\TV(\mathsf P,\mathsf G)$. Then, for positive $d,A,k$, substitute
+\(\varepsilon=e^{-k/18}\), \(\delta=(T+1)e^{-k/18}\), and
+\[
+ \frac{\eta\sqrt T}{2\sigma}+T+1\le3d^{5A/2},
+ \qquad
+ 3d^{5A/2}\le e^{k/36},
+\]
+to prove
+\[
+ \TV(\mathsf P,\mathsf G)\le e^{-k/36}.
+\]
+\end{enumerate}
+\begin{hints}
+For (a), Gaussians with common covariance \(\sigma^2I\) and means
+\(\mu,\nu\) have KL divergence
+\(\|\mu-\nu\|^2/(2\sigma^2)\). For (c), use the defining rule for the
+clipped gradient and argue by induction on time.
+\end{hints}
+\end{exercisechunk}

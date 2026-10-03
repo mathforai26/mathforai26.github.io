@@ -1,0 +1,89 @@
+\begin{exercisechunk}
+\item \textbf{A squared-loss improvement that gradient training misses.}\suppmark
+\label[exercise]{ex:l8-squared-loss-gap}
+\exerciseprofile{3}{3}{4}{\exproof\quad\excalculation\quad\exinterpretation}{%
+Extend the Gaussian trajectory comparison to an objective with a linear
+label-independent gradient term.}
+Let $X$ be uniform on $\{-1,1\}^d$, let $Y=\chi_S(X)$, and assume
+$k=|S|\ge4$ is even. Set $s=(-1)^{(k-2)/2}$ and define
+\[
+f_w(x)=s[w^\top x]_+,\qquad
+c(w)=\E[Yf_w(X)],\qquad
+L(w)=\E[(f_w(X)-Y)^2],\qquad w\in\R^d.
+\]
+Use the ReLU backpropagation rule from \cref{sec:recap}.
+You may use these two estimates without proof:
+\[
+s\,\E[Y[\mathbf1_S^\top X]_+]\ge\frac1{4\sqrt k},
+\]
+and, for every $\tau>0$ and $B\subseteq[d]$ with $|B|\ge2$,
+\[
+\Law(W)=\cN(0,\tau^2I_d)
+\quad\Longrightarrow\quad
+\E[q_B(W,0)^2]\le8e^{-|B|/4}.
+\]
+Here $\mathbf1_S=(\I\{j\in S\})_{j=1}^d$, and $q_B$ is the threshold
+coefficient defined in the lecture. The first estimate is a Fourier
+coefficient of the unweighted sum; the second is the version of
+\cref{lem:gaussian-threshold} with zero bias.
+
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Prove
+\[
+L(w)=1+\tfrac12\|w\|^2-2c(w),
+\qquad
+L\!\left(\frac{\mathbf1_S}{2k^{3/2}}\right)\le1-\frac1{8k^2}.
+\]
+Thus the model admits an inverse-polynomial improvement over $L(0)=1$.
+
+\item Derive
+\[
+\nabla L(w)=w-2s\bigl(q_{S\mathbin\triangle\{j\}}(w,0)\bigr)_{j=1}^d.
+\]
+Fix $0<\eta<2$, $\sigma>0$, and $T\in\mathbb N$. Let
+$W_0,\Xi_0,\ldots,\Xi_{T-1}$ be mutually independent with law
+$\cN(0,\sigma^2I_d)$ and independent of $X$. Define
+\[
+W_{t+1}=W_t-\eta\nabla L(W_t)-\Xi_t,\qquad
+V_0=W_0,\qquad V_{t+1}=(1-\eta)V_t-\Xi_t.
+\]
+Prove that
+\[
+\Law(V_t)=\cN(0,\tau_t^2I_d),
+\qquad
+\tau_t^2=\sigma^2\sum_{j=0}^t(1-\eta)^{2j}
+\le\sigma^2(t+1).
+\]
+
+\item With $\mathsf P=\Law(W_0,\ldots,W_T)$ and
+$\mathsf G=\Law(V_0,\ldots,V_T)$, prove
+\[
+\TV(\mathsf P,\mathsf G)
+\le\frac{\eta\sqrt{8dT}}{\sigma}e^{-(k-1)/8}.
+\]
+Also prove
+\[
+\E[|c(V_T)|]\le\sqrt8\,\sigma\sqrt{T+1}\,d\,e^{-(k-1)/8}.
+\]
+
+\item Prove that, for every $A>0$, there is a constant $B_A=O(A+1)$
+such that, whenever
+\[
+d>30,\qquad T,\sigma,\sigma^{-1}\le d^A,\qquad
+k\ge B_A\log d,
+\]
+the trained neuron satisfies
+\[
+\P\bigl(L(W_T)\ge1-e^{-k/32}\bigr)\ge1-e^{-k/32}.
+\]
+Compare the improvement allowed by this bound with the improvement
+achieved in (a), as $k\to\infty$.
+\end{enumerate}
+\begin{hints}
+For (a), pair $X$ with $-X$ to evaluate the second moment of a ReLU.
+For (c), apply the KL chain rule to $\KL(\mathsf G,\mathsf P)$.
+To bound the final correlation, expand $[w^\top X]_+$ and use
+Cauchy--Schwarz. For (d), first bound the probability that
+$L(V_T)<1-e^{-k/32}$, and then transfer the event between the two laws.
+\end{hints}
+\end{exercisechunk}

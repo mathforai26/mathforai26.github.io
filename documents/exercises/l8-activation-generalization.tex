@@ -1,0 +1,105 @@
+\begin{exercisechunk}
+\item \textbf{Activation properties behind the parity lower bound.}\suppmark
+\label[exercise]{ex:l8-activation-generalization}
+\exerciseprofile{3}{3}{4}{\exproof\quad\excalculation\quad\exinterpretation}{%
+Identify the kernel expansion and moment bounds that make the parity
+obstruction persist across activation functions.}
+Let $d>30$, fix $S\subseteq[d]$ with $k=|S|\ge2$, and let $X$ be uniform
+on $\{-1,1\}^d$. Replace the ReLU activation in \cref{sec:recap} by a
+continuously differentiable function $\phi:\R\to\R$:
+\[
+N_\theta(x)=\sum_{r=1}^m u_r\phi(w_r^\top x+b_r),
+\qquad
+F(\theta)=-\E[\chi_S(X)N_\theta(X)].
+\]
+The parameter vector is $\theta=(u_r,w_r,b_r)_{r=1}^m\in\R^p$, where
+$p=m(d+2)$. For a function $\psi:\R\to\R$, define
+\[
+q_B^\psi(w,b)=\E[\chi_B(X)\psi(w^\top X+b)],
+\qquad B\subseteq[d],\quad (w,b)\in\R^d\times\R.
+\]
+Let $G$ be standard normal and, for $\tau>0$, write
+\[
+s_\tau=\tau\sqrt{d+1},
+\qquad
+M_\psi(\tau)=\E[\psi(s_\tau G)^2].
+\]
+
+You may use the following Gaussian kernel identity without proof. Whenever
+$M_\psi(\tau)<\infty$, there are coefficients $a_\ell\ge0$ such that,
+for a centered jointly Gaussian pair $(G_1,G_2)$ with unit variances and
+correlation $\rho\in[-1,1]$,
+\[
+\E[\psi(s_\tau G_1)\psi(s_\tau G_2)]
+=\sum_{\ell\ge0}a_\ell\rho^\ell,
+\qquad
+\sum_{\ell\ge0}a_\ell=M_\psi(\tau).
+\]
+You may also use the moment estimate from the proof of
+\cref{lem:gaussian-threshold}: if $Z$ is uniform on $\{-1,1\}^d$ and
+$V=(1+\sum_iZ_i)/(d+1)$, then
+\[
+\E[|V|^j]\le4e^{-j/4},\qquad 1\le j\le d.
+\]
+
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Let $(W,C)$ have law $\cN(0,\tau^2I_{d+1})$, independently of $X$.
+For every nonempty $B\subseteq[d]$ and every $\psi$ with
+$M_\psi(\tau)<\infty$, prove
+\[
+\E[q_B^\psi(W,C)^2]
+\le4M_\psi(\tau)e^{-|B|/4}.
+\]
+Identify the roles of parity degree, nonnegativity of the kernel
+coefficients, and their finite sum in your argument.
+
+\item Let $\Law(\Theta)=\cN(0,\tau^2I_p)$ and assume
+$M_\phi(\tau),M_{\phi'}(\tau)<\infty$. Derive the partial derivatives
+of $F$ and prove
+\[
+\E[\|\nabla F(\Theta)\|^2]
+\le4m e^{-(k-1)/4}
+\bigl(M_\phi(\tau)+(d+1)\tau^2M_{\phi'}(\tau)\bigr).
+\]
+
+\item Use the initialization and independent Gaussian perturbations from
+\cref{sec:recap} to define the processes in
+\cref{eq:perturbed-gd,eq:gaussian-walk} for this objective. Write
+\[
+\mathsf P=\Law(\Theta_0,\ldots,\Theta_T),
+\qquad
+\mathsf G=\Law(\Theta_0^{(0)},\ldots,\Theta_T^{(0)}),
+\qquad \tau_t=\sigma\sqrt{t+1}.
+\]
+Assuming the moments in part (b) are finite at every $\tau_t$, prove
+\[
+\TV(\mathsf P,\mathsf G)
+\le\frac{\eta\sqrt m}{\sigma}e^{-(k-1)/8}
+\left(\sum_{t=0}^{T-1}
+\bigl(M_\phi(\tau_t)+(d+1)\tau_t^2M_{\phi'}(\tau_t)\bigr)
+\right)^{1/2}.
+\]
+Now suppose, for fixed $C_0\ge1$ and $r\ge0$, that
+\[
+|\phi(z)|+|\phi'(z)|\le C_0(1+|z|)^r
+\qquad\text{for every }z\in\R.
+\]
+Show that for every $A>0$ there is a constant $B_A>0$, depending only on
+$A,C_0,r$, such that
+\[
+m,T,\eta,\sigma,\sigma^{-1}\le d^A,
+\qquad k\ge B_A\log d
+\quad\Longrightarrow\quad
+\TV(\mathsf P,\mathsf G)\le e^{-k/16}.
+\]
+Deduce both classification-risk conclusions of
+\cref{thm:classification}, with $e^{-k/16}$ replacing $e^{-k/36}$.
+\end{enumerate}
+
+\begin{hints}
+For (a), introduce an independent copy $X'$ of $X$ and compare the Gaussian
+margins at $X$ and $X'$. For (b), calculate the derivatives before bounding
+their second moments. For (c), consider $\KL(\mathsf G,\mathsf P)$:
+which process supplies the history in the KL chain rule?
+\end{hints}
+\end{exercisechunk}

@@ -1,0 +1,57 @@
+\begin{exercisechunk}
+\item \textbf{Learn a two-bit rule and compose it.}
+\label[exercise]{ex:l8-learning-xor}
+\exerciseprofile{2}{2}{3}{\exproof\quad\excalculation\quad\exinterpretation}{%
+Prove convergence for a locally supervised gate and transfer its correctness
+to a multistep computation.}
+For $a,b\in\{0,1\}$, fix
+\[
+\phi(a,b)=\begin{pmatrix}{[a+b]_+}\\{[a+b-1]_+}\end{pmatrix},
+\qquad
+g_u(a,b)=u^\top\phi(a,b),\quad u\in\R^2.
+\]
+Only the two output weights $u$ are trained. With equal weight on the four
+input pairs, let
+\[
+L(u)=\frac14\sum_{a,b\in\{0,1\}}
+       (g_u(a,b)-(a\oplus b))^2.
+\]
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Prove that the unique minimizer is $u^\star=(1,-2)^\top$ and that
+$L(u^\star)=0$. Derive
+\[
+\nabla^2L(u)=H=\begin{pmatrix}3&1\\1&1/2\end{pmatrix},
+\qquad
+\lambda_{\min}(H)=\frac{7-\sqrt{41}}4,\quad
+\lambda_{\max}(H)=\frac{7+\sqrt{41}}4.
+\]
+
+\item For any initial $u_0\in\R^2$, run
+$u_{t+1}=u_t-\eta\nabla L(u_t)$ with $\eta=1/\lambda_{\max}(H)$.
+Prove
+\[
+\|u_t-u^\star\|\le r^t\|u_0-u^\star\|,
+\qquad
+r=1-\frac{\lambda_{\min}(H)}{\lambda_{\max}(H)}\in(0,1).
+\]
+Let $\widehat g_t(a,b)=\I\{g_{u_t}(a,b)\ge1/2\}$.
+Show that $\widehat g_t(a,b)=a\oplus b$ on all four inputs whenever
+$\sqrt5\,r^t\|u_0-u^\star\|<1/2$.
+
+\item For $b_{1:d}\in\{0,1\}^d$, define
+$\widehat z_1=b_1$ and
+$\widehat z_i=\widehat g_t(\widehat z_{i-1},b_i)$ for $2\le i\le d$.
+Prove that the condition in (b) gives
+$\widehat z_d=b_1\oplus\cdots\oplus b_d$ for every input.
+State separately which components are fixed by the construction and which are
+learned. Your answer must account for the two ReLU features $\phi$, the
+threshold at $1/2$, the recurrent connections that feed
+$(\widehat z_{i-1},b_i)$ to the next gate, and the output-weight vector $u$.
+\end{enumerate}
+\begin{hints}
+For (a), evaluate $\phi$ on the four input pairs.
+For (b), write the recurrence for $u_t-u^\star$ and use an orthonormal
+eigenbasis of the symmetric matrix $H$.
+For (c), use induction over the output positions.
+\end{hints}
+\end{exercisechunk}

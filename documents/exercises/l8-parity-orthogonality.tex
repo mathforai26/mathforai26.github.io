@@ -1,0 +1,28 @@
+\begin{exercisechunk}
+\item \textbf{Parity orthogonality and polynomial degree.}
+\label[exercise]{ex:l8-parity-orthogonality}
+\exerciseprofile{2}{1}{2}{\exproof}{%
+Explain why a polynomial of low degree has zero correlation with a
+higher-degree parity under uniform inputs.}
+Let $X$ be uniform on $\{-1,1\}^d$ and put $\chi_\varnothing(x)=1$.
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Prove that, for all $B,C\subseteq[d]$,
+\[
+\E[\chi_B(X)\chi_C(X)]=\I\{B=C\}.
+\]
+Deduce that the $2^d$ functions $\chi_B$ form an orthonormal basis for
+the vector space of real functions on $\{-1,1\}^d$, with inner product
+$\langle f,g\rangle=\E[f(X)g(X)]$.
+
+\item Let $B\ne\varnothing$, and let $p:\R^d\to\R$ be a polynomial
+of total degree less than $|B|$. Prove
+\[
+\E[\chi_B(X)p(X)]=0.
+\]
+Your argument must allow repeated powers of a coordinate in a monomial.
+\end{enumerate}
+\begin{hints}
+For (a), simplify $\chi_B(x)\chi_C(x)$.
+For (b), first consider one monomial; use $X_j^2=1$.
+\end{hints}
+\end{exercisechunk}
