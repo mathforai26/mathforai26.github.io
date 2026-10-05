@@ -1,0 +1,53 @@
+\begin{exercisechunk}
+\item \textbf{Matrix inequalities in the interpolation proof.}
+\label[exercise]{ex:l9-matrix-order}
+\exerciseprofile{2}{2}{3}{\exproof\quad\excalculation}{%
+Justify the spectral and matrix-order bounds used in the risk calculation.}
+For symmetric matrices, $S\preceq R$ means
+$x^\top Sx\le x^\top Rx$ for every vector $x$.
+The matrix norm is the Euclidean operator norm
+$\|M\|=\sup_{\|x\|=1}\|Mx\|$.
+You may use the spectral theorem: every real symmetric matrix has an
+orthonormal basis of eigenvectors.
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Prove that $S\preceq R$ implies
+$B^\top SB\preceq B^\top RB$ for any matrix $B$ of compatible size.
+If $c_HI_n\preceq H\preceq C_HI_n$ with $c_H>0$, prove
+\[
+ C_H^{-1}I_n\preceq H^{-1}\preceq c_H^{-1}I_n,
+ \qquad H^{-2}\preceq c_H^{-1}H^{-1}.
+\]
+Identify which inequalities follow by applying scalar inequalities to
+the eigenvalues of the same symmetric matrix.
+
+\item Suppose also $U^\top U\succeq(n/2)I_m$ for
+$U\in\R^{n\times m}$. With
+$A=U^\top H^{-1}U$ and $T=(I_m+A)^{-1}U^\top H^{-1}$,
+prove
+\[
+ A\succeq\frac{n}{2C_H}I_m,\qquad
+ \|(I_m+A)^{-1}\|\le\frac{2C_H}{n},
+\]
+and
+\[
+ TT^\top\preceq c_H^{-1}(I_m+A)^{-1}A(I_m+A)^{-1}
+ \preceq\frac{2C_H}{c_Hn}I_m.
+\]
+Explain why it is legitimate to diagonalize $A$ and $(I_m+A)^{-1}$
+simultaneously.
+
+\item Set $K=H+UU^\top$, $\alpha=K^{-1}\mathbf Y$,
+$H=D^{-1}VV^\top$, and $\widehat b=D^{-1}V^\top\alpha$.
+Prove the full chain
+\[
+ \|\widehat b\|^2
+ =D^{-1}\alpha^\top H\alpha
+ \le D^{-1}\mathbf Y^\top K^{-1}\mathbf Y
+ \le(c_HD)^{-1}\|\mathbf Y\|^2.
+\]
+\end{enumerate}
+\begin{hints}
+For (b), first write $TT^\top$ explicitly. For an eigenvalue $t>0$ of
+$A$, use $t/(1+t)^2\le1/t$.
+\end{hints}
+\end{exercisechunk}

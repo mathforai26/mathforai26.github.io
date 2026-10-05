@@ -1,0 +1,55 @@
+\begin{exercisechunk}
+\item \textbf{Consistency with finite average noise variance.}
+\label[exercise]{ex:l9-finite-variance}
+\exerciseprofile{3}{2}{3}{\exproof\quad\excalculation\quad\exinterpretation}{%
+Extend the interpolation guarantee to unbounded conditional variances by controlling their tails.}
+Retain the uniform-input, i.i.d. regression setup and
+$\E[\varepsilon_i\mid X_i]=0$, but replace the uniform conditional
+variance bound by
+\[
+ s^2(x)=\E[\varepsilon_i^2\mid X_i=x],\qquad
+ \overline\sigma^2=\E[s^2(X_i)]=\E[\varepsilon_i^2]<\infty.
+\]
+For $z\in\R$, write $z_+=\max\{z,0\}$.
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Let $T\in\R^{m\times n}$ depend only on the inputs, set $T=0$ on
+$\cG^c$, and suppose $TT^\top\preceq(C_T/n)I_m$ on $\cG$ for a fixed
+$C_T>0$. Prove that, for every deterministic $a\ge0$,
+\[
+ \E[\I\{\cG\}\|T\boldsymbol\varepsilon\|^2]
+ \le C_T\left(\frac{am}{n}+\E[(s^2(X_1)-a)_+]\right).
+\]
+No independence between $T$ and $s^2(X_i)$ may be assumed.
+
+\item Define the deterministic quantity
+\[
+ \mathcal V(t)=\inf_{a\ge0}\{at+\E[(s^2(X_1)-a)_+]\},\qquad t\ge0.
+\]
+Use (a) and the proof of \cref{thm:weighted-legendre} to show that, for
+$m+D\ge n$, $D\ge16m$, and $\delta\in(0,1)$, with probability at least
+$1-Cn^2/D-m\exp(-cn/m^2)-\delta$,
+\[
+ \|\widehat f-f^\star\|_{L^2(\mu)}^2
+ \le\frac C\delta\left(
+ A_m(f^\star)+\mathcal V(m/n)+\frac{\|f^\star\|_{L^2(\mu)}^2}{n^2}
+ +\frac nD\bigl(\|f^\star\|_{L^2(\mu)}^2+\overline\sigma^2\bigr)
+ \right).
+\]
+The constants $c,C>0$ are universal.
+Show that if $s^2(X_1)\le\sigma^2$ almost surely, then
+$\mathcal V(m/n)\le\sigma^2m/n$.
+
+\item Prove that $\mathcal V(t)\to0$ as $t\downarrow0$.
+Deduce consistency in probability for
+$m_n=\max\{1,\lfloor n^{1/4}\rfloor\}$ and $D_n=n^3$ for every
+fixed $f^\star\in L^2(\mu)$ with $\overline\sigma^2<\infty$.
+Explain why finite average variance alone does not give a decay rate for
+the tail expectation in (a).
+\end{enumerate}
+\begin{hints}
+For (a), condition on the inputs and split each variance using
+$s^2\le a+(s^2-a)_+$. Use the trace bound for the first term and
+$\|Te_i\|^2\le C_T/n$ for each term in the remainder.
+For (c), fix $a$ while taking $t\downarrow0$, and then take $a\to\infty$.
+\end{hints}
+\end{exercisechunk}

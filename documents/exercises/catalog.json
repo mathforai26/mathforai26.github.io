@@ -423,5 +423,77 @@
     "lecture": 7,
     "number": 4,
     "file": "l7-correlation-loss.tex"
+  },
+  {
+    "id": "l9-excess-risk-identity",
+    "lecture": 9,
+    "number": 1,
+    "file": "l9-excess-risk-identity.tex"
+  },
+  {
+    "id": "l9-point-corrections",
+    "lecture": 9,
+    "number": 2,
+    "file": "l9-point-corrections.tex"
+  },
+  {
+    "id": "l9-minimum-norm",
+    "lecture": 9,
+    "number": 3,
+    "file": "l9-minimum-norm.tex"
+  },
+  {
+    "id": "l9-induced-function-norm",
+    "lecture": 9,
+    "number": 4,
+    "file": "l9-induced-function-norm.tex"
+  },
+  {
+    "id": "l9-orthogonal-projection",
+    "lecture": 9,
+    "number": 5,
+    "file": "l9-orthogonal-projection.tex"
+  },
+  {
+    "id": "l9-weighted-norm",
+    "lecture": 9,
+    "number": 6,
+    "file": "l9-weighted-norm.tex"
+  },
+  {
+    "id": "l9-two-stage-fitting",
+    "lecture": 9,
+    "number": 7,
+    "file": "l9-two-stage-fitting.tex"
+  },
+  {
+    "id": "l9-push-through",
+    "lecture": 9,
+    "number": 8,
+    "file": "l9-push-through.tex"
+  },
+  {
+    "id": "l9-matrix-order",
+    "lecture": 9,
+    "number": 9,
+    "file": "l9-matrix-order.tex"
+  },
+  {
+    "id": "l9-quadratic-forms",
+    "lecture": 9,
+    "number": 10,
+    "file": "l9-quadratic-forms.tex"
+  },
+  {
+    "id": "l9-finite-variance",
+    "lecture": 9,
+    "number": 11,
+    "file": "l9-finite-variance.tex"
+  },
+  {
+    "id": "l9-equal-penalty",
+    "lecture": 9,
+    "number": 12,
+    "file": "l9-equal-penalty.tex"
   }
 ]

@@ -1,0 +1,48 @@
+\begin{exercisechunk}
+\item \textbf{Best approximation, orthogonality, and synthesis bounds.}
+\label[exercise]{ex:l9-orthogonal-projection}
+\exerciseprofile{2}{2}{2}{\exproof\quad\excalculation}{%
+Derive the population-norm identities used to separate approximation and estimation error.}
+Use the inner product and norm from \cref{app:l2-background}.
+Let $\psi_0,\ldots,\psi_{m-1}$ be orthonormal in $L^2(\mu)$,
+$\cF_m=\operatorname{span}\{\psi_0,\ldots,\psi_{m-1}\}$, and
+$f^\star\in L^2(\mu)$.
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Prove that the unique best approximation $g_m\in\cF_m$ is
+\[
+ g_m=\sum_{j<m}\langle f^\star,\psi_j\rangle_{L^2(\mu)}\psi_j.
+\]
+Writing $r=f^\star-g_m$, prove that
+$\langle r,g\rangle_{L^2(\mu)}=0$ for every $g\in\cF_m$.
+Also show directly that optimality forces this orthogonality by considering
+$\|f^\star-(g_m+tg)\|_{L^2(\mu)}^2$ for real $t$.
+
+\item If $g_m=\beta_\star^\top u$ with
+$u=(\psi_0,\ldots,\psi_{m-1})^\top$, prove
+\[
+ \|\beta_\star\|^2=\|g_m\|_{L^2(\mu)}^2,\qquad
+ \|f^\star\|_{L^2(\mu)}^2
+ =\|g_m\|_{L^2(\mu)}^2+\|r\|_{L^2(\mu)}^2.
+\]
+For arbitrary $\widehat\beta\in\R^m$ and $h\in L^2(\mu)$, deduce
+\[
+ \|\widehat\beta^\top u+h-f^\star\|_{L^2(\mu)}^2
+ \le3\|\widehat\beta-\beta_\star\|^2
+   +3\|h\|_{L^2(\mu)}^2+3\|r\|_{L^2(\mu)}^2.
+\]
+
+\item Suppose $\chi_j$ are orthonormal under a probability measure $\nu$
+and $\mu(E)\le M\nu(E)$ for every measurable set $E$, with $M<\infty$.
+Prove, for every finite coefficient vector $b$, that
+\[
+ \left\|\sum_jb_j\chi_j\right\|_{L^2(\mu)}^2\le M\sum_jb_j^2.
+\]
+Specialize to the uniform and arcsine laws in the lecture to obtain
+\cref{eq:chebyshev-synthesis}.
+\end{enumerate}
+\begin{hints}
+Expand the squared norms using the inner product.
+For (c), extend the measure inequality from indicators to nonnegative
+simple functions and then to nonnegative measurable functions.
+\end{hints}
+\end{exercisechunk}

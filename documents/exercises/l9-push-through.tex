@@ -1,0 +1,62 @@
+\begin{exercisechunk}
+\item \textbf{Two derivations of the optimizer identities.}
+\label[exercise]{ex:l9-push-through}
+\exerciseprofile{2}{2}{2}{\exproof\quad\excalculation}{%
+Derive the optimizer from its optimality equations and verify it with a
+push-through identity.}
+Let $U\in\R^{n\times m}$ and $V\in\R^{n\times D}$, where $V$ has full row
+rank, and define
+\[
+ H=D^{-1}VV^\top,
+ \qquad K=H+UU^\top,
+ \qquad \alpha=K^{-1}\mathbf Y.
+\]
+Assume that $H$ is positive definite. Consider
+\[
+ \min_{\beta\in\R^m,\,b\in\R^D}
+ \left\{\frac12\|\beta\|^2+\frac D2\|b\|^2:
+ U\beta+Vb=\mathbf Y\right\}.
+\]
+
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Introduce a Lagrange multiplier in $\R^n$ and use the optimality
+equations to prove that the optimizer satisfies
+\[
+ \widehat\beta=U^\top\alpha,
+ \qquad
+ \widehat b=D^{-1}V^\top\alpha.
+\]
+
+\item Let $A\in\R^{p\times q}$ and $B\in\R^{q\times p}$, and suppose the
+two inverses below exist. Starting from
+\[
+ (I_p+AB)A=A(I_q+BA),
+\]
+prove the push-through identity
+\[
+ (I_p+AB)^{-1}A=A(I_q+BA)^{-1}.
+\]
+Then apply it to prove
+\[
+ (I_m+U^\top H^{-1}U)^{-1}U^\top H^{-1}
+ =U^\top(H+UU^\top)^{-1}.
+\]
+Conclude that the formula for $\widehat\beta$ in
+\cref{eq:beta-hat} equals $U^\top\alpha$.
+
+\item Starting from the formula for $b_\beta$ in \cref{eq:bbeta}, verify
+directly that
+\[
+ \widehat b=D^{-1}V^\top\alpha.
+\]
+Your calculation should use $VV^\top=DH$ and
+$I_n-UU^\top K^{-1}=HK^{-1}$.
+\end{enumerate}
+
+\begin{remark}[Why ``push-through''?]
+In $(I_p+AB)^{-1}A=A(I_q+BA)^{-1}$, the factor $A$ moves through the
+inverse. The matrix being inverted changes from a $p\times p$ matrix to a
+$q\times q$ matrix. This identity is especially useful when one of these
+two matrices is substantially smaller than the other.
+\end{remark}
+\end{exercisechunk}

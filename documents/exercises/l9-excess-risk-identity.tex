@@ -1,0 +1,17 @@
+\begin{exercisechunk}
+\item \textbf{The squared-loss excess-risk identity.}
+\label[exercise]{ex:l9-excess-risk-identity}
+\exerciseprofile{1}{1}{1}{\exproof\quad\excalculation}{%
+Derive the population identity that turns squared-loss excess risk into
+$L^2$ estimation error.}
+Let $P\in\cP_2$, write $\mu=P_X$, and let
+$f_P^\star(X)=\E[Y\mid X]$. For any fixed $f\in L^2(\mu)$, prove
+\[
+ \E[(f(X)-Y)^2]-\E[(f_P^\star(X)-Y)^2]
+ =\|f-f_P^\star\|_{L^2(\mu)}^2.
+\]
+Then let $S_n$ be a training sample independent of the test pair $(X,Y)$ and
+let $\widehat f_n$ be selected from $S_n$. Show that, whenever the displayed
+quantities are finite, the same identity holds conditional on $S_n$ with
+$f=\widehat f_n$.
+\end{exercisechunk}

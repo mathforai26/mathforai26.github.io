@@ -1,0 +1,41 @@
+\begin{exercisechunk}
+\item \textbf{Equal penalties can eliminate a nonzero signal.}
+\label[exercise]{ex:l9-equal-penalty}
+\exerciseprofile{2}{2}{2}{\exproof\quad\excalculation\quad\exinterpretation}{%
+Use a Gram-matrix bound to diagnose failure of a minimum-norm interpolator.}
+Use the notation of \cref{sec:series}. Suppose that on events $\cG_n$ with
+$\P(\cG_n)\to1$, the tail Gram matrix satisfies
+$H=D_n^{-1}VV^\top\succeq cI_n$ for a constant $c>0$. Let
+$\widehat f_n^{\rm eq}$ be the minimum-$L^2(\mu)$-norm polynomial that
+interpolates $\mathbf Y$. Assume $\E[Y^2]<\infty$ and $D_n/n\to\infty$.
+
+\begin{enumerate}[(a),beginpenalty=10000]
+\item On $\cG_n$, construct an interpolating polynomial using only the
+Chebyshev features in $v$. Use \cref{eq:chebyshev-synthesis} and the
+minimality of $\widehat f_n^{\rm eq}$ to prove
+\[
+ \|\widehat f_n^{\rm eq}\|_{L^2(\mu)}^2
+ \le\frac\pi{2cD_n}\|\mathbf Y\|^2.
+\]
+
+\item Prove
+$\|\widehat f_n^{\rm eq}\|_{L^2(\mu)}\xrightarrow{\P}0$ as $n\to\infty$.
+Then show that for every fixed nonzero $f^\star\in L^2(\mu)$,
+\[
+ \|\widehat f_n^{\rm eq}-f^\star\|_{L^2(\mu)}^2
+ \xrightarrow{\P}\|f^\star\|_{L^2(\mu)}^2
+ \qquad\text{as }n\to\infty.
+\]
+
+\item The estimator interpolates every sample with distinct inputs. Explain
+why this fact is compatible with convergence to zero in population norm.
+Your answer must distinguish values on the random training set from an
+$L^2(\mu)$ statement about test inputs.
+\end{enumerate}
+\begin{hints}
+For (a), solve $Vb=\mathbf Y$ with its minimum-Euclidean-norm coefficient
+vector. For (b), apply the weak law of large
+numbers to $n^{-1}\|\mathbf Y\|^2$ and Cauchy--Schwarz to the cross term in
+the squared distance.
+\end{hints}
+\end{exercisechunk}

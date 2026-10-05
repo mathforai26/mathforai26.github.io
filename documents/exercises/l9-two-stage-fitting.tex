@@ -1,0 +1,65 @@
+\begin{exercisechunk}
+\item \textbf{A large penalty and two-stage fitting.}
+\label[exercise]{ex:l9-two-stage-fitting}
+\exerciseprofile{3}{2}{3}{\exproof\quad\excalculation\quad\exinterpretation}{%
+Quantify when a weighted interpolator approximates fitting the first block and then its residual.}
+Fix $U\in\R^{n\times m}$ of column rank $m$,
+$V\in\R^{n\times D}$ of row rank $n$, and $\mathbf Y\in\R^n$.
+For $\lambda>0$, let $(\widehat\beta_\lambda,\widehat b_\lambda)$ minimize
+$\|\beta\|^2+\lambda\|b\|^2$ subject to $U\beta+Vb=\mathbf Y$.
+Set $H=D^{-1}VV^\top$, $A=U^\top H^{-1}U$, and define the two-stage fit by
+\[
+ \widetilde\beta
+ =\arg\min_\beta(\mathbf Y-U\beta)^\top H^{-1}(\mathbf Y-U\beta),
+ \qquad
+ \widetilde b=V^\top(VV^\top)^{-1}(\mathbf Y-U\widetilde\beta).
+\]
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Prove that
+\[
+ \widetilde\beta=A^{-1}U^\top H^{-1}\mathbf Y,
+ \qquad
+ \widehat\beta_\lambda-\widetilde\beta
+ =-\bigl(I_m+(\lambda/D)A\bigr)^{-1}\widetilde\beta.
+\]
+If $A\succeq aI_m$ with $a>0$, deduce
+\[
+ \|\widehat\beta_\lambda-\widetilde\beta\|
+ \le\frac{\|\widetilde\beta\|}{1+(\lambda/D)a}.
+\]
+
+\item Put $d_\lambda=\widehat\beta_\lambda-\widetilde\beta$.
+Prove that
+\[
+ \widehat b_\lambda-\widetilde b
+ =-V^\top(VV^\top)^{-1}Ud_\lambda,
+ \qquad
+ \|\widehat b_\lambda-\widetilde b\|^2=D^{-1}d_\lambda^\top A d_\lambda.
+\]
+For the lecture's choice $\lambda=D$, show that on $\cG$,
+\[
+ \|\widehat\beta_D-\widetilde\beta\|
+ \le\frac{\|\widetilde\beta\|}{1+n/(2C_H)},\qquad
+ \|\widehat b_D-\widetilde b\|^2
+ \le\frac{2C_H}{Dn}\|\widetilde\beta\|^2.
+\]
+Distinguish the limit $\lambda\to\infty$ with $U,V,\mathbf Y$ fixed from
+the lecture's bound, where $D$, $V$, and $n$ may vary together.
+
+\item Show that $\widetilde\beta$ is the ordinary least-squares solution
+when $H$ is a scalar multiple of $I_n$. For
+\[
+ U=\begin{pmatrix}1\\1\end{pmatrix},\quad
+ V=\begin{pmatrix}\sqrt2&0\\0&2\sqrt2\end{pmatrix},\quad
+ \mathbf Y=\begin{pmatrix}0\\1\end{pmatrix},\quad D=2,
+\]
+calculate $\widetilde\beta$ and the ordinary least-squares solution.
+Explain why a large second-block penalty alone does not imply convergence
+to ordinary least squares.
+\end{enumerate}
+\begin{hints}
+Eliminate $b$ as in \cref{ex:l9-minimum-norm}.
+For the last bound in (b), diagonalize $A$ and use
+$t/(1+t)^2\le1/t$ for $t>0$.
+\end{hints}
+\end{exercisechunk}

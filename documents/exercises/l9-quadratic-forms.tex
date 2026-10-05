@@ -1,0 +1,50 @@
+\begin{exercisechunk}
+\item \textbf{Operator norms, traces, and noise depending on the inputs.}
+\label[exercise]{ex:l9-quadratic-forms}
+\exerciseprofile{2}{2}{3}{\exproof\quad\excalculation}{%
+Turn matrix bounds into expectation bounds without assuming independent residuals.}
+Use the Euclidean operator norm. The trace $\operatorname{tr}(M)$ of a
+square matrix is the sum of its diagonal entries.
+\begin{enumerate}[(a),beginpenalty=10000]
+\item For $T\in\R^{m\times n}$, prove
+\[
+ \|T\|^2=\|T^\top T\|=\|TT^\top\|,
+ \qquad
+ \operatorname{tr}(T^\top T)=\operatorname{tr}(TT^\top).
+\]
+If $TT^\top\preceq bI_m$ with $b\ge0$, deduce that
+$\|Tz\|^2\le b\|z\|^2$ and $\operatorname{tr}(TT^\top)\le mb$.
+
+\item Let $(X_i,\varepsilon_i)_{i=1}^n$ be i.i.d. with
+$\E[\varepsilon_i\mid X_i]=0$ and
+$\E[\varepsilon_i^2\mid X_i]\le\sigma^2$.
+Let $T\in\R^{m\times n}$ depend only on $X_{1:n}$, and let $\cG$ be
+an input event. Set $T=0$ on $\cG^c$ and assume
+$TT^\top\preceq bI_m$ on $\cG$ for a deterministic $b<\infty$.
+Writing $\boldsymbol\varepsilon=(\varepsilon_i)_{i=1}^n$, prove
+\[
+ \E[\|T\boldsymbol\varepsilon\|^2\mid X_{1:n}]
+ =\operatorname{tr}\bigl(T^\top T
+       \E[\boldsymbol\varepsilon\boldsymbol\varepsilon^\top\mid X_{1:n}]\bigr)
+ \le\sigma^2\operatorname{tr}(TT^\top).
+\]
+Deduce
+$\E[\I\{\cG\}\|T\boldsymbol\varepsilon\|^2]\le\sigma^2mb$.
+State exactly where the i.i.d. assumption, the zero conditional mean,
+and the fact that $\cG$ is an input event enter the calculation.
+
+\item Let $r\in L^2(\mu)$ be fixed, where $\mu$ is the law of $X_i$,
+and set $r_X=(r(X_i))_{i=1}^n$. Show that
+\[
+ \E[\|r_X\|^2]=n\|r\|_{L^2(\mu)}^2,\qquad
+ \E[\I\{\cG\}\|Tr_X\|^2]\le bn\|r\|_{L^2(\mu)}^2.
+\]
+Explain why independence of $T$ and $r_X$ is unnecessary.
+\end{enumerate}
+\begin{hints}
+For (a), use the singular value decomposition or the nonzero eigenvalues
+of $T^\top T$ and $TT^\top$.
+For (b), expand the quadratic form as a finite sum and condition on all
+the inputs before averaging.
+\end{hints}
+\end{exercisechunk}

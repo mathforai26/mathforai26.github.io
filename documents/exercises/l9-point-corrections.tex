@@ -1,0 +1,72 @@
+\begin{exercisechunk}
+\item \textbf{Point corrections and the test measure.}
+\label[exercise]{ex:l9-point-corrections}
+\exerciseprofile{2}{1}{2}{\exproof\quad\exconstruction\quad\exinterpretation}{%
+Separate exact fitting at the observations from integrated prediction error.}
+Let $\mu$ be a Borel probability law on $\cX\subset\R$, let
+$x_1,\ldots,x_n\in\cX$ be distinct, and let $g,f^\star$ be measurable,
+square-integrable functions with specified point values.
+For numbers $r_1,\ldots,r_n$, define
+\[
+ h(x)=g(x)+\sum_{i=1}^nr_i\I\{x=x_i\}.
+\]
+
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Suppose that $\mu(\{x\})=0$ for every $x\in\cX$. Prove
+\[
+ \|h-g\|_{L^2(\mu)}=0,
+ \qquad
+ \|h-f^\star\|_{L^2(\mu)}
+ =\|g-f^\star\|_{L^2(\mu)}.
+\]
+Choose $r_i$ so that $h(x_i)=y_i$ for arbitrary prescribed values
+$y_1,\ldots,y_n$.
+
+\item Show that the conclusion can fail when the test law has a point mass.
+Give an explicit
+choice of $\cX,\mu,g,f^\star,x_1,r_1$ for which
+\[
+ \|h-f^\star\|_{L^2(\mu)}^2
+ >\|g-f^\star\|_{L^2(\mu)}^2.
+\]
+Show that the distinction from part (a) is whether the set on which the
+correction is nonzero has zero or positive $\mu$-measure, and state why this
+determines whether the correction contributes to the population
+$L^2(\mu)$ error.
+
+\item \textbf{Optional.} Let $P\in\cP_2$ be arbitrary, and assume that every singleton in
+$\cX$ is measurable. Let
+$S_n=((X_i,Y_i))_{i=1}^n$ be an i.i.d. sample with
+$\Law(X_i,Y_i)=P$. Write
+$N_n(x)=\sum_{i=1}^n\I\{X_i=x\}$ and define
+\[
+ \widehat f_n(x)=
+ \begin{cases}
+  N_n(x)^{-1}\sum_{i:X_i=x}Y_i,&N_n(x)>0,\\
+  \widetilde f_n(x),&N_n(x)=0,
+ \end{cases}
+\]
+where $\widetilde f_n$ is any estimator. Prove that, for every training index
+$i$ such that
+$X_j=X_i$ implies $Y_j=Y_i$ for all $j\in[n]$,
+\[
+ \widehat f_n(X_i)=Y_i.
+\]
+
+\item \textbf{Optional.} In the setting of part (c), suppose that
+\[
+ \|\widetilde f_n-f_P^\star\|_{L^2(P_X)}^2\xrightarrow{\P}0.
+\]
+Prove
+\[
+ \|\widehat f_n-f_P^\star\|_{L^2(P_X)}^2\xrightarrow{\P}0
+ \qquad\text{as }n\to\infty.
+\]
+You may use that the set
+$\cD=\{x:P_X(\{x\})>0\}$ is countable, the strong law of large numbers, and
+dominated convergence for sums over $\cD$.
+\end{enumerate}
+\begin{hints}
+For (b), a one-point space is sufficient.
+\end{hints}
+\end{exercisechunk}

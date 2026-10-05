@@ -156,5 +156,26 @@
       "documents/scribes/lecture08.tex": "804a34e6411de192daa42c1fc6ee239da83c99ecbadffedd48dad40645ad546a"
     },
     "revised": "2026-10-03 01:15 UTC-06:00"
+  },
+  "lecture09": {
+    "inputs": {
+      "documents/exercises/course-exercises.sty": "8b55005e025860aad67dba6a85a880872d8bdad5e23d7c65630067d32cf5f859",
+      "documents/exercises/l9-equal-penalty.tex": "ea906c275bf067efbaaf8038ee9b1b9de06d15e97bba548d3c318c2051543915",
+      "documents/exercises/l9-excess-risk-identity.tex": "bf811278a929f7b22f3fb13406d86a82f7983d8b1d19c6e3ea5bf4f668875b44",
+      "documents/exercises/l9-finite-variance.tex": "9342123d689d92846a7aed545f2d9db38b04e0ceeecb86750acbfb579290d2b3",
+      "documents/exercises/l9-induced-function-norm.tex": "1eab050bc13aa50ad324c7e68b9de949cbd958250492cc6c40dce3eb38e3aacc",
+      "documents/exercises/l9-matrix-order.tex": "89c20f8c87747db71c475a17bf898ac8b4d7e77ac04f271816c1741070c4eba3",
+      "documents/exercises/l9-minimum-norm.tex": "3ead06ff876927e3d255589e623dda884b4c123e1468970c41f73e0290af9bef",
+      "documents/exercises/l9-orthogonal-projection.tex": "9e1c0128ec78bcbae30e20abe07d489739806eb31d17899156c510327872b9f1",
+      "documents/exercises/l9-point-corrections.tex": "821d5ab4caab8c9d536335a252acdcda8aa8f22662dab6e42383ffbf14cb4c33",
+      "documents/exercises/l9-push-through.tex": "66364aae64bbb715da75e449facbef2bde3947bc7d967bcbf6cc74f0c6b553f6",
+      "documents/exercises/l9-quadratic-forms.tex": "b65cbacf256ce30886346d428e0f824a35e2c3e1ead31174f81ecaa315339cd8",
+      "documents/exercises/l9-two-stage-fitting.tex": "fdbd63ebf51bd150efbf2f5cd124c65e663dfc51013a31e92001f7275b276373",
+      "documents/exercises/l9-weighted-norm.tex": "eac3b24eef7ac8e14c7135cf0c7c79c014354f88722963cc005525f6a245a4b6",
+      "documents/figures/lecture09-polynomial-interpolants-plot.pdf": "e61e6137226efc8f9aac1315142b491b70173e1f5bbfd3a6c87ad37683dd1aff",
+      "documents/figures/lecture09-polynomial-interpolants.tex": "5d099d5c806f8bec20b7f1356554d1bedd6f9abced604167aa7c9b40ee4f2bce",
+      "documents/scribes/lecture09.tex": "501d29b78a46ce36e2375053eadbd0720735d204f8a44bdb803f2a5985ba589f"
+    },
+    "revised": "2026-10-05 17:09 UTC-06:00"
   }
 }

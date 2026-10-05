@@ -1,0 +1,39 @@
+\begin{exercisechunk}
+\item \textbf{The function norm induced by a feature map.}
+\label[exercise]{ex:l9-induced-function-norm}
+\exerciseprofile{2}{2}{3}{\exproof\quad\excalculation}{%
+Relate parameter minimization to a function norm even when representations are not unique.}
+Let $\psi:\cX\to\R^p$, let
+$\cF=\{x\mapsto\theta^\top\psi(x):\theta\in\R^p\}$, and define
+\[
+ N=\{\theta:\theta^\top\psi(x)=0\text{ for every }x\in\cX\},\qquad
+ \|f\|_\psi=\inf_{\theta:\,\theta^\top\psi=f}\|\theta\|.
+\]
+Equality here is pointwise on $\cX$.
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Prove that every $f\in\cF$ has a unique representing vector
+$\theta_f\in N^\perp$, that all its representing vectors form
+$\theta_f+N$, and that $\|f\|_\psi=\|\theta_f\|$.
+Show that $f\mapsto\theta_f$ is linear and deduce that $\|\cdot\|_\psi$
+is a norm.
+
+\item Suppose the interpolation constraints $f(X_i)=Y_i$ are feasible.
+Prove that minimizing $\|\theta\|$ over interpolating parameters and
+minimizing $\|f\|_\psi$ over interpolating functions give the same unique
+function. Establish existence and uniqueness, including when the
+features are linearly dependent.
+
+\item For invertible $G\in\R^{p\times p}$, set $\psi^{(G)}=G\psi$.
+Prove that the represented function space is unchanged and that
+\[
+ \|f\|_{\psi^{(G)}}
+ =\inf_{\theta:\,\theta^\top\psi=f}\|G^{-\top}\theta\|.
+\]
+Explain why, when the features are dependent, this infimum need not be
+attained at the vector $\theta_f$ from (a).
+\end{enumerate}
+\begin{hints}
+Use the orthogonal decomposition $\R^p=N\oplus N^\perp$.
+For (c), the coordinate change is $\theta=G^\top c$.
+\end{hints}
+\end{exercisechunk}

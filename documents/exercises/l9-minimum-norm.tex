@@ -1,0 +1,48 @@
+\begin{exercisechunk}
+\item \textbf{Minimum-norm solutions and elimination of a coefficient block.}
+\label[exercise]{ex:l9-minimum-norm}
+\exerciseprofile{2}{2}{2}{\exproof\quad\excalculation}{%
+Derive the minimum-norm formula and reduce a constrained fit to a quadratic problem.}
+All vector norms below are Euclidean.
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Let $M\in\R^{n\times p}$ and suppose $M\theta=y$ is feasible.
+Prove that the feasible vector of minimum norm exists and is unique.
+When $M$ has row rank $n$, prove that
+\[
+ \widehat\theta=M^\top(MM^\top)^{-1}y,
+ \qquad
+ \|\widehat\theta\|^2=y^\top(MM^\top)^{-1}y.
+\]
+Show that every feasible $\theta$ has the form
+$\widehat\theta+z$ with $z\in\ker M$, and that
+$\|\widehat\theta+z\|^2=\|\widehat\theta\|^2+\|z\|^2$.
+
+\item Let $U\in\R^{n\times m}$, let $V\in\R^{n\times D}$ have row rank
+$n$, and set $H=D^{-1}VV^\top$. For fixed $\beta\in\R^m$, derive
+\[
+ b_\beta=V^\top(VV^\top)^{-1}(\mathbf Y-U\beta),\qquad
+ D\|b_\beta\|^2=(\mathbf Y-U\beta)^\top H^{-1}(\mathbf Y-U\beta).
+\]
+Deduce that minimizing $\|\beta\|^2+D\|b\|^2$ subject to
+$U\beta+Vb=\mathbf Y$ reduces to minimizing
+\[
+ q(\beta)=\|\beta\|^2+(\mathbf Y-U\beta)^\top H^{-1}(\mathbf Y-U\beta).
+\]
+
+\item Differentiate $q$ to prove
+\[
+ \widehat\beta=(I_m+U^\top H^{-1}U)^{-1}U^\top H^{-1}\mathbf Y.
+\]
+Explain why the inverse exists even when $U$ has dependent columns.
+Writing $A=U^\top H^{-1}U$ and
+$T=(I_m+A)^{-1}U^\top H^{-1}$, verify
+\[
+ TU=I_m-(I_m+A)^{-1},
+\]
+and derive \cref{eq:beta-error} from \cref{eq:datarx}.
+\end{enumerate}
+\begin{hints}
+For (a), decompose a feasible vector into its components in $\ker M$ and
+$(\ker M)^\perp$. For (c), examine the quadratic form of $I_m+A$.
+\end{hints}
+\end{exercisechunk}
