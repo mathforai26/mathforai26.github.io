@@ -9,7 +9,7 @@
 \usepackage{needspace}
 
 % Revision date: maintained by scripts/build_lecture_notes.py. Keep this command.
-\newcommand{\lecturerevised}{2026-10-05 19:09 UTC-06:00}
+\newcommand{\lecturerevised}{2026-10-05 21:23 UTC-06:00}
 \usepackage{eso-pic}
 \AddToShipoutPictureBG{%
   \AtPageLowerLeft{%
@@ -987,8 +987,10 @@ Chebyshev polynomials supply that bound while retaining the
 population-norm control needed for the interpolation component.
 This is not merely a limitation of the proof: replacing the Chebyshev block
 by Legendre polynomials while retaining the same scaling can destroy
-consistency (see next section), even for a bounded continuous target without observation
-noise.\endnote{\hypertarget{note:all-legendre-failure}{}An
+consistency even for a bounded continuous target without observation
+noise. In fact, \cref{thm:all-legendre-tuning} below establishes failure of
+universal consistency for every deterministic choice of the two block
+sizes.\endnote{\hypertarget{note:all-legendre-failure}{}An
 all-Legendre variant can fail consistency. Replace only the second-block
 functions $\chi_j$ by $\psi_j$, retaining the scaling in
 \cref{eq:scaled-feature-map}. For a fixed sample of distinct interior inputs
@@ -1222,8 +1224,57 @@ Minimizing the equal-coefficient norm therefore selects interpolants whose
 $L^2(\mu)$ norm tends to zero, even when the target is nonzero. The positive
 rule instead makes the low-degree signal inexpensive relative to fitting all
 responses with the additional features. Both rules interpolate, and their
-population limits differ. We next ask whether commonly used kernel norms
-provide the needed bias.
+population limits differ.
+
+\paragraph{Can the all-Legendre construction be universally consistent?}
+What if we keep the two-level penalty, use Legendre polynomials in both
+blocks, and choose their sizes differently? The following result strengthens
+the specific-tuning counterexample in
+\hyperlink{note:all-legendre-failure}{\cref*{en:all-legendre-failure}}.
+
+\begin{theorem}[All-Legendre failure for every deterministic tuning]
+\label{thm:all-legendre-tuning}
+Let $X_1,\ldots,X_n$ be independent with law $\mu$, uniform on $[-1,1]$.
+For any deterministic sequences of positive integers $m_n,D_n$ with
+$p_n=m_n+D_n\ge n$, use the feature map
+\[
+ \varphi_n^{\rm Leg}(x)
+ =\bigl(\psi_0(x),\ldots,\psi_{m_n-1}(x),
+ D_n^{-1/2}\psi_{m_n}(x),\ldots,D_n^{-1/2}\psi_{p_n-1}(x)\bigr)^\top
+\]
+and select the interpolant $\widehat f_n^{\rm Leg}$ with minimum Euclidean
+coefficient norm. There is a fixed continuous target
+$f^\star:[-1,1]\to\R$ for which the noiseless observations
+$Y_i=f^\star(X_i)$ give
+\[
+ \|\widehat f_n^{\rm Leg}-f^\star\|_{L^2(\mu)}
+ \not\xrightarrow{\P}0.
+\]
+\end{theorem}
+
+\paragraph{Proof outline.}
+Suppose a tuning were consistent for every continuous noiseless target.
+Four obstructions exhaust the possibilities. First, when $m_n/n\to\infty$,
+the fitted function for the constant target tends to zero in $L^2(\mu)$.
+Applying this along subsequences forces $m_n=O(n)$. Second, close sample
+pairs force $p_n\ge a_0n^{4/3}$ eventually for some $a_0>0$; otherwise
+interpolation of rapidly varying continuous functions has unbounded
+population cost. Thus $D_n\ge a n^{4/3}$ eventually for some $a>0$.
+Third, with a second block this large, $m_n\ge bn$ for any fixed $b>0$
+again gives inconsistency for the constant target. Hence $m_n=o(n)$.
+Finally, in this remaining regime a bounded first block misses a fixed
+polynomial target, while a growing first block has an endpoint instability.
+For the latter, bounded oscillatory test functions force the fitted
+$L^2(\mu)$ norms to diverge. The uniform boundedness principle, in its
+probabilistic form, converts these varying test functions into one fixed
+continuous counterexample; it also supplies the fixed target in the
+close-pair argument. The full argument is developed in the accompanying
+research note.
+
+The Chebyshev block therefore contributes to universal consistency in a way
+that changing the two block sizes in the all-Legendre construction cannot
+recover. We next ask whether commonly used kernel norms provide the needed
+bias.
 
 \section{What does ``minimum norm'' mean?\suppmark}
 \label{sec:minnorm}
@@ -1472,32 +1523,24 @@ a minimax statement whose difficult distribution may change with $n$. Its
 interest comes from the procedure: minimum RKHS norm is not an intentionally
 poor interpolation rule.
 
-This result complements the scaled all-Legendre counterexample in
-\hyperlink{note:all-legendre-failure}{\cref*{en:all-legendre-failure}}.
-Both show that a rich function class and
-minimum-norm selection do not suffice for consistency. The failure
-mechanisms differ. In the all-Legendre example, the induced weighted
-approximation can fail in the population $L^2$ norm even for a bounded
-continuous target without noise. Here, interpolation of noisy observations
-prevents consistency even for a constant target. Moreover, the Laplace
-result covers every bandwidth choice, whereas the all-Legendre
-counterexample concerns the particular scaling and dimension schedules
-considered there. Whether tuning can restore universal consistency for the
-all-Legendre family remains open here.\endnote{%
-\hypertarget{note:all-legendre-conjecture}{}A conjectured approximation--noise
-trade-off. Consider the all-Legendre variant in
-\hyperlink{note:all-legendre-failure}{\cref*{en:all-legendre-failure}}, with
-deterministic positive integer sequences $m_n,D_n$ satisfying $m_n+D_n\ge n$
-and the prescribed second-block scaling $D_n^{-1/2}$. The conjecture is:
-if the resulting interpolator is $L^2(\mu)$-consistent in probability for
-every continuous target $f:[-1,1]\to\R$ with noiseless observations
-$Y_i=f(X_i)$, then it is inconsistent for pure noise
-$Y_i=\varepsilon_i$, where the $\varepsilon_i$ are independent
-$N(0,\sigma^2)$ variables, independent of the inputs, and $\sigma^2>0$ is
-fixed. Here $\mu$ is uniform on $[-1,1]$, as in the polynomial example.
-The same sequences are used in both experiments.
+This result complements \cref{thm:all-legendre-tuning}: both rule out
+consistency guarantees across all the tunings they consider. The
+all-Legendre result covers every deterministic sequence of block sizes;
+the obstruction already occurs for continuous noiseless targets. The
+Laplace result covers every bandwidth selection rule, including
+data-dependent choices, on one fixed noisy problem with a constant target.
+The two results thus identify different ways in which minimum-norm
+selection can lose the signal.\endnote{%
+\hypertarget{note:all-legendre-conjecture}{}The approximation--noise question.
+The original conjecture asked whether an all-Legendre tuning that is
+consistent for every continuous noiseless target must fail on pure Gaussian
+noise. \Cref{thm:all-legendre-tuning} resolves this question by showing that
+its noiseless-consistency premise is unattainable.
 
-Conditional on $X_1,\ldots,X_n$, write the interpolator as $T_n\mathbf Y$,
+The noise contribution itself has a useful general expression.
+Let $\varepsilon_1,\ldots,\varepsilon_n$ be independent $N(0,\sigma^2)$
+variables, independent of the inputs, with fixed $\sigma^2>0$.
+Conditional on $X_1,\ldots,X_n$, write a linear interpolator as $T_n\mathbf Y$,
 where $T_n:\R^n\to L^2(\mu)$ is linear. If $e_1,\ldots,e_n$ are the standard
 coordinate vectors, its conditional squared error on pure noise is
 \[
@@ -1506,13 +1549,7 @@ coordinate vectors, its conditional squared error on pure noise is
  =\sigma^2\sum_{i=1}^n\|T_ne_i\|_{L^2(\mu)}^2.
 \]
 For Gaussian noise, consistency in probability is equivalent to the sum on
-the right tending to zero in probability. The conjecture therefore asserts
-that universal noiseless consistency prevents this noise contribution from
-vanishing. 
-%It is not a claim about a single target: consistency for a fixed
-polynomial can hold both with and without noise. 
-Neither the preceding
-counterexample nor \cref{thm:rakhlin-zhai} establishes this conjecture.
+the right tending to zero in probability.
 }\label{en:all-legendre-conjecture}
 
 The proof has two regimes. When $c$ is not too large, fitting noise at nearby
@@ -1590,16 +1627,41 @@ regression when the selected solution contains two effective components:
 Second,
 the choice of features and the norm both matter. The scaled
 Legendre--Chebyshev construction is consistent under our assumptions,
-whereas the all-Legendre variant with the same scaling can be inconsistent
-(see \hyperlink{note:all-legendre-failure}{\cref*{en:all-legendre-failure}}).
+whereas every deterministic tuning of the all-Legendre variant fails for
+some continuous noiseless target (\cref{thm:all-legendre-tuning}).
 The spiky-smooth kernel supplies
 another positive example; \cref{thm:rakhlin-zhai} gives another failure of
 minimum-norm interpolation, for the ordinary Laplace RKHS in fixed dimension.
 
-These results take it for granted that interpolation needs to happen
-and show that under the right circumstances, interpolation is harmless.
-On the prescriptive side of things,
-there is no implication that interpolation would be desired.
+The results above explain how a learner can fit noisy responses and still
+predict well. The practical question is whether it would predict better
+with regularization or early stopping. In the accompanying noisy-regression
+experiments, the answer was yes. Even with the deliberately weighted
+polynomial features, validation-selected ridge regression improved on the
+minimum-norm interpolator on all ten datasets, reducing median squared
+population error from $0.052$ to $0.018$. For the ordinary neural networks,
+earlier validation-selected checkpoints outperformed the endpoints after
+$100{,}000$ training steps in all $60$ runs.\endnote{%
+\hypertarget{note:regularization-comparison}{}Regression comparison.
+The experiments use ten independent datasets, each with $20$ fitting
+observations and $256$ independent validation observations, uniform inputs
+on $[-1,1]$, independent Gaussian noise of standard deviation $0.28$, and
+the smooth target
+\[
+ f^\star(x)=0.55+0.55\sin(\pi x/2)-0.15\cos(\pi x).
+\]
+The weighted polynomial comparison keeps $(m,D)=(4,160)$ fixed and selects
+only the ridge penalty. Squared population errors are evaluated on a
+$2{,}001$-point grid against the known target; tuning uses noisy validation
+responses. The $60$ neural runs comprise three representations and two
+initializations on each dataset. Their earlier checkpoints also outperform
+the validation-selected checkpoints from the continuation of training in
+all $60$ runs.
+}\label{en:regularization-comparison}
+Here, regularization and early stopping are clearly preferable for
+prediction. This preference also has theoretical and empirical support in
+the literature, as detailed in the bibliographical notes.
+
 What may be desired though is ``overparametrization'' because 
 adding modeling flexibility could in theory reduce approximation error,
 and such, the model could \emph{adapt} to how challenging the learning 
@@ -1614,8 +1676,6 @@ one would still need to use model-selection on the top
 of our procedure to adjust the number of Legendre basis functions.
 An oversized model capacity does not guarantee that that capacity will
 be used to model ``signal'' as opposed to capture noise.
-Moreover, we see that overfitting to the data may not even be competitive to the 
-well-trotten path of using early stopping and/or regularization with model selection.
 
 \section{Does understanding deep learning require rethinking generalization? \suppmark}
 \label{sec:rethinking-generalization}
@@ -1885,7 +1945,8 @@ weights determine whether the selected interpolant recovers the signal and
 where it places the fitted noise.
 \item Minimum norm can succeed or fail. Ordinary Laplace-kernel interpolation
 fails on a fixed smooth noisy problem; a deliberately structured spiky-smooth
-kernel is consistent.
+kernel is consistent. Every deterministic tuning of the scaled all-Legendre
+construction fails for some continuous noiseless target.
 \item The weighted polynomial rule retains the classical
 $n^{-2s/(2s+1)}$ rate despite interpolation. Its raw guarantee is in
 probability; clipping yields expected-risk control when a valid target range
@@ -1963,6 +2024,23 @@ sample size, a different asymptotic regime from this lecture's
 fixed-dimensional polynomial example. \citet{belkin2021} surveys the
 interpolation literature and its relation to older statistical ideas.
 
+\paragraph{Interpolation, regularization, and early stopping.}
+There is direct evidence for the preference for regularization discussed
+in \cref{sec:interpretation}. In high-dimensional linear regression with
+isotropic features, \citet[\S6.1]{hastie2022} show that optimally tuned ridge
+regression has lower asymptotic prediction risk than minimum-norm
+interpolation. For neural networks,
+\citet[\S4.2]{mallinar2022} report experiments in which early-stopped
+networks approach Bayes-optimal performance, while training to interpolation
+leaves a persistent excess risk from fitting label noise.
+The regression comparisons in
+\hyperlink{note:regularization-comparison}{\cref*{en:regularization-comparison}}
+were carried out for the accompanying report, \emph{Does benign overfitting
+justify training to zero error? A regression study and critical literature
+review}. Its paired comparisons favor regularization even for the
+engineered polynomial representation, and early stopping for the ordinary
+networks.
+
 \paragraph{The lecture's results and their sources.}
 The lecture separates the existence of consistent interpolators from the
 analysis of a specified selection rule. The elementary point-correction
@@ -2032,13 +2110,17 @@ $\alpha=\beta=1/2$. The fixed-sample kernel limit and its finite-sample
 control use the uniform Legendre asymptotics recorded in
 \citet[\S14.15(iii)]{nistdlmf}, together with matrix concentration.
 The explicit continuous target and its application to the scaled
-all-Legendre interpolator were derived for these notes. No earlier source
-for this particular interpolation counterexample has been identified;
-its novelty has not been established.
-The tuning conjecture in
-\hyperlink{note:all-legendre-conjecture}{\cref*{en:all-legendre-conjecture}}
-is posed here as an unresolved question, not as a consequence of the cited
-inconsistency results.
+all-Legendre interpolator were derived for these notes.
+\Cref{thm:all-legendre-tuning} strengthens that example to every
+deterministic tuning of the two block sizes. The full argument was developed
+in the accompanying research note, \emph{All-Legendre interpolation:
+failure of universal noiseless consistency}. It combines close-pair bounds,
+constant-target constructions, and endpoint instability with uniform
+boundedness in probability. Priority for these interpolation results has
+not been established. The theorem resolves the approximation--noise
+question in
+\hyperlink{note:all-legendre-conjecture}{\cref*{en:all-legendre-conjecture}}:
+universal noiseless consistency is already impossible in this family.
 
 Second, convergence in probability does not by itself give convergence of
 expected risk. \Cref{prop:infinite-expected-risk} gives a direct close-pair
@@ -2775,6 +2857,12 @@ in fixed dimension.
 \newblock Advances in Neural Information Processing Systems, 2023.
 \newblock \url{https://proceedings.neurips.cc/paper_files/paper/2023/hash/421f83663c02cdaec8c3c38337709989-Abstract-Conference.html}.
 
+\bibitem[Hastie et al.(2022)]{hastie2022}
+Trevor Hastie, Andrea Montanari, Saharon Rosset, and Ryan J. Tibshirani.
+\newblock Surprises in high-dimensional ridgeless least squares interpolation.
+\newblock Annals of Statistics, 50(2):949--986, 2022.
+\newblock \url{https://doi.org/10.1214/21-AOS2133}.
+
 \bibitem[Hsu et al.(2012)]{hsu2012}
 Daniel Hsu, Sham M. Kakade, and Tong Zhang.
 \newblock Random design analysis of ridge regression.
@@ -2801,6 +2889,14 @@ Tengyuan Liang, Alexander Rakhlin, and Xiyu Zhai.
 lower isometry of kernels.
 \newblock Proceedings of the 33rd Conference on Learning Theory, 2020.
 \newblock \url{https://proceedings.mlr.press/v125/liang20a.html}.
+
+\bibitem[Mallinar et al.(2022)]{mallinar2022}
+Neil Mallinar, James B. Simon, Amirhesam Abedsoltan, Parthe Pandit,
+Mikhail Belkin, and Preetum Nakkiran.
+\newblock Benign, tempered, or catastrophic: Toward a refined taxonomy of
+overfitting.
+\newblock Advances in Neural Information Processing Systems, 35, 2022.
+\newblock \url{https://papers.neurips.cc/paper_files/paper/2022/hash/08342dc6ab69f23167b4123086ad4d38-Abstract-Conference.html}.
 
 \bibitem[McRae et al.(2022)]{mcrae2022}
 Andrew D. McRae, Santhosh Karnik, Mark A. Davenport, and Vidya Muthukumar.
