@@ -9,7 +9,7 @@
 \usepackage{needspace}
 
 % Revision date: maintained by scripts/build_lecture_notes.py. Keep this command.
-\newcommand{\lecturerevised}{2026-10-05 17:09 UTC-06:00}
+\newcommand{\lecturerevised}{2026-10-05 19:09 UTC-06:00}
 \usepackage{eso-pic}
 \AddToShipoutPictureBG{%
   \AtPageLowerLeft{%
@@ -94,6 +94,18 @@ October 1, 2026
 \end{minipage}}
 \end{center}
 
+\noindent\textbf{Covered in class.}
+The lecture opened with a brief discussion of the random-label experiments
+of Zhang et al., which motivated the interpolation question. The main
+development followed roughly \crefrange{sec:question}{sec:series}, up to
+the statement of \cref{thm:weighted-legendre}; there was no time to prove
+the theorem. The result for smooth functions in
+\cref{cor:s-smooth-consistency} was also mentioned, and we discussed the
+problem with expected risk and the use of clipping. The theorem's proof,
+the kernel results, and the extended discussion of generalization theory
+are supplementary material in these notes.
+
+\medskip
 \noindent\textbf{Reading guide.}
 Motivated by exact fitting in large neural networks, these notes ask when
 interpolation of noisy observations can coexist with consistent prediction.
@@ -103,8 +115,8 @@ for gradient training and analyze one polynomial procedure: Legendre
 polynomials represent the low-degree signal, and bounded Chebyshev polynomials
 provide the additional interpolation directions. Both are functions of the
 same one-dimensional input. The main text derives the approximation and estimation bound;
-\cref{app:legendre-proof} verifies its matrix assumptions. The starred
-\cref{sec:minnorm,sec:interpretation} are optional: they compare positive and
+\cref{app:legendre-proof} verifies its matrix assumptions.
+\Cref{sec:minnorm,sec:interpretation} extend the discussion: they compare positive and
 negative results for kernel interpolation and ask what they justify about
 model size and training time. \Cref{sec:minnorm} first introduces kernels and
 reproducing kernel Hilbert spaces through linear function approximation.
@@ -358,9 +370,12 @@ a finite nonlinear network is difficult to characterize. We therefore study
 the corresponding linear problem, where the selected interpolant can be
 described exactly.
 
-In the linear setting, the link with gradient descent is exact: gradient flow
-on the squared loss, started at the origin, converges to the interpolating
-parameter vector of smallest Euclidean norm (we prove this in the next lecture). 
+In the linear setting, the link with gradient training is exact. In
+Problem~3 of Homework~0, you were asked to prove that, for a full-row-rank
+design matrix, gradient descent on the squared loss, started at zero with
+a sufficiently small constant step size, converges to the interpolating
+parameter vector of smallest Euclidean norm. Gradient flow started at zero
+selects the same vector. The next lecture will develop this connection further.
 Minimum-norm interpolation is
 therefore the natural linear analogue of interpolation by gradient training.
 Formally, let $\varphi: \cX \to \R^p$ be some fixed function, collecting
@@ -1248,6 +1263,20 @@ $x_1,\ldots,x_N$, and real coefficients $c_1,\ldots,c_N$ is called a
 \emph{positive semidefinite kernel}. This is different from a probability
 kernel: it records inner products, not conditional distributions.
 
+For orientation, familiar kernels on $\R^d$ include the linear kernel
+$k(x,x')=x^\top x'$ and the polynomial kernel
+$k(x,x')=(1+x^\top x')^q$, where $q$ is a positive integer. These have
+finite-dimensional feature representations. Two standard
+infinite-dimensional examples are the Laplace and Gaussian kernels:
+\[
+ k^{\rm Lap}_\gamma(x,x')=\exp(-\|x-x'\|/\gamma),\qquad
+ k^{\rm Gauss}_\gamma(x,x')=\exp(-\|x-x'\|^2/(2\gamma^2)).
+\]
+Both are \emph{radial}: their values depend only on the Euclidean distance
+between the inputs. The parameter $\gamma>0$ is the \emph{bandwidth}, or
+length scale. Smaller bandwidths make the kernel more localized around
+$x=x'$; larger bandwidths make it decay more slowly with distance.
+
 \paragraph{The associated function space.}
 For these finite features, let $\cH_k=\{f_\theta:\theta\in\R^p\}$ and give
 it the induced norm $\|f\|_{\varphi}$ from \cref{sec:series}. Its inner
@@ -1273,20 +1302,46 @@ $f(x)=\langle f,\varphi(x)\rangle_{\cH_k}$. Kernel prediction is still
 linear function approximation in this feature space.
 
 \paragraph{Feature scaling determines the norm.}
-Suppose the kernel has a pointwise expansion in functions orthonormal under
-the test-input law, with $k(x,x)<\infty$ for every $x$:
+To compare the RKHS norm with prediction error, we also need the test-input
+law $\mu$. For a bounded measurable kernel $k$, define its
+\emph{integral operator} $T_{k,\mu}:L^2(\mu)\to L^2(\mu)$ by
+\begin{equation}
+ (T_{k,\mu}g)(x)=\int_{\cX} k(x,x')g(x')\,\mu(dx').
+ \label{eq:kernel-integral-operator}
+\end{equation}
+This is the population analogue of multiplying a vector of function values
+by a kernel matrix: the integral replaces a finite weighted sum. Its
+eigenfunctions identify orthogonal directions in $L^2(\mu)$ in which the
+RKHS norm has a simple coefficient penalty, as we now explain.
+
+Suppose the kernel has the pointwise expansion
 \begin{equation}
  k(x,x')=\sum_{j\ge0}\lambda_j\psi_j(x)\psi_j(x'),
- \qquad \lambda_j>0.
+ \qquad \lambda_j>0,
  \label{eq:kernel-expansion}
 \end{equation}
+with the functions $\psi_j$ orthonormal in $L^2(\mu)$. Substituting into
+\cref{eq:kernel-integral-operator} and using orthonormality gives
+\[
+ T_{k,\mu}\psi_j=\lambda_j\psi_j.
+\]
+Thus the $\lambda_j$ and $\psi_j$ are eigenvalues and eigenfunctions of
+this operator, which depends on both the kernel and the input law.
 The corresponding features are $\sqrt{\lambda_j}\psi_j(x)$. Representing
 $f=\sum_ja_j\psi_j\in\cH_k$ therefore uses coefficients
-$a_j/\sqrt{\lambda_j}$, so its squared RKHS norm is
+$a_j/\sqrt{\lambda_j}$, giving
 \begin{equation}
+ \|f\|_{L^2(\mu)}^2=\sum_{j\ge0}a_j^2,
+ \qquad
  \|f\|_{\cH_k}^2=\sum_{j\ge0}\frac{a_j^2}{\lambda_j}.
  \label{eq:rkhs-series-norm}
 \end{equation}
+The significance of the eigenvalues is this comparison: a component
+$a_j\psi_j$ has squared population norm $a_j^2$, but incurs squared RKHS
+norm $a_j^2/\lambda_j$. Larger eigenvalues therefore mean a smaller penalty
+for a component of the same population size. The operator makes the
+relation between the norm minimized by the algorithm and the norm used to
+measure prediction error explicit.
 Thus a minimum-norm claim is incomplete until the feature map and its scaling,
 or equivalently the kernel, have been specified. The weighted polynomial rule
 uses the finite kernel
@@ -1296,13 +1351,48 @@ uses the finite kernel
  +\frac1D\sum_{m\le j<m+D}\chi_j(x)\chi_j(x').
  \label{eq:polynomial-kernel}
 \end{equation}
-Its squared RKHS norm is exactly $\|\beta\|^2+D\|b\|^2$. Because the combined
+For $f_{\beta,b}(x)=u(x)^\top\beta+v(x)^\top b$, the squared RKHS norm is
+\[
+ \|f_{\beta,b}\|_{\cH_{k_{m,D}}}^2=\|\beta\|^2+D\|b\|^2.
+\]
+Because the combined
 Legendre--Chebyshev basis is not orthogonal under $\mu$, these coefficient
-weights are not the reciprocals of its integral-operator eigenvalues.
+weights are not the reciprocals of the eigenvalues of $T_{k_{m,D},\mu}$.
 They would be for an orthonormal basis, as in \cref{eq:rkhs-series-norm}.
 The larger penalty makes each additional coefficient expensive, while the
 number of features makes collective interpolation inexpensive in population
 norm. \Cref{ex:l9-weighted-norm} asks you to verify the orthonormal case.
+
+\paragraph{Choosing a kernel.}
+A useful kernel admits good approximations to plausible targets at a small
+RKHS norm. For regression, the relevant smoothness is that of the
+conditional mean $f^\star$, not of the noisy responses. Among standard
+radial kernels at comparable bandwidths, smoother choices penalize
+fine-scale variation more strongly.
+In regularized regression this can improve estimation when the target is
+smooth. A rougher kernel may approximate corners or less regular behavior
+with a smaller norm, but also allows more freedom to fit noise. Thus kernel
+choice involves both approximation and estimation; ``smoother'' does not
+mean ``better.'' The target need not belong to the RKHS: what matters is
+how well it can be approximated at a controlled norm.
+
+The \emph{Mat\'ern family} offers a range of smoothness choices. Its
+parameter $\nu>0$ controls smoothness separately from its bandwidth
+$\gamma$: $\nu=1/2$ gives the Laplace kernel, larger $\nu$ gives smoother
+kernels, and the Gaussian kernel is the limit as $\nu\to\infty$ with
+$\gamma$ fixed. Smoothness and bandwidth are different: a Gaussian kernel
+with a small bandwidth is still infinitely differentiable, but can
+represent variation on short distance scales.
+
+In practice, choose the features, distance scale, and kernel family using
+knowledge of the problem, then compare bandwidths and smoothness choices
+using held-out prediction error or cross-validation. With noisy data,
+one commonly also tunes a regularization penalty:
+\emph{kernel ridge regression} adds $\lambda\|f\|_{\cH_k}^2$, with
+$\lambda>0$, to the average squared training loss. This permits residuals
+instead of requiring the fit to reproduce every noisy response. These
+considerations guide kernel selection, but do not by themselves establish
+that minimum-norm interpolation is consistent.
 
 For a fixed RKHS $\cH_k$, the standard ridgeless estimator is
 \begin{equation}
@@ -1316,7 +1406,7 @@ surely, and these are the usual $n$ interpolation constraints.
 The minimum-norm solution lies in the span of
 $k(X_1,\cdot),\ldots,k(X_n,\cdot)$: an orthogonal component vanishes at all
 sample inputs by the reproducing property and only increases the norm.
-This is the interpolation form of the representer theorem. Writing the
+This is the interpolation form of the so-called \emph{representer theorem}. Writing the
 solution as $\sum_i\alpha_i k(X_i,\cdot)$ turns the constraints into
 $K\alpha=\mathbf Y$, where $K=(k(X_i,X_j))_{i,j=1}^n$.
 When $K$ is invertible, define
@@ -1334,9 +1424,21 @@ results ask when its selected interpolant is consistent.
 
 Does a conventional fixed kernel already have the needed norm, perhaps after
 tuning its bandwidth? The following fixed noisy problem gives a negative
-answer for the Laplace family.
+answer for the Laplace family. This is a standard kernel with substantial
+approximation power: on a compact domain, its RKHS can approximate every
+continuous function uniformly. Its failure below therefore concerns the
+minimum-norm fitting rule, not a lack of expressive power.
 
-Let $\mu$ be uniform on the unit ball in $\R^3$, let
+Let $\mu$ be uniform on the unit ball in $\R^3$.\endnote{%
+Why three dimensions, and why Laplace? We specialize the original theorem
+to $d=3$ for a concrete example; it covers every fixed odd dimension.
+The Laplace kernel is convenient for its proof because, on $\R^d$ with
+$d$ odd, its squared RKHS norm is a weighted sum of integrals of squared
+derivatives through order $(d+1)/2$, including the function itself.
+For $d=3$ this means derivatives through order two. This expression lets
+the proof turn norm control into control of variation between observations.
+}
+Take
 \[
  Y=1+\varepsilon,
  \qquad \P(\varepsilon=1)=\P(\varepsilon=-1)=\tfrac12,
@@ -1345,6 +1447,9 @@ with $\varepsilon$ independent of $X$, and use the Laplace kernels
 \[
  k_c(x,x')=c^3\exp(-c\|x-x'\|),\qquad c>0.
 \]
+Here $c$ is the inverse bandwidth: the bandwidth is $1/c$. The positive
+factor $c^3$ rescales the RKHS norm but does not change its minimizing
+interpolant for a fixed $c$.
 For each $c$, let $\widehat f_{n,c}$ be the minimum-RKHS-norm interpolant.
 
 \begin{theorem}[Laplace minimum-norm interpolation is inconsistent]
@@ -1357,7 +1462,7 @@ There are constants $a,C>0$ such that, for all sufficiently large $n$,
  \ge1-\frac C{\sqrt n}.
  \label{eq:rakhlin-zhai}
 \end{equation}
-The statement holds simultaneously for every bandwidth $c$, so $c$ may be
+The statement holds simultaneously for every $c>0$, so $c$ may be
 selected from the data.
 \end{theorem}
 
@@ -1390,8 +1495,7 @@ $Y_i=f(X_i)$, then it is inconsistent for pure noise
 $Y_i=\varepsilon_i$, where the $\varepsilon_i$ are independent
 $N(0,\sigma^2)$ variables, independent of the inputs, and $\sigma^2>0$ is
 fixed. Here $\mu$ is uniform on $[-1,1]$, as in the polynomial example.
-The same sequences are used in both experiments; label-dependent tuning is
-not included in this conjecture.
+The same sequences are used in both experiments.
 
 Conditional on $X_1,\ldots,X_n$, write the interpolator as $T_n\mathbf Y$,
 where $T_n:\R^n\to L^2(\mu)$ is linear. If $e_1,\ldots,e_n$ are the standard
@@ -1404,8 +1508,10 @@ coordinate vectors, its conditional squared error on pure noise is
 For Gaussian noise, consistency in probability is equivalent to the sum on
 the right tending to zero in probability. The conjecture therefore asserts
 that universal noiseless consistency prevents this noise contribution from
-vanishing. It is not a claim about a single target: consistency for a fixed
-polynomial can hold both with and without noise. Neither the preceding
+vanishing. 
+%It is not a claim about a single target: consistency for a fixed
+polynomial can hold both with and without noise. 
+Neither the preceding
 counterexample nor \cref{thm:rakhlin-zhai} establishes this conjecture.
 }\label{en:all-legendre-conjecture}
 
@@ -1423,7 +1529,8 @@ Can a different kernel reproduce the separation that worked for the series
 estimator? A positive theorem uses a norm designed for exactly that purpose.
 Let $\widetilde k$ be a continuous universal kernel on a compact domain
 $\cX\subset\R^d$: its RKHS is dense in the continuous functions in the
-uniform norm. Let
+uniform norm. A Gaussian kernel with any fixed positive bandwidth is one
+such choice of $\widetilde k$. Let
 $\check k_\gamma(x,x')=\exp(-\|x-x'\|/\gamma)$ be a narrow Laplace kernel.
 Define the sample-size-dependent kernel
 \begin{equation}
@@ -1464,7 +1571,7 @@ series rule. The two kernel theorems concern different procedures:
 increasingly narrow kernel, whereas \cref{thm:rakhlin-zhai} uses a single
 Laplace kernel with an adaptively chosen bandwidth.
 
-\section{What the results establish\suppmark}
+\section{What the results establish}
 \label{sec:interpretation}
 
 What do these successes and failures establish about the original question,
@@ -1510,10 +1617,10 @@ be used to model ``signal'' as opposed to capture noise.
 Moreover, we see that overfitting to the data may not even be competitive to the 
 well-trotten path of using early stopping and/or regularization with model selection.
 
-\section{Does understanding deep learning require rethinking generalization?}
+\section{Does understanding deep learning require rethinking generalization? \suppmark}
 \label{sec:rethinking-generalization}
 
-\noindent\textit{Optional reading.}
+%\noindent\textit{Optional reading.}
 The interpolation results also help us assess the argument that motivated
 this lecture. What do the random-label experiments establish about existing
 generalization bounds, and what should we expect such bounds to explain?
@@ -1552,8 +1659,11 @@ the small gap in this second setting. This formalizes the limitation
 suggested by the experiments; a large upper bound does not predict that
 the actual gap must be large.
 
-Quantities that take this form include the VC dimension of a fixed class
-of predictors and its Rademacher complexity. Empirical Rademacher complexity
+Quantities that take this form include the \emph{VC dimension} of a fixed class
+of predictors and its Rademacher complexity. For binary classifiers, the VC
+dimension is the largest number of inputs on which the class can realize
+every binary labeling, or infinity if there is no finite maximum.
+Empirical Rademacher complexity
 measures the class's ability to correlate with independent random signs on
 the observed inputs; its expectation depends on the input distribution,
 not the labeling distribution. One can associate these capacity measures
@@ -1583,7 +1693,9 @@ not establish that training on the original labels produces equally large
 norms or equally small normalized margins. The argument above therefore
 does not rule out useful bounds of these kinds. Some of them themselves
 use Rademacher complexity or uniform convergence, applied to suitably
-restricted classes. A limitation of the full architecture class is not a
+restricted classes. \emph{Uniform convergence} controls the discrepancy
+between population and empirical losses simultaneously over a class of
+predictors. A limitation of the full architecture class is not a
 limitation of every use of these methods.
 
 The paper acknowledges norm-based bounds, and Section~5 does compare norms
@@ -1616,8 +1728,10 @@ Replacing $\phi$ by $a\phi$ and $w$ by $w/a$, for $a>0$, leaves the
 margins and this complexity term unchanged when $M$ is rescaled by $1/a$.
 The coefficient norm alone is not invariant. Bounds of this form follow
 from Rademacher complexity; a classical source is identified in the
-bibliographical notes. The binary formula illustrates the ingredients,
-not a numerical evaluation for the paper's multiclass experiment.}
+bibliographical notes. 
+% The binary formula illustrates the ingredients,
+% not a numerical evaluation for the paper's multiclass experiment.
+}
 \label{en:kernel-margin-bound}
 
 It remains a substantive question whether any particular available bound
@@ -1935,7 +2049,15 @@ classical topics; \citet[Chapters 10--11 and 18]{gyorfi2002} is a reference
 for truncated least squares and orthogonal-series estimation.
 
 The kernel results give further success and failure comparisons for
-specified minimum-norm procedures. The fixed-problem negative result in
+specified minimum-norm procedures. For standard kernel families and their
+smoothness properties, including the Mat\'ern family, see
+\citet[Chapter 4]{rasmussen2006}; Chapter 5 discusses kernel selection and
+hyperparameter tuning, including cross-validation. The preceding guidance
+on kernel choice concerns approximation and regularized prediction, not a
+general guarantee for noisy interpolation. The universality of Laplace and
+Gaussian kernels, used here only as an approximation property on compact
+domains, follows from the criteria in \citet{sriperumbudur2010}.
+The fixed-problem negative result in
 \cref{thm:rakhlin-zhai} specializes
 \citet[Theorem 1]{rakhlin2019}. Their theorem allows fixed odd dimension,
 an input density on the unit ball bounded above and below, a fixed nonzero
@@ -1943,7 +2065,11 @@ smooth regression function, and independent uniform-sign noise. The constant
 target used here has a smooth compactly supported extension, as required
 by their proof. \citet{buchholz2022} extends fixed-dimensional
 inconsistency to additional Sobolev kernels, and \citet{beaglehole2023}
-studies translation-invariant kernels in a fixed-design formulation.
+give expected-risk inconsistency results for translation-invariant kernels,
+including periodic versions of Gaussian kernels, on a fixed grid with noisy
+responses. This differs from the i.i.d. sampling and in-probability lower
+bound in \cref{thm:rakhlin-zhai}; the latter theorem should not be read as
+a statement about every standard kernel.
 \citet{haas2023} prove both broader fixed-dimensional obstructions for smooth
 estimators and positive spiky-smooth results. \Cref{thm:haas} records the
 existence conclusion of their Theorem 8 for a Laplace correction, without
@@ -1974,6 +2100,11 @@ guarantee?
 \item[Regression function $f_P^\star$]
 The conditional mean $f_P^\star(x)=\E[Y\mid X=x]$, defined up to
 $P_X$-null sets. It minimizes population squared-loss risk.
+\item[Population norm $\|f\|_{L^2(\mu)}$]
+The norm $\|f\|_{L^2(\mu)}=(\int f^2\,d\mu)^{1/2}$ under the input law
+$\mu$, also abbreviated $\|f\|_2$ here. The space $L^2(\mu)$ identifies
+square-integrable functions that agree $\mu$-almost everywhere; changing
+values on a set of input probability zero does not change this norm.
 \item[Population excess risk]
 Population risk minus the smallest achievable population risk. Under
 squared loss it equals $\|f-f_P^\star\|_{L^2(P_X)}^2$ by
@@ -2000,6 +2131,8 @@ excess risk, including when the responses contain nondegenerate noise.
 \item[Interpolation]
 Exact satisfaction of the empirical fitting constraints; here
 $f(X_i)=Y_i$ at every nonconflicting training input.
+An index is nonconflicting when all observations at its input have the
+same response.
 \item[Minimum-norm interpolant]
 The feasible interpolating predictor having smallest norm in a specified
 feature or function space. The norm and representation are part of the
@@ -2022,6 +2155,11 @@ below $m$: $A_m(f^\star)=\inf_{g\in\cF_m}\|g-f^\star\|_{L^2(\mu)}^2$.
 The condition $A_m(f^\star)\le L^2m^{-2s}$ for every $m\ge1$, with
 some fixed $0\le L<\infty$. The corresponding best norm error is at most
 $Lm^{-s}$.
+\item[Minimax-optimal rate]
+A rate achieved uniformly over a specified problem class and matched,
+up to constants, by a lower bound for every learning procedure, under
+the specified risk criterion. No estimator achieves a faster rate
+uniformly over that class; the difficult problem may change with $n$.
 \item[Orthonormal basis]
 An orthogonal family of unit-norm functions whose finite linear
 combinations are dense in the space under discussion. Orthogonality and
@@ -2038,15 +2176,62 @@ representation, $k(x,x')=\langle\varphi(x),\varphi(x')\rangle$.
 A Hilbert space $\cH_k$ of functions with continuous point evaluations,
 represented by a kernel through
 $f(x)=\langle f,k(x,\cdot)\rangle_{\cH_k}$.
+This identity is the reproducing property.
 Its norm determines which interpolant the minimum-norm rule selects.
+\item[Representer theorem]
+In the interpolation form used here, whenever the constraints are feasible,
+the minimum-RKHS-norm interpolant lies in
+$\operatorname{span}\{k(X_1,\cdot),\ldots,k(X_n,\cdot)\}$.
+Thus the possibly infinite-dimensional optimization reduces to a finite
+kernel-matrix problem; see \cref{eq:kernel-minnorm,eq:ridgeless-formula}.
 \item[Kernel Gram matrix]
 The matrix $K=(k(X_i,X_j))_{i,j=1}^n$ of kernel values at the sample
 inputs. Its entries are inner products of the corresponding feature vectors.
+\item[Kernel integral operator]
+The map $T_{k,\mu}$ in \cref{eq:kernel-integral-operator}, which depends
+on the kernel and input law. In the orthonormal expansion
+\cref{eq:kernel-expansion}, the RKHS norm weights squared coefficients
+by the reciprocals of the positive eigenvalues, whereas the $L^2(\mu)$
+norm weights them equally.
 \item[Universal kernel]
 On a compact domain $\cX$, a continuous kernel whose RKHS is dense in the
 continuous functions on $\cX$ under the uniform norm. This is an
 approximation property of a kernel; universal consistency is a property of
 a learning procedure.
+\item[Linear and polynomial kernels]
+The kernels $k(x,x')=x^\top x'$ and $k(x,x')=(1+x^\top x')^q$,
+respectively, with positive integer $q$. The former uses the original
+coordinates as features; the latter represents monomials through degree
+$q$ with specific weights. Both have finite-dimensional feature spaces.
+\item[Radial kernel]
+A kernel whose value depends only on the Euclidean distance
+$\|x-x'\|$. Laplace and Gaussian kernels are examples.
+\item[Bandwidth (length scale)]
+The distance-scale parameter $\gamma>0$ in kernels such as
+$\exp(-\|x-x'\|/\gamma)$ and $\exp(-\|x-x'\|^2/(2\gamma^2))$.
+Smaller bandwidths give more localized kernels; larger bandwidths give
+slower decay with distance. In the parametrization
+$k_c(x,x')=c^3\exp(-c\|x-x'\|)$, the bandwidth is $1/c$, not $c$.
+\item[Laplace kernel]
+The radial kernel $k(x,x')=\exp(-\|x-x'\|/\gamma)$, with bandwidth
+$\gamma>0$. It has an infinite-dimensional RKHS and is universal on
+compact domains, but its minimum-norm interpolant need not be consistent.
+\item[Gaussian kernel]
+The radial kernel $k(x,x')=\exp(-\|x-x'\|^2/(2\gamma^2))$, also called
+the squared-exponential kernel, with bandwidth $\gamma>0$. It has an
+infinite-dimensional RKHS and is universal on compact domains.
+\item[Mat\'ern family]
+A family of radial kernels with a smoothness parameter $\nu>0$ and a
+separate bandwidth $\gamma>0$. It includes the Laplace kernel at
+$\nu=1/2$ and approaches the Gaussian kernel as $\nu\to\infty$ with
+$\gamma$ fixed. Increasing $\nu$ increases smoothness; changing
+$\gamma$ changes the distance scale.
+\item[Kernel ridge regression]
+Squared-loss regression with a positive penalty
+$\lambda\|f\|_{\cH_k}^2$ added to the average training loss.
+With this normalization, its kernel-matrix formula uses
+$K+n\lambda I_n$ in place of $K$. Positive regularization permits
+nonzero training residuals.
 \item[Ridgeless kernel regression]
 Minimum-RKHS-norm interpolation, equivalently the zero-regularization limit
 of kernel ridge regression when the kernel matrix is invertible.
@@ -2057,6 +2242,30 @@ and a sharply localized component for satisfying interpolation constraints.
 Replacing a prediction $f(x)$ by $\max\{-M,\min\{M,f(x)\}\}$.
 If $|f^\star|\le M$, this cannot increase squared prediction error.
 It preserves interpolation when the observed responses lie in $[-M,M]$.
+\item[Generalization gap]
+The population risk of a learned predictor minus its average training
+loss. In the optional discussion these are classification error rates.
+This differs from excess risk, which subtracts the optimal population
+risk rather than training loss.
+\item[VC dimension]
+For a class of binary classifiers, the largest number of inputs on which
+the class can realize every binary labeling, or infinity if unbounded.
+It is a property of the class, not of the predictor selected from it.
+\item[Empirical Rademacher complexity]
+The expected supremum of the average correlation between functions in a specified
+class and independent uniform random signs on the observed inputs.
+The expectation here is over the signs; averaging also over the inputs
+gives the corresponding population Rademacher complexity. For a fixed
+class, neither quantity uses the labeling distribution.
+\item[Uniform convergence]
+Control of the difference between population and empirical losses
+simultaneously for every predictor in a specified class. This allows
+the bound to apply to a predictor selected from that class using the
+training data.
+\item[Uniform stability]
+A uniform bound on the change in an algorithm's test loss when one
+training observation is replaced. The bound must hold over all training
+samples and test observations, not just the observed sample.
 \item[Rate in probability $O_{\P}(a_n)$]
 For deterministic $a_n>0$, $Z_n=O_{\P}(a_n)$ means that, for every
 $\delta>0$, some constant $C_\delta$ satisfies
@@ -2411,8 +2620,8 @@ alone locates a large derivative, not the location of the large predictions.
 
 This matters when repeated retraining is evaluated by average squared loss,
 or when occasional extreme predictions are unacceptable. The proposition is
-a tail-risk result rather than a claim about a typical fitted model; the
-frequency of large losses also depends on $C_n$. Finite measurement precision
+a tail-risk result.
+Finite measurement precision
 removes the literal arbitrarily-close-pair idealization, but can still leave
 severe sensitivity. A probability guarantee and a tail safeguard therefore
 answer different practical questions.
@@ -2621,12 +2830,26 @@ high-dimensional phenomenon.
 \newblock Proceedings of the 32nd Conference on Learning Theory, 2019.
 \newblock \url{https://proceedings.mlr.press/v99/rakhlin19a.html}.
 
+\bibitem[Rasmussen and Williams(2006)]{rasmussen2006}
+Carl Edward Rasmussen and Christopher K. I. Williams.
+\newblock \emph{Gaussian Processes for Machine Learning}.
+\newblock MIT Press, 2006.
+\newblock \url{https://gaussianprocess.org/gpml/chapters/}.
+
 \bibitem[Schapire et al.(1998)]{schapire1998}
 Robert E. Schapire, Yoav Freund, Peter Bartlett, and Wee Sun Lee.
 \newblock Boosting the margin: A new explanation for the effectiveness of
 voting methods.
 \newblock Annals of Statistics, 26(5):1651--1686, 1998.
 \newblock \url{https://doi.org/10.1214/aos/1024691352}.
+
+\bibitem[Sriperumbudur et al.(2010)]{sriperumbudur2010}
+Bharath K. Sriperumbudur, Kenji Fukumizu, and Gert R. G. Lanckriet.
+\newblock On the relation between universality, characteristic kernels and
+RKHS embedding of measures.
+\newblock Proceedings of the Thirteenth International Conference on
+Artificial Intelligence and Statistics, 9:773--780, 2010.
+\newblock \url{https://proceedings.mlr.press/v9/sriperumbudur10a.html}.
 
 \bibitem[Stone(1982)]{stone1982}
 Charles J. Stone.
