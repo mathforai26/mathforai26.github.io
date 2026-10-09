@@ -12,8 +12,8 @@ The goal is to develop a good research question related to the mathematical foun
 ## Deliverables
 
 1. **Question sketch, encouraged by the end of Week 4:** a short paragraph identifying the phenomenon and the uncertainty.
-2. **First draft, due at the end of Week 6:** approximately 1–3 pages. The instructor will return feedback.
-3. **Revised note, due at the end of Week 12:** approximately 2–5 pages incorporating the feedback.
+2. **First draft, due Sunday, October 11, at 11:59 p.m. Edmonton time (end of Week 6):** approximately 1–3 pages. The instructor will return feedback. [Submit the first draft on Canvas](https://canvas.ualberta.ca/courses/37231/assignments/823020).
+3. **Revised note, due Sunday, November 29, at 11:59 p.m. Edmonton time (end of Week 12):** approximately 2–5 pages incorporating the feedback. [Submit the revised note on Canvas](https://canvas.ualberta.ca/courses/37231/assignments/823021).
 
 Together, the drafts and revision process account for 10% of the course grade. The detailed rubric will be posted before the first draft is due.
 

@@ -16,11 +16,11 @@ Homework materials and submission links are added as assignments are released.
 | Homework 0: mathematical readiness | 0% | Sun, Sep 6, 11:59 p.m. | [PDF]({{ '/documents/assignments/assignment0.pdf' | relative_url }}) · [LaTeX]({{ '/documents/assignments/assignment0.tex' | relative_url }}) · [Submit on Canvas](https://canvas.ualberta.ca/courses/37231/assignments/812892) |
 | Homework 1: prediction, generalization, and evaluation | 10% | Fri, Sep 18, 11:59 p.m. | [PDF]({{ '/documents/assignments/assignment1.pdf' | relative_url }}) · [LaTeX source bundle]({{ '/documents/assignments/assignment1-source.zip' | relative_url }}) · [Submit on Canvas](https://canvas.ualberta.ca/courses/37231/assignments/814320) |
 | Homework 2: sequence objectives, state, and dependence | 10% | Fri, Oct 2, 11:59 p.m. | [PDF]({{ '/documents/assignments/assignment2.pdf' | relative_url }}) · [LaTeX source bundle]({{ '/documents/assignments/assignment2-source.zip' | relative_url }}) · [Submit on Canvas](https://canvas.ualberta.ca/courses/37231/assignments/817841) |
-| Research-question first draft | Part of 10% | End of Week 6 | [Template]({{ '/documents/misc_files/research_question_template.tex' | relative_url }}) |
+| Research-question first draft | Part of 10% | Sun, Oct 11, 11:59 p.m. | [Template]({{ '/documents/misc_files/research_question_template.tex' | relative_url }}) · [Submit on Canvas](https://canvas.ualberta.ca/courses/37231/assignments/823020) |
 | Homework 3: distribution shift, learnability, and interpolation | 10% | Fri, Oct 16, 11:59 p.m. | [PDF]({{ '/documents/assignments/assignment3.pdf' | relative_url }}) · [LaTeX source bundle]({{ '/documents/assignments/assignment3-source.zip' | relative_url }}) · [Submit on Canvas](https://canvas.ualberta.ca/courses/37231/assignments/821347) |
 | Homework 4 | 10% | End of Week 9 | To be posted |
 | Homework 5 | 10% | End of Week 11 | To be posted |
-| Research-question revised note | Part of 10% | End of Week 12 | [Guidelines]({% link _pages/research-question.md %}) |
+| Research-question revised note | Part of 10% | Sun, Nov 29, 11:59 p.m. | [Guidelines]({% link _pages/research-question.md %}) · [Submit on Canvas](https://canvas.ualberta.ca/courses/37231/assignments/823021) |
 | Homework 6 | 10% | End of Week 13 | To be posted |
 | Final oral exam | 20% | Final-examination period | Topic list posted at least one week before |
 
