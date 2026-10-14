@@ -1,0 +1,34 @@
+% Shared exercise chunk: l2-threshold-coverage
+\begin{exercisechunk}
+\item \textbf{Conditional coverage and threshold error.}
+\label[exercise]{ex:threshold-coverage}
+\exerciseprofile{2}{2}{2}{\exproof\quad\excalculation\quad\exinterpretation}{%
+Derive a threshold-error tail bound under dependent sampling with conditional
+coverage.}
+Fix the target and learner from \cref{ex:threshold-sampling}. Suppose the test
+index is an independent draw from a distribution $P$. The training indices may
+be dependent. Assume that, for some $\alpha\in(0,1]$, every interval
+$I\subseteq[N]$ satisfies
+\[
+\P(X_i\in I\mid X_1,\ldots,X_{i-1})\ge\alpha P(I)
+\qquad\text{almost surely}
+\]
+for each $i$, with unconditional probability when $i=1$.
+Let $L=P(\{k,\ldots,\kest-1\})$ be the learned predictor's error mass,
+where the set is empty if $\kest=k$.
+\begin{enumerate}[(a)]
+\item Adapt the proof of \cref{prop:threshold} to show, for
+$\epsilon\in(0,1)$,
+\[
+\P(L>\epsilon)\le(1-\alpha\epsilon)^m\le e^{-\alpha m\epsilon}.
+\]
+\item Verify the conditional-coverage inequality for independent draws from
+$P$ with $\alpha=1$.
+\item What sample size suffices to ensure $L\le\epsilon$ with probability at
+least $1-\delta$, for $\delta\in(0,1)$?
+\end{enumerate}
+\begin{hints}
+For (a), bound the probability of missing a fixed interval at every step by
+conditioning successively on the previous indices.
+\end{hints}
+\end{exercisechunk}

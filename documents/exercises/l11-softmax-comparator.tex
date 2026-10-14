@@ -1,0 +1,30 @@
+\begin{exercisechunk}
+\item \textbf{Convergence without an attained minimum.}
+\label[exercise]{ex:l11-softmax-comparator}
+\exerciseprofile{2}{2}{2}{\exproof\quad\exinterpretation}{%
+Use a convex comparator bound to prove convergence to an infimum that need
+not be attained.}
+Let $L:\R^d\to\R$ be convex and $\beta$-smooth. Gradient descent uses
+$0<\eta\le1/\beta$.
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Starting from the squared-distance recursion and the descent inequality,
+prove that every $u\in\R^d$ satisfies
+\[
+ 2\eta\bigl(L(\theta_{t+1})-L(u)\bigr)
+ \le\|\theta_t-u\|_2^2-\|\theta_{t+1}-u\|_2^2.
+\]
+\item Deduce
+\[
+ L(\theta_T)-L(u)\le\frac{\|\theta_0-u\|_2^2}{2\eta T}.
+\]
+\item Suppose only that $L^\star=\inf_uL(u)>-\infty$. For every
+$\epsilon>0$, choose $u_\epsilon$ with
+$L(u_\epsilon)\le L^\star+\epsilon$. Prove
+$L(\theta_T)\to L^\star$ without assuming that a minimizer exists.
+\end{enumerate}
+\begin{hints}
+Use convexity to bound
+$\langle\nabla L(\theta_t),\theta_t-u\rangle$. In (b), use monotonicity of
+the objective values before telescoping.
+\end{hints}
+\end{exercisechunk}

@@ -1,0 +1,73 @@
+% Shared exercise chunk: l4-direct-cost-gradient
+\begin{exercisechunk}
+\item \textbf{Direct cost, log loss, and natural gradient.}
+\label[exercise]{ex:direct-cost-gradient}
+\exerciseprofile{2}{2}{2}{\exproof\quad\excalculation\quad\exinterpretation}{%
+Compare three optimization dynamics and identify why an exact smooth task-cost
+gradient can provide a poor training signal.}
+Consider a one-step binary policy. The correct action is \(1\), and the policy
+samples \(A\in\{0,1\}\) with
+\[
+ \pi_z(1)=p(z):=\sigma(z)=\frac{1}{1+e^{-z}},
+ \qquad
+ \pi_z(0)=1-p(z).
+\]
+The task cost is \(c(A)=\I\{A=0\}\), so its expectation is
+\(C(z)=\E[c(A)]=1-p(z)\). The correct action is known, so every gradient below
+is evaluated exactly. Define the log-loss surrogate
+\[
+ L(z)=-\log p(z).
+\]
+For \(a>0\), initialize \(z(0)=-a\).
+For a differentiable loss \(f(z)\), its \emph{gradient flow} is the
+continuous-time rule
+\[
+ \dot z(t)=-f'(z(t)).
+\]
+For this policy, define the scalar Fisher information by
+\[
+ F(z)=\E_{A\sim\pi_z}\!\left[
+   \left(\frac{\partial}{\partial z}\log\pi_z(A)\right)^2
+ \right].
+\]
+For a differentiable expected reward \(J(z)\), its \emph{natural-gradient
+flow} for maximizing \(J\) is
+\[
+ \dot z_{\rm NG}(t)
+ =F(z_{\rm NG}(t))^{-1}J'(z_{\rm NG}(t)).
+\]
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Use this definition to derive the gradient flows for minimizing \(C\)
+and \(L\):
+\[
+ \dot z_C=p(z_C)(1-p(z_C)),
+ \qquad
+ \dot z_L=1-p(z_L).
+\]
+\item Let \(\tau_C(a)\) and \(\tau_L(a)\) be the first times at which the
+corresponding flow reaches \(z=0\). Show that
+\[
+ \tau_C(a)=e^a-e^{-a}+2a,
+ \qquad
+ \tau_L(a)=a+1-e^{-a}.
+\]
+Deduce that \(\tau_C(a)\sim e^a\) and \(\tau_L(a)\sim a\) as
+\(a\to\infty\).
+\item Show that the Fisher information of the Bernoulli policy is
+\[
+ F(z)=p(z)(1-p(z)).
+\]
+For the expected reward \(J(z)=p(z)\), show that its natural-gradient flow is
+\(\dot z_{\rm NG}(t)=1\), and hence that the flow reaches \(z=0\) at time
+\(a\).
+\item Explain why this example is an optimization failure rather than a
+nonsmooth-loss, exploration, delayed-credit, or gradient-estimation failure.
+Your explanation must also state why multiplying the direct-cost gradient by
+one fixed positive constant cannot remove its exponential dependence on \(a\),
+whereas log loss and natural gradient use state-dependent rescaling.
+\end{enumerate}
+\begin{hints}
+For (b), if \(\dot z=g(z)>0\), separate variables to express the hitting time
+as an integral of \(1/g(z)\).
+\end{hints}
+\end{exercisechunk}

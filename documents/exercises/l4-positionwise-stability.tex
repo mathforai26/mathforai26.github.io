@@ -1,0 +1,19 @@
+% Shared exercise chunk: l4-positionwise-stability
+\begin{exercisechunk}
+\item \textbf{Parity as a Markov state.\suppmark}
+\label[exercise]{ex:positionwise-stability}
+\exerciseprofile{2}{2}{2}{\exproof\quad\excalculation\quad\exinterpretation}{%
+Represent parity as a Markov state and locate the final error in the stability
+bound.}
+Use the parity law \(P_{\mathrm{par}}\), independent fair-coin law
+\(Q_{\mathrm{coin}}\), and cost \(c_{\mathrm{par}}\) from
+\cref{ex:positionwise-loss}.
+Define the running parity \(Y_t=(\sum_{j=1}^t X_j)\bmod2\).
+Describe its Markov kernels under \(P_{\mathrm{par}}\) and
+\(Q_{\mathrm{coin}}\). Apply \cref{thm:markov-stability} to this
+state, for which \(c_{\mathrm{par}}=Y_T\). Show that the fitted
+kernels have contraction factor zero, all earlier local discrepancies
+vanish, and the final local discrepancy is \(1/2\).
+Why does contraction leave this final error unchanged?
+
+\end{exercisechunk}

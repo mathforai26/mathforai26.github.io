@@ -1,0 +1,23 @@
+\begin{exercisechunk}
+\item \textbf{Smooth descent can stop at the wrong value.}
+\label[exercise]{ex:l11-smoothness-trap}
+\exerciseprofile{1}{1}{1}{\excalculation\quad\exinterpretation}{%
+Distinguish convergence to stationarity from convergence to the global
+infimum.}
+Let $L(\theta)=1-\cos\theta$ for $\theta\in\R$.
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Prove that $L$ is $1$-smooth, determine $L^\star$, and identify all
+global minimizers.
+\item For arbitrary $\eta>0$, run gradient descent from $\theta_0=\pi$.
+Determine $\theta_t$, $L(\theta_t)$, and $|L'(\theta_t)|$ for every $t$.
+\item Explain precisely why the smooth nonconvex stationarity bound
+\[
+ \min_{0\le t<T}|L'(\theta_t)|^2
+ \le \frac{2(L(\theta_0)-L^\star)}{\eta T}
+\]
+does not imply that the objective value approaches $L^\star$ in this example.
+\end{enumerate}
+\begin{hints}
+Use $L'(\theta)=\sin\theta$ and the mean value theorem for the derivative.
+\end{hints}
+\end{exercisechunk}

@@ -8,7 +8,7 @@
 \usepackage{microtype}
 
 % Revision date: maintained by scripts/build_lecture_notes.py. Keep this command.
-\newcommand{\lecturerevised}{2026-09-28 20:44 UTC-06:00}
+\newcommand{\lecturerevised}{2026-10-09 23:46 UTC-07:00}
 \usepackage{eso-pic}
 \AddToShipoutPictureBG{%
   \AtPageLowerLeft{%
@@ -216,12 +216,13 @@ law of feedback.
 \end{example}
 
 Evaluation has the same dependence on its law. For a loss $\ell$, an
-evaluation set drawn from $P_{\rm eval}$ estimates
+evaluation set drawn from $P_{\rm eval}$ yields an empirical average that estimates
 \[
  L_{P_{\rm eval}}(f)=\E_{P_{\rm eval}}[\ell(f(X),Y)].
 \]
-It estimates deployment risk when its construction represents the deployment
-law, or when a separate argument relates the two laws. Curation is therefore
+The empirical average estimates deployment risk when the construction of the
+evaluation set represents the deployment law, or when a separate argument
+relates the two laws. Curation is therefore
 part of evaluation as well as training.
 
 \section{Correct specification, misspecification, and coverage}
@@ -277,9 +278,9 @@ L_P(f)=H_P(Y\mid X)+
 \label{eq:conditional-logloss}
 \end{equation}
 If one model represents $p^\star(\cdot\mid x)$ at every deployment input,
-changing the input mixture does not change this population optimum. The
+changing the input mixture does not change this population-risk minimizer. The
 mixture can still change the number of observations at each input, the
-conditioning of the optimization problem, and which optimum is selected in an
+conditioning of the optimization problem, and which minimizer is selected in an
 overparameterized class.
 
 \begin{proposition}[Misspecification makes the mixture part of the target]
@@ -790,6 +791,7 @@ The probability that a binary-valued predictor differs from the binary label.
 \input{../exercises/l7-parity-identification.tex}
 \input{../exercises/l7-parity-representation.tex}
 \input{../exercises/l7-correlation-loss.tex}
+\input{../exercises/l7-mixture-compromise.tex}
 
 \clearpage
 \begin{thebibliography}{99}

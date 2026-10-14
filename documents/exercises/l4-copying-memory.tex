@@ -1,0 +1,20 @@
+% Shared exercise chunk: l4-copying-memory
+\begin{exercisechunk}
+\item \textbf{Memory required for exact copying.\suppmark}
+\label[exercise]{ex:copying-memory}
+\exerciseprofile{2}{1}{2}{\exproof\quad\excalculation\quad\exinterpretation}{%
+Distinguish the short description of a copying rule from the growing context or
+state information required to execute it.}
+Use the copying process and bounded-context models from
+\cref{ex:copying-context}.
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Explain why more training data cannot remove this error for
+a fixed \(w\). How must \(w\) grow to predict every copied bit exactly?
+\item Show that an exact recurrent generator must distinguish
+\(2^m\) states after generating a fresh length-\(m\) block, and hence
+needs at least \(m\) bits of state information.
+Compare the description length of the copying rule with its memory
+requirement. Relate the distinction to recalling earlier definitions
+or intermediate results in a mathematical argument.
+\end{enumerate}
+\end{exercisechunk}

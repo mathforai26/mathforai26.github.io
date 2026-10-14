@@ -1,0 +1,22 @@
+\begin{exercisechunk}
+\item \textbf{Observed-state HMM estimates.}
+\label[exercise]{ex:l5-observed-hmm}
+\exerciseprofile{2}{1}{1}{\exproof\quad\excalculation\quad\exinterpretation}{%
+Derive transition and emission maximum-likelihood estimates and identify the
+parameters left undetermined by unvisited states.}
+Suppose the hidden states in the finite HMM of \cref{eq:hmm-joint} are
+observed. Define
+\[
+ N_{ij}=\sum_{t=1}^T\I\{S_{t-1}=j,S_t=i\},
+ \qquad
+ H_{aj}=\sum_{t=1}^T\I\{X_t=a,S_t=j\}.
+\]
+Show that, whenever the denominators are positive, the maximum-likelihood
+estimates are
+\[
+ \widehat A_{ij}=\frac{N_{ij}}{\sum_kN_{kj}},
+ \qquad
+ \widehat C_{aj}=\frac{H_{aj}}{\sum_bH_{bj}}.
+\]
+Identify the columns left undetermined when a denominator is zero.
+\end{exercisechunk}

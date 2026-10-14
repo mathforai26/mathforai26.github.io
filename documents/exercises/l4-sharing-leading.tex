@@ -1,0 +1,20 @@
+% Shared exercise chunk: l4-sharing-leading
+\begin{exercisechunk}
+\item \textbf{The asymptotic constant for pooled estimation.\suppmark}
+\label[exercise]{ex:sharing-leading}
+\exerciseprofile{4}{3}{4}{\exproof\quad\excalculation}{%
+Derive the uniform local expansion that gives the asymptotically sharp
+\(d(T)/(2n)\) sequence-KL rate.}
+Use the independent-bit models and pooled estimator from
+\cref{sec:parameter-sharing}. All expectations below average over the
+training observations. Fix \(0<a<1/2\). For fixed \(p\in(0,1)\), prove
+\(L\,\E[\kl(p,\widehat p)]\to1/2\) as \(L\to\infty\).
+Deduce \cref{eq:shared-bernoulli,eq:unshared-bernoulli}, keeping track
+of which of \(n,T\) is fixed in each limit.
+Make the expansion uniform for \(p\in[a,1-a]\) and prove
+\cref{eq:sharing-leading} when \(n\min_jm_j\to\infty\).
+\begin{hints}
+Expand \(\kl(p,q)\) near \(q=p\) and use a binomial tail bound for the
+remaining event.
+\end{hints}
+\end{exercisechunk}

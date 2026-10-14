@@ -2,26 +2,50 @@
 \begin{exercisechunk}
 \item \textbf{Latent likelihood and the forward algorithm.}
 \label[exercise]{ex:latent-likelihood}
-Use the hidden Markov model in \cref{eq:hmm-likelihood}, with
-\(d\) hidden states, transition matrix \(A\), emission matrix
-\(C\), and initial law \(\pi\).
-\begin{enumerate}[(a),beginpenalty=10000]
-\item Derive the likelihood by summing the joint law of hidden states
-and observations. How many hidden trajectories appear?
-\item Starting from \(\Lambda_0=\pi\), derive the recursion
+\exerciseprofile{2}{2}{2}{\exproof\quad\excalculation\quad\exinterpretation}{%
+Derive the forward recursion and explain why it replaces enumeration of
+$d^{T+1}$ hidden trajectories by $O(Td^2)$ computation.}
+Let \(d,N,T\) be positive integers. Let
+\(\pi\in[0,1]^d\) be a probability vector, and let
+\(A\in[0,1]^{d\times d}\) and \(C\in[0,1]^{N\times d}\) satisfy
 \[
- \Lambda_t=\diag(C_{X_t,1},\ldots,C_{X_t,d})A\Lambda_{t-1},
- \qquad Q_\theta(X_{1:T})=\mathbf1^\top\Lambda_T.
+ \sum_{i=1}^d A_{ij}=1,
+ \qquad
+ \sum_{a=1}^N C_{aj}=1
+ \quad\text{for every }j\in[d].
 \]
-Prove that \(\Lambda_t(j)\) is the joint mass the model assigns to
-the observed prefix and hidden state \(j\) at time \(t\).
-Explain the \(O(Td^2)\) arithmetic cost.
-\item If \(S_{0:T}\) were observed, write the transition and emission
-counts that appear in the complete-data log likelihood.
-What replaces those counts when the hidden trajectory is averaged
-under its posterior given \(X_{1:T}\)?
-\item For a continuous state model with initial density \(\pi_\theta\),
-transition density \(a_\theta(s'\mid s)\), and emission density
-\(b_\theta(x\mid s)\), write the corresponding trajectory integral.
+Let \(Q\) be the joint probability mass function of a hidden Markov model on
+\[
+ [d]^{T+1}\times[N]^T.
+\]
+The initial-state pmf is \(\pi\). Given previous state \(j\), the next-state
+pmf is the column \(A_{\mathord\cdot j}\). Given current state \(j\), the
+emission pmf is the column \(C_{\mathord\cdot j}\). These conditional pmfs do
+not depend on \(t\).
+Fix \(x_{1:T}\in[N]^T\). For \(s_{0:T}\in[d]^{T+1}\), write
+\(Q(s_{0:T},x_{1:T})\) for the joint mass and \(Q(x_{1:T})\) for the
+marginal mass of \(x_{1:T}\).
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Derive
+\[
+ Q(s_{0:T},x_{1:T})=\pi_{s_0}
+ \prod_{t=1}^T A_{s_ts_{t-1}}C_{x_ts_t},
+ \qquad
+ Q(x_{1:T})=\sum_{s_{0:T}\in[d]^{T+1}}
+ \pi_{s_0}\prod_{t=1}^T A_{s_ts_{t-1}}C_{x_ts_t}.
+\]
+Verify that the sum has \(d^{T+1}\) terms.
+\item For \(t\in[T]\), let \(Q_t\) be the joint marginal pmf on
+\([N]^t\times[d]\). Define \(\Lambda_0=\pi\) and
+\(\Lambda_t\in\mathbb R^d\) by
+\(\Lambda_t(j)=Q_t(x_{1:t},j)\) for \(j\in[d]\).
+Derive a recursion for \(\Lambda_t\) and show that, in vector form, it is
+\[
+ \Lambda_t=\diag(C_{x_t,1},\ldots,C_{x_t,d})A\Lambda_{t-1}.
+\]
+\item Let \(\mathbf1\in\mathbb R^d\) be the all-ones vector. Show that
+\(Q(x_{1:T})=\mathbf1^\top\Lambda_T\) and that the recursion
+evaluates it in \(O(Td^2)\) arithmetic operations, rather than summing
+\(d^{T+1}\) terms.
 \end{enumerate}
 \end{exercisechunk}

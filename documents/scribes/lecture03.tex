@@ -7,7 +7,7 @@
 \usepackage{microtype}
 
 % Revision date: maintained by scripts/build_lecture_notes.py. Keep this command.
-\newcommand{\lecturerevised}{2026-09-16 09:57 UTC-06:00}
+\newcommand{\lecturerevised}{2026-10-09 23:51 UTC-07:00}
 \usepackage{eso-pic}
 \AddToShipoutPictureBG{%
   \AtPageLowerLeft{%
@@ -542,8 +542,9 @@ excess log loss:
 \end{equation}
 Its proof is \cref{ex:pinsker}.
 
-This raises a sharper question: would total variation select the same efficient
-estimator as KL? In the regular finite-dimensional setting, the answer is yes.
+The one-sided Pinsker bound raises a sharper question: would total variation
+select the same efficient estimator as KL? In the regular finite-dimensional
+setting, the answer is yes.
 
 \begin{proposition}[Efficiency measured by total variation]
 \label{prop:tv-efficiency}
@@ -693,10 +694,13 @@ using $q$ instead of $p$ is
 =\sum_{x=1}^N p(x)\log_2\frac{p(x)}{q(x)}.
 \label{eq:coding-regret}
 \end{equation}
-This is relative entropy measured in bits. Thus KL is the expected codelength
+The final expression in \cref{eq:coding-regret} is relative entropy measured
+in bits. Thus KL is the expected codelength
 penalty for using probabilities $q$ when the data have distribution $p$.
 
-For an autoregressive model $Q$,
+For an autoregressive law \(Q\), write
+\(Q(x_t\mid x_{<t})\) for the conditional probability mass assigned to token
+\(x_t\) after prefix \(x_{<t}\). Then
 \begin{align}
 -\log_2 Q(x_{1:T})
 &=-\log_2\prod_{t=1}^TQ(x_t\mid x_{<t})
@@ -719,7 +723,7 @@ If the measured average is $b$ bits per token, its \emph{perplexity} is
 =\left(\prod_{t=1}^T\frac{1}{Q(x_t\mid x_{<t})}\right)^{1/T}.
 \label{eq:perplexity}
 \end{equation}
-This is the geometric mean of the inverse probabilities assigned to the
+The quantity $2^b$ is the geometric mean of the inverse probabilities assigned to the
 realized tokens.\endnote{\textbf{Interpreting perplexity.}
 Perplexity can be read as an effective branching factor when the next-token
 uncertainty behaves roughly like a uniform choice among a fixed number of
@@ -1435,7 +1439,8 @@ weights:
 =\frac1T\frac{1}{\tfrac12(1/v_a+1/v_b)}.
 \label{eq:oracle-estimator}
 \end{equation}
-It is an oracle because $v_a$ and $v_b$ depend on the unknown parameter.
+The estimator $\widehat\theta_{\rm oracle}$ is an oracle because $v_a$ and
+$v_b$ depend on the unknown parameter.
 
 The likelihood equation is
 \begin{equation}

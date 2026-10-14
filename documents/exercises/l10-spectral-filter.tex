@@ -1,0 +1,44 @@
+\begin{exercisechunk}
+\item \textbf{Early stopping as a spectral filter.}\suppmark
+\label[exercise]{ex:l10-spectral-filter}
+\exerciseprofile{2}{2}{2}{\exproof\quad\excalculation\quad\exinterpretation}{%
+Diagonalize least-squares gradient descent and interpret stopping time as
+eigendirection-dependent regularization.}
+Let $H=\mathbf X^\top\mathbf X$, $b=\mathbf X^\top y$, $w_0=0$, and
+\[
+ w_{t+1}=(I-\eta H)w_t+\eta b,
+ \qquad 0<\eta<2/\|H\|_{\mathrm{op}}.
+\]
+Let $H=\sum_{j=1}^d\lambda_jq_jq_j^\top$ be an orthonormal
+eigendecomposition.
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Prove that
+\[
+ w_t=\sum_{j:\lambda_j>0}
+ \frac{1-(1-\eta\lambda_j)^t}{\lambda_j}
+ \langle q_j,b\rangle q_j.
+\]
+Justify why the coordinates with $\lambda_j=0$ vanish.
+
+\item Define
+$g_t(\lambda)=[1-(1-\eta\lambda)^t]/\lambda$. Show that
+$g_t(\lambda)\to1/\lambda$ for every positive eigenvalue. For
+$0\le\eta\lambda\le1$, prove
+\[
+ 1-e^{-\eta\lambda t}
+ \le 1-(1-\eta\lambda)^t
+ \le \eta\lambda t.
+\]
+Use these bounds to identify the transition scale in $\lambda$.
+
+\item Ridge regression uses the filter
+$g_\rho(\lambda)=1/(\lambda+\rho)$. Compare the limiting behavior of
+$g_t$ and $g_\rho$ when $\lambda$ is much larger or much smaller than
+$1/(\eta t)$ and $\rho$, respectively. State the sense in which early
+stopping regularizes small-eigenvalue directions.
+\end{enumerate}
+\begin{hints}
+For (a), unroll the affine recursion and sum a geometric series in each
+eigendirection. For (b), use $1-x\le e^{-x}$ and Bernoulli's inequality.
+\end{hints}
+\end{exercisechunk}

@@ -2,7 +2,10 @@
 \begin{exercisechunk}
 \item \textbf{Task costs at a given learning rate.\suppmark}
 \label[exercise]{ex:sharing-costs}
-Prove \cref{prop:sharing-full-cost} using the following construction.
+\exerciseprofile{3}{2}{3}{\exproof\quad\excalculation\quad\exconstruction\quad\exinterpretation}{%
+Construct estimators with the same expected sequence-KL rate whose attainable
+task costs fill sharply different intervals.}
+Use the following construction to prove the stated KL rate and cost intervals.
 At each horizon \(T\), partition
 the first \(T\) positions into \(\lceil d(T)\rceil\) nonempty groups.
 Let the \(U_t\) be independent fair bits and \(V_t=0\) under \(P\).
@@ -25,8 +28,15 @@ and, for any law $R$ supported on $v_{1:T}\ne0^T$, define
 partition, so the mixture weight can be used by the estimator.
 \item Compute \(\E[\KL(P_T,\widehat Q_R)]\) and show that it has
 order \(d(T)/n\), independently of \(R\).
-\item Determine the full attainable intervals for the expected terminal
-and counting costs as \(R\) varies. Identify laws attaining the endpoints.
+\item Writing
+$\kappa_n(T)=\E[\KL(P_T,\widehat Q_R)]$, show that the full attainable
+intervals for the expected terminal and counting costs as \(R\) varies are
+\[
+ [0,1-e^{-\kappa_n(T)/2}]
+ \quad\text{and}\quad
+ [1-e^{-\kappa_n(T)/2},T(1-e^{-\kappa_n(T)/2})],
+\]
+respectively. Identify laws attaining the endpoints.
 \end{enumerate}
 
 \end{exercisechunk}

@@ -1,0 +1,71 @@
+% Shared exercise chunk: l4-positionwise-fitting
+\begin{exercisechunk}
+\item \textbf{Fitting parity with independent-bit models.\suppmark}
+\label[exercise]{ex:positionwise-fitting}
+\exerciseprofile{2}{2}{2}{\exproof\quad\excalculation}{%
+Compare fitting the parity law directly with fitting it using independent-bit
+models.}
+Let \(T\ge2\), let \(\cX=\{0,1\}^T\), and define
+\[
+ \operatorname{par}(x_{<T})
+ =\left(\sum_{t=1}^{T-1}x_t\right)\bmod 2,
+ \qquad x_{<T}\in\{0,1\}^{T-1}.
+\]
+For \(t\in[T]\), let \(X_t:\cX\to\{0,1\}\) be the \(t\)-th
+coordinate map, and write \(X_{<T}=(X_1,\ldots,X_{T-1})\).
+Let \(P_{\mathrm{par}}\) be the probability mass function on \(\cX\)
+under which
+the first \(T-1\) bits are independent fair coins and the last bit is their
+parity. Let \(Q_{\mathrm{coin}}\) be the probability mass function on
+\(\cX\)
+under which all \(T\) bits are independent fair coins. Fix \(n\ge1\) and
+points \(x^{(1)},\ldots,x^{(n)}\in\cX\) satisfying
+\(P_{\mathrm{par}}(x^{(i)})>0\) for every \(i\in[n]\). For any probability
+mass function \(Q\) on \(\cX\), define its empirical log loss per token on
+these points by
+\[
+\widehat L_n(Q)=-\frac1{nT}\sum_{i=1}^n\log Q(x^{(i)}).
+\]
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Show that
+\[
+ \widehat L_n(P_{\mathrm{par}})=\frac{T-1}{T}\log 2,
+ \qquad
+ \widehat L_n(Q_{\mathrm{coin}})=\log 2,
+ \qquad
+ \widehat L_n(Q_{\mathrm{coin}})-\widehat L_n(P_{\mathrm{par}})
+ =\frac{\log 2}{T}.
+\]
+Verify that for every \(x_{<T}\in\{0,1\}^{T-1}\),
+\[
+ P_{\mathrm{par}}\!\left(
+ X_T=\operatorname{par}(x_{<T})\mid X_{<T}=x_{<T}\right)=1,
+ \qquad
+ Q_{\mathrm{coin}}\!\left(
+ X_T=\operatorname{par}(x_{<T})\mid X_{<T}=x_{<T}\right)=\frac12.
+\]
+\item Let \(\cQ_{\mathrm{ind}}\) be the class of independent-bit laws
+\[
+ Q_q=\bigotimes_{t=1}^T\operatorname{Bernoulli}(q_t),
+ \qquad q=(q_1,\ldots,q_T)\in[0,1]^T.
+\]
+First verify that \(Q_{\mathrm{coin}}=Q_{(1/2,\ldots,1/2)}\) belongs to
+\(\cQ_{\mathrm{ind}}\). Then derive
+\[
+ \E_{P_{\mathrm{par}}}[-\log Q_q]
+ =\sum_{t=1}^T\left[-\frac12\log q_t-\frac12\log(1-q_t)\right]
+\]
+and show that the unique minimizer of the population sequence log loss over
+\(\cQ_{\mathrm{ind}}\) is \(Q_{\mathrm{coin}}\).
+\end{enumerate}
+
+\paragraph{Interpretation.}
+Part~(a) shows that one completely missed final-position dependency contributes
+only \((\log 2)/T\) to average per-token log loss, although the independent
+model assigns only probability \(1/2\) to the correct final bit. Part~(b)
+identifies the role of model
+misspecification: the best independent-bit law matches every one-coordinate
+marginal and is \(Q_{\mathrm{coin}}\), but no law in this class represents the
+parity dependency. Thus optimal fitting within a factorized class need not
+recover a sequence-level dependency.
+\end{exercisechunk}

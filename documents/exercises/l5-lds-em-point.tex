@@ -1,0 +1,19 @@
+% Shared exercise chunk: l5-lds-em-point
+\begin{exercisechunk}
+\item \textbf{A posterior-mean approximation to the M-step.}
+\label[exercise]{ex:l5-lds-em-point}
+\exerciseprofile{2}{2}{2}{\excalculation\quad\exinterpretation}{%
+Identify the uncertainty terms lost when the exact conditional distribution is
+replaced by its posterior-mean trajectory.}
+Use the setting and notation of \cref{ex:l5-lds-em}. Replace
+\(\Pi_{k,\mathrm{obs}}\), the exact conditional distribution of the hidden
+trajectory given \(z_{1:T,\mathrm{obs}}\), by a point mass at
+\((\mu_0,\ldots,\mu_T)\). Derive the resulting update for \(A\) when its
+required inverse exists, and identify the conditional covariance terms that
+this update omits. Explain why this point-trajectory update is not exact EM in
+general and need not inherit EM's likelihood-monotonicity guarantee.
+
+When \(\Pi_{k,\mathrm{obs}}\) has a nonsingular Gaussian density, its mean
+\((\mu_0,\ldots,\mu_T)\) is also its unique mode. The substitution therefore
+uses the most likely hidden trajectory.
+\end{exercisechunk}

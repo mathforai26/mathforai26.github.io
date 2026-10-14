@@ -1,0 +1,39 @@
+\begin{exercisechunk}
+\item \textbf{Softmax curvature as a variance.}
+\label[exercise]{ex:l11-softmax-curvature}
+\exerciseprofile{2}{2}{2}{\exproof\quad\excalculation}{%
+Express softmax curvature as categorical variance and obtain a global
+smoothness constant from the feature matrix.}
+Fix $x_i\in\R^p$, $y_i\in[K]$, and $W\in\R^{K\times p}$ with row $k$ equal
+to $w_k^\top$. Define
+\[
+ q_W(k\mid x_i)=\frac{e^{w_k^\top x_i}}
+  {\sum_{j=1}^Ke^{w_j^\top x_i}},
+ \qquad
+ L_n(W)=\frac1n\sum_{i=1}^n-\log q_W(y_i\mid x_i).
+\]
+Let $\Delta\in\R^{K\times p}$ have row $k$ equal to
+$\delta w_k^\top$.
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Derive
+\[
+ \nabla_{w_k}L_n(W)=\frac1n\sum_{i=1}^n
+ \bigl(q_W(k\mid x_i)-\I\{y_i=k\}\bigr)x_i.
+\]
+\item For fixed $W$ and $i$, let $Y_i^W$ have mass function
+$\P(Y_i^W=k)=q_W(k\mid x_i)$. Prove
+\[
+ \langle\Delta,\nabla^2L_n(W)\Delta\rangle_F
+ =\frac1n\sum_{i=1}^n
+ \operatorname{Var}\bigl((\delta w_{Y_i^W})^\top x_i\bigr).
+\]
+\item Using
+$\operatorname{Var}(a_Y)\le\|a\|_2^2/2$, prove that $L_n$ is
+$\lambda_{\max}(G)/2$-smooth in Frobenius norm, where
+$G=n^{-1}\sum_i x_ix_i^\top$.
+\end{enumerate}
+\begin{hints}
+For (b), differentiate along the scalar path $W+s\Delta$. For (c), write
+$n^{-1}\sum_i\|\Delta x_i\|_2^2$ as a trace.
+\end{hints}
+\end{exercisechunk}

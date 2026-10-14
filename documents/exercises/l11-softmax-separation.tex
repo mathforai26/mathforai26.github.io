@@ -1,0 +1,43 @@
+\begin{exercisechunk}
+\item \textbf{A gradient certificate from multiclass separation.}
+\label[exercise]{ex:l11-softmax-separation}
+\exerciseprofile{2}{2}{2}{\exproof\quad\excalculation}{%
+Convert a positive multiclass margin into a lower bound on the softmax
+gradient norm.}
+For fixed $x_i\in\R^p$, $y_i\in[K]$, and $W\in\R^{K\times p}$, define
+\[
+ q_W(k\mid x_i)=\frac{e^{w_k^\top x_i}}
+ {\sum_{j=1}^Ke^{w_j^\top x_i}},
+ \qquad
+ L_n(W)=\frac1n\sum_{i=1}^n-\log q_W(y_i\mid x_i).
+\]
+Suppose $\overline W\in\R^{K\times p}$ satisfies
+$\|\overline W\|_F\le1$ and
+\[
+ (\overline w_{y_i}-\overline w_k)^\top x_i\ge\gamma>0
+ \qquad(i\in[n],\ k\ne y_i).
+\]
+Let $\ell_i(W)=-\log q_W(y_i\mid x_i)$, and suppose
+$L_n(W)\le L_0$.
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Prove
+\[
+ -\langle\nabla L_n(W),\overline W\rangle_F
+ \ge\frac\gamma n\sum_{i=1}^n
+       \bigl(1-q_W(y_i\mid x_i)\bigr).
+\]
+\item Prove that $0<\ell_i(W)\le nL_0$ and, with
+$\rho_0=(1-e^{-nL_0})/(nL_0)$, that
+\[
+ 1-q_W(y_i\mid x_i)\ge\rho_0\ell_i(W).
+\]
+\item Deduce the gradient certificate
+\[
+ \|\nabla L_n(W)\|_F\ge\gamma\rho_0L_n(W).
+\]
+\end{enumerate}
+\begin{hints}
+Expand the inner product using the row-gradient formula. For (b), use the
+chord of the concave function $u\mapsto1-e^{-u}$ on $[0,nL_0]$.
+\end{hints}
+\end{exercisechunk}

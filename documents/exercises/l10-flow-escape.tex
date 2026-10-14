@@ -1,0 +1,52 @@
+\begin{exercisechunk}
+\item \textbf{Why steepest-descent flow escapes to infinity.}
+\label[exercise]{ex:l10-flow-escape}
+\exerciseprofile{2}{2}{2}{\exproof\quad\excalculation}{%
+Complete the descent argument that makes separable logistic loss vanish along
+unit steepest-descent flow.}
+Fix a linearly separable collection $z_1,\ldots,z_n\in\R^d$, let
+\[
+ L_n(w)=\frac1n\sum_{i=1}^n\log(1+e^{-\langle w,z_i\rangle}),
+\]
+and let $w(t)$ solve the unit steepest-descent flow
+\[
+ \dot w(t)=s_p(\nabla L_n(w(t))).
+\]
+Let $q$ be conjugate to $p$, let $\gamma_p^\star>0$ be the maximum
+normalized margin, and define
+\[
+ a_i(t)=\frac1{n(1+e^{\langle w(t),z_i\rangle})},
+ \qquad A(t)=\sum_{i=1}^n a_i(t).
+\]
+Set $L_0=L_n(w(0))$.
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Prove
+\[
+ \|\nabla L_n(w(t))\|_q\ge\gamma_p^\star A(t)
+\]
+and
+\[
+ -\frac{d}{dt}L_n(w(t))=\|\nabla L_n(w(t))\|_q.
+\]
+
+\item Prove that $L_n(w(t))\le L_0$ and that
+\[
+ A(t)\ge e^{-nL_0}L_n(w(t)).
+\]
+
+\item Deduce the explicit bound
+\[
+ L_n(w(t))
+ \le L_0\exp\bigl(-\gamma_p^\star e^{-nL_0}t\bigr).
+\]
+Conclude that every margin $\langle w(t),z_i\rangle$ tends to infinity and
+that $\|w(t)\|_p\to\infty$.
+\end{enumerate}
+\begin{hints}
+For (b), put $x_i=e^{-\langle w(t),z_i\rangle}$. Use
+$x_i\ge\log(1+x_i)$ and
+$\log(1+x_i)\le nL_n(w(t))\le nL_0$.
+For (c), apply the differential inequality from parts (a)--(b), then use the
+fact that the loss is a finite sum of nonnegative terms.
+\end{hints}
+\end{exercisechunk}

@@ -1,0 +1,17 @@
+\begin{exercisechunk}
+\item \textbf{Parallel scans of affine recurrences.}
+\label[exercise]{ex:l5-affine-scan}
+\exerciseprofile{3}{2}{2}{\exproof\quad\excalculation\quad\exinterpretation}{%
+Derive the work, depth, and storage costs of affine scans and identify the
+advantage of diagonal transitions.}
+For affine maps, define
+\[
+ (A_2,b_2)\circ(A_1,b_1)=(A_2A_1,A_2b_1+b_2).
+\]
+Verify that this operation is associative. Show that a dense
+$d$-dimensional sequential recurrence has $O(Td^2)$ work and $O(T)$
+sequential depth, while a work-inefficient dense parallel scan has
+$O(Td^3)$ work and $O(\log T)$ composition depth. Compare their activation
+storage. Then show that diagonal transitions reduce the scan to $O(Td)$ work,
+$O(\log T)$ composition depth, and $O(Td)$ storage.
+\end{exercisechunk}

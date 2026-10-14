@@ -1,0 +1,95 @@
+\begin{exercisechunk}
+\item \textbf{The discrete steepest-descent estimate.}\suppmark
+\label[exercise]{ex:l10-discrete-steepest}
+\exerciseprofile{3}{2}{3}{\exproof\quad\excalculation\quad\exinterpretation}{%
+Prove a discrete margin estimate and distinguish unit and scaled
+steepest-descent stepsizes.}
+Fix linearly separable vectors $z_1,\ldots,z_n\in\R^d$, let
+\[
+ L_n(w)=\frac1n\sum_{i=1}^n\log(1+e^{-\langle w,z_i\rangle}),
+ \qquad
+ \gamma_p^\star
+ =\max_{\|u\|_p\le1}\min_{i\in[n]}\langle u,z_i\rangle,
+\]
+and let $q$ be conjugate to $p$. For $g\ne0$, choose
+\[
+ s_p(g)\in\operatorname*{arg\,min}_{\|v\|_p=1}\langle g,v\rangle,
+\]
+so that
+$\|s_p(g)\|_p=1$ and
+$\langle-g,s_p(g)\rangle=\|g\|_q$.
+Suppose that $L_n$ is $B$-smooth relative to $\|\cdot\|_p$: for all
+$w,\Delta$,
+\[
+ L_n(w+\Delta)
+ \le L_n(w)+\langle\nabla L_n(w),\Delta\rangle
+       +\frac B2\|\Delta\|_p^2.
+\]
+Consider the scaled discrete update
+\[
+ w_{t+1}=w_t+\eta_t\|g_t\|_q s_p(g_t),
+ \qquad g_t=\nabla L_n(w_t).
+\]
+Assume $\eta_t\to0$, $L_n(w_t)\to0$, and
+\[
+ \sum_{t=0}^\infty\eta_t\|g_t\|_q=\infty.
+\]
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Prove the one-step inequalities
+\begin{align*}
+ L_n(w_{t+1})
+ &\le L_n(w_t)-\eta_t\|g_t\|_q^2
+       +\frac B2\eta_t^2\|g_t\|_q^2,\\
+ \|w_{t+1}\|_p-\|w_t\|_p
+ &\le\eta_t\|g_t\|_q.
+\end{align*}
+
+\item Define
+\[
+ A_t=\frac1n\sum_{i=1}^n
+ \frac1{1+e^{\langle w_t,z_i\rangle}}.
+\]
+Prove that
+\[
+ \frac{A_t}{L_n(w_t)}\longrightarrow1
+ \quad\text{and}\quad
+ \|g_t\|_q\ge\gamma_p^\star A_t.
+\]
+Deduce that for every $\varepsilon>0$ and all sufficiently large $t$,
+\[
+ \log\frac{L_n(w_t)}{L_n(w_{t+1})}
+ \ge(\gamma_p^\star-\varepsilon)
+       \eta_t\|g_t\|_q.
+\]
+
+\item Sum the inequalities from parts (a)--(b) and prove
+\[
+ \gamma_p(w_t)\longrightarrow\gamma_p^\star.
+\]
+
+\item A unit-direction update has the form
+\[
+ w_{t+1}=w_t+\alpha_t s_p(g_t).
+\]
+Show that the unit-direction update equals the scaled update in this exercise
+exactly when
+$\alpha_t=\eta_t\|g_t\|_q$. Deduce the following translations:
+\begin{enumerate}[(i)]
+\item gradient descent with multiplier $\beta_t$ is represented by $p=2$,
+$\eta_t=\beta_t$, and unit-direction length
+$\alpha_t=\beta_t\|g_t\|_2$;
+\item signed gradient descent with multiplier $\beta_t$ is represented by $p=\infty$,
+$\alpha_t=\beta_t$, and scaled multiplier
+$\eta_t=\beta_t/\|g_t\|_1$ whenever $g_t\ne0$.
+\end{enumerate}
+Explain why a stepsize theorem for the scaled update cannot be applied to
+signed gradient descent without checking the transformed multipliers.
+\end{enumerate}
+\begin{hints}
+For (b), use $-\log(1-x)\ge x$ after applying the one-step loss bound, and
+use $\eta_t\to0$ to absorb the quadratic term. For (c), compare both
+$-\log L_n(w_t)$ and $\|w_t\|_p$ with
+$\sum_{s<t}\eta_s\|g_s\|_q$; then use
+$-\log L_n(w_t)=\min_i\langle w_t,z_i\rangle+O(1)$.
+\end{hints}
+\end{exercisechunk}

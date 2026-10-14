@@ -1,0 +1,32 @@
+\begin{exercisechunk}
+\item \textbf{The identified softmax subspace.}
+\label[exercise]{ex:l11-softmax-invariance}
+\exerciseprofile{1}{1}{1}{\exproof\quad\excalculation}{%
+Remove the parameter directions that cannot change fitted softmax
+probabilities.}
+Fix $x_i\in\R^p$, $y_i\in[K]$, and $W\in\R^{K\times p}$ with row $k$ equal
+to $w_k^\top$. Define
+\[
+ q_W(k\mid x_i)=\frac{e^{w_k^\top x_i}}
+ {\sum_{j=1}^Ke^{w_j^\top x_i}},
+ \qquad
+ L_n(W)=\frac1n\sum_{i=1}^n-\log q_W(y_i\mid x_i).
+\]
+Let $\mathbf 1\in\R^K$ be the all-ones vector.
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Prove that for every $a\in\R^p$,
+\[
+ q_{W+\mathbf1a^\top}(k\mid x_i)=q_W(k\mid x_i)
+\]
+for every $i,k$, and hence the loss is invariant under this transformation.
+\item Prove that the rows of $\nabla_WL_n(W)$ sum to zero. Deduce that if
+$\sum_k w_{0,k}=0$, then gradient descent preserves this equality.
+\item Let $v\in\R^p$ satisfy $v^\top x_i=0$ for every $i$. Explain why adding
+an arbitrary multiple of $v$ to any row of $W$ cannot change the fitted
+probabilities.
+\end{enumerate}
+\begin{hints}
+In (a), cancel the common factor $e^{a^\top x_i}$ in the softmax ratio. In
+(b), sum the row-gradient formula over $k$.
+\end{hints}
+\end{exercisechunk}

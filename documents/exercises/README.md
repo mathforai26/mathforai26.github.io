@@ -13,6 +13,14 @@ The `exercisechunk` environment handles printed numbering; the ID does not
 change when the printed number changes. The `hints` environment owns hint
 formatting. Keep exercise labels unique throughout the course.
 
+When several focused exercises develop one topic, give each exercise its own
+stable ID, chunk, profile, and solution, and give their catalog entries the
+same `group` value. Add one matching `\exercisegroup{...}` before the inputs in
+the lecture source. The bundle builder prints catalog groups automatically.
+If split solutions share substantial text, `solution_file` may override the
+usual `<id>-solution.tex` filename and `solution_dependencies` may list private
+helper files that the solution bundle must copy.
+
 General instructions require justification for every answer, including yes/no
 answers. Their wording is shared in `\exerciseinstructions` in
 `course-exercises.sty`. Lecture exercise sections invoke this command; the
@@ -20,6 +28,45 @@ builder includes it automatically in the instructor book and both homework
 variants, in addition to the assignment-specific JSON instructions.
 When editing prompts, specify the output or quantity students should determine;
 avoid vague requests such as "What happens?".
+
+## Exercise profiles
+
+Use the [exercise-profile guidelines](exercise-profile-guidelines.md) to assign
+and audit the ratings. They define the student model, separate intellectual
+difficulty from execution burden, and give the required calibration procedure.
+
+Place `\exerciseprofile` immediately after the exercise title and label:
+
+```tex
+\exerciseprofile{2}{2}{2}{\exproof\quad\excalculation}{%
+Derive the forward recursion and explain why it avoids enumerating hidden
+trajectories.}
+```
+
+The first argument is difficulty: 1 is a direct application, 2 uses a familiar
+method, 3 combines several ideas, and 4 is a substantial challenge. The second
+is technical load: 1 is light, 2 is sustained, and 3 is dense. The third is
+estimated time: 1 is under 20 minutes, 2 is 20--45 minutes, 3 is 45--90
+minutes, and 4 is more than 90 minutes. The fourth lists one or more task types
+in this canonical order: `\exproof`, `\excalculation`, `\exconstruction`,
+`\excomputation`, and `\exinterpretation`. Omit inapplicable types without
+changing the order of those retained. The final argument is one specific
+learning gain.
+
+The printed profile uses mountains for difficulty, cogs for technical load,
+and hourglasses for time. Filled pictograms show the rating and pale pictograms
+show the unused part of the scale. The profile line contains pictograms only;
+the target pictogram introduces the learning-gain sentence below it.
+Estimate time for the non-optional parts; optional extensions do not affect the
+hourglass rating.
+`\exerciseinstructions` prints the complete legend once at the start of every
+exercise section or bundle. Do not use the ratings as prerequisites or grading
+weights. Revisit estimates after students have attempted the exercise.
+
+A superscript asterisk, produced by `\suppmark`, marks an exercise based on
+supplementary lecture material. It is separate from the exercise profile: it
+does not encode difficulty and does not make the exercise optional when the
+exercise is assigned.
 
 Solutions are separate files in the private checkout:
 `instructor-materials/exercises/solutions/<id>-solution.tex`.
@@ -70,9 +117,10 @@ The student bundle has editable empty solution environments and contains no
 solution source files. Working outputs are ignored by Git and not published.
 
 Homework JSON supplies a title, revision, instructions, and an ordered list of
-exercise IDs. Optional `assigned` text can say which parts to complete without
-removing other parts. Optional `points` maps printed part labels to marks; the
-homework prints this allocation and its total outside the unchanged chunk.
+exercise IDs. Optional `points` is either the mark value for a whole exercise
+or a map from required printed part labels to marks. Parts omitted from a map
+may be declared optional in the homework's general instructions. The homework
+prints the allocation and its total outside the unchanged chunk.
 Homework solutions currently include the whole solution for each selected chunk.
 The sample is a development example, not an assigned or published homework.
 

@@ -1,0 +1,43 @@
+\begin{exercisechunk}
+\item \textbf{Joint densities and conditional laws.}
+\label[exercise]{ex:l5-continuous-em}
+\exerciseprofile{3}{3}{3}{\exproof\quad\excalculation\quad\exconstruction}{%
+Construct a conditional law from a common joint density and verify its
+disintegration identity.}
+Let \(Q_\theta\) be a family of probability laws on
+\(\cX\times\cY\), where \(\cX\) and \(\cY\) are standard Borel spaces.
+Fix sigma-finite reference measures \(P_X\) and \(P_Y\), put
+\(P=P_X\otimes P_Y\), and assume that \(Q_\theta\ll P\). Write
+\[
+ q_\theta(x,y)=\frac{dQ_\theta}{dP}(x,y),
+ \qquad
+ m_\theta(y)=\int_\cX q_\theta(x,y)\,P_X(dx).
+\]
+Let \(Q_\theta^{(Y)}\) denote the marginal law of \(Y\).
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Prove that \(Q_\theta^{(Y)}\ll P_Y\) and
+\[
+ \frac{dQ_\theta^{(Y)}}{dP_Y}(y)=m_\theta(y)
+ \quad\text{for \(P_Y\)-almost every \(y\)}.
+\]
+\item For \(y\) such that \(m_\theta(y)>0\), define
+\[
+ r_\theta(x\mid y)=\frac{q_\theta(x,y)}{m_\theta(y)}.
+\]
+Show that this is a probability density with respect to \(P_X\). For
+measurable \(A\subseteq\cX\), set
+\[
+ R_\theta(y,A)=\int_A r_\theta(x\mid y)\,P_X(dx).
+\]
+When \(m_\theta(y)=0\), define \(R_\theta(y,\cdot)\) to be any fixed
+probability law on \(\cX\).
+Verify that \(y\mapsto R_\theta(y,A)\) is measurable for each measurable
+\(A\subseteq\cX\), and, for measurable \(B\subseteq\cY\), that
+\[
+ Q_\theta(X\in A,Y\in B)
+ =\int_B R_\theta(y,A)\,Q_\theta^{(Y)}(dy).
+\]
+Conclude that \(R_\theta(y,\cdot)\) is a version of
+\(Q_\theta(X\in\cdot\mid Y=y)\).
+\end{enumerate}
+\end{exercisechunk}

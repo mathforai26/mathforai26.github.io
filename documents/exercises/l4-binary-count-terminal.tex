@@ -1,0 +1,15 @@
+% Shared exercise chunk: l4-binary-count-terminal
+\begin{exercisechunk}
+\item \textbf{Terminal cost at fixed KL.}
+\label[exercise]{ex:binary-count-terminal}
+\exerciseprofile{2}{1}{1}{\excalculation\quad\exinterpretation}{%
+Show that models with equal sequence KL can have terminal costs differing by a
+factor of order \(T\).}
+Use the setting and Markov generators from \cref{ex:binary-count}.
+Set \(\varepsilon=1-e^{-\kappa/T}\) for fixed \(\kappa>0\).
+Compute the two terminal costs and the ratio
+\(\E_{Q_{\mathrm{bad}}}[c_{\mathrm{fin}}]/
+\E_{Q_{\mathrm{ind}}}[c_{\mathrm{fin}}]\). Explain why this ratio is of order \(T\) even though the terminal cost range is
+fixed. Which model attains the terminal-cost upper endpoint?
+
+\end{exercisechunk}

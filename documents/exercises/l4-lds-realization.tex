@@ -1,0 +1,31 @@
+% Shared exercise chunk: l4-lds-realization
+\begin{exercisechunk}
+\item \textbf{Predictive-state realization.\suppmark}
+\label[exercise]{ex:lds-realization}
+\exerciseprofile{2}{2}{2}{\exproof\quad\excalculation}{%
+Track initialization, Hankel factorization, and coordinate invariance in a
+predictive-state realization.}
+Use \(M_{t+1}=FM_t+LZ_t\), \(\widehat Z_t=CM_t\), and
+\(K_j=CF^{j-1}L\) from \cref{eq:kalman-predictor,eq:history-coefficients}.
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Unroll the recurrence from a nonzero fixed \(M_1\) and show that
+\[
+ CM_t=CF^{t-1}M_1+\sum_{j=1}^{t-1}K_jZ_{t-j}.
+\]
+\item For an integer $q\ge1$, define
+\[
+ \mathcal O=(C^\top,(CF)^\top,\ldots,(CF^{q-1})^\top)^\top,
+ \qquad
+ \mathcal R=(L,FL,\ldots,F^{q-1}L).
+\]
+Verify, including the index shifts, that
+\[
+ [K_{i+j-1}]_{i,j=1}^q=\mathcal O\mathcal R,
+ \qquad
+ [K_{i+j}]_{i,j=1}^q=\mathcal O F\mathcal R.
+\]
+\item Show directly that replacing
+\((F,C,L)\) by \((T_0^{-1}FT_0,CT_0,T_0^{-1}L)\), with \(T_0\)
+invertible, preserves every history coefficient.
+\end{enumerate}
+\end{exercisechunk}

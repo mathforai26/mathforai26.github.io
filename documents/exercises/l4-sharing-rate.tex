@@ -1,0 +1,24 @@
+% Shared exercise chunk: l4-sharing-rate
+\begin{exercisechunk}
+\item \textbf{Finite-sample benefit of parameter sharing.\suppmark}
+\label[exercise]{ex:sharing-rate}
+\exerciseprofile{3}{2}{2}{\exproof\quad\excalculation\quad\exinterpretation}{%
+Prove matching-order finite-sample sequence-KL bounds and explain why group
+size cancels under pooled estimation.}
+Use the independent-bit models and pooled estimator from
+\cref{sec:parameter-sharing}. All expectations below average over the
+training observations. Fix \(0<a<1/2\). Apply \cref{ex:sharing} with
+\(L=nm_j\) to bound \(\kappa_n(T)\) from above.
+For the lower bound, calculate
+\[
+ \E[(\widehat p-p)^2]
+ =\frac{Lp(1-p)+(1-2p)^2}{(L+2)^2}.
+\]
+Use Pinsker's inequality and \(L/(L+2)\ge1/3\) to show that
+\[
+ \frac{2a(1-a)}9\frac{d(T)}n
+ \le\kappa_n(T)\le\frac{d(T)}n
+ \qquad\text{when }p_j\in[a,1-a].
+\]
+Explain why group sizes cancel from both bounds.
+\end{exercisechunk}

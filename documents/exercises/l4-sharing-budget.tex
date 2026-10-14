@@ -1,0 +1,16 @@
+% Shared exercise chunk: l4-sharing-budget
+\begin{exercisechunk}
+\item \textbf{Sequence length at a fixed token budget.\suppmark}
+\label[exercise]{ex:sharing-budget}
+\exerciseprofile{2}{2}{2}{\exproof\quad\excalculation\quad\exinterpretation}{%
+Determine how allocating a fixed training-token budget across longer sequences
+changes sequence KL and bounded-cost guarantees.}
+Use the grouped Bernoulli model and smoothed estimator from
+\cref{sec:parameter-sharing}. Assume \(p_j\in[a,1-a]\), with
+\(0<a<1/2\). Fix the total training-token budget \(L=nT\) and use
+\(\kappa'_L(T)=\kappa_{L/T}(T)\) to repeat the shared and unshared
+leading-order comparisons. Explain why increasing \(T\) worsens
+expected sequence KL in the shared model. Compare the numbers of
+observations per parameter in the two models. Translate the expected-KL bounds
+into bounds on the discrepancy of a cost in \([0,1]\).
+\end{exercisechunk}

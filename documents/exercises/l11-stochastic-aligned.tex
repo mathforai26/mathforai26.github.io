@@ -1,0 +1,57 @@
+\begin{exercisechunk}
+\item \textbf{Stochastic aligned directions.}
+\label[exercise]{ex:l11-stochastic-aligned}
+\exerciseprofile{2}{2}{2}{\exproof\quad\excalculation\quad\exinterpretation}{%
+Extend the PL recursion from unbiased stochastic gradients to conditionally
+aligned random directions.}
+Let $L:\R^d\to\R$ be $\beta$-smooth and $\mu$-PL, and consider
+\[
+ \Theta_{t+1}=\Theta_t+\eta D_t.
+\]
+Suppose that, conditional on $\Theta_t$, constants $c,C>0$ and
+$\sigma^2\ge0$ satisfy
+\[
+ -\E[\langle\nabla L(\Theta_t),D_t\rangle\mid\Theta_t]
+ \ge c\|\nabla L(\Theta_t)\|_2^2,
+ \qquad
+ \E[\|D_t\|_2^2\mid\Theta_t]
+ \le C^2\|\nabla L(\Theta_t)\|_2^2+\frac{\sigma^2}{B}.
+\]
+Assume
+\[
+ 0<\eta\le
+ \min\left\{\frac{c}{\beta C^2},\frac1{c\mu}\right\}.
+\]
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Prove the conditional recursion
+\[
+ \E[L(\Theta_{t+1})-L^\star\mid\Theta_t]
+ \le(1-\eta c\mu)(L(\Theta_t)-L^\star)
+    +\frac{\beta\eta^2\sigma^2}{2B}.
+\]
+\item With $\delta_t=\E[L(\Theta_t)-L^\star]$, prove
+\[
+ \delta_t
+ \le(1-\eta c\mu)^t\delta_0
+    +\frac{\beta\eta\sigma^2}{2Bc\mu}.
+\]
+\item Suppose $D_t=-G_t$, where
+\[
+ \E[G_t\mid\Theta_t]=\nabla L(\Theta_t),
+ \qquad
+ \E[\|G_t-\nabla L(\Theta_t)\|_2^2\mid\Theta_t]\le\frac vB.
+\]
+Identify valid values of $c,C,\sigma^2$ and show that part (a) becomes
+\[
+ \E[L(\Theta_{t+1})-L^\star\mid\Theta_t]
+ \le(1-\eta\mu)(L(\Theta_t)-L^\star)
+ +\frac{\beta\eta^2v}{2B}.
+\]
+\end{enumerate}
+\begin{hints}
+For (a), apply smoothness before taking the conditional expectation. For (b),
+sum a finite geometric series. For (c), use the conditional second-moment
+identity obtained by expanding
+$G_t=\nabla L(\Theta_t)+(G_t-\nabla L(\Theta_t))$.
+\end{hints}
+\end{exercisechunk}

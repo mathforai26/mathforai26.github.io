@@ -1,0 +1,20 @@
+% Shared exercise chunk: l4-fitting-minimizers
+\begin{exercisechunk}
+\item \textbf{Exact fitting and finite-class guarantees.\suppmark}
+\label[exercise]{ex:fitting-minimizers}
+\exerciseprofile{3}{2}{2}{\exproof\quad\excalculation\quad\exinterpretation}{%
+Separate empirical minimization from task quality and track how finite-class
+guarantees scale with sequence length and token budget.}
+Use the repeated-error generators from \cref{ex:binary-count} and all-zero
+training sequences.
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Remove \(P\) and use a finite collection of paired generators
+at distinct positive values of \(\varepsilon\). Identify all
+empirical minimizers. Explain why exact fitting leaves a tie between
+models of different task cost.
+\item Specialize \cref{thm:finite-mle} to zero-cost data, first for
+\(c\in[0,T]\) and then for \(c\in[0,1]\). Express each guarantee
+using the number of sequences \(n\), then using the token budget
+\(L=nT\).
+\end{enumerate}
+\end{exercisechunk}

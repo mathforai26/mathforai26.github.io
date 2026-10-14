@@ -1,0 +1,61 @@
+\begin{exercisechunk}
+\item \textbf{Initialization and the minimum-norm least-squares solution.}
+\label[exercise]{ex:l10-least-squares-selection}
+\exerciseprofile{2}{2}{2}{\exproof\quad\excalculation}{%
+Identify the invariant component of least-squares gradient descent and derive
+the solution selected by its initialization.}
+Fix $x_1,\ldots,x_n\in\R^d$ and $y_1,\ldots,y_n\in\R$. Let
+\[
+ \cR=\operatorname{span}\{x_1,\ldots,x_n\},
+ \qquad \dim(\cR)=n,
+\]
+let $\mathbf X\in\R^{n\times d}$ have row $i$ equal to $x_i^\top$, and set
+$y=(y_1,\ldots,y_n)^\top$. Define
+\[
+ L_n(w)=\frac12\sum_{i=1}^n
+ \bigl(\langle w,x_i\rangle-y_i\bigr)^2.
+\]
+Consider gradient descent
+\[
+ w_{t+1}=w_t-
+ \eta\sum_{i=1}^n
+ \bigl(\langle w_t,x_i\rangle-y_i\bigr)x_i,
+ \qquad 0<\eta<2/\|\mathbf X\|_{\mathrm{op}}^2.
+\]
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Derive the normal equation in both forms
+\[
+ \sum_{i=1}^n
+ \bigl(\langle w,x_i\rangle-y_i\bigr)x_i=0,
+ \qquad
+ \mathbf X^\top(\mathbf Xw-y)=0.
+\]
+Prove that $\dim(\cR)=n$ is equivalent to
+$\mathbf X\mathbf X^\top$ being nonsingular, and deduce that the normal
+equation is equivalent to $\mathbf Xw=y$.
+
+\item Define
+$w^\star=\mathbf X^\top(\mathbf X\mathbf X^\top)^{-1}y$.
+Prove that every minimizer of $L_n$ has the unique form
+\[
+ w^\star+v,
+ \qquad v\in\cR^\perp.
+\]
+Use the Pythagorean theorem to prove that $w^\star$ is the unique
+minimum-Euclidean-norm minimizer.
+
+\item Let $v_0$ be the orthogonal projection of $w_0$ onto $\cR^\perp$.
+Prove that the $\cR^\perp$ component of every iterate equals $v_0$ and that
+\[
+ w_t\longrightarrow w^\star+v_0.
+\]
+Deduce the limit for $w_0=0$, and give an initialization whose limit is not
+the minimum-norm minimizer.
+\end{enumerate}
+\begin{hints}
+For (a), use the rank of $\mathbf X$ and the fact that a full-column-rank
+matrix $\mathbf X^\top$ is one-to-one. For (b), first substitute $w^\star$
+into $\mathbf Xw=y$. For (c), every increment belongs to $\cR$; on $\cR$, use
+an eigenbasis of $\mathbf X^\top\mathbf X$.
+\end{hints}
+\end{exercisechunk}

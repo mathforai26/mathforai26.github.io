@@ -1,0 +1,82 @@
+\begin{exercisechunk}
+\item \textbf{Width, dead ReLUs, and tangent coverage.}\suppmark
+\label[exercise]{ex:l11-wide-relu}
+\exerciseprofile{2}{2}{2}{\exproof\quad\excalculation\quad\exinterpretation}{%
+Show how independent ReLU gates make complete gradient failure unlikely and
+relate the resulting calculation to fixed-kernel convergence.}
+For $w=(w_1,\ldots,w_m)\in\R^m$, let
+\[
+ f_m(w)=\frac1{\sqrt m}\sum_{r=1}^m[w_r]_+,
+ \qquad
+ L_m(w)=\frac12\bigl(f_m(w)-1\bigr)^2.
+\]
+Let $S_1,\ldots,S_m$ be independent random signs with
+$\P(S_r=1)=\P(S_r=-1)=1/2$, fix $a\in(0,1)$, and initialize
+\[
+ W_{r,0}=\frac{aS_r}{\sqrt m}.
+\]
+Gradient descent uses $W_{t+1}=W_t-\eta\nabla L_m(W_t)$ with
+$0<\eta\le1$. Define
+\[
+ Q=\sum_{r=1}^m\I\{S_r=1\}.
+\]
+
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Show that
+\[
+ \P(Q=0)=2^{-m},
+\]
+and that on the event $\{Q=0\}$ the iterates never move and
+$L_m(W_t)=1/2$ for every $t\ge0$.
+
+\item Condition on $Q=q>0$. Prove that the initially active coordinates
+remain positive, the initially inactive coordinates remain negative, and
+\begin{align*}
+ 1-f_m(W_t)
+ &=\left(1-\eta\frac qm\right)^t
+       \bigl(1-f_m(W_0)\bigr),\\
+ L_m(W_t)
+ &=\left(1-\eta\frac qm\right)^{2t}L_m(W_0).
+\end{align*}
+
+\item You may use Hoeffding's inequality in the form
+\[
+ \P\left(\frac Qm<\frac12-\delta\right)
+ \le e^{-2m\delta^2},
+ \qquad 0<\delta<\frac12.
+\]
+Prove that, with probability at least $1-e^{-2m\delta^2}$,
+\[
+ L_m(W_t)
+ \le\left(1-\eta(1/2-\delta)\right)^{2t}L_m(W_0)
+ \qquad\text{for every }t\ge0.
+\]
+Explain which failure of the single-ReLU model is removed by width and which
+fact about the individual inactive units remains unchanged.
+
+\item \emph{Optional extension.}
+Let $K_\infty\in\R^{n\times n}$ be symmetric and positive semidefinite, and
+suppose a residual vector follows
+\[
+ \dot r(t)=-K_\infty r(t).
+\]
+If
+$K_\infty=U\operatorname{diag}(\lambda_1,\ldots,\lambda_n)U^\top$
+with $U$ orthogonal, prove that
+\[
+ r(t)=U\operatorname{diag}
+       (e^{-\lambda_1t},\ldots,e^{-\lambda_nt})U^\top r(0).
+\]
+Deduce that $\|r(t)\|_2^2/2\le
+e^{-2\lambda t}\|r(0)\|_2^2/2$ when
+$K_\infty\succeq\lambda I_n$. Explain both what the fixed-kernel assumption
+makes exactly analyzable and what kind of network behavior it excludes.
+\end{enumerate}
+
+\begin{hints}
+For (b), first compute $f_m(W_0)$ and the derivative with respect to one
+active coordinate. Use induction to justify that the activation pattern does
+not change. For the optional extension, express the differential equation in
+the eigenbasis of $K_\infty$.
+\end{hints}
+\end{exercisechunk}

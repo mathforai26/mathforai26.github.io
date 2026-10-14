@@ -1,55 +1,79 @@
 % Shared exercise chunk: l4-positionwise-loss
 \begin{exercisechunk}
-\item \textbf{A missed dependency at the final prediction.\suppmark}
+\item \textbf{A missed dependency at the final position.\suppmark}
 \label[exercise]{ex:positionwise-loss}
-Let \(T\ge2\). Under \(P_{\mathrm{par}}\), the first \(T-1\) bits
+\exerciseprofile{1}{2}{2}{\excalculation}{%
+Show that sequence KL divided by sequence length can vanish while final-answer
+error stays fixed.}
+Let \(T\ge2\), let \(\cX=\{0,1\}^T\), and let
+\(P_{\mathrm{par}}\) and \(Q_{\mathrm{coin}}\) be probability mass functions
+on \(\cX\). Under \(P_{\mathrm{par}}\), the
+first \(T-1\) bits
 are independent fair coins and the last is their parity:
 \(X_T=(\sum_{t<T}X_t)\bmod2\). Under \(Q_{\mathrm{coin}}\), all
-\(T\) bits are independent fair coins. The task cost is
+\(T\) bits are independent fair coins. Define the task cost
+\(c_{\mathrm{par}}:\cX\to\{0,1\}\) by
 \[
  c_{\mathrm{par}}(x_{1:T})
  =\I\!\left\{x_T\ne\Bigl(\sum_{t<T}x_t\Bigr)\bmod2\right\}.
 \]
 \begin{enumerate}[(a),beginpenalty=10000]
-\item Compute the next-token KL at every position and prove
-\begin{equation}
- \begin{gathered}
- \KL(P_{\mathrm{par}}, Q_{\mathrm{coin}})=\log2,\qquad
- \frac{\KL(P_{\mathrm{par}}, Q_{\mathrm{coin}})}T
- =\frac{\log2}{T},\\
- \E_{P_{\mathrm{par}}}[c_{\mathrm{par}}]=0,\qquad
- \E_{Q_{\mathrm{coin}}}[c_{\mathrm{par}}]=\frac12.
- \end{gathered}
- \label{eq:parity-final-error}
-\end{equation}
-Verify that \cref{eq:positive-data-bound} is attained.
-Compare the effect of normalization with \cref{eq:endpoint-normalization}.
-\item For the model class \(\{P_{\mathrm{par}},Q_{\mathrm{coin}}\}\)
-and any sample from \(P_{\mathrm{par}}\), prove that returning
-\(Q_{\mathrm{coin}}\) has empirical per-token optimization gap
-\((\log2)/T\). What has been left unlearned when this gap is accepted?
-\item Now use the class of all independent-bit laws
-\(Q=\bigotimes_{t=1}^T\operatorname{Bernoulli}(q_t)\).
-Show that every bit is marginally fair under \(P_{\mathrm{par}}\),
-and deduce that \(Q_{\mathrm{coin}}\) uniquely minimizes population
-log loss in this class. Explain why the same prediction failure is
-now approximation error.
-\item If \(\KL(P, Q)/T\le\eta\), what is the largest possible
-final-position contribution
+\item Show that for every \(t<T\) and every
+\(x_{<t}\in\{0,1\}^{t-1}\),
 \[
- \E\!\left[\KL\bigl(P(\,\cdot\mid X_{<T})
-       , Q(\,\cdot\mid X_{<T})\bigr)\right],
- \qquad X_{1:T}\sim P,
+ P_{\mathrm{par}}(\mathord\cdot\mid x_{<t})
+ =Q_{\mathrm{coin}}(\mathord\cdot\mid x_{<t})
+ =\operatorname{Bernoulli}(1/2).
 \]
-in \cref{eq:population-kl}? Give an example attaining it.
-Compare the information supplied by the average and by the individual
-positionwise losses.
-\item Define the running parity \(Y_t=(\sum_{j=1}^t X_j)\bmod2\).
-Describe its Markov kernels under \(P_{\mathrm{par}}\) and
-\(Q_{\mathrm{coin}}\). Apply \cref{thm:markov-stability} to this
-state, for which \(c_{\mathrm{par}}=Y_T\). Show that the fitted
-kernels have contraction factor zero, all earlier local discrepancies
-vanish, and the final local discrepancy is \(1/2\).
-Why does contraction leave this final error unchanged?
+Show also that for every \(x_{<T}\in\{0,1\}^{T-1}\),
+\[
+ P_{\mathrm{par}}(\mathord\cdot\mid x_{<T})
+ =\delta_{\operatorname{par}(x_{<T})},
+ \qquad
+ Q_{\mathrm{coin}}(\mathord\cdot\mid x_{<T})
+ =\operatorname{Bernoulli}(1/2),
+\]
+where \(\operatorname{par}(x_{<T})=(\sum_{t<T}x_t)\bmod2\).
+
+\item Use the KL chain rule to show that
+\[
+ \KL(P_{\mathrm{par}},Q_{\mathrm{coin}})=\log 2,
+ \qquad
+ \frac{\KL(P_{\mathrm{par}},Q_{\mathrm{coin}})}{T}
+ =\frac{\log 2}{T}.
+\]
+
+\item Derive
+\[
+ \E_{P_{\mathrm{par}}}[c_{\mathrm{par}}]=0,
+ \qquad
+ \E_{Q_{\mathrm{coin}}}[c_{\mathrm{par}}]=\frac12,
+\]
+and verify the equality
+\[
+ \E_{Q_{\mathrm{coin}}}[c_{\mathrm{par}}]
+ =1-e^{-\KL(P_{\mathrm{par}},Q_{\mathrm{coin}})}.
+\]
+
+\item \label{ex:positionwise-loss:last}
+For this part, let $\cX$ be any finite alphabet,
+and let $P,Q$ be probability distributions on
+$\cX^+ = \cup_{t\ge 1} \cX^t$,
+the set of finite sequences taking values
+in $\cX$. Let $c:\cX^+\to [0,1]$.
+Assume that $\E_P[c]=0$.
+For $x\in \cX^+$, let $|x|$ denote its length.
+Assume that \(P(\cX^T)>0\) and \(Q(\cX^T)>0\) for every \(T\ge1\).
+For \(x\in\cX^T\), define the conditional probability mass functions
+\[
+ P_T(x)=\frac{P(x)}{P(\cX^T)},
+ \qquad
+ Q_T(x)=\frac{Q(x)}{Q(\cX^T)}.
+\]
+Show that \(\E_{P_T}[c]=0\) for every \(T\ge1\).
+Prove or disprove the following statement:
+If $\KL(P_T,Q_T)/T\to 0$ as $T\to\infty$ then $\lim_{T\to\infty}\E_{Q_T}[c]=0$.
+That is, if the average KL between $P_T$ and $Q_T$ vanishes,
+the cost under $Q_T$ vanishes.
 \end{enumerate}
 \end{exercisechunk}

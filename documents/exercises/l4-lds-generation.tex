@@ -1,0 +1,19 @@
+% Shared exercise chunk: l4-lds-generation
+\begin{exercisechunk}
+\item \textbf{Prediction memory and generation.\suppmark}
+\label[exercise]{ex:lds-generation}
+\exerciseprofile{1}{1}{1}{\excalculation\quad\exinterpretation}{%
+Identify why predictor memory can decay while generated-state differences
+grow.}
+Use \(M_{t+1}=FM_t+LZ_t\), \(\widehat Z_t=CM_t\), and
+\(K_j=CF^{j-1}L\) from \cref{eq:kalman-predictor,eq:history-coefficients}.
+For scalars \(F=1/2,C=1,L=3/4\), show that predictor-memory coefficients
+decay as
+\[
+ K_j=\frac34\left(\frac12\right)^{j-1},
+\]
+whereas differences between generated states are multiplied by
+$F+LC=5/4$. Identify why $F$ governs the first calculation and $F+LC$
+governs the second.
+
+\end{exercisechunk}

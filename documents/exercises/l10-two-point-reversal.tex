@@ -1,0 +1,47 @@
+\begin{exercisechunk}
+\item \textbf{A two-point population-risk reversal.}
+\label[exercise]{ex:l10-two-point-reversal}
+\exerciseprofile{2}{2}{2}{\exproof\quad\excalculation\quad\exinterpretation}{%
+Compute two norm-induced separators and relate their disagreement to expected
+population classification risk.}
+Let
+\[
+ z_0=(2,1)^\top,
+ \qquad u=(1,-3/2)^\top,
+ \qquad v=(-1,3/2)^\top.
+\]
+For $p\in\{2,\infty\}$, let $\widehat w_p$ minimize $\|w\|_p$ subject to
+the hard-margin constraints in an observed sample.
+\begin{enumerate}[(a),beginpenalty=10000]
+\item When every observed signed feature equals $z_0$, derive
+\[
+ \widehat w_2=(2/5,1/5)^\top,
+ \qquad
+ \widehat w_\infty=(1/3,1/3)^\top.
+\]
+Determine the sign of the score assigned by each vector to $u$ and to $v$.
+
+\item Fix $\delta\in(0,1)$. Under $P_2$, let $Z=z_0$ with probability
+$1-\delta$ and $Z=u$ with probability $\delta$. Under $P_\infty$, replace
+$u$ by $v$. In either law, draw $Y$ uniformly from $\{-1,1\}$ independently
+of $Z$ and set $X=YZ$. For an i.i.d. sample $S_n$, prove
+\begin{align*}
+ \E_{P_2^n}[R_{P_2}(\widehat w_2)]&=0,&
+ \E_{P_2^n}[R_{P_2}(\widehat w_\infty)]
+ &=\delta(1-\delta)^n,\\
+ \E_{P_\infty^n}[R_{P_\infty}(\widehat w_\infty)]
+ &=(1-\delta)\delta^n,&
+ \E_{P_\infty^n}[R_{P_\infty}(\widehat w_2)]
+ &=\delta(1-\delta)^n+(1-\delta)\delta^n.
+\end{align*}
+
+\item Maximize the risk difference over $\delta$ and determine its asymptotic
+order as $n\to\infty$. Explain in one sentence why the calculation gives no
+universal population-risk ordering of the two norm biases.
+\end{enumerate}
+\begin{hints}
+For (b), partition the samples into those containing only the common point,
+only the rare point, or both. A hard-margin solution classifies every support
+point that appears in its constraints.
+\end{hints}
+\end{exercisechunk}

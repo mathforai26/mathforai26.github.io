@@ -1,6 +1,9 @@
 \begin{exercisechunk}
 \item \textbf{Observed feedback does not imply Markov observations.}
 \label[exercise]{ex:l5-feedback}
+\exerciseprofile{2}{1}{1}{\exproof\quad\exconstruction}{%
+Construct a Markov state representation and verify that the observed process
+it generates is not first-order Markov.}
 Let \(W_t\) be iid Bernoulli\((1/4)\), put \(Z_{-1}=Z_0=0\), and set
 \(Z_t=Z_{t-2}\mathbin{\oplus}W_t\), where \(\oplus\) is addition modulo two.
 \begin{enumerate}[(a),beginpenalty=10000]

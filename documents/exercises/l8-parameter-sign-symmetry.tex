@@ -1,0 +1,42 @@
+\begin{exercisechunk}
+\item \textbf{Why a global parameter sign flip is the wrong symmetry.}
+\label[exercise]{ex:l8-parameter-sign-symmetry}
+\exerciseprofile{2}{1}{2}{\exproof\quad\exconstruction\quad\exinterpretation}{%
+Distinguish a tempting parameter transformation from the input-coordinate
+symmetry used in the parity lower bound.}
+Consider
+\[
+N_\theta(x)=\sum_{r=1}^m u_r[w_r^\top x+b_r]_+,
+\qquad
+\theta=(u_r,w_r,b_r)_{r=1}^m,
+\]
+and let $h_\theta(x)=\operatorname{sign}(N_\theta(x))$, using either fixed
+binary value for $\operatorname{sign}(0)$. Let $X$ be uniform on
+$\{-1,1\}^d$ and $Y=\chi_S(X)$ for a nonempty $S\subseteq[d]$.
+
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Let $G\theta=(-u_r,-w_r,-b_r)_{r=1}^m$. Write $N_{G\theta}(x)$ in
+terms of the original parameters. Give a width-one example for which
+$N_{G\theta}(x)\ne-N_\theta(x)$.
+
+\item Fix $j\in S$. Let $D_j$ flip the $j$th coordinate of a vector and set
+\[
+J_j\theta=(u_r,D_jw_r,b_r)_{r=1}^m.
+\]
+Prove
+\[
+N_{J_j\theta}(x)=N_\theta(D_jx)
+\quad\text{and}\quad
+R_{01}(h_{J_j\theta})=1-R_{01}(h_\theta).
+\]
+
+\item If a random parameter vector $\Theta$ has an isotropic Gaussian law,
+explain why $\Law(J_j\Theta)=\Law(\Theta)$. What symmetry does this imply for
+the law of $R_{01}(h_\Theta)$?
+\end{enumerate}
+
+\begin{hints}
+For (a), recall that ReLU is not an odd function. For (b), change variables
+$z=D_jx$ in the uniform average over the Boolean cube.
+\end{hints}
+\end{exercisechunk}

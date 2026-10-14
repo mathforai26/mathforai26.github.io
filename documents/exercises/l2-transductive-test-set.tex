@@ -1,0 +1,20 @@
+% Shared exercise chunk: l2-transductive-test-set
+\begin{exercisechunk}
+\item \textbf{When unlabeled test inputs carry information.}
+\label[exercise]{ex:transductive-test-set}
+\exerciseprofile{2}{2}{2}{\exproof\quad\excalculation\quad\exconstruction\quad\exinterpretation}{%
+Show how a label-dependent test-set promise can make unlabeled test indices
+informative.}
+Three boxes have nondecreasing binary labels. The training data reveal
+$f(1)=0$ and $f(3)=1$. The test set consists of box 2 and one other box, with
+the promise that their labels differ. Loss is the fraction of the two test
+labels predicted incorrectly. Allow randomized learners in both cases; the
+hidden labels are chosen before the learner's private random seed is drawn.
+\begin{enumerate}[(a)]
+\item Find the smallest worst-case expected loss when the learner must produce
+its prediction function before seeing the test set.
+\item Find the smallest worst-case expected loss when the learner receives
+both test indices before predicting their labels.
+\item Explain why this does not contradict \cref{ex:transduction}.
+\end{enumerate}
+\end{exercisechunk}

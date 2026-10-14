@@ -1,0 +1,49 @@
+\begin{exercisechunk}
+\item \textbf{A fixed-point residual and its Lyapunov function.}\suppmark
+\label[exercise]{ex:l11-fixed-point}
+\exerciseprofile{2}{2}{2}{\exproof\quad\excalculation\quad\exinterpretation}{%
+Relate a computable fixed-point residual to distance from the unknown fixed
+point.}
+Let $\cT:\R^d\to\R^d$ satisfy
+\[
+ \|\cT(\theta)-\cT(\theta')\|_2
+ \le q\|\theta-\theta'\|_2
+ \qquad\text{for all $\theta,\theta'\in\R^d$},
+\]
+where $q\in[0,1)$. Starting from any $\theta_0$, define
+$\theta_{t+1}=\cT(\theta_t)$.
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Prove that, for every $t\ge0$ and $k\ge1$,
+\[
+ \|\theta_{t+k}-\theta_t\|_2
+ \le\frac{q^t}{1-q}\|\theta_1-\theta_0\|_2.
+\]
+Deduce that the iterates converge to a fixed point $\theta^\star$, and prove
+that this fixed point is unique.
+\item Define the fixed-point residual
+$g(\theta)=\theta-\cT(\theta)$. Prove that its roots are exactly the fixed
+points of $\cT$ and that
+\[
+ (1-q)\|\theta-\theta^\star\|_2
+ \le\|g(\theta)\|_2
+ \le(1+q)\|\theta-\theta^\star\|_2.
+\]
+\item For $V(\theta)=\|\theta-\theta^\star\|_2^2/2$, prove
+\[
+ V(\theta_t)\le q^{2t}V(\theta_0),
+ \qquad
+ \|\theta_t-\theta^\star\|_2
+ \le\frac{\|g(\theta_t)\|_2}{1-q}.
+\]
+\item State which of $g(\theta_t)$ and $V(\theta_t)$ can be evaluated without
+knowing $\theta^\star$. Explain why the second display in part (c) makes the
+computable residual a stopping certificate for parameter error.
+\end{enumerate}
+\begin{hints}
+For (a), first bound consecutive differences and then sum a geometric series.
+The contraction property implies continuity, so it can be applied after taking
+the limit. For (b), write
+$g(\theta)=(\theta-\theta^\star)
+-(\cT(\theta)-\cT(\theta^\star))$.
+\end{hints}
+\end{exercisechunk}

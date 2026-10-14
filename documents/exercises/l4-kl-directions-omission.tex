@@ -1,0 +1,26 @@
+% Shared exercise chunk: l4-kl-directions-omission
+\begin{exercisechunk}
+\item \textbf{Omitted outcomes and reverse KL.}
+\label[exercise]{ex:kl-directions-omission}
+\exerciseprofile{2}{2}{2}{\exproof\quad\excalculation\quad\exinterpretation}{%
+Quantify how reverse KL permits omitting successful outcomes while forward KL
+detects the support loss.}
+Let \(P\) be a law on a finite domain \(\cX\). For \(0<P(A)<1\),
+define the conditional law
+\[
+ Q(x)=\frac{P(x)\I\{x\in A\}}{P(A)},\qquad x\in\cX.
+\]
+Prove
+\begin{equation}
+ \KL(Q,P)=-\log P(A),\qquad \KL(P,Q)=+\infty.
+ \label{eq:kl-omission}
+\end{equation}
+What fraction of the target probability can be omitted with reverse KL
+\(\log 2\)? If \(P\) is uniform on \(M\ge2\) zero-cost outcomes,
+compute reverse KL and task cost for an arbitrary \(Q\) supported there.
+
+\begin{hints}
+Use the disjoint-support mixture calculation following
+\cref{prop:positive-data}.
+\end{hints}
+\end{exercisechunk}

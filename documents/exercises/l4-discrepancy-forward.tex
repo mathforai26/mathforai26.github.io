@@ -1,0 +1,22 @@
+% Shared exercise chunk: l4-discrepancy-forward
+\begin{exercisechunk}
+\item \textbf{Forward discrepancy conversion.\suppmark}
+\label[exercise]{ex:discrepancy-forward}
+\exerciseprofile{1}{1}{1}{\exproof\quad\excalculation}{%
+Compute sharp forward-KL-to-cost moduli and identify the laws attaining them.}
+Use the definitions in \cref{sec:discrepancy-comparison}. Let
+\(P=\delta_{0^T}\), \(T\ge2\), with
+\(c_{\mathrm{cnt}}(x)=\sum_{t=1}^T x_t\) and
+\(c_{\mathrm{fin}}(x)=x_T\).
+Use the fixed-KL intervals
+in \cref{eq:binary-kl-level,eq:terminal-kl-level} to prove
+\begin{align}
+ \omega_{D\to c_{\mathrm{cnt}}}(\kappa;P)
+ &=T(1-e^{-\kappa}),\label{eq:binary-moduli}\\
+ \omega_{D\to c_{\mathrm{fin}}}(\kappa;P)
+ &=1-e^{-\kappa},\qquad \kappa\ge0.
+ \label{eq:terminal-moduli}
+\end{align}
+Which of $Q_-$ and $Q_+$ attains these bounds?
+
+\end{exercisechunk}

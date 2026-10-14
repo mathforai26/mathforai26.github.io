@@ -1,0 +1,20 @@
+\begin{exercisechunk}
+\item \textbf{Recurrent linear attention.}
+\label[exercise]{ex:l5-recurrent-attention}
+\exerciseprofile{2}{2}{2}{\exproof\quad\excalculation\quad\exconstruction}{%
+Derive recurrent linear attention and construct the additional state required
+for normalization.}
+Starting from
+\[
+ R_t=\gamma_tR_{t-1}+v_tk_t^\top,
+ \qquad y_t=R_tq_t,
+\]
+show that
+\[
+ y_t=\sum_{u=1}^t v_u(k_u^\top q_t)
+       \prod_{j=u+1}^t\gamma_j.
+\]
+For \(\gamma_t=1\), derive a recurrent state $d_t$ for which the normalized
+output has denominator $d_t^\top q_t$. State conditions under which these
+weights define a normalized weighted average.
+\end{exercisechunk}

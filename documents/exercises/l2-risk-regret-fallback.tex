@@ -1,0 +1,27 @@
+% Shared exercise chunk: l2-risk-regret-fallback
+\begin{exercisechunk}
+\item \textbf{A common fallback.}
+\label[exercise]{ex:risk-regret-fallback}
+\exerciseprofile{2}{2}{2}{\exproof\quad\excalculation\quad\exconstruction\quad\exinterpretation}{%
+Prove that a common fallback preserves regret rankings but can reverse
+worst-risk rankings.}
+Consider two decisions with risks
+\[
+R(A,1)=0.1,\quad R(A,2)=1.0,\qquad
+R(B,1)=0.3,\quad R(B,2)=0.9.
+\]
+Suppose each available decision is implemented with probability
+$\lambda\in(0,1)$; otherwise the same fallback $H$ is implemented. This random
+choice is independent of the environment. Thus
+\[
+R_\lambda(A,\theta)=\lambda R(A,\theta)+(1-\lambda)R(H,\theta).
+\]
+Determine how this transformation affects rankings by worst-case risk and
+by worst-case regret.
+\begin{enumerate}[(a)]
+\item Show that when the \emph{whole menu} undergoes this transformation, regret
+rankings are unchanged.
+\item Give $\lambda$ and the two risks of $H$ for which
+the minimax-risk ranking of $A$ and $B$ reverses, and verify the reversal.
+\end{enumerate}
+\end{exercisechunk}

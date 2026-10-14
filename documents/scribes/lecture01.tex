@@ -10,7 +10,7 @@
 \usepackage{microtype}
 
 % Revision date: maintained by scripts/build_lecture_notes.py. Keep this command.
-\newcommand{\lecturerevised}{2026-09-16 09:57 UTC-06:00}
+\newcommand{\lecturerevised}{2026-10-09 23:50 UTC-07:00}
 \usepackage{eso-pic}
 \AddToShipoutPictureBG{%
   \AtPageLowerLeft{%
@@ -1230,7 +1230,8 @@ distant displacements can still have similar rotations, so long-context
 retrieval is not guaranteed. RoPE also does not enforce locality: prescribed
 causal and \emph{window masks} exclude future and distant positions,
 respectively, as in Mistral~7B.
-\Cref{ex:rope} examines retrieval and periodicity; the bibliographical notes
+\Cref{ex:rope-retrieval,ex:rope-collisions} examine retrieval and periodicity;
+the bibliographical notes
 discuss trained models.
 
 \subsection{Architecture examples}
@@ -1515,8 +1516,8 @@ training distributes the work among components, heads, and layers is a
 further question.
 
 RoPE can add positional conditions to these content-based comparisons.
-\Cref{ex:rope} isolates retrieval at a fixed relative offset and examines
-the required width and score scale. More complex addressing also depends on
+\Cref{ex:rope-retrieval,ex:rope-width} isolate retrieval at a fixed relative
+offset and examine the required width and score scale. More complex addressing also depends on
 the available heads and layers. The bibliographical notes introduce languages
 for studying how such computations can be organized.
 
@@ -1560,8 +1561,8 @@ of token $v$, then its output logit is
 z_{t,v}=u_v^\top h_t^L+b_{U,v}.
 \label{eq:tied-readout}
 \end{equation}
-The same vector represents token $v$ when it is read and scores it as a
-possible next token. Sharing the matrices replaces two independently learned
+The same vector represents token $v$ on input and enters the dot product that
+scores token $v$ as a possible output. Sharing the matrices replaces two independently learned
 $V\times d$ matrices by one, saving $Vd$ parameters. This is an architectural
 choice; the input and output matrices can also be learned separately.
 \end{remark}
@@ -1664,9 +1665,10 @@ O_{t,:}&=A_{t,:}V
 =\sum_{j=1}^t A_{tj}v_j^\top\in\R^{1\times d_h}.
 \label{eq:cached-head}
 \end{align}
-This evaluates only the last row of \eqref{eq:self-attention-heads},
+Equation \cref{eq:cached-head} evaluates only the last row of
+\eqref{eq:self-attention-heads},
 the new query row in \cref{fig:attention-head}.
-All cached positions are available to it, so no additional causal mask
+The new query can attend to all cached positions, so no additional causal mask
 is needed in this row formula.
 
 Combine the new outputs of all heads, complete the residual, normalization,
@@ -1974,7 +1976,7 @@ entire source sequence. A task-specific readout converts these contextual
 states into predictions.
 
 \paragraph{Decoder-only.}
-A decoder-only model represents a single sequence and predicts its
+A decoder-only model processes a single token stream and predicts its
 continuation. Similarly,
 $\mathcal B^{\rm dec}_{\ell,M}=\mathcal B_{\theta^{\rm dec}_\ell,M}$ denotes
 its independently parameterized block at depth $\ell$.
@@ -1993,7 +1995,7 @@ stream.
 \paragraph{Encoder--decoder.}
 An encoder--decoder model is designed for generating a target sequence
 conditioned on a separately supplied source sequence. The encoder first
-computes $E^{L_E}$ using \eqref{eq:encoder-stack}. This matrix is the
+computes $E^{L_E}$ using \eqref{eq:encoder-stack}. This matrix serves as the
 \emph{source memory}: it contains one contextual state for each source
 position and remains fixed while the target is generated. The target decoder
 starts from
@@ -2494,8 +2496,8 @@ and uses them to combine value vectors; see \cref{fig:attention-head}.
 The query $q_i$ is computed from an output position's activation. The key
 $k_j$ is computed from a source position's activation and is compared with
 $q_i$ to score that source. The value $v_j$ is the source vector used in
-the attention-weighted sum; its projection is generally distinct from the
-key projection.
+the attention-weighted sum; the value projection is generally distinct from
+the key projection.
 \item[Attention score]
 A real-valued comparison between query $i$ and source $j$, here the scaled
 inner product $q_i^\top k_j/\sqrt{d_h}$, possibly modified by positional
@@ -2589,7 +2591,11 @@ even within the supported context length.
 
 \exerciseinstructions
 \setcounter{courseexercise}{0}
+\exercisegroup{Relative addressing with RoPE}
 \input{../exercises/l1-rope.tex}
+\input{../exercises/l1-rope-retrieval.tex}
+\input{../exercises/l1-rope-collisions.tex}
+\input{../exercises/l1-rope-width.tex}
 \input{../exercises/l1-greedy-decoding.tex}
 \input{../exercises/l1-bounded-attention.tex}
 

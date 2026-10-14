@@ -1,19 +1,101 @@
 \begin{exercisechunk}
 \item \textbf{Permanent state and finite-window prediction.}
 \label[exercise]{ex:l5-memory}
-Use the process in \cref{eq:constant-state}.
+\exerciseprofile{2}{2}{3}{\exproof\quad\excalculation\quad\exinterpretation}{%
+Quantify the prediction loss from a finite context when information is stored
+in a permanent latent state.}
+Let \(n\ge1\) be an integer. On a common probability space, let \(U\) and
+\((W_t)_{t\ge1}\) be real-valued random variables satisfying
+\[
+ U\sim\mathcal N(0,\tau^2),\qquad
+ Z_t=U+W_t,\qquad
+ W_t\stackrel{\mathrm{iid}}{\sim}\mathcal N(0,\sigma^2),
+\]
+where \(U\) is unobserved, is independent of the noise sequence, and
+\(\tau,\sigma>0\). The goal is to predict \(Z_{n+1}\) given
+\(Z_{1:n}=z_{1:n}\), where \(z_{1:n}\in\mathbb R^n\). For \(k\ge1\), define
+\[
+ v_k=(\tau^{-2}+k\sigma^{-2})^{-1}.
+\]
 \begin{enumerate}[(a),beginpenalty=10000]
-\item Complete the square in the posterior density of \(U\) given
-\(Z_{1:n}\) to derive \cref{eq:constant-posterior}.
-Give a recursion that stores only a running sum and a count.
-\item Derive the minimum prediction risks using all \(n\) observations
-and only the last \(p\le n\). Prove that the latter bound applies to
-nonlinear predictors as well as linear AR predictors.
-\item Derive the expected conditional KL in
-\cref{prop:memory-advantage} directly from the Gaussian KL formula.
-You may use conditional-expectation orthogonality.
-\item Explain why recovering \(U\) accurately along one infinite
-trajectory does not consistently estimate an unknown prior variance
-\(\tau^2\). What additional data would supply repeated draws of \(U\)?
+\item Show that
+\[
+ \mathcal L(U\mid Z_{1:n}=z_{1:n})=\mathcal N(m_n,v_n),
+ \qquad
+ m_n=v_n\sigma^{-2}\sum_{i=1}^n z_i.
+\]
+Starting from \(a_0=0\), derive the running-sum recursion
+\[
+ a_k=a_{k-1}+z_k,
+ \qquad
+ m_k=\frac{a_k}{\sigma^2/\tau^2+k}.
+\]
+\item Let \(1\le p\le n\). Consider a full-history predictor
+\(h_n(Z_{1:n})\) and a window predictor \(h_p(Z_{n-p+1:n})\), where
+\(h_n\) and \(h_p\) are arbitrary prediction functions. Show that
+\[
+ \min_{h_n}\E[(Z_{n+1}-h_n(Z_{1:n}))^2]=\sigma^2+v_n
+\]
+and
+\[
+ \min_{h_p}\E[(Z_{n+1}-h_p(Z_{n-p+1:n}))^2]=\sigma^2+v_p.
+\]
+Show that the minima are attained by
+\[
+ \widehat Z_{n+1}^{\rm full}=\E[U\mid Z_{1:n}],
+ \qquad
+ \widehat Z_{n+1}^{\rm win}=\E[U\mid Z_{n-p+1:n}].
+\]
+Your result must apply to all predictors based on the indicated observations,
+including nonlinear predictors. For fixed \(p\), show that the first minimum
+tends to \(\sigma^2\), while the second remains \(\sigma^2+v_p\), as
+\(n\to\infty\).
+\item \emph{Optional extension.} Let \(P_n\) and \(Q_{p,n}\) be the following
+random probability laws on \(\mathbb R\):
+\[
+ P_n=\mathcal L(Z_{n+1}\mid Z_{1:n}),\qquad
+ Q_{p,n}=\mathcal L(Z_{n+1}\mid Z_{n-p+1:n}).
+\]
+Identify these two Gaussian predictive laws and show that
+\[
+ \E[D(P_n,Q_{p,n})]
+ =\frac12\log\frac{\sigma^2+v_p}{\sigma^2+v_n},
+\]
+where the expectation is under the stated joint law of \(Z_{1:n}\).
+\item \emph{Optional extension.} Suppose now that \(\tau^2\) is unknown, let
+\(K\ge1\) be an integer, and suppose that we observe \(K\)
+independent trajectories
+\[
+ Z_{j,t}=U_j+W_{j,t},\qquad j\in[K],\quad t\in[n],
+\]
+where the \(U_j\) are iid \(\mathcal N(0,\tau^2)\), the \(W_{j,t}\) are iid
+\(\mathcal N(0,\sigma^2)\), and the two collections are independent. Let
+\(\bar Z_{j,n}=n^{-1}\sum_{t=1}^n Z_{j,t}\). Show that
+\[
+ \widehat\tau_{K,n}^2
+ =\frac1K\sum_{j=1}^K\bar Z_{j,n}^2-\frac{\sigma^2}{n}
+\]
+is unbiased for \(\tau^2\) and, for fixed \(n\), satisfies
+\(\widehat\tau_{K,n}^2\to\tau^2\) almost surely as \(K\to\infty\). Then set
+\(K=1\) and show that
+\(\widehat\tau_{1,n}^2\to U_1^2\) almost surely as \(n\to\infty\). Explain
+why this limit does not consistently estimate \(\tau^2\).
 \end{enumerate}
+
+\begin{hints}
+For (b), let \(X\) be any random element (e.g., a vector), and let \(Y,Z\)
+be real-valued random variables satisfying
+\(\E[Y^2],\E[Z^2]<\infty\). If \(Z\) is a function of \(X\), then
+\[
+\E\!\left[(Y-\E[Y\mid X])Z\right]=0\,.
+\]
+For (c),
+recall or derive that, for \(a,b\in\mathbb R\) and \(A,B>0\),
+\[
+ D\bigl(\mathcal N(a,A),\mathcal N(b,B)\bigr)
+ =\frac12\left[\log\frac{B}{A}
+ +\frac{A+(a-b)^2}{B}-1\right]\,.
+\]
+The identity in the hint for part (b) may also be useful.
+\end{hints}
 \end{exercisechunk}

@@ -1,0 +1,57 @@
+\begin{exercisechunk}
+\item \textbf{A weighted Lyapunov function for a nonsymmetric update.}\suppmark
+\label[exercise]{ex:l11-td-lyapunov}
+\exerciseprofile{2}{2}{2}{\exproof\quad\excalculation\quad\exinterpretation}{%
+Construct an analysis certificate for a linear root-finding update that is not
+gradient descent.}
+Let $A\in\R^{d\times d}$ be positive stable and nonsymmetric, let
+$b\in\R^d$, and consider
+\[
+ w_{t+1}=w_t+\eta(b-Aw_t).
+\]
+Fix $Q\succ0$, and suppose $M\succ0$ solves
+$A^\top M+MA=Q$. Define $w^\star=A^{-1}b$ and the candidate Lyapunov
+function
+\[
+ V(w)=(w-w^\star)^\top M(w-w^\star).
+\]
+Thus $V(w)\ge0$, with equality exactly at $w=w^\star$. Write
+$e_t=w_t-w^\star$ and $V_t=V(w_t)=e_t^\top Me_t$.
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Compute $\nabla V(w)$ and prove that the update direction
+$d(w)=b-Aw$ satisfies
+\[
+ -\langle\nabla V(w),d(w)\rangle
+ =(w-w^\star)^\top Q(w-w^\star).
+\]
+Thus the update is aligned with $-\nabla V(w)$ whenever $w\ne w^\star$.
+\item Prove
+\[
+ V_{t+1}-V_t
+ =-\eta e_t^\top Qe_t+\eta^2e_t^\top A^\top MAe_t.
+\]
+Let $q=\lambda_{\min}(Q)$ and
+$c_A=\lambda_{\max}(A^\top MA)$.
+Show that the condition
+\[
+ 0<\eta\le
+ \min\left\{\frac{q}{2c_A},\frac{\lambda_{\max}(M)}q\right\}
+\]
+implies
+\[
+ V_{t+1}\le V_t-\frac{\eta q}{2}\|e_t\|_2^2,
+\]
+and use $V_t\le\lambda_{\max}(M)\|e_t\|_2^2$ to derive a geometric bound
+with contraction factor in $[0,1)$.
+\item Explain why nonsymmetry of $A$ prevents the vector field
+$b-Aw$ from being the negative gradient of a scalar objective. Also explain
+why the algorithm can use $b-Aw_t$ without knowing $w^\star$ or evaluating
+$V(w_t)$, even though both appear in its convergence proof.
+\end{enumerate}
+\begin{hints}
+For (a), use $\nabla V(w)=2M(w-w^\star)$ and the Lyapunov equation. For (b),
+use $e_{t+1}=(I-\eta A)e_t$ and upper-bound the quadratic form involving
+$A^\top MA$. For (c), recall that the Jacobian of a gradient field is a
+symmetric Hessian.
+\end{hints}
+\end{exercisechunk}

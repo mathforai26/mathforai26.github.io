@@ -14,7 +14,7 @@
 \usetikzlibrary{arrows.meta,positioning,calc}
 
 % Revision date: maintained by scripts/build_lecture_notes.py. Keep this command.
-\newcommand{\lecturerevised}{2026-09-17 20:29 UTC-06:00}
+\newcommand{\lecturerevised}{2026-10-09 23:51 UTC-07:00}
 \usepackage{eso-pic}
 \AddToShipoutPictureBG{%
   \AtPageLowerLeft{%
@@ -114,6 +114,10 @@ September 15, 2026
 \end{minipage}}
 \end{center}
 
+\noindent Mark Holmstrom prepared a scribe of the lecture. Csaba Szepesv\'ari
+prepared and expanded the present notes.
+
+\medskip
 \noindent\textbf{About these lecture notes.}
 This lecture asks how a structured hidden state can explain a sequence,
 how to predict and generate after observing a prefix, and how to fit the
@@ -172,7 +176,11 @@ contain short refinements.
 A state-space model specifies what information a process retains and how
 that information produces observations. Let \(\cS\) and \(\cZ\) be the
 state and observation spaces. The state is \emph{latent} when it is not
-directly observed. We use the equations
+directly observed. Latent-variable modeling is much broader than dynamical
+systems. In a finite mixture model, for example, each observation has an
+unobserved categorical component label, and its posterior label probabilities
+act as soft cluster assignments. Missing-data and latent-factor models use
+the same modeling pattern without temporal dynamics. We use the equations
 \begin{equation}
  S_0\sim\pi_\theta,\qquad
  S_{t+1}=f_\theta(S_t,V_{t+1}),\qquad
@@ -467,8 +475,13 @@ noise \(W_t\) and set \(Z_t=g_\theta(S_t,W_t)\).
 Continue with \(S_{t+1}=f_\theta(S_t,V_{t+1})\) and the remaining
 observations, using fresh independent noises at each step.
 
-A \emph{posterior} is a conditional distribution after incorporating
-observed data. After seeing \(z_t\), the \emph{filtering distribution} is
+For jointly distributed random elements \(Y\) and \(V\), write
+\(\mathcal L(Y)\) for the distribution of \(Y\) and
+\(\mathcal L(Y\mid V=v)\) for the conditional distribution of \(Y\) given
+\(V=v\). If \(\mathcal L(Y)\) is regarded as the \emph{prior distribution}
+of \(Y\), then \(\mathcal L(Y\mid V=v)\) is the \emph{posterior distribution}
+of \(Y\) given \(V=v\). For the prefix \(Z_{1:t}=z_{1:t}\), the
+\emph{filtering distribution} is
 \(\mu_t=Q_\theta(S_t\in\cdot\mid Z_{1:t}=z_{1:t})\).
 Bayes' rule gives it and the next prediction:
 \begin{equation}
@@ -489,8 +502,9 @@ Then \(\alpha_0=\pi\) and
  {\mathbf1^\top\diag(C_{x_t,1},\ldots,C_{x_t,d})\alpha_t^-}.
  \label{eq:hmm-filter}
 \end{equation}
-Each step costs \(O(d^2)\) for dense \(A\). This is the forward
-filtering recursion. Viterbi instead finds a most likely complete
+Each step costs \(O(d^2)\) for dense \(A\). Equations
+\cref{eq:hmm-filter} form the forward filtering recursion. Viterbi instead
+finds a most likely complete
 hidden path; smoothing computes posterior state distributions using
 observations on both sides of the time in question.
 
@@ -514,8 +528,9 @@ Filtering also gives an observation-driven representation. Take
 the next observation is sampled by first drawing a state from this
 distribution and then applying the observation map. The initial
 \(R_1\) is the fixed law of \(S_1\), even when \(S_1\) is random.
-For a finite HMM, this state is a probability vector; for a Gaussian LDS,
-it is a mean and covariance. In general, it is a whole probability law,
+For a finite HMM, the predictive law $R_t$ is represented by a probability
+vector; for a Gaussian LDS, it is represented by a mean and covariance. In
+general, $R_t$ is a whole probability law,
 whose update may require difficult integration.
 
 \section{What can be learned from observations?}
@@ -618,6 +633,11 @@ is the E-step; maximizing over parameters is the M-step:
  \E_{S\sim q_k}[\log Q_\theta(S,Z_{1:T})].
  \label{eq:em}
 \end{align}
+The names E-step and M-step describe a conceptual decomposition, not
+necessarily two separate computational stages. The iteration itself maps
+\(\theta^{(k)}\) to \(\theta^{(k+1)}\). An implementation need only compute
+the posterior expectations under \(q_k\) that are required for the parameter
+update; it need not construct or store \(q_k\) explicitly.
 For a finite HMM, the \emph{forward--backward algorithm} combines forward
 probability calculations from the past with backward calculations from
 future observations. It supplies expected transition and
@@ -625,18 +645,33 @@ emission counts; these replace the observed counts. For a linear Gaussian model,
 the E-step uses smoothing means \emph{and second moments}, including
 cross moments at adjacent times.
 
-Exact EM makes the observed log likelihood nondecreasing. Under regularity
+Exact EM makes the observed log likelihood nondecreasing.\endnote{
+\textbf{Gaussian mixtures and clustering.}
+In a Gaussian mixture, the latent component label turns density estimation
+into a form of soft clustering. For a spherical mixture, the posterior label
+probabilities concentrate on the nearest center as the common variance tends
+to zero, connecting the EM updates to the assignment and center-update steps
+of \(k\)-means. In the two-component known-covariance setting studied by
+\citet{daskalakis2017}, population EM converges geometrically to the correct
+means, and their finite-sample procedure has a random-initialization guarantee.
+\citet{balakrishnan2017} give local contraction and finite-sample guarantees
+under suitable initialization for several latent-variable models. These are
+model-specific results, not consequences of EM monotonicity alone.}
+Under regularity
 conditions its limit points are stationary: they satisfy first-order
 optimality conditions, with zero gradient at an interior point.
 Finite HMMs and linear Gaussian models admit efficient E- and M-steps.
-\Cref{ex:l5-em} asks for the monotonicity calculation.
+\Cref{ex:l5-em} asks for the monotonicity calculation, and
+\cref{ex:l5-continuous-em} develops its density form.
+\Cref{ex:l5-lds-em} then derives the EM update for a linear dynamics
+matrix under Gaussian transition noise.
 
 Another approach treats the hidden states as optimization variables:
 \begin{equation}
  \min_{\theta,s_{0:T}}-\log Q_\theta(s_{0:T},Z_{1:T}).
  \label{eq:joint-map}
 \end{equation}
-This maximizes a joint mass or density, rather than summing or integrating
+Minimizing \cref{eq:joint-map} maximizes a joint mass or density, rather than summing or integrating
 over states. Multiplying by a prior density on \(\theta\) gives a joint
 \emph{maximum a posteriori} (MAP) objective: maximize the posterior
 density of states and parameters given the observations.
@@ -644,7 +679,7 @@ Trajectory optimization is central in \emph{simultaneous localization
 and mapping} (SLAM), where a robot estimates its path and a map from
 measurements. Its objective is often sparse: each measurement involves
 only a small subset of the unknown poses and map features.
-It can remain nonconvex. For continuous states its density objective also
+The joint MAP objective can remain nonconvex. For continuous states the density objective also
 depends on the chosen coordinates and reference measure.
 
 For deterministic linear state dynamics and unit Gaussian observation
@@ -809,8 +844,10 @@ Coordinate \(a\) of \(e_{X_{t+1}}\) is \(\I\{X_{t+1}=a\}\).
 Take its conditional expectation, then subtract.
 \end{proof}
 A sequence with conditional mean zero given its past is called a
-\emph{martingale-difference sequence}; the residuals above have this property. With
-\(P_t=\phi_t(X_{1:t})\), this is a vector autoregression.
+\emph{martingale-difference sequence}; the residuals above have this property.
+Writing \(P_t=\phi_t(X_{1:t})\) gives an observation-driven regression
+representation. The representation becomes a vector autoregression when
+$\phi_t$ is linear in a fixed collection of observed lags.
 Squared loss against \(e_{X_{t+1}}\) is the Brier loss of Lecture~3.
 
 \section{The regression and subspace algorithm}
@@ -851,7 +888,8 @@ For fixed observed data, the objective in
 Each prediction is linear in \(B\); squared Euclidean distance is convex.
 \end{proof}
 
-This is conditional Gaussian maximum likelihood, conditional on the
+Minimizing \cref{eq:observable-regression} is equivalent to conditional
+Gaussian maximum likelihood, conditional on the
 first \(p\) observations, for iid \emph{isotropic} Gaussian residuals:
 their covariance is a fixed multiple of the identity. With a specified covariance \(\Omega\succ0\), the loss is
 the corresponding quadratic form
@@ -940,7 +978,8 @@ Set \(\overline A=\overline F+\overline L\overline C\) and generate
  \mathcal N(0,\widehat\Omega).
  \label{eq:recovered-generator}
 \end{equation}
-This is an \emph{innovations realization}. Its state and observation
+Equations \cref{eq:recovered-generator} define an \emph{innovations realization}.
+Its state and observation
 perturbations share the same \(\widetilde E_t\); they are correlated.
 In the ideal case it gives the same observation law as the original LDS.
 A process can have different state-space representations; independent
@@ -951,9 +990,10 @@ gives
  \widetilde M_{t+1}
  =\overline F\widetilde M_t+\overline L\widetilde Z_t.
 \]
-This is the observation-driven update in \cref{fig:observed-feedback}:
+The displayed recursion is the observation-driven update in \cref{fig:observed-feedback}:
 the observation carries the noise into the next state.
-Its state is an observation-based state estimate in suitable coordinates.
+The variable $\widetilde M_t$ is an observation-based state estimate in
+suitable coordinates.
 For the ideal linear Gaussian predictor, \(F=A-LC\).
 Thus \(A\) governs generative state dynamics and \(F\) governs the
 propagation of errors when filtering the same observed history. These
@@ -1185,7 +1225,7 @@ and supply a 1,000-observation prompt centered near 2.
 The full-history model has posterior mean \(m_n\) and variance \(v_n\)
 from \cref{eq:constant-posterior}. Its continuation has conditional
 mean \(m_n\) at every future step: the inferred level persists.
-This is exactly the true conditional process. Its next-observation
+The resulting continuation law is exactly the true conditional process. Its next-observation
 variance is \(1+v_n=1+1/1001\), including the remaining uncertainty
 about the hidden level. The optimal ten-observation predictor instead
 has residual variance \(1+v_{10}=12/11\). Sampling from it recursively gives
@@ -1401,8 +1441,8 @@ For a random vector \(Y\), its \emph{root mean square} (RMS) norm is
 \label{sec:noisy-prediction}
 
 For a Gaussian LDS, the conditional distribution can be computed by a
-recursive predictor. Its state is an estimate obtained from the
-observations. This gives an observable autoregression after unrolling.
+recursive predictor. The predictor maintains a state estimate obtained from
+the observations. Unrolling the recursion gives an observable autoregression.
 The tail of its history coefficients controls the truncation error.
 
 The observations in this subsection are real vectors. Log loss uses their
@@ -1874,7 +1914,19 @@ Dynamax implements EM and gradient-based marginal-likelihood fitting
 \citep{dynamax}. Thus differentiating a forward recursion is an established
 computational option. \citet{wu1983} supplies convergence conditions for EM
 and explains why monotonicity alone does not establish convergence to
-a local optimum. \citet{dellaert2017} develops sparse trajectory MAP
+a local optimum. \citet{balakrishnan2017} give a general framework in which
+population EM is contractive in a neighborhood of a target optimum; for
+Gaussian mixtures, mixtures of regressions, and regression with missing
+covariates, suitable initialization leads finite-sample EM to statistical
+accuracy. \citet{daskalakis2017} prove a stronger global geometric-convergence
+result for the population EM iteration in a two-Gaussian mixture with known
+covariances, together with a finite-sample result under their initialization
+scheme. The favorable conclusion is special: \citet{jin2016} construct
+well-separated spherical mixtures with at least three components whose
+population likelihood has bad local maxima and for which random initialization
+can lead EM to bad critical points with high probability.
+
+\citet{dellaert2017} develops sparse trajectory MAP
 estimation for robotics. It concerns optimization over states and, in
 SLAM, map variables, rather than replacing marginal likelihood by an
 equivalent objective.
@@ -2019,18 +2071,32 @@ Differentiation of the unrolled recurrent computation.
 \section{Exercises}
 \label{sec:exercises}
 The exercises follow the modeling, estimation, and computational questions.
-The noiseless recurrence in \cref{ex:lds}(a) is optional.
+The noiseless recurrence in \cref{ex:lds} is optional.
 \exerciseinstructions
 \setcounter{courseexercise}{0}
 
 \input{../exercises/l5-feedback.tex}
+\exercisegroup{Noise maps and HMM estimation}
 \input{../exercises/l5-kernels.tex}
+\input{../exercises/l5-observed-hmm.tex}
 \input{../exercises/l4-latent-likelihood.tex}
 \input{../exercises/l5-em.tex}
+\exercisegroup{Continuous-state EM}
+\input{../exercises/l5-continuous-em.tex}
+\input{../exercises/l5-continuous-em-reference.tex}
+\exercisegroup{Gaussian transition EM}
+\input{../exercises/l5-lds-em.tex}
+\input{../exercises/l5-lds-em-point.tex}
 \input{../exercises/l5-sharing.tex}
+\exercisegroup{Linear state-space structure}
 \input{../exercises/l4-lds.tex}
+\input{../exercises/l4-lds-realization.tex}
+\input{../exercises/l4-lds-generation.tex}
 \input{../exercises/l5-memory.tex}
+\exercisegroup{Recurrences, scans, and recurrent attention}
 \input{../exercises/l5-bptt.tex}
+\input{../exercises/l5-affine-scan.tex}
+\input{../exercises/l5-recurrent-attention.tex}
 
 \clearpage
 \appendix
@@ -2460,7 +2526,7 @@ at each step draw
  m_{\rm next}=m+\frac{v}{1+v}(z-m),\qquad
  v_{\rm next}=\frac{v}{1+v}.
 \]
-This has the same joint continuation law as drawing \(U\) once from its
+This sequential construction has the same joint continuation law as drawing \(U\) once from its
 posterior and then adding independent observation noises.
 The fixed-window model is the AR(10) recurrence in
 \cref{sec:completion-experiments}, with every coefficient \(1/11\)
@@ -2517,6 +2583,13 @@ Naman Agarwal, Daniel Suo, Xinyi Chen, and Elad Hazan.
 \newblock Spectral State Space Models.
 \newblock 2024. \url{https://arxiv.org/abs/2312.06837v4}.
 
+\bibitem[Balakrishnan et al.(2017)]{balakrishnan2017}
+Sivaraman Balakrishnan, Martin J. Wainwright, and Bin Yu.
+\newblock Statistical guarantees for the EM algorithm: From population to
+sample-based analysis.
+\newblock Annals of Statistics, 45(1):77--120, 2017.
+\newblock \url{https://doi.org/10.1214/16-AOS1435}.
+
 \bibitem[Barron et al.(1998)]{barron1998}
 Andrew Barron, Jorma Rissanen, and Bin Yu.
 \newblock The minimum description length principle in coding and modeling.
@@ -2533,6 +2606,13 @@ Tri Dao and Albert Gu.
 \newblock Transformers are SSMs: Generalized Models and Efficient Algorithms
 Through Structured State Space Duality.
 \newblock 2024. \url{https://arxiv.org/abs/2405.21060v1}.
+
+\bibitem[Daskalakis et al.(2017)]{daskalakis2017}
+Constantinos Daskalakis, Christos Tzamos, and Manolis Zampetakis.
+\newblock Ten Steps of EM Suffice for Mixtures of Two Gaussians.
+\newblock Proceedings of the 2017 Conference on Learning Theory,
+PMLR 65:704--710, 2017.
+\newblock \url{https://proceedings.mlr.press/v65/daskalakis17b.html}.
 
 \bibitem[Dellaert and Kaess(2017)]{dellaert2017}
 Frank Dellaert and Michael Kaess.
@@ -2574,6 +2654,13 @@ B. L. Ho and Rudolf E. Kalman.
 from input/output functions.
 \newblock Regelungstechnik, 14:545--548, 1966.
 \newblock \url{https://doi.org/10.1524/auto.1966.14.112.545}.
+
+\bibitem[Jin et al.(2016)]{jin2016}
+Chi Jin, Yuchen Zhang, Sivaraman Balakrishnan, Martin J. Wainwright,
+and Michael I. Jordan.
+\newblock Local Maxima in the Likelihood of Gaussian Mixture Models:
+Structural Results and Algorithmic Consequences.
+\newblock 2016. \url{https://arxiv.org/abs/1609.00978}.
 
 \bibitem[Katharopoulos et al.(2020)]{katharopoulos2020}
 Angelos Katharopoulos, Apoorv Vyas, Nikolaos Pappas, and Fran\c{c}ois Fleuret.

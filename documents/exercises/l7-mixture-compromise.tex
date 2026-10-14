@@ -1,0 +1,91 @@
+\begin{exercisechunk}
+\item \textbf{The cost of a compromise under a changed mixture.}
+\label[exercise]{ex:l7-mixture-compromise}
+\exerciseprofile{2}{2}{2}{\exproof\quad\excalculation\quad\exinterpretation}{%
+Quantify how a restricted model's population optimum changes with the
+training mixture.}
+For $\lambda\in[0,1]$, define the input probability mass function
+$\mu_\lambda$ by
+\[
+ \mu_\lambda(a)=\lambda,
+ \qquad
+ \mu_\lambda(b)=1-\lambda.
+\]
+Let $k(\,\cdot\mid x)$ be the conditional probability mass function on
+$\{0,1\}$ specified by
+\[
+ k(1\mid a)=0.1,
+ \qquad
+ k(1\mid b)=0.9,
+ \qquad
+ k(0\mid x)=1-k(1\mid x).
+\]
+Define the joint law $P_\lambda$ on $\{a,b\}\times\{0,1\}$ through its mass
+function
+\[
+ P_\lambda(x,y)=\mu_\lambda(x)k(y\mid x).
+\]
+For each $\lambda\in[0,1]$, let $(X,Y)$ have joint law $P_\lambda$.
+For $q\in(0,1)$, let $f_q:\{a,b\}\to(0,1)$ satisfy
+$f_q(a)=f_q(b)=q$.
+Define the constant and context-dependent model classes
+\[
+\mathcal F_{\rm const}
+=\{f_q:q\in(0,1)\},
+\qquad
+\mathcal F_{\rm ctx}
+=\{f:\{a,b\}\to(0,1)\}.
+\]
+For $f\in\mathcal F_{\rm ctx}$, define
+\[
+L_\lambda^{\rm sq}(f)=\E[(f(X)-Y)^2],
+\qquad
+L_\lambda^{\log}(f)
+=\E[-Y\log f(X)-(1-Y)\log(1-f(X))].
+\]
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Let $q_\lambda^\star=0.9-0.8\lambda$. Prove that
+$f_{q_\lambda^\star}$ is the unique minimizer of both losses over
+$\mathcal F_{\rm const}$. Establish, for every $q\in(0,1)$,
+\[
+L_\lambda^{\rm sq}(f_q)-L_\lambda^{\rm sq}(f_{q_\lambda^\star})
+=(q-q_\lambda^\star)^2,
+\qquad
+L_\lambda^{\log}(f_q)-L_\lambda^{\log}(f_{q_\lambda^\star})
+=D(\operatorname{Ber}(q_\lambda^\star),\operatorname{Ber}(q)).
+\]
+\item Suppose training uses $\lambda$ and deployment uses $\nu\in[0,1]$.
+Derive the deployment excess risks of the training minimizer:
+\[
+L_\nu^{\rm sq}(f_{q_\lambda^\star})
+-L_\nu^{\rm sq}(f_{q_\nu^\star})
+=0.64(\lambda-\nu)^2,
+\]
+\[
+L_\nu^{\log}(f_{q_\lambda^\star})
+-L_\nu^{\log}(f_{q_\nu^\star})
+=D(\operatorname{Ber}(q_\nu^\star),\operatorname{Ber}(q_\lambda^\star)).
+\]
+Define $f^\star\in\mathcal F_{\rm ctx}$ by
+$f^\star(a)=0.1$ and $f^\star(b)=0.9$. Prove that, for every
+$\rho\in[0,1]$ and $f\in\mathcal F_{\rm ctx}$,
+\[
+L_\rho^{\rm sq}(f)-L_\rho^{\rm sq}(f^\star)
+=\rho(f(a)-0.1)^2+(1-\rho)(f(b)-0.9)^2
+\]
+and
+\[
+L_\rho^{\log}(f)-L_\rho^{\log}(f^\star)
+=\rho D(\operatorname{Ber}(0.1),\operatorname{Ber}(f(a)))
++(1-\rho)D(\operatorname{Ber}(0.9),\operatorname{Ber}(f(b))).
+\]
+Use these identities to prove that $f^\star$ minimizes both risks over
+$\mathcal F_{\rm ctx}$ for every $\rho$. Identify the restriction to
+$\mathcal F_{\rm const}$ as the source of the nonzero deployment excess risks.
+\end{enumerate}
+\begin{hints}
+For (a), first determine $\P(Y=1)$.
+For the $\mathcal F_{\rm ctx}$ identities, consider the risk at each context
+separately.
+\end{hints}
+\end{exercisechunk}

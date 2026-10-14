@@ -1,0 +1,43 @@
+\begin{exercisechunk}
+\item \textbf{Why separated softmax has no uniform PL constant.}
+\label[exercise]{ex:l11-softmax-no-pl}
+\exerciseprofile{2}{1}{1}{\exproof\quad\exinterpretation}{%
+Rule out uniform PL by comparing the softmax gradient with the vanishing
+loss.}
+Fix $x_i\in\R^p$, $y_i\in[K]$, and $W\in\R^{K\times p}$, and define
+\[
+ q_W(k\mid x_i)=\frac{e^{w_k^\top x_i}}
+ {\sum_{j=1}^Ke^{w_j^\top x_i}},
+ \qquad
+ L_n(W)=\frac1n\sum_{i=1}^n-\log q_W(y_i\mid x_i).
+\]
+Let $R=\max_i\|x_i\|_2$, $q_i=q_W(\cdot\mid x_i)$, and
+$\ell_i=-\log q_W(y_i\mid x_i)$. You may use
+\[
+ \nabla L_n(W)=\frac1n\sum_{i=1}^n(q_i-e_{y_i})x_i^\top.
+\]
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Prove
+\[
+ \|q_i-e_{y_i}\|_2
+ \le\sqrt2\bigl(1-q_W(y_i\mid x_i)\bigr)
+ \le\sqrt2\ell_i.
+\]
+\item Deduce
+\[
+ \|\nabla L_n(W)\|_F\le\sqrt2R L_n(W).
+\]
+\item Suppose $W_r=r\overline W$ is a separating ray, so
+$L_n(W_r)\to0=L_n^\star$. Prove that no $\mu>0$ can satisfy
+\[
+ \frac12\|\nabla L_n(W)\|_F^2
+ \ge\mu\bigl(L_n(W)-L_n^\star\bigr)
+\]
+for every $W$.
+\end{enumerate}
+\begin{hints}
+If $s=1-q_W(y_i\mid x_i)$, the incorrect-class probabilities are
+nonnegative and sum to $s$. For (c), divide by the positive loss along the
+ray.
+\end{hints}
+\end{exercisechunk}

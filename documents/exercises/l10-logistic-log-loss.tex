@@ -1,0 +1,60 @@
+\begin{exercisechunk}
+\item \textbf{Logits, sigmoid probabilities, and logistic loss.}
+\label[exercise]{ex:l10-logistic-log-loss}
+\exerciseprofile{2}{2}{2}{\exproof\quad\excalculation\quad\exinterpretation}{%
+Derive binary logistic loss from a conditional probability model and
+distinguish the probabilistic surrogate from classification error.}
+Define the sigmoid function by
+\[
+ \sigma(s)=\frac1{1+e^{-s}},
+ \qquad s\in\R.
+\]
+For a score $s_w(x)=\langle w,x\rangle$ and a label
+$y\in\{-1,1\}$, define
+\[
+ q_w(y\mid x)=\sigma\bigl(ys_w(x)\bigr).
+\]
+Lecture~1 introduced a binary logit as log-odds, and Lecture~3 introduced
+sigmoid probabilities and log-loss fitting. This exercise reconnects those
+ideas for a linear score.
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Prove that $\sigma(s)+\sigma(-s)=1$. Deduce that
+$q_w(\cdot\mid x)$ is a probability mass function on $\{-1,1\}$ for every
+$x$.
+
+\item Prove the log-odds identity
+\[
+ \log\frac{q_w(1\mid x)}{q_w(-1\mid x)}=s_w(x),
+\]
+and derive
+\[
+ -\log q_w(y\mid x)
+ =\log\bigl(1+e^{-ys_w(x)}\bigr).
+\]
+Use these identities to explain each part of the terminology: why $s_w(x)$ is
+a \emph{logit}, why the use of $\sigma$ makes the model \emph{logistic}, why
+modeling $\P(Y=1\mid X=x)$ as a function of $x$ is called \emph{regression},
+and why the negative log-likelihood is called \emph{logistic loss}.
+
+\item Fix an input $x$ and suppose
+$\pi=\P(Y=1\mid X=x)\in(0,1)$. If a predictor assigns probability
+$q\in(0,1)$ to label $1$, its conditional expected log loss is
+\[
+ C_\pi(q)=-\pi\log q-(1-\pi)\log(1-q).
+\]
+Prove that $C_\pi$ is uniquely minimized at $q=\pi$. State precisely what the
+identity $q=\pi$ implies when the logistic model can represent the true
+conditional probabilities.
+
+\item Show that $q_w(1\mid x)\ge1/2$ if and only if $s_w(x)\ge0$.
+Compare the logistic training loss with the deployment loss
+$\I\{\operatorname{sign}(s_w(x))\ne y\}$. Why is logistic loss called a
+surrogate loss for classification error?
+\end{enumerate}
+\begin{hints}
+For (c), differentiate $C_\pi(q)$ and determine the sign of its derivative
+on either side of $q=\pi$. For (d), the two losses use the same signed score,
+but one records its magnitude and the other records only whether its sign is
+correct.
+\end{hints}
+\end{exercisechunk}

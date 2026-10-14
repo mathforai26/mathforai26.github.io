@@ -1,0 +1,34 @@
+\begin{exercisechunk}
+\item \textbf{A minibatch recursion under PL.}
+\label[exercise]{ex:l11-stochastic-pl}
+\exerciseprofile{2}{2}{2}{\exproof\quad\excalculation\quad\exinterpretation}{%
+Separate contraction from the additive variance term in stochastic gradient
+descent.}
+Let $L:\R^d\to\R$ be $\beta$-smooth and $\mu$-PL. Random iterates satisfy
+$\Theta_{t+1}=\Theta_t-\eta G_t$, where
+\[
+ \E[G_t\mid\Theta_t]=\nabla L(\Theta_t),
+ \qquad
+ \E[\|G_t-\nabla L(\Theta_t)\|_2^2\mid\Theta_t]\le\frac vB.
+\]
+Assume $0<\eta\le1/\beta$.
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Prove
+\[
+ \E[\|G_t\|_2^2\mid\Theta_t]
+ \le\|\nabla L(\Theta_t)\|_2^2+\frac vB.
+\]
+\item Apply smoothness and PL to derive
+\[
+ \E[L(\Theta_{t+1})-L^\star\mid\Theta_t]
+ \le(1-\eta\mu)(L(\Theta_t)-L^\star)
+ +\frac{\beta\eta^2v}{2B}.
+\]
+\item Unroll the recursion and give an upper bound valid for every $t$.
+Explain how its nondecaying term scales with $\eta$ and $B$.
+\end{enumerate}
+\begin{hints}
+For (a), expand $G_t=\nabla L(\Theta_t)+(G_t-\nabla L(\Theta_t))$ and use
+the conditional mean. For (c), sum a finite geometric series.
+\end{hints}
+\end{exercisechunk}

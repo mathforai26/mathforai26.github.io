@@ -10,7 +10,7 @@
 \usepackage{microtype}
 
 % Revision date: maintained by scripts/build_lecture_notes.py. Keep this command.
-\newcommand{\lecturerevised}{2026-09-16 10:00 UTC-06:00}
+\newcommand{\lecturerevised}{2026-10-09 23:50 UTC-07:00}
 \usepackage{eso-pic}
 \AddToShipoutPictureBG{%
   \AtPageLowerLeft{%
@@ -320,7 +320,8 @@ These stages raise several issues.
   learned compromise.
 \end{itemize}
 
-This is a curse of developing learned systems: we steer their behavior mostly
+Reliance on indirect interventions complicates the development of learned
+systems: we steer their behavior mostly
 through indirect interventions---change data, objectives,
 architectures, optimization, or feedback and observe what behavior changes.
 Why machine learning is excellent for transforming information
@@ -562,7 +563,7 @@ If $X$ matches one of $X_1,\dots,X_n$, the learner should simply use the label
 associated with the matching index.
 That is, if the learner's data are $((X_1,Y_1), \dots, (X_n,Y_n))$ and $X = X_J$
 for some $J\in [n]$, then the learner should set $\hat Y = Y_J$.
-This is because \emph{we are promised} that for the (unknown to us) secret function
+Using $Y_J$ is valid because \emph{we are promised} that for the unknown secret function
 $f$, $Y_J = f(X_J)$. Thus, choosing $Y_J$, we have $\hat Y = Y_J = f(X_J) = f(X)$.
 We are therefore guaranteed to be correct, which gives zero loss, the minimum
 possible loss---we are winning!
@@ -673,7 +674,7 @@ given in \cref{app:detailed-proof}. That appendix also explains why
 learning to supply the omitted steps is important. The elementary probability
 facts used in both versions are reviewed separately in
 \cref{app:probability}. Supply the missing justifications in
-\cref{ex:complete-boxes-proof}; the expanded proof in
+\cref{ex:complete-boxes-proof,ex:complete-boxes-lower}; the expanded proof in
 \cref{app:detailed-proof} provides intermediate steps.
 
 We prove the equality by bounding its left-hand side (LHS) both above and
@@ -816,22 +817,22 @@ these experiments are somehow isolated from each other in time and space,
 so the randomness that governs the outcome of obtaining the first datapoint
 does not influence that of the second.
 
-When running experiments in a lab, this is where the equipment would not be
-``reset'' to its pristine state, all conditions controlled.
-When collecting survey data, this is where the telephone numbers of people
-chosen to be surveyed should be chosen by throwing that $N$-sides
-dice independently of each other (most likely, using a computer, pretending
-computers produce real randomness). Stopping people at a shopping mall
+In a laboratory experiment, independence can fail when the equipment is not
+reset or when conditions carry over between trials.
+In a survey, independent sampling requires selecting respondents independently
+from the specified population. Stopping people at a shopping mall
 and talking to them will not produce an independent sample (couples often
 shop together, people go to a shop at a certain time may have similar jobs),
-let alone one that is uniform. The characters of a text are definitely not independent
-of each other by any means. The \emph{i.i.d.} (\emph{independent, identically distributed})
+let alone one that is uniform. The characters of a text are also dependent.
+The \emph{i.i.d.} (\emph{independent, identically distributed})
 assumption is common as it allows some crude quantification of
 how information scales with data, as we will illustrate now. We will return to going beyond this assumption later.
-An important detail of this assumption that the test index is drawn from the same distribution
-as the training indices. The meaning of this is that deployment data is obtained the same way as test data.
-This is again often not true; when this does not hold, we talk about \emph{distribution shift} (more specifically, \emph{covariate shift}, since
-the inputs, with an old word from statistics are also called \emph{covariates}).
+An important part of this assumption is that the test index is drawn from the
+same distribution as the training indices. This equality of sampling laws
+models deployment data as being obtained in the same way as training data.
+The equality often fails; when only the input law changes, we have
+\emph{covariate shift}, since inputs are also called \emph{covariates} in
+statistics.
 TODO: Add a simple exercise about covariate shift; probability ratios govern how much the error shifts.
 
 Conditioning on $X=x$ gives
@@ -892,8 +893,8 @@ test index are independent draws from the same probability distribution $P$
 on $[N]$. Again, we will write $P(x)$ for the probability assigned to index $x$.
 This assumption ensures that a region with substantial test probability also has
 a substantial chance of being represented in the training data.
-\Cref{ex:threshold-sampling} explores what can be proved under more general
-sampling assumptions.
+\Cref{ex:threshold-sampling,ex:threshold-coverage,ex:threshold-dependence}
+explore what can be proved under more general sampling assumptions.
 
 \newcommand{\kest}{K}
 Let $\kest$ be the smallest index with an
@@ -1510,13 +1511,15 @@ Predicting labels for particular unlabeled test inputs that are supplied
 to the learner along with its training data. Which inputs are revealed,
 and how they are selected, are part of the protocol; see \cref{ex:transduction}.
 \item[Prior]
-A specified distribution $\pi$ on possible targets before observing data.
+A specified distribution $\pi$ on possible targets.
 In the Bayesian boxes model, $F$ is drawn from $\pi$ independently of the
 sampled indices and the learner's seed.
 \item[Posterior]
-The conditional distribution of the target after observations. For a sample
-$s$ of positive probability, its mass at $f$ is
-$\P(F=f\mid S_F=s)$.
+Given jointly distributed random elements $Y$ and $V$, if the distribution
+of $Y$ is regarded as its prior distribution, then the conditional
+distribution of $Y$ given $V=v$ is its posterior distribution given $V=v$.
+For the boxes model and a sample $s$ of positive probability, its mass at
+$f$ is $\P(F=f\mid S_F=s)$.
 \item[Bayes rule]
 A learner minimizing average risk under a specified prior and sampling law.
 It chooses predictions to minimize posterior expected loss at observations
@@ -1559,18 +1562,32 @@ coexist with a large absolute risk. See \cref{ex:risk-versus-regret}.
 \input{../exercises/l2-repeated-experiments.tex}
 \input{../exercises/l2-unseen-probability.tex}
 \input{../exercises/l2-sample-size-bounds.tex}
+\exercisegroup{Completing the boxes proof}
 \input{../exercises/l2-complete-boxes-proof.tex}
+\input{../exercises/l2-complete-boxes-lower.tex}
 \input{../exercises/l2-threshold-expectation.tex}
 \input{../exercises/l2-data-coverage.tex}
+\exercisegroup{Sampling assumptions for threshold learning}
 \input{../exercises/l2-threshold-sampling.tex}
+\input{../exercises/l2-threshold-coverage.tex}
+\input{../exercises/l2-threshold-dependence.tex}
 \input{../exercises/l2-finite-class-consistency.tex}
+\exercisegroup{Induction and transduction}
 \input{../exercises/l2-transduction.tex}
+\input{../exercises/l2-transductive-test-set.tex}
 \input{../exercises/l2-deterministic-minimax.tex}
+\exercisegroup{Decisions for one bit}
 \input{../exercises/l2-one-bit-decisions.tex}
+\input{../exercises/l2-one-bit-worst-case.tex}
 \input{../exercises/l2-unknown-sampling-law.tex}
 \input{../exercises/l2-minimax-regret-q.tex}
+\exercisegroup{Comparing regret criteria}
 \input{../exercises/l2-regret-comparison.tex}
+\input{../exercises/l2-regret-minimizers.tex}
+\exercisegroup{Minimax risk and minimax regret}
 \input{../exercises/l2-risk-versus-regret.tex}
+\input{../exercises/l2-risk-regret-fallback.tex}
+\input{../exercises/l2-risk-regret-menu.tex}
 \input{../exercises/l2-probability-rules.tex}
 \input{../exercises/l2-probability-bounds.tex}
 \input{../exercises/l2-bayes-not-minimax.tex}
@@ -1586,7 +1603,7 @@ coexist with a large absolute risk. See \cref{ex:risk-versus-regret}.
 For a result of this caliber, no one would write a proof as detailed as the one
 shown below in a research paper or an advanced textbook. Instead, one would
 see a few short hints from which the proof can be constructed. The compact
-proof in \cref{sec:proof} has this form. This is good for remembering
+proof in \cref{sec:proof} has this form. The compact form is useful for remembering
 what is important about the proof.
 
 This appendix writes out a detailed version of the proof. Being able to
@@ -1751,7 +1768,7 @@ establish the lower bound.
 
 This appendix states the definitions and general rules used in these notes.
 Their applications to the boxes proof are left to
-\cref{ex:complete-boxes-proof}; elementary derivations are collected in
+\cref{ex:complete-boxes-proof,ex:complete-boxes-lower}; elementary derivations are collected in
 \cref{ex:probability-rules}. \Cref{app:detailed-proof} supplies intermediate
 steps for readers who need them.
 
@@ -1832,8 +1849,8 @@ $Y(\omega)=g(Z(\omega))$. For any measurable set $D$,
 \[
 \{Y\in D\}=\{Z\in g^{-1}(D)\}.
 \]
-Thus the events involving $Y$ are determined by $Z$. This is how applying a
-function to a random element produces another random element.
+Thus the events involving $Y$ are determined by $Z$. This dependence on $Z$
+is how applying a function to a random element produces another random element.
 
 \subsection{Distributions and expectation}
 The \emph{law} of a random element $Z$ assigns probability
@@ -1955,7 +1972,7 @@ $(V,W)$, and $C$ is an event determined by $V$, with $\P(C)>0$. Then
 Thus $T$ keeps its law and is independent of $W$ under this conditioning.
 For mutually independent coordinates, each coordinate is independent of the
 tuple of all the others. These general facts are the tools for the unseen-bit
-calculation in \cref{ex:complete-boxes-proof}.
+calculation in \cref{ex:complete-boxes-lower}.
 
 \subsection{Tails and repeated experiments}
 \label{sec:tails-and-repetitions}

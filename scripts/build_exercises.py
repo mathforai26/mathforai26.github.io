@@ -21,10 +21,14 @@ def reference_lectures(entries):
                   | {n for e in entries for n in e.get('reference_lectures', [])})
 
 
+def lecture_stem(number):
+    return f'lecture{number:02d}'
+
+
 def available_reference_lectures(entries):
     """Return referenced lectures whose scribe-note sources currently exist."""
     return [n for n in reference_lectures(entries)
-            if (ROOT / f'documents/scribes/lecture0{n}.tex').exists()]
+            if (ROOT / f'documents/scribes/{lecture_stem(n)}.tex').exists()]
 
 
 def tex(text):
@@ -41,12 +45,12 @@ def build(folder, entries, title, revision, instructions, solutions, book=False)
     local_labels=set()
     for e in entries:
         local_labels.update(re.findall(r'\\label(?:\[[^]]*\])?\{([^}]+)\}', (BANK/e['file']).read_text()))
-        solution=PRIVATE/'solutions'/(e['id']+'-solution.tex')
+        solution=PRIVATE/'solutions'/e.get('solution_file',e['id']+'-solution.tex')
         if solutions and solution.exists():
             local_labels.update(re.findall(r'\\label(?:\[[^]]*\])?\{([^}]+)\}',solution.read_text()))
     # Keep links to lecture facts functional even when the bundle is moved.
     for n in lectures:
-        stem = f'lecture0{n}'
+        stem = lecture_stem(n)
         aux=(ROOT / f'outputs/lecture-labels/{stem}.aux').read_text().splitlines()
         external=[]
         for line in aux:
@@ -66,7 +70,8 @@ def build(folder, entries, title, revision, instructions, solutions, book=False)
              r'\newcommand{\documentrevision}{'+tex(revision)+'}',
              r'\input{reader-preamble.tex}']
     for n in lectures:
-        lines.append(r'\externaldocument{lecture0'+str(n)+'}[lecture0'+str(n)+'.pdf]')
+        stem = lecture_stem(n)
+        lines.append(r'\externaldocument{'+stem+'}['+stem+'.pdf]')
     if not book:
         lines.append(r'\renewcommand{\thetheorem}{\arabic{theorem}}')
     if not solutions:
@@ -76,26 +81,38 @@ def build(folder, entries, title, revision, instructions, solutions, book=False)
     if not solutions:
         lines.append(r'\noindent Name: \studentname\quad CCID: \studentccid\par\medskip')
     current = None
+    current_group = None
     for e in entries:
         ident = e['id']
         if book and current != e['lecture']:
             if current is not None: lines.append(r'\clearpage')
             current = e['lecture']
+            current_group = None
             lines += [r'\section{Lecture '+str(current)+'}',r'\setcounter{courseexercise}{0}']
+        group=e.get('group')
+        if group != current_group:
+            current_group=group
+            if group:
+                lines.append(r'\exercisegroup{'+tex(group)+'}')
         if not book:
-            if e.get('assigned'):
-                lines.append(r'\noindent\textbf{Assigned work:} '+tex(e['assigned'])+r'\par')
             points=e.get('points', {})
             if points:
-                lines.append(r'\noindent\textbf{Points:} '+tex(', '.join(f'{k}: {v}' for k,v in points.items()))+
-                             '; total '+str(sum(points.values()))+r'.\par')
+                lines.append(r'\par\medskip\noindent\rule{\linewidth}{0.4pt}\par\nobreak\smallskip')
+                if isinstance(points, dict):
+                    allocation=tex(', '.join(f'{k}: {v}' for k,v in points.items()))
+                    lines.append(r'\noindent\textbf{Points:} '+allocation+
+                                 '; total '+str(sum(points.values()))+r'.\par\nobreak')
+                else:
+                    lines.append(r'\noindent\textbf{Points:} '+str(points)+r'.\par\nobreak')
         shutil.copy2(BANK / e['file'], folder)
         lines.append(r'\input{'+e['file']+'}')
         lines.append(r'\begin{exercisesolution}')
         if solutions:
-            filename=ident+'-solution.tex'
+            filename=e.get('solution_file',ident+'-solution.tex')
             source=PRIVATE / 'solutions' / filename
             if source.exists():
+                for dependency in e.get('solution_dependencies',[]):
+                    shutil.copy2(PRIVATE/'solutions'/dependency,folder)
                 shutil.copy2(source, folder)
                 lines.append(r'\input{'+filename+'}')
             else:
@@ -133,7 +150,13 @@ def main():
         entries=[dict(lookup[e['id']],**{k:v for k,v in e.items() if k!='id'}) for e in config['exercises']]
         if len({e['id'] for e in entries})!=len(entries): parser.error('An exercise must not appear twice')
         for e in entries:
-            if any(not isinstance(v,(int,float)) or v<0 for v in e.get('points',{}).values()):
+            points=e.get('points',{})
+            if isinstance(points,dict):
+                valid=all(isinstance(v,(int,float)) and not isinstance(v,bool) and v>=0
+                          for v in points.values())
+            else:
+                valid=isinstance(points,(int,float)) and not isinstance(points,bool) and points>=0
+            if not valid:
                 parser.error('Points must be nonnegative numbers')
         target=(PRIVATE/'releases'/args.release) if args.release else ROOT/'outputs/homeworks'/args.homework.stem
         if args.release and target.exists(): parser.error('Release already exists; choose a new revision')
@@ -142,12 +165,16 @@ def main():
         target=ROOT/'outputs/instructor-exercises'
     # Reject concurrent edits rather than saving a mixed source revision.
     inputs=[*BANK.glob('*.tex'),*BANK.glob('*.sty'),BANK/'catalog.json',
-            *[ROOT/f'documents/scribes/lecture0{n}.tex' for n in available_reference_lectures(entries)],
-            *[PRIVATE/'solutions'/(e['id']+'-solution.tex') for e in entries]]
+            *[ROOT/f'documents/scribes/{lecture_stem(n)}.tex'
+              for n in available_reference_lectures(entries)],
+            *[PRIVATE/'solutions'/e.get('solution_file',e['id']+'-solution.tex') for e in entries],
+            *[PRIVATE/'solutions'/dependency for e in entries
+              for dependency in e.get('solution_dependencies',[])]]
     if args.homework: inputs.append(args.homework)
     before={p:p.read_bytes() if p.exists() else None for p in inputs}
     # Refresh labels and reference PDFs from the same current sources.
-    lectures=[f'documents/scribes/lecture0{n}.tex' for n in available_reference_lectures(entries)]
+    lectures=[f'documents/scribes/{lecture_stem(n)}.tex'
+              for n in available_reference_lectures(entries)]
     with (ROOT/'tmp/exercise-reference-build.log').open('w') as log:
         subprocess.run([sys.executable,str(ROOT/'scripts/build_lecture_notes.py'),*lectures],cwd=ROOT,
                        stdout=log,stderr=subprocess.STDOUT,check=True)

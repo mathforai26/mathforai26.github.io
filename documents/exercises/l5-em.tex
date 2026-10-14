@@ -1,23 +1,64 @@
 \begin{exercisechunk}
-\item \textbf{EM averages hidden paths.}
+\pagebreak[3]
+\item \textbf{EM increases likelihood but can stop at a saddle.}
 \label[exercise]{ex:l5-em}
-In a finite model with positive joint masses, fix observed data \(z\),
-write \(\ell(\theta)=\log Q_\theta(z)\), and let
-\(q(s)=Q_{\theta_0}(s\mid z)\).
+\exerciseprofile{3}{2}{3}{\exproof\quad\excalculation\quad\exconstruction\quad\exinterpretation}{%
+Prove EM monotonicity and construct an exact EM iteration that remains at a
+saddle point of the observed log likelihood.}
+Let the unobserved variable \(X\) and observed variable \(Y\) take values
+in finite sets. Fix an observed value \(y_{\mathrm{obs}}\), and assume that
+\(Q_\theta(x,y_{\mathrm{obs}})>0\) for every allowed \(\theta,x\). Write
+\(\ell(\theta)=\log Q_\theta(y_{\mathrm{obs}})\). Starting from \(\theta_k\), one EM
+iteration consists of the E-step
+\[
+ q_k(x)=Q_{\theta_k}(X=x\mid Y=y_{\mathrm{obs}})
+\]
+and the M-step
+\[
+ \theta_{k+1}\in\arg\max_\theta
+ \sum_x q_k(x)\log Q_\theta(x,y_{\mathrm{obs}}).
+\]
+A generalized M-step need only make this sum no smaller than its value at
+\(\theta_k\). For part (a), fix \(\theta_0\) and abbreviate
+\(q(x)=Q_{\theta_0}(X=x\mid Y=y_{\mathrm{obs}})\).
 \begin{enumerate}[(a),beginpenalty=10000]
 \item Prove
 \[
  \ell(\theta)-\ell(\theta_0)
- =\sum_s q(s)\log\frac{Q_\theta(s,z)}{Q_{\theta_0}(s,z)}
-   +\KL(q,Q_\theta(\cdot\mid z)).
+ =\sum_x q(x)\log\frac{Q_\theta(x,y_{\mathrm{obs}})}
+                              {Q_{\theta_0}(x,y_{\mathrm{obs}})}
+   +\KL(q,Q_\theta(\cdot\mid y_{\mathrm{obs}})).
 \]
 Deduce monotonicity of exact EM and of an M-step that merely increases
 the expected complete-data log likelihood.
-\item Why does this identity not guarantee convergence to a local
-maximum? Explain why replacing \(q\) by a point mass at a most likely
-path generally changes the update and its guarantee.
-\item For a Gaussian LDS, expand
-\(\E[\|S_{t+1}-AS_t\|^2\mid Z_{1:T}]\).
-Identify the second moments that a state-mean substitution omits.
+\item The proof in part (a) depends on \(q\) being the full current
+posterior. Identify the equality that is lost if \(q\) is replaced by a
+point mass at a most likely hidden value. Explain also why monotonicity of
+the likelihood values does not guarantee convergence to a local maximum.
+\item To exhibit the stationary-point problem from the second subproblem
+of part (b), consider parameters \((a,b)\in(-1,1)^2\), with
+\[
+ Q_{a,b}(X=x)=\frac{1+ax}{2},\qquad
+ Q_{a,b}(Y=1\mid X=x)=\frac{1+bx}{2},
+ \qquad x\in\{-1,1\}.
+\]
+Suppose that \(Y=1\) is observed. Show that
+\(\ell(a,b)=\log((1+ab)/2)\). Starting from \((a,b)=(0,0)\), compute
+the E- and M-steps and show that exact EM remains at the origin. Use the
+Hessian of \(\ell\) to show that the origin is a saddle point.
+\item The stationary point in part (c) has an indefinite Hessian. Now
+suppose that EM converges to an interior stationary point \(\theta_\star\).
+Assume that the observed log likelihood is twice continuously
+differentiable near \(\theta_\star\) and
+\(\nabla^2\ell(\theta_\star)\) is negative definite. What can be
+concluded about \(\theta_\star\)? Justify the conclusion.
 \end{enumerate}
+\begin{hints}
+For (a), factor the joint mass as
+\(Q_\theta(x,y_{\mathrm{obs}})
+=Q_\theta(x\mid y_{\mathrm{obs}})Q_\theta(y_{\mathrm{obs}})\).
+For (c), first compute the posterior of \(X\) at the origin. The
+expected complete-data log likelihood then separates into a function of
+\(a\) and a function of \(b\).
+\end{hints}
 \end{exercisechunk}

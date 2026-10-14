@@ -1,0 +1,34 @@
+\begin{exercisechunk}
+\item \textbf{Preconditioned directions under PL.}
+\label[exercise]{ex:l11-aligned-update}
+\exerciseprofile{2}{2}{2}{\exproof\quad\excalculation}{%
+Identify the two controls on an approximate descent direction that preserve a
+global PL rate.}
+Let $L:\R^d\to\R$ be $\beta$-smooth and $\mu$-PL. Consider
+\[
+ \theta_{t+1}=\theta_t+\eta d_t,
+\]
+where, for constants $c,C>0$,
+\[
+ -\langle\nabla L(\theta_t),d_t\rangle
+ \ge c\|\nabla L(\theta_t)\|_2^2,
+ \qquad
+ \|d_t\|_2\le C\|\nabla L(\theta_t)\|_2.
+\]
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Prove that $0<\eta\le c/(\beta C^2)$ implies
+\[
+ L(\theta_{t+1})
+ \le L(\theta_t)-\frac{\eta c}{2}
+                  \|\nabla L(\theta_t)\|_2^2.
+\]
+Deduce a geometric bound on $L(\theta_t)-L^\star$.
+\item Let $d_t=-P_t\nabla L(\theta_t)$, where $P_t$ is symmetric and
+$mI\preceq P_t\preceq MI$. Give valid values of $c$ and $C$, and state the
+resulting sufficient upper bound on $\eta$ and convergence factor.
+\end{enumerate}
+\begin{hints}
+Apply the descent lemma to $\eta d_t$. For (b), use the Rayleigh quotient and
+the operator norm of $P_t$.
+\end{hints}
+\end{exercisechunk}

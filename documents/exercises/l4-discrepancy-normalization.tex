@@ -1,0 +1,25 @@
+% Shared exercise chunk: l4-discrepancy-normalization
+\begin{exercisechunk}
+\item \textbf{Normalization and discrepancy scale.\suppmark}
+\label[exercise]{ex:discrepancy-normalization}
+\exerciseprofile{1}{1}{1}{\excalculation\quad\exinterpretation}{%
+Determine how cost normalization changes conversion moduli without changing
+their extremal ratio.}
+Let \(P=\delta_{0^T}\), \(T\ge2\), with
+\(c_{\mathrm{cnt}}(x)=\sum_{t=1}^T x_t\).
+Replace the count by the average count \(c_{\mathrm{cnt}}/T\). Show that
+\[
+ \omega_{D\to c_{\mathrm{cnt}}/T}(\kappa;P)=1-e^{-\kappa}
+\]
+and
+\[
+ \omega_{c_{\mathrm{cnt}}/T\to D}(s;P)
+ =\begin{cases}
+   -\log(1-Ts),&0\le s<1/T,\\
+   +\infty,&s\ge1/T.
+  \end{cases}
+\]
+Show that normalization divides both fixed-KL cost endpoints by $T$ and
+therefore leaves their ratio equal to $T$ for every $\kappa>0$.
+
+\end{exercisechunk}

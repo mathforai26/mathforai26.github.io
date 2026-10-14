@@ -1,0 +1,61 @@
+\begin{exercisechunk}
+\item \textbf{A constant gap from private features.}
+\label[exercise]{ex:l10-private-features}
+\exerciseprofile{3}{3}{3}{\exproof\quad\excalculation\quad\exinterpretation}{%
+Prove that unseen private features amplify a two-dimensional norm bias into a
+constant expected-risk gap in proportional dimension.}
+Fix $n\ge4$, set $d=n+2$, and decompose
+$z=(z^{\rm sh},z^{\rm pr})\in\R^2\times\R^n$. Define
+\[
+ z_0=((2,1)^\top,0),\quad
+ u_j=((1,-3/2)^\top,ne_j),\quad
+ v_j=((-1,3/2)^\top,ne_j),\quad j\in[n].
+\]
+Under $P_{2,n}$, $Z=z_0$ with probability $1/2$ and
+$Z=u_j$ with probability $1/(2n)$ for every $j$. Under $P_{\infty,n}$,
+replace $u_j$ by $v_j$. Draw $Y$ uniformly and independently from
+$\{-1,1\}$ and set $X=YZ$. Let $S_n$ be an i.i.d. sample.
+
+Let $\widehat w_2$ be the minimum-$\ell_2$ hard-margin separator. Let
+$\widehat w_\infty$ minimize the global $\ell_\infty$ norm and then minimize
+the Euclidean norm among the max-norm minimizers. Let
+$G_n=\{z_0\text{ appears in }S_n\}$.
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Prove that on $G_n$ the shared coordinates of
+$\widehat w_\infty$ equal $(1/3,1/3)^\top$. Exhibit feasible private parameter
+coefficients for every observed rare identity under each population, and prove
+that the coefficient associated with every unobserved identity is zero.
+
+\item Set $w_2^\star=(2/5,1/5)^\top$. Construct a feasible Euclidean
+comparison vector and prove that, on $G_n$,
+\[
+ \|\widehat w_2^{\rm sh}-w_2^\star\|_2^2
+ \le\frac{121}{100n}.
+\]
+Deduce that the signs assigned by the shared coordinates to the rare points
+agree with those in the two-dimensional example for all sufficiently large
+$n$.
+
+\item For a fixed rare identity $j$, compute the probability that $j$ is
+absent from $S_n$ while $G_n$ occurs. Sum over $j$ and prove that the favored
+selector has expected risk tending to zero while the disfavored selector has
+expected risk tending to
+\[
+ \frac12e^{-1/2}.
+\]
+Prove this conclusion under both $P_{2,n}$ and $P_{\infty,n}$, with the roles
+of the selectors reversed.
+
+\item State precisely which aspects of the learning problem change with
+$n$. Does the result prove inconsistency for a fixed finite-dimensional
+population law?
+\end{enumerate}
+\begin{hints}
+For (a), the common constraint and $\|w\|_\infty\le1/3$ force equality in
+$2w_1+w_2\le3\|w\|_\infty$. For (b), use at most $n$ private parameter
+coefficients, each of magnitude at most $11/(10n)$. For (c), subtract the
+event that neither
+the common point nor identity $j$ appears from the event that identity $j$
+does not appear.
+\end{hints}
+\end{exercisechunk}

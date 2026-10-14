@@ -1,0 +1,38 @@
+% Shared exercise chunk: l4-binary-count-accumulation
+\begin{exercisechunk}
+\item \textbf{Persistent errors accumulate.}
+\label[exercise]{ex:binary-count-accumulation}
+\exerciseprofile{3}{2}{3}{\exproof\quad\excalculation\quad\exinterpretation}{%
+Derive exact and asymptotic error counts and explain the quadratic accumulation
+caused by persistent errors.}
+Use the setting and Markov generators from \cref{ex:binary-count}.
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Prove
+\begin{align}
+ \E_{Q_{\mathrm{ind}}}[c_{\mathrm{cnt}}]&=T\varepsilon,
+ \label{eq:ind-cost}\\
+ \E_{Q_{\mathrm{bad}}}[c_{\mathrm{cnt}}]
+ &=\sum_{t=1}^T[1-(1-\varepsilon)^t]
+ =T-\frac{(1-\varepsilon)[1-(1-\varepsilon)^T]}{\varepsilon}.
+ \label{eq:bad-cost}
+\end{align}
+Obtain the second identity both from marginal error probabilities
+and by conditioning on the first error position. Also prove
+\begin{equation}
+ \E_{Q_{\mathrm{ind}}}[c_{\mathrm{fin}}]=\varepsilon,\qquad
+ \E_{Q_{\mathrm{bad}}}[c_{\mathrm{fin}}]=1-(1-\varepsilon)^T.
+ \label{eq:terminal-cost}
+\end{equation}
+\item Prove the finite bounds
+\[
+ \frac{\varepsilon T(T+1)}2
+ -\frac{\varepsilon^2T(T+1)(T-1)}6
+ \le\E_{Q_{\mathrm{bad}}}[c_{\mathrm{cnt}}]
+ \le\frac{\varepsilon T(T+1)}2.
+\]
+Deduce \(\E_{Q_{\mathrm{bad}}}[c_{\mathrm{cnt}}]
+\sim\varepsilon T(T+1)/2\) when \(T\varepsilon\to0\).
+Explain why the expected count can grow quadratically with \(T\)
+in this regime.
+\end{enumerate}
+\end{exercisechunk}

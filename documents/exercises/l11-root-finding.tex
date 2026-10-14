@@ -1,0 +1,44 @@
+\begin{exercisechunk}
+\item \textbf{Root finding without an objective.}\suppmark
+\label[exercise]{ex:l11-root-finding}
+\exerciseprofile{2}{2}{2}{\exproof\quad\excalculation\quad\exinterpretation}{%
+Separate the residual used by an algorithm from the Lyapunov function used to
+prove its convergence.}
+Let $g:\R^d\to\R^d$ be $\mu$-strongly monotone and $C$-Lipschitz:
+\[
+ \langle g(\theta)-g(\theta'),\theta-\theta'\rangle
+ \ge\mu\|\theta-\theta'\|_2^2,
+ \qquad
+ \|g(\theta)-g(\theta')\|_2
+ \le C\|\theta-\theta'\|_2.
+\]
+Suppose $g(\theta^\star)=0$, and consider
+\[
+ \theta_{t+1}=\theta_t-\eta g(\theta_t).
+\]
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Prove that the root $\theta^\star$ is unique and that
+\[
+ \|\theta_{t+1}-\theta^\star\|_2^2
+ \le(1-2\eta\mu+\eta^2C^2)
+      \|\theta_t-\theta^\star\|_2^2.
+\]
+\item Prove that $\mu\le C$ and that
+$0<\eta<2\mu/C^2$ makes the factor in part (a) belong to $[0,1)$.
+State the resulting geometric bound.
+\item Define
+$V(\theta)=\|\theta-\theta^\star\|_2^2/2$ and
+$d(\theta)=-g(\theta)$. Verify the two aligned-direction conditions for
+$V$, with constants $c=\mu$ and $C$. Using the facts that $V$ is
+$1$-smooth and $1$-PL, state the stepsize and rate supplied by the
+aligned-update theorem. Compare its stepsize range with part (b).
+\item Explain why the update can be run without evaluating either
+$\theta^\star$ or $V(\theta_t)$, and why $V$ is an analysis certificate
+rather than an objective from which the update was derived.
+\end{enumerate}
+\begin{hints}
+For (a), subtract $\theta^\star$ from the update and expand the squared norm.
+For (b), combine strong monotonicity with Cauchy--Schwarz and Lipschitz
+continuity. For (c), compute $\nabla V(\theta)$.
+\end{hints}
+\end{exercisechunk}

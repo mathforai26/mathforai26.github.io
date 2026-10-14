@@ -2,6 +2,9 @@
 \begin{exercisechunk}
 \item \textbf{Classification from probabilistic prediction.}
 \label[exercise]{ex:probabilistic-classification}
+\exerciseprofile{3}{2}{3}{\exproof\quad\excalculation\quad\exinterpretation}{%
+Relate probabilistic accuracy under log loss to classification accuracy and
+identify why optimal classification need not imply accurate probabilities.}
 Let $(X,Y)$ have an arbitrary distribution on $\cX\times\{0,1\}$, where
 $\cX$ is finite. For every $x$ with $\P(X=x)>0$, define
 \[
@@ -65,10 +68,4 @@ p\log\frac pq+(1-p)\log\frac{1-p}{1-q}
 \right)}.
 \]
 
-\paragraph{What this exercise is meant to teach.}
-A probabilistic predictor and a classifier answer different questions. The
-excess classification risk weights a wrong decision by twice the distance of
-$\eta(x)$ from the decision boundary $1/2$. Small excess log loss controls
-excess classification risk, but Bayes-optimal classification does not imply
-accurate probabilities or small log loss.
 \end{exercisechunk}

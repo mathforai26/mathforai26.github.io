@@ -2,10 +2,24 @@
 \begin{exercisechunk}
 \item \textbf{Concentration and reverse KL.}
 \label[exercise]{ex:reverse}
+\exerciseprofile{3}{3}{3}{\exproof\quad\excalculation\quad\exinterpretation}{%
+Use exponential tilting to connect reverse KL with concentration and solve the
+minimum-reverse-KL problem under an expected-count constraint.}
 Use the notation of \cref{sec:cost-concentration}.
 \begin{enumerate}[(a),beginpenalty=10000]
-\item Prove \cref{prop:entropy-cost} by exponential tilting, and
-then deduce \cref{thm:reverse-cost}, including the case \(v=0\).
+\item Prove by exponential tilting that
+\[
+ \E_Q[c]-\E_P[c]
+ \le\inf_{\lambda>0}
+ \frac{\KL(Q,P)+\log\E_P[e^{\lambda(c-\E_P[c])}]}{\lambda}.
+\]
+Then suppose
+$\log\E_P[e^{\lambda(c-\E_P[c])}]\le\lambda^2v^2/2$ for every
+$\lambda\in\mathbb R$, and deduce
+\[
+ |\E_Q[c]-\E_P[c]|\le v\sqrt{2\KL(Q,P)}.
+\]
+Include the case \(v=0\).
 \item Let \(c=T^{-1}\sum_{t=1}^T f_t(X_t)\), with independent
 \([0,1]\)-valued summands under \(P\). Prove
 \(v_P(c)\le1/(4T)\), and deduce, for every law \(Q\),

@@ -1,0 +1,55 @@
+\begin{exercisechunk}
+\item \textbf{Equivalent smoothness and Hessian conditions.}
+\label[exercise]{ex:l11-smoothness-equivalences}
+\exerciseprofile{2}{2}{3}{\exproof\quad\excalculation}{%
+Relate quadratic first-order bounds, Hessian inequalities, convexity, and
+Lipschitz continuity of the gradient.}
+Let $L:\R^d\to\R$ be twice continuously differentiable. For $\beta\ge0$,
+consider the quadratic upper bound
+\begin{equation}
+ L(v)\le L(u)+\langle\nabla L(u),v-u\rangle
+              +\frac\beta2\|v-u\|_2^2
+ \qquad\text{for every }u,v\in\R^d.
+ \tag{$U_\beta$}
+ \label{eq:ex-l11-upper}
+\end{equation}
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Prove that \cref{eq:ex-l11-upper} holds if and only if
+\[
+ \nabla^2L(\theta)\preceq\beta I
+ \qquad\text{for every }\theta\in\R^d.
+\]
+\item Prove both Hessian characterizations
+\[
+ \begin{aligned}
+ L\text{ is convex}
+ &\quad\Longleftrightarrow\quad
+ \nabla^2L(\theta)\succeq0
+ &&\text{for every }\theta,\\
+ L\text{ is $\mu$-strongly convex}
+ &\quad\Longleftrightarrow\quad
+ \nabla^2L(\theta)\succeq\mu I
+ &&\text{for every }\theta.
+ \end{aligned}
+\]
+\item Prove that $L$ is $\beta$-smooth if and only if
+\[
+ -\beta I\preceq\nabla^2L(\theta)\preceq\beta I
+ \qquad\text{for every }\theta\in\R^d.
+\]
+\item Conclude that, when $L$ is convex, $\beta$-smoothness is equivalent to
+\cref{eq:ex-l11-upper}. Verify that $L(x)=-x^4$ satisfies
+\cref{eq:ex-l11-upper} with $\beta=0$ but is not smooth with any finite
+constant. Explain why this example prevents the same conclusion without
+convexity.
+\end{enumerate}
+\begin{hints}
+For the Hessian implications, restrict $L$ to the line
+$t\mapsto u+t(v-u)$. For the reverse implications, use
+\[
+ \phi(1)=\phi(0)+\phi'(0)+\int_0^1(1-t)\phi''(t)\,dt.
+\]
+For part (c), apply the fundamental theorem of calculus to the gradient along
+the line segment from $u$ to $v$.
+\end{hints}
+\end{exercisechunk}

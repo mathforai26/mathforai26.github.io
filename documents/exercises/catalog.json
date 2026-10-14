@@ -3,7 +3,42 @@
     "id": "l1-rope",
     "lecture": 1,
     "number": 1,
-    "file": "l1-rope.tex"
+    "file": "l1-rope.tex",
+    "group": "Relative addressing with RoPE",
+    "solution_file": "l1-rope-encoding-solution.tex",
+    "solution_dependencies": [
+      "l1-rope-solution.tex"
+    ]
+  },
+  {
+    "id": "l1-rope-retrieval",
+    "lecture": 1,
+    "number": 2,
+    "file": "l1-rope-retrieval.tex",
+    "group": "Relative addressing with RoPE",
+    "solution_dependencies": [
+      "l1-rope-solution.tex"
+    ]
+  },
+  {
+    "id": "l1-rope-collisions",
+    "lecture": 1,
+    "number": 3,
+    "file": "l1-rope-collisions.tex",
+    "group": "Relative addressing with RoPE",
+    "solution_dependencies": [
+      "l1-rope-solution.tex"
+    ]
+  },
+  {
+    "id": "l1-rope-width",
+    "lecture": 1,
+    "number": 4,
+    "file": "l1-rope-width.tex",
+    "group": "Relative addressing with RoPE",
+    "solution_dependencies": [
+      "l1-rope-solution.tex"
+    ]
   },
   {
     "id": "l1-greedy-decoding",
@@ -11,13 +46,13 @@
     "reference_lectures": [
       2
     ],
-    "number": 2,
+    "number": 5,
     "file": "l1-greedy-decoding.tex"
   },
   {
     "id": "l1-bounded-attention",
     "lecture": 1,
-    "number": 3,
+    "number": 6,
     "file": "l1-bounded-attention.tex"
   },
   {
@@ -54,96 +89,158 @@
     "id": "l2-complete-boxes-proof",
     "lecture": 2,
     "number": 6,
-    "file": "l2-complete-boxes-proof.tex"
+    "file": "l2-complete-boxes-proof.tex",
+    "group": "Completing the boxes proof"
+  },
+  {
+    "id": "l2-complete-boxes-lower",
+    "lecture": 2,
+    "number": 7,
+    "file": "l2-complete-boxes-lower.tex",
+    "group": "Completing the boxes proof"
   },
   {
     "id": "l2-threshold-expectation",
     "lecture": 2,
-    "number": 7,
+    "number": 8,
     "file": "l2-threshold-expectation.tex"
   },
   {
     "id": "l2-data-coverage",
     "lecture": 2,
-    "number": 8,
+    "number": 9,
     "file": "l2-data-coverage.tex"
   },
   {
     "id": "l2-threshold-sampling",
     "lecture": 2,
-    "number": 9,
-    "file": "l2-threshold-sampling.tex"
+    "number": 10,
+    "file": "l2-threshold-sampling.tex",
+    "group": "Sampling assumptions for threshold learning"
+  },
+  {
+    "id": "l2-threshold-coverage",
+    "lecture": 2,
+    "number": 11,
+    "file": "l2-threshold-coverage.tex",
+    "group": "Sampling assumptions for threshold learning"
+  },
+  {
+    "id": "l2-threshold-dependence",
+    "lecture": 2,
+    "number": 12,
+    "file": "l2-threshold-dependence.tex",
+    "group": "Sampling assumptions for threshold learning"
   },
   {
     "id": "l2-finite-class-consistency",
     "lecture": 2,
-    "number": 10,
+    "number": 13,
     "file": "l2-finite-class-consistency.tex"
   },
   {
     "id": "l2-transduction",
     "lecture": 2,
-    "number": 11,
-    "file": "l2-transduction.tex"
+    "number": 14,
+    "file": "l2-transduction.tex",
+    "group": "Induction and transduction"
+  },
+  {
+    "id": "l2-transductive-test-set",
+    "lecture": 2,
+    "number": 15,
+    "file": "l2-transductive-test-set.tex",
+    "group": "Induction and transduction"
   },
   {
     "id": "l2-deterministic-minimax",
     "lecture": 2,
-    "number": 12,
+    "number": 16,
     "file": "l2-deterministic-minimax.tex"
   },
   {
     "id": "l2-one-bit-decisions",
     "lecture": 2,
-    "number": 13,
-    "file": "l2-one-bit-decisions.tex"
+    "number": 17,
+    "file": "l2-one-bit-decisions.tex",
+    "group": "Decisions for one bit"
+  },
+  {
+    "id": "l2-one-bit-worst-case",
+    "lecture": 2,
+    "number": 18,
+    "file": "l2-one-bit-worst-case.tex",
+    "group": "Decisions for one bit"
   },
   {
     "id": "l2-unknown-sampling-law",
     "lecture": 2,
-    "number": 14,
+    "number": 19,
     "file": "l2-unknown-sampling-law.tex"
   },
   {
     "id": "l2-minimax-regret-q",
     "lecture": 2,
-    "number": 15,
+    "number": 20,
     "file": "l2-minimax-regret-q.tex"
   },
   {
     "id": "l2-regret-comparison",
     "lecture": 2,
-    "number": 16,
-    "file": "l2-regret-comparison.tex"
+    "number": 21,
+    "file": "l2-regret-comparison.tex",
+    "group": "Comparing regret criteria"
+  },
+  {
+    "id": "l2-regret-minimizers",
+    "lecture": 2,
+    "number": 22,
+    "file": "l2-regret-minimizers.tex",
+    "group": "Comparing regret criteria"
   },
   {
     "id": "l2-risk-versus-regret",
     "lecture": 2,
-    "number": 17,
-    "file": "l2-risk-versus-regret.tex"
+    "number": 23,
+    "file": "l2-risk-versus-regret.tex",
+    "group": "Minimax risk and minimax regret"
+  },
+  {
+    "id": "l2-risk-regret-fallback",
+    "lecture": 2,
+    "number": 24,
+    "file": "l2-risk-regret-fallback.tex",
+    "group": "Minimax risk and minimax regret"
+  },
+  {
+    "id": "l2-risk-regret-menu",
+    "lecture": 2,
+    "number": 25,
+    "file": "l2-risk-regret-menu.tex",
+    "group": "Minimax risk and minimax regret"
   },
   {
     "id": "l2-probability-rules",
     "lecture": 2,
-    "number": 18,
+    "number": 26,
     "file": "l2-probability-rules.tex"
   },
   {
     "id": "l2-probability-bounds",
     "lecture": 2,
-    "number": 19,
+    "number": 27,
     "file": "l2-probability-bounds.tex"
   },
   {
     "id": "l2-bayes-not-minimax",
     "lecture": 2,
-    "number": 20,
+    "number": 28,
     "file": "l2-bayes-not-minimax.tex"
   },
   {
     "id": "l2-prior-structure",
     "lecture": 2,
-    "number": 21,
+    "number": 29,
     "file": "l2-prior-structure.tex"
   },
   {
@@ -180,108 +277,272 @@
     "id": "l4-discrepancy-comparison",
     "lecture": 4,
     "number": 4,
-    "file": "l4-discrepancy-comparison.tex"
+    "file": "l4-discrepancy-comparison.tex",
+    "group": "Task discrepancy conversions"
+  },
+  {
+    "id": "l4-discrepancy-forward",
+    "lecture": 4,
+    "number": 5,
+    "file": "l4-discrepancy-forward.tex",
+    "group": "Task discrepancy conversions"
+  },
+  {
+    "id": "l4-discrepancy-reverse",
+    "lecture": 4,
+    "number": 6,
+    "file": "l4-discrepancy-reverse.tex",
+    "group": "Task discrepancy conversions"
+  },
+  {
+    "id": "l4-discrepancy-normalization",
+    "lecture": 4,
+    "number": 7,
+    "file": "l4-discrepancy-normalization.tex",
+    "group": "Task discrepancy conversions"
+  },
+  {
+    "id": "l4-discrepancy-variance",
+    "lecture": 4,
+    "number": 8,
+    "file": "l4-discrepancy-variance.tex",
+    "group": "Task discrepancy conversions"
   },
   {
     "id": "l4-binary-count",
     "lecture": 4,
-    "number": 5,
-    "file": "l4-binary-count.tex"
+    "number": 9,
+    "file": "l4-binary-count.tex",
+    "group": "Repeated and persistent errors"
+  },
+  {
+    "id": "l4-binary-count-accumulation",
+    "lecture": 4,
+    "number": 10,
+    "file": "l4-binary-count-accumulation.tex",
+    "group": "Repeated and persistent errors"
+  },
+  {
+    "id": "l4-binary-count-tv",
+    "lecture": 4,
+    "number": 11,
+    "file": "l4-binary-count-tv.tex",
+    "group": "Repeated and persistent errors"
+  },
+  {
+    "id": "l4-binary-count-terminal",
+    "lecture": 4,
+    "number": 12,
+    "file": "l4-binary-count-terminal.tex",
+    "group": "Repeated and persistent errors"
   },
   {
     "id": "l4-positionwise-kl",
     "lecture": 4,
-    "number": 6,
+    "number": 13,
     "file": "l4-positionwise-kl.tex"
   },
   {
     "id": "l4-sharing",
     "lecture": 4,
-    "number": 7,
-    "file": "l4-sharing.tex"
+    "number": 14,
+    "file": "l4-sharing.tex",
+    "group": "Parameter sharing"
+  },
+  {
+    "id": "l4-sharing-rate",
+    "lecture": 4,
+    "number": 15,
+    "file": "l4-sharing-rate.tex",
+    "group": "Parameter sharing"
+  },
+  {
+    "id": "l4-sharing-leading",
+    "lecture": 4,
+    "number": 16,
+    "file": "l4-sharing-leading.tex",
+    "group": "Parameter sharing"
   },
   {
     "id": "l4-sharing-horizon",
     "lecture": 4,
-    "number": 8,
-    "file": "l4-sharing-horizon.tex"
+    "number": 17,
+    "file": "l4-sharing-horizon.tex",
+    "group": "Sequence length and token budgets"
+  },
+  {
+    "id": "l4-sharing-budget",
+    "lecture": 4,
+    "number": 18,
+    "file": "l4-sharing-budget.tex",
+    "group": "Sequence length and token budgets"
   },
   {
     "id": "l4-sharing-costs",
     "lecture": 4,
-    "number": 9,
+    "number": 19,
     "file": "l4-sharing-costs.tex"
   },
   {
     "id": "l4-bernoulli-identification",
     "lecture": 4,
-    "number": 10,
+    "number": 20,
     "file": "l4-bernoulli-identification.tex"
   },
   {
     "id": "l4-copying-context",
     "lecture": 4,
-    "number": 11,
-    "file": "l4-copying-context.tex"
+    "number": 21,
+    "file": "l4-copying-context.tex",
+    "group": "Copying and memory"
+  },
+  {
+    "id": "l4-copying-memory",
+    "lecture": 4,
+    "number": 22,
+    "file": "l4-copying-memory.tex",
+    "group": "Copying and memory"
   },
   {
     "id": "l4-positionwise-loss",
     "lecture": 4,
-    "number": 12,
-    "file": "l4-positionwise-loss.tex"
+    "number": 23,
+    "file": "l4-positionwise-loss.tex",
+    "group": "A missed final-position dependency"
+  },
+  {
+    "id": "l4-positionwise-fitting",
+    "lecture": 4,
+    "number": 24,
+    "file": "l4-positionwise-fitting.tex",
+    "group": "A missed final-position dependency"
+  },
+  {
+    "id": "l4-positionwise-budget",
+    "lecture": 4,
+    "number": 25,
+    "file": "l4-positionwise-budget.tex",
+    "group": "A missed final-position dependency"
+  },
+  {
+    "id": "l4-positionwise-stability",
+    "lecture": 4,
+    "number": 26,
+    "file": "l4-positionwise-stability.tex",
+    "group": "A missed final-position dependency"
   },
   {
     "id": "l4-optimization-certificate",
     "lecture": 4,
-    "number": 13,
+    "number": 27,
     "file": "l4-optimization-certificate.tex"
   },
   {
     "id": "l4-fitting-support",
     "lecture": 4,
-    "number": 14,
-    "file": "l4-fitting-support.tex"
+    "number": 28,
+    "file": "l4-fitting-support.tex",
+    "group": "Likelihood fitting, task cost, and support"
+  },
+  {
+    "id": "l4-fitting-minimizers",
+    "lecture": 4,
+    "number": 29,
+    "file": "l4-fitting-minimizers.tex",
+    "group": "Likelihood fitting, task cost, and support"
+  },
+  {
+    "id": "l4-chosen-prompts",
+    "lecture": 4,
+    "number": 30,
+    "file": "l4-chosen-prompts.tex",
+    "group": "Likelihood fitting, task cost, and support"
+  },
+  {
+    "id": "l4-direct-cost-gradient",
+    "lecture": 4,
+    "number": 31,
+    "file": "l4-direct-cost-gradient.tex",
+    "group": "Likelihood fitting, task cost, and support"
   },
   {
     "id": "l4-multistep-benefit",
     "lecture": 4,
-    "number": 15,
+    "number": 32,
     "file": "l4-multistep-benefit.tex"
   },
   {
     "id": "l4-multistep",
     "lecture": 4,
-    "number": 16,
-    "file": "l4-multistep.tex"
+    "number": 33,
+    "file": "l4-multistep.tex",
+    "group": "Exact and auxiliary multistep prediction"
+  },
+  {
+    "id": "l4-multistep-heads",
+    "lecture": 4,
+    "number": 34,
+    "file": "l4-multistep-heads.tex",
+    "group": "Exact and auxiliary multistep prediction"
   },
   {
     "id": "l4-kl-directions",
     "lecture": 4,
-    "number": 17,
-    "file": "l4-kl-directions.tex"
+    "number": 35,
+    "file": "l4-kl-directions.tex",
+    "group": "Errors detected by the two KL directions"
+  },
+  {
+    "id": "l4-kl-directions-omission",
+    "lecture": 4,
+    "number": 36,
+    "file": "l4-kl-directions-omission.tex",
+    "group": "Errors detected by the two KL directions"
+  },
+  {
+    "id": "l4-kl-directions-failures",
+    "lecture": 4,
+    "number": 37,
+    "file": "l4-kl-directions-failures.tex",
+    "group": "Errors detected by the two KL directions"
   },
   {
     "id": "l4-reverse-variational",
     "lecture": 4,
-    "number": 18,
+    "number": 38,
     "file": "l4-reverse-variational.tex"
   },
   {
     "id": "l4-stability",
     "lecture": 4,
-    "number": 19,
-    "file": "l4-stability.tex"
+    "number": 39,
+    "file": "l4-stability.tex",
+    "group": "Contraction and error recovery"
+  },
+  {
+    "id": "l4-single-error-recovery",
+    "lecture": 4,
+    "number": 40,
+    "file": "l4-single-error-recovery.tex",
+    "group": "Contraction and error recovery"
+  },
+  {
+    "id": "l4-repeated-errors",
+    "lecture": 4,
+    "number": 41,
+    "file": "l4-repeated-errors.tex",
+    "group": "Contraction and error recovery"
   },
   {
     "id": "l4-cumulative-recovery",
     "lecture": 4,
-    "number": 20,
+    "number": 42,
     "file": "l4-cumulative-recovery.tex"
   },
   {
     "id": "l4-persistent-memory",
     "lecture": 4,
-    "number": 21,
+    "number": 43,
     "file": "l4-persistent-memory.tex"
   },
   {
@@ -298,6 +559,17 @@
     "lecture": 5,
     "number": 2,
     "file": "l5-kernels.tex",
+    "group": "Noise maps and HMM estimation",
+    "reference_lectures": [
+      4
+    ]
+  },
+  {
+    "id": "l5-observed-hmm",
+    "lecture": 5,
+    "number": 3,
+    "file": "l5-observed-hmm.tex",
+    "group": "Noise maps and HMM estimation",
     "reference_lectures": [
       4
     ]
@@ -305,7 +577,7 @@
   {
     "id": "l4-latent-likelihood",
     "lecture": 5,
-    "number": 3,
+    "number": 4,
     "file": "l4-latent-likelihood.tex",
     "reference_lectures": [
       4
@@ -314,8 +586,48 @@
   {
     "id": "l5-em",
     "lecture": 5,
-    "number": 4,
+    "number": 5,
     "file": "l5-em.tex",
+    "reference_lectures": [
+      4
+    ]
+  },
+  {
+    "id": "l5-continuous-em",
+    "lecture": 5,
+    "number": 6,
+    "file": "l5-continuous-em.tex",
+    "group": "Continuous-state EM",
+    "reference_lectures": [
+      4
+    ]
+  },
+  {
+    "id": "l5-continuous-em-reference",
+    "lecture": 5,
+    "number": 7,
+    "file": "l5-continuous-em-reference.tex",
+    "group": "Continuous-state EM",
+    "reference_lectures": [
+      4
+    ]
+  },
+  {
+    "id": "l5-lds-em",
+    "lecture": 5,
+    "number": 8,
+    "file": "l5-lds-em.tex",
+    "group": "Gaussian transition EM",
+    "reference_lectures": [
+      4
+    ]
+  },
+  {
+    "id": "l5-lds-em-point",
+    "lecture": 5,
+    "number": 9,
+    "file": "l5-lds-em-point.tex",
+    "group": "Gaussian transition EM",
     "reference_lectures": [
       4
     ]
@@ -323,7 +635,7 @@
   {
     "id": "l5-sharing",
     "lecture": 5,
-    "number": 5,
+    "number": 10,
     "file": "l5-sharing.tex",
     "reference_lectures": [
       4
@@ -332,8 +644,29 @@
   {
     "id": "l4-lds",
     "lecture": 5,
-    "number": 6,
+    "number": 11,
     "file": "l4-lds.tex",
+    "group": "Linear state-space structure",
+    "reference_lectures": [
+      4
+    ]
+  },
+  {
+    "id": "l4-lds-realization",
+    "lecture": 5,
+    "number": 12,
+    "file": "l4-lds-realization.tex",
+    "group": "Linear state-space structure",
+    "reference_lectures": [
+      4
+    ]
+  },
+  {
+    "id": "l4-lds-generation",
+    "lecture": 5,
+    "number": 13,
+    "file": "l4-lds-generation.tex",
+    "group": "Linear state-space structure",
     "reference_lectures": [
       4
     ]
@@ -341,7 +674,7 @@
   {
     "id": "l5-memory",
     "lecture": 5,
-    "number": 7,
+    "number": 14,
     "file": "l5-memory.tex",
     "reference_lectures": [
       4
@@ -350,8 +683,29 @@
   {
     "id": "l5-bptt",
     "lecture": 5,
-    "number": 8,
+    "number": 15,
     "file": "l5-bptt.tex",
+    "group": "Recurrences, scans, and recurrent attention",
+    "reference_lectures": [
+      4
+    ]
+  },
+  {
+    "id": "l5-affine-scan",
+    "lecture": 5,
+    "number": 16,
+    "file": "l5-affine-scan.tex",
+    "group": "Recurrences, scans, and recurrent attention",
+    "reference_lectures": [
+      4
+    ]
+  },
+  {
+    "id": "l5-recurrent-attention",
+    "lecture": 5,
+    "number": 17,
+    "file": "l5-recurrent-attention.tex",
+    "group": "Recurrences, scans, and recurrent attention",
     "reference_lectures": [
       4
     ]
@@ -425,6 +779,60 @@
     "file": "l7-correlation-loss.tex"
   },
   {
+    "id": "l7-mixture-compromise",
+    "lecture": 7,
+    "number": 5,
+    "file": "l7-mixture-compromise.tex"
+  },
+  {
+    "id": "l7-path-comparison",
+    "lecture": 8,
+    "number": 1,
+    "file": "l7-path-comparison.tex"
+  },
+  {
+    "id": "l8-parameter-sign-symmetry",
+    "lecture": 8,
+    "number": 2,
+    "file": "l8-parameter-sign-symmetry.tex"
+  },
+  {
+    "id": "l8-activation-generalization",
+    "lecture": 8,
+    "number": 3,
+    "file": "l8-activation-generalization.tex"
+  },
+  {
+    "id": "l8-parity-orthogonality",
+    "lecture": 8,
+    "number": 4,
+    "file": "l8-parity-orthogonality.tex"
+  },
+  {
+    "id": "l8-gradient-features",
+    "lecture": 8,
+    "number": 5,
+    "file": "l8-gradient-features.tex"
+  },
+  {
+    "id": "l8-squared-loss-gap",
+    "lecture": 8,
+    "number": 6,
+    "file": "l8-squared-loss-gap.tex"
+  },
+  {
+    "id": "l8-learning-xor",
+    "lecture": 8,
+    "number": 7,
+    "file": "l8-learning-xor.tex"
+  },
+  {
+    "id": "l8-parity-memory",
+    "lecture": 8,
+    "number": 8,
+    "file": "l8-parity-memory.tex"
+  },
+  {
     "id": "l9-excess-risk-identity",
     "lecture": 9,
     "number": 1,
@@ -495,5 +903,192 @@
     "lecture": 9,
     "number": 12,
     "file": "l9-equal-penalty.tex"
+  },
+  {
+    "id": "l10-least-squares-selection",
+    "lecture": 10,
+    "number": 1,
+    "file": "l10-least-squares-selection.tex"
+  },
+  {
+    "id": "l10-logistic-log-loss",
+    "lecture": 10,
+    "number": 2,
+    "file": "l10-logistic-log-loss.tex"
+  },
+  {
+    "id": "l10-flow-escape",
+    "lecture": 10,
+    "number": 3,
+    "file": "l10-flow-escape.tex"
+  },
+  {
+    "id": "l10-flow-proof-details",
+    "lecture": 10,
+    "number": 4,
+    "file": "l10-flow-proof-details.tex"
+  },
+  {
+    "id": "l10-discrete-steepest",
+    "lecture": 10,
+    "number": 5,
+    "file": "l10-discrete-steepest.tex"
+  },
+  {
+    "id": "l10-two-point-reversal",
+    "lecture": 10,
+    "number": 6,
+    "file": "l10-two-point-reversal.tex"
+  },
+  {
+    "id": "l10-private-features",
+    "lecture": 10,
+    "number": 7,
+    "file": "l10-private-features.tex"
+  },
+  {
+    "id": "l10-equal-margin-ray",
+    "lecture": 10,
+    "number": 8,
+    "file": "l10-equal-margin-ray.tex"
+  },
+  {
+    "id": "l10-spectral-filter",
+    "lecture": 10,
+    "number": 9,
+    "file": "l10-spectral-filter.tex"
+  },
+  {
+    "id": "l11-smoothness-equivalences",
+    "lecture": 11,
+    "number": 1,
+    "file": "l11-smoothness-equivalences.tex",
+    "group": "Local descent and global certificates"
+  },
+  {
+    "id": "l11-smoothness-trap",
+    "lecture": 11,
+    "number": 2,
+    "file": "l11-smoothness-trap.tex",
+    "group": "Local descent and global certificates"
+  },
+  {
+    "id": "l11-strong-convex-pl",
+    "lecture": 11,
+    "number": 3,
+    "file": "l11-strong-convex-pl.tex",
+    "group": "Local descent and global certificates"
+  },
+  {
+    "id": "l11-gradient-dominance",
+    "lecture": 11,
+    "number": 4,
+    "file": "l11-gradient-dominance.tex",
+    "group": "Local descent and global certificates"
+  },
+  {
+    "id": "l11-softmax-comparator",
+    "lecture": 11,
+    "number": 5,
+    "file": "l11-softmax-comparator.tex",
+    "group": "Local descent and global certificates"
+  },
+  {
+    "id": "l11-aligned-update",
+    "lecture": 11,
+    "number": 6,
+    "file": "l11-aligned-update.tex",
+    "group": "Local descent and global certificates"
+  },
+  {
+    "id": "l11-wide-relu",
+    "lecture": 11,
+    "number": 7,
+    "file": "l11-wide-relu.tex",
+    "group": "Local descent and global certificates"
+  },
+  {
+    "id": "l11-softmax-curvature",
+    "lecture": 11,
+    "number": 8,
+    "file": "l11-softmax-curvature.tex",
+    "group": "Unregularized softmax"
+  },
+  {
+    "id": "l11-softmax-invariance",
+    "lecture": 11,
+    "number": 9,
+    "file": "l11-softmax-invariance.tex",
+    "group": "Unregularized softmax"
+  },
+  {
+    "id": "l11-softmax-overlap",
+    "lecture": 11,
+    "number": 10,
+    "file": "l11-softmax-overlap.tex",
+    "group": "Unregularized softmax"
+  },
+  {
+    "id": "l11-softmax-separation",
+    "lecture": 11,
+    "number": 11,
+    "file": "l11-softmax-separation.tex",
+    "group": "Unregularized softmax"
+  },
+  {
+    "id": "l11-reciprocal-decay",
+    "lecture": 11,
+    "number": 12,
+    "file": "l11-reciprocal-decay.tex",
+    "group": "Unregularized softmax"
+  },
+  {
+    "id": "l11-softmax-no-pl",
+    "lecture": 11,
+    "number": 13,
+    "file": "l11-softmax-no-pl.tex",
+    "group": "Unregularized softmax"
+  },
+  {
+    "id": "l11-stochastic-pl",
+    "lecture": 11,
+    "number": 14,
+    "file": "l11-stochastic-pl.tex",
+    "group": "Stochastic and incremental updates"
+  },
+  {
+    "id": "l11-stochastic-aligned",
+    "lecture": 11,
+    "number": 15,
+    "file": "l11-stochastic-aligned.tex",
+    "group": "Stochastic and incremental updates"
+  },
+  {
+    "id": "l11-decreasing-stepsize",
+    "lecture": 11,
+    "number": 16,
+    "file": "l11-decreasing-stepsize.tex",
+    "group": "Stochastic and incremental updates"
+  },
+  {
+    "id": "l11-root-finding",
+    "lecture": 11,
+    "number": 17,
+    "file": "l11-root-finding.tex",
+    "group": "Root finding and Lyapunov functions"
+  },
+  {
+    "id": "l11-fixed-point",
+    "lecture": 11,
+    "number": 18,
+    "file": "l11-fixed-point.tex",
+    "group": "Root finding and Lyapunov functions"
+  },
+  {
+    "id": "l11-td-lyapunov",
+    "lecture": 11,
+    "number": 19,
+    "file": "l11-td-lyapunov.tex",
+    "group": "Root finding and Lyapunov functions"
   }
 ]

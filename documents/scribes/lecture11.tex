@@ -1,0 +1,2687 @@
+\documentclass[11pt,twoside]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage[inline,shortlabels]{enumitem}
+\usepackage{booktabs,array}
+\usepackage{xcolor}
+\usepackage{microtype}
+\usepackage{needspace}
+
+% Revision date: maintained by scripts/build_lecture_notes.py. Keep this command.
+\newcommand{\lecturerevised}{2026-10-12 22:27 UTC-07:00}
+\usepackage{eso-pic}
+\AddToShipoutPictureBG{%
+  \AtPageLowerLeft{%
+    \put(\LenToUnit{0.5\paperwidth},\LenToUnit{0.5in}){%
+      \makebox(0,0){\normalfont\footnotesize\color{black!60}Last revised: \lecturerevised}%
+    }%
+  }%
+}
+
+\usepackage[square,authoryear]{natbib}
+\usepackage[colorlinks=true,linkcolor=blue!60!black,
+  urlcolor=blue!60!black,citecolor=blue!60!black]{hyperref}
+\usepackage[nameinlink,capitalize]{cleveref}
+\crefname{exercise}{Exercise}{Exercises}
+\Crefname{exercise}{Exercise}{Exercises}
+\hypersetup{pdftitle={Lecture 11: Global convergence from local gradients},
+  pdfauthor={Csaba Szepesvari}}
+
+\usepackage{../exercises/course-exercises}
+
+\usepackage{enotez}
+\DeclareInstance{enotez-list}{lecture}{list}{format=\normalsize,number={#1.}}
+\setenotez{list-name=Endnotes,list-style=lecture,backref=true}
+\crefname{endnote}{Endnote}{Endnotes}
+\Crefname{endnote}{Endnote}{Endnotes}
+
+\definecolor{courseblue}{HTML}{17365D}
+\newcommand{\E}{\mathbb E}
+\newcommand{\I}{\mathbb I}
+\newcommand{\one}[1]{\I\{#1\}}
+\renewcommand{\P}{\mathbb P}
+\newcommand{\R}{\mathbb R}
+\newcommand{\argmin}{\operatorname*{arg\,min}}
+\newcommand{\argmax}{\operatorname*{arg\,max}}
+\newcommand{\diag}{\operatorname{diag}}
+\newcommand{\spanop}{\operatorname{span}}
+\newcommand{\suppmark}{\texorpdfstring{\textsuperscript{*}}{*}}
+\makeatletter
+\@for\@letter:=A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z\do{%
+  \expandafter\edef\csname c\@letter\endcsname{\noexpand\mathcal{\@letter}}}
+\makeatother
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{lemma}[theorem]{Lemma}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{example}[theorem]{Example}
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+
+\renewcommand{\thepage}{11--\arabic{page}}
+\renewcommand{\thesection}{11.\arabic{section}}
+\renewcommand{\theequation}{11.\arabic{equation}}
+\pagestyle{myheadings}
+\markboth{Lecture 11: Global convergence from local gradients}
+{Lecture 11: Global convergence from local gradients}
+
+\begin{document}
+
+\begin{center}
+\fcolorbox{courseblue}{white}{%
+\begin{minipage}{0.92\textwidth}
+\vspace{1mm}
+\textbf{CMPUT 654: Mathematical Foundations of Modern AI Systems}
+\hfill Fall 2026
+
+\vspace{3mm}
+\begin{center}
+{\Large\bfseries Lecture 11: Global convergence from local gradients}
+
+\vspace{1mm}
+October 8, 2026
+\end{center}
+
+\vspace{2mm}
+\textit{Lecturer: Csaba Szepesv\'ari}
+\hfill
+\textit{Note prepared by: Csaba Szepesv\'ari}
+\vspace{1mm}
+\end{minipage}}
+\end{center}
+
+\noindent\textbf{Reading guide.}
+Lectures~8--10 separated three questions about learning by gradient methods.
+Lecture~8 asked whether the available gradients contain information about the
+target. Lecture~9 studied what exact empirical fitting can imply for
+prediction. Lecture~10 asked which solution an optimization method selects
+when many parameters fit the training data. Even the max-margin analysis in
+Lecture~10 first needed to know that logistic loss tends to zero. That fact was
+a supporting step there; it is the central question here. We ask when an
+update computed from the gradient at the current parameter drives the
+training loss toward its best possible value.
+
+The principal example is the same unregularized softmax log loss used for
+language-model outputs in Lectures~1 and~3 and for separable logistic
+classification in Lecture~10. Depending on the data, it admits a general
+convex comparison bound, a linear rate when the relevant parameters remain
+bounded and all fitted class probabilities stay uniformly away from zero, or
+an $O(1/t)$ rate
+under strict separation even though no finite minimizer exists.
+We then analyze stochastic gradient descent and define a Lyapunov function,
+which extends the proof pattern to root-finding and fixed-point updates that
+need not be gradients of an objective. Material
+marked with $\suppmark$ may be skipped on a first reading. It develops
+nonlinear gradient dominance, nonsmooth convex optimization, nonlinear least
+squares, overparameterized ReLU networks, softmax policy gradient, and
+temporal-difference learning. The prerequisites are multivariable calculus,
+eigenvalues of symmetric matrices, Hoeffding's inequality, and conditional
+expectation.
+
+\section{The local-to-global question}
+\label{sec:local-global-question}
+
+Several kinds of convergence can be relevant in optimization. They should not
+be treated as interchangeable.
+\begin{enumerate}[(a),leftmargin=*]
+\item \emph{Objective-value convergence} means that the loss values approach
+the best possible loss.
+\item \emph{Parameter convergence} means that the iterates themselves approach
+a finite vector, $\theta_t\to\theta^\star$. This is stronger and can fail when
+there are many minimizers or when the best loss is attained only in the limit
+as the parameter norm diverges.
+\item When the norm diverges, \emph{directional convergence} may still hold:
+$\theta_t/\|\theta_t\|_2$ can approach a limiting direction. Lecture~10 used
+this conclusion to describe max-margin selection in separable logistic
+regression.
+\end{enumerate}
+Objective-value convergence is the minimum optimization conclusion.
+Lecture~10 needed it before asking which direction gradient descent selected.
+This lecture concentrates on that conclusion and remarks on parameter or
+directional convergence when the example permits one. Its guiding question is
+\begin{quote}
+When does local first-order information certify convergence of the objective
+value to its global infimum?
+\end{quote}
+
+Let $L:\R^d\to\R$ be differentiable and bounded below, and define
+\begin{equation}
+ L^\star=\inf_{\theta\in\R^d}L(\theta).
+ \label{eq:global-target}
+\end{equation}
+We do not assume that this infimum is attained: there may be no finite
+minimizer $\theta^\star$ satisfying $L(\theta^\star)=L^\star$. The main target
+throughout the lecture is objective-value convergence,
+\[
+ L(\theta_t)\longrightarrow L^\star.
+\]
+Equivalently, the nonnegative \emph{objective gap}
+$L(\theta_t)-L^\star$ tends to zero. For separable softmax models, this happens
+while the parameter norm diverges, so objective-value convergence cannot be
+replaced by convergence to a minimizer.
+
+Gradient descent uses the update
+\begin{equation}
+ \theta_{t+1}=\theta_t-\eta\nabla L(\theta_t),
+ \label{eq:gd-update}
+\end{equation}
+where $\eta>0$ is the stepsize. Differentiability gives, for a perturbation
+$r$,
+\[
+ L(\theta_t+r)
+ =L(\theta_t)+\langle\nabla L(\theta_t),r\rangle
+  +o(\|r\|_2).
+\]
+Thus the gradient controls infinitesimal changes around $\theta_t$; it does
+not directly compare $L(\theta_t)$ with values at distant parameters or with
+$L^\star$. To control the finite step in
+\cref{eq:gd-update}, we begin with smoothness.
+
+\begin{definition}[Smooth objective]
+\label{def:smoothness}
+The function $L$ is $\beta$-smooth if
+\[
+ \|\nabla L(u)-\nabla L(v)\|_2
+ \le \beta\|u-v\|_2
+ \qquad\text{for every }u,v\in\R^d.
+\]
+\end{definition}
+
+Smoothness says that the gradient cannot change faster than linearly with the
+parameter. It does not imply convexity: a smooth objective may still have
+several stationary points, including suboptimal ones. Its role here is to
+control the error in the first-order approximation over a finite step. The
+following inequality makes that control explicit.
+
+\begin{lemma}[Descent lemma]
+\label{lem:descent}
+If $L$ is $\beta$-smooth, then
+\begin{equation}
+ L(v)\le L(u)+\langle\nabla L(u),v-u\rangle
+              +\frac\beta2\|v-u\|_2^2
+ \label{eq:descent-lemma}
+\end{equation}
+for every $u,v\in\R^d$.
+\end{lemma}
+
+\begin{proof}
+Put $r=v-u$ and $g(s)=L(u+sr)$ for $s\in[0,1]$. The fundamental theorem of
+calculus and smoothness give
+\begin{align*}
+ L(v)-L(u)-\langle\nabla L(u),r\rangle
+ &=\int_0^1
+   \langle\nabla L(u+sr)-\nabla L(u),r\rangle\,ds\\
+ &\le\int_0^1\beta s\|r\|_2^2\,ds
+ =\frac\beta2\|r\|_2^2.
+\end{align*}
+\end{proof}
+
+For twice continuously differentiable objectives, Hessian inequalities
+characterize the standard first- and second-order conditions.
+
+\begin{proposition}[Hessian characterizations of smoothness and convexity]
+\label{prop:hessian-characterizations}
+Let $L:\R^d\to\R$ be twice continuously differentiable.
+\begin{enumerate}[(a),leftmargin=*]
+\item The quadratic upper bound \cref{eq:descent-lemma} holds for every
+$u,v\in\R^d$ if and only if
+\[
+ \nabla^2L(\theta)\preceq\beta I
+ \qquad\text{for every }\theta\in\R^d.
+\]
+\item The function $L$ is convex if and only if
+$\nabla^2L(\theta)\succeq0$ for every $\theta$. The function $L$ is
+$\mu$-strongly convex if and only if
+$\nabla^2L(\theta)\succeq\mu I$ for every $\theta$.
+\item The function $L$ is $\beta$-smooth if and only if
+\[
+ -\beta I\preceq\nabla^2L(\theta)\preceq\beta I
+ \qquad\text{for every }\theta\in\R^d.
+\]
+\end{enumerate}
+Consequently, for a twice continuously differentiable convex objective, the
+quadratic upper bound and $\beta$-smoothness are equivalent; both are
+equivalent to
+\[
+ 0\preceq\nabla^2L(\theta)\preceq\beta I
+ \qquad\text{for every }\theta\in\R^d.
+\]
+\end{proposition}
+
+The converse from the quadratic upper bound to smoothness can fail without
+convexity. A nonconvex objective can have arbitrarily large negative curvature
+while remaining below every tangent plane.
+\Cref{ex:l11-smoothness-equivalences} asks you to prove all parts of
+\cref{prop:hessian-characterizations} and verify a one-dimensional
+counterexample when convexity is removed.
+
+We now use the descent lemma to analyze gradient descent. Substituting the
+gradient step into the descent lemma gives a decrease that depends only on the
+gradient at the current point.
+
+A point $\theta$ is \emph{stationary} if $\nabla L(\theta)=0$ and
+\emph{$\epsilon$-stationary} if $\|\nabla L(\theta)\|_2\le\epsilon$.
+
+\begin{proposition}[Smoothness gives descent and stationarity]
+\label{prop:smooth-stationarity}
+Suppose that $L$ is $\beta$-smooth and that the iterates follow
+\cref{eq:gd-update} with $0<\eta\le1/\beta$. Then
+\begin{equation}
+ L(\theta_{t+1})
+ \le L(\theta_t)-\frac\eta2\|\nabla L(\theta_t)\|_2^2.
+ \label{eq:basic-descent}
+\end{equation}
+Consequently, for every integer $T\ge1$,
+\begin{equation}
+ \min_{0\le t<T}\|\nabla L(\theta_t)\|_2^2
+ \le \frac{2\bigl(L(\theta_0)-L^\star\bigr)}{\eta T}.
+ \label{eq:stationarity-rate}
+\end{equation}
+\end{proposition}
+
+\begin{proof}
+Use $v-u=-\eta\nabla L(u)$ in \cref{eq:descent-lemma}:
+\begin{align*}
+ L(\theta_{t+1})
+ &\le L(\theta_t)
+ -\eta\left(1-\frac{\beta\eta}{2}\right)
+       \|\nabla L(\theta_t)\|_2^2
+ \le L(\theta_t)-\frac\eta2
+       \|\nabla L(\theta_t)\|_2^2.
+\end{align*}
+Summing from $t=0$ to $T-1$ and using $L(\theta_T)\ge L^\star$ gives the
+complete bound
+\[
+ \frac{\eta T}{2}\min_{0\le t<T}\|\nabla L(\theta_t)\|_2^2
+ \le \frac\eta2\sum_{t=0}^{T-1}\|\nabla L(\theta_t)\|_2^2
+ \le L(\theta_0)-L^\star,
+\]
+which is \cref{eq:stationarity-rate}.
+\end{proof}
+
+\Cref{eq:stationarity-rate} is a global statement about reaching an
+approximately stationary point. The minimum means that at least one of the
+first $T$ iterates has a small gradient; the result does not claim this for the
+last iterate or for every iterate. More importantly, a small gradient need not
+mean a small objective gap.
+
+\begin{example}[A stationary point can be globally suboptimal]
+\label{ex:cosine-trap}
+Let
+\[
+ L(\theta)=1-\cos\theta.
+\]
+This function is $1$-smooth and has $L^\star=0$. If
+$\theta_0=\pi$, then $\nabla L(\theta_0)=\sin\pi=0$, so gradient descent
+never moves. Its objective value remains $2$. Thus smoothness and exact local
+descent do not connect stationarity to global optimality.
+\end{example}
+
+\Cref{ex:l11-smoothness-trap} asks you to verify every part of this failure
+and to identify exactly why the stationarity bound does not imply global
+objective convergence.
+
+\paragraph{When smoothness fails.}
+The smoothness assumption concerns the objective, not the rule used to choose
+an update direction. Lecture~10's signed gradient descent applies a
+discontinuous transformation to the gradient of a smooth objective. A ReLU
+network creates a different issue: its training objective can itself fail to
+be differentiable.
+
+The function $L(x)=|x|$ gives the basic stepsize obstruction. Away from zero,
+use the available derivative in
+\[
+ x_{t+1}=x_t-\eta\operatorname{sign}(x_t).
+\]
+If $0<x_0<\eta$, then $x_1=x_0-\eta<0$ and $x_2=x_0$. Thus a fixed
+stepsize can make the iterates alternate across the minimizer rather than
+converge to it. The smooth descent lemma is unavailable, and a locally
+decreasing direction does not by itself give a finite-step decrease bound.
+
+For a convex nonsmooth objective, subgradient descent replaces the
+objective-descent calculation by a squared-distance calculation and obtains
+an $O(1/\sqrt T)$ comparator bound for an averaged iterate; this is developed
+in \cref{sec:nonsmooth-convex}. General ReLU training is also nonconvex, so
+that convex result does not apply. For example,
+\[
+ L(w)=\frac12\bigl([w]_+-1\bigr)^2,
+ \qquad [w]_+=\max\{0,w\},
+\]
+has global minimum zero at $w=1$, but $L(w)=1/2$ and $L'(w)=0$ for every
+$w<0$. A unit initialized there is \emph{dead}: its output and parameter
+derivative both vanish. \Cref{sec:wide-relu} gives an exact example in which
+width makes complete death unlikely and then relates the mechanism to the
+Jacobian condition used in this lecture.
+
+\section{From small gradients to small objective gaps}
+\label{sec:global-certificates}
+
+The previous section showed that gradient descent reaches iterates with small
+gradient norm. Our actual goal is to control the objective gap
+$L(\theta_t)-L^\star$. We therefore need a relation between these two
+quantities.
+
+The most direct route is to impose exactly the comparison needed to complete
+the argument: for some $\mu>0$, require
+\begin{equation}
+ \frac12\|\nabla L(\theta)\|_2^2
+ \ge \mu\bigl(L(\theta)-L^\star\bigr)
+ \qquad\text{for every }\theta\in\R^d.
+ \label{eq:pl}
+\end{equation}
+This condition is the \emph{$\mu$-Polyak--\L{}ojasiewicz inequality},
+abbreviated the \emph{$\mu$-PL inequality}. It says that a small gradient is
+possible only at a small objective gap, and it rules out globally suboptimal
+stationary points.
+
+Combining the PL inequality with smooth descent gives the main reusable
+theorem.
+
+\begin{theorem}[Linear convergence under PL]
+\label{thm:pl-linear}
+Suppose that $L$ is $\beta$-smooth and satisfies the $\mu$-PL inequality.
+For gradient descent with $0<\eta\le1/\beta$,
+\begin{equation}
+ L(\theta_t)-L^\star
+ \le(1-\eta\mu)^t
+       \bigl(L(\theta_0)-L^\star\bigr).
+ \label{eq:pl-linear-rate}
+\end{equation}
+\end{theorem}
+
+\begin{proof}
+By \cref{eq:basic-descent,eq:pl},
+\begin{align*}
+ L(\theta_{t+1})-L^\star
+ &\le L(\theta_t)-L^\star
+ -\frac\eta2\|\nabla L(\theta_t)\|_2^2\\
+ &\le(1-\eta\mu)\bigl(L(\theta_t)-L^\star\bigr).
+\end{align*}
+For a nonconstant $\beta$-smooth objective that is bounded below, apply the
+descent lemma to $v=u-\nabla L(u)/\beta$ to obtain
+\[
+ L^\star\le L(v)
+ \le L(u)-\frac1{2\beta}\|\nabla L(u)\|_2^2.
+\]
+Combining this upper bound on the gradient norm with PL gives
+$\mu\le\beta$. Hence $1-\eta\mu\in[0,1)$, and iterating the preceding
+recursion proves the claim.
+\end{proof}
+
+The term \emph{linear convergence} refers to the geometric bound
+$q^t(L(\theta_0)-L^\star)$ with $q=1-\eta\mu<1$. It does not mean that the
+error is a linear function of the iteration number.
+
+The theorem separates two proof obligations. Smoothness proves that the local
+step decreases the objective. PL proves that the available decrease is large
+relative to the remaining objective gap. A convergence proof that checks only
+the first obligation reaches \cref{eq:stationarity-rate}, not
+\cref{eq:pl-linear-rate}.
+
+The PL inequality is linear in the squared gradient norm and the objective
+gap. Other powers give other rates. The exact calculation is developed in
+\cref{sec:generalized-gradient-dominance}; the separated softmax model below
+will use the quadratic relation
+$\|\nabla L(\theta)\|_2^2\gtrsim(L(\theta)-L^\star)^2$.
+
+The definition leaves two questions. When can we establish a PL inequality?
+What can replace it when no uniform PL constant exists?
+
+\subsection{A sufficient condition for PL}
+
+At a point $u$, the affine function
+\[
+ v\longmapsto L(u)+\langle\nabla L(u),v-u\rangle
+\]
+is the tangent-plane approximation to $L$.
+
+\begin{definition}[Convexity and strong convexity]
+\label{def:convex-strong}
+A differentiable function $L$ is convex if
+\begin{equation}
+ L(v)\ge L(u)+\langle\nabla L(u),v-u\rangle
+ \label{eq:convex-first-order}
+\end{equation}
+for every $u,v\in\R^d$. It is $\mu$-strongly convex, for $\mu>0$, if
+\begin{equation}
+ L(v)\ge L(u)+\langle\nabla L(u),v-u\rangle
+             +\frac\mu2\|v-u\|_2^2
+ \label{eq:strong-convex-first-order}
+\end{equation}
+for every $u,v\in\R^d$.
+\end{definition}
+
+Strong convexity supplies one way to verify the PL inequality.
+
+\begin{proposition}[Strong convexity implies PL]
+\label{prop:strong-implies-pl}
+If $L$ is differentiable and $\mu$-strongly convex, then it satisfies the
+$\mu$-PL inequality.
+\end{proposition}
+
+\begin{proof}
+Fix $u$ and compare it with an arbitrary $v$. Rearranging
+\cref{eq:strong-convex-first-order} gives
+\[
+ L(u)-L(v)
+ \le \langle\nabla L(u),u-v\rangle
+       -\frac\mu2\|u-v\|_2^2.
+\]
+Thus, the excess loss at $u$ relative to the loss at $v$ is upper bounded
+by a function that combines the gradient at $u$ and $u-v$. We would be
+essentially done if this upper bound were further upper bounded by just
+$\|\nabla L(u)\|_2$, scaled as needed. This is promising: the first term,
+which scales linearly with $\nabla L(u)$, is linear in $u-v$, while the
+second is quadratic with a fixed negative coefficient.
+For every $a\in\R$,
+\[
+ \sup_{r\in\R}\left\{ar-\frac\mu2r^2\right\}
+ =\frac{a^2}{2\mu}.
+\]
+Thus, by the Cauchy--Schwarz inequality,
+\begin{align*}
+ L(u)-L(v)
+ &\le \|\nabla L(u)\|_2\|u-v\|_2
+       -\frac\mu2\|u-v\|_2^2\\
+ &\le \sup_{r\in\R}
+       \left\{\|\nabla L(u)\|_2r-\frac\mu2r^2\right\}\\
+ &=\frac{\|\nabla L(u)\|_2^2}{2\mu}.
+\end{align*}
+Taking the supremum over $v$ and using
+$L(u)-L^\star=\sup_v\{L(u)-L(v)\}$ gives \cref{eq:pl}.
+\end{proof}
+
+The converse is false. A PL objective need not be convex. The following
+example gives this distinction an elementary machine-learning
+interpretation.
+
+\begin{example}[A nonconvex residual model with a PL loss]
+\label{ex:nonconvex-pl}
+Consider regression on one training example with target zero. Suppress the
+fixed input and let a one-parameter residual model output
+\[
+ g(\theta)=\theta+10\tanh\theta,
+ \qquad
+ L(\theta)=\frac12g(\theta)^2.
+\]
+The additive linear term prevents the parameter-to-residual derivative from
+vanishing:
+\[
+ g'(\theta)=1+10\operatorname{sech}^2\theta\ge1.
+\]
+Since $g$ is strictly increasing and $g(0)=0$, we have $L^\star=0$ and
+\[
+ \frac12|L'(\theta)|^2
+ =\frac12g(\theta)^2g'(\theta)^2
+ \ge L(\theta).
+\]
+Thus $L$ is $1$-PL. Its second derivative is bounded because $g'$ is bounded
+and $\theta\operatorname{sech}^2\theta$ is bounded, so $L$ is globally
+smooth. It is not convex. At $\theta=\log3$, where
+$\tanh\theta=4/5$ and $\operatorname{sech}^2\theta=9/25$,
+\[
+ L''(\log3)
+ =-\frac{623+144\log3}{25}<0.
+\]
+Thus a nonconvex parameterization can still have a gradient that certifies
+the global residual. The Jacobian condition in
+\cref{sec:nls-pl} gives the corresponding statement for a vector of training
+residuals.
+\end{example}
+
+\Cref{ex:l11-strong-convex-pl} asks you to derive the PL certificate from
+strong convexity and then obtain the linear convergence recursion. The
+example above shows why PL, rather than strong convexity, is the property used
+by that recursion.
+
+\subsection{Convexity without PL}
+
+PL is not necessary for objective-value convergence. Rearranging the
+convexity inequality gives, for every $u\in\R^d$,
+\begin{equation}
+ L(\theta)-L(u)
+ \le\langle\nabla L(\theta),\theta-u\rangle
+ \le\|\nabla L(\theta)\|_2\|\theta-u\|_2.
+ \label{eq:convex-gradient-distance}
+\end{equation}
+The second inequality is Cauchy--Schwarz. Thus a small gradient gives a small
+loss difference when the distance to a near-optimal reference parameter is
+controlled; a bounded parameter set supplies such a bound. On an unbounded
+parameter space, this distance need not be bounded, and the infimum may not be
+attained. We call the arbitrary reference parameter $u$ a \emph{comparator};
+it need not be a minimizer.
+
+Gradient descent makes stronger use of the first inequality in
+\cref{eq:convex-gradient-distance}. Tracking squared distance to a fixed
+comparator makes the distance terms telescope.
+
+\begin{theorem}[Gradient descent against every comparator]
+\label{thm:convex-comparator}
+Let $L:\R^d\to\R$ be convex and $\beta$-smooth. Let gradient descent use
+$0<\eta\le1/\beta$. Then for every $u\in\R^d$ and every integer $T\ge1$,
+\begin{equation}
+ L(\theta_T)-L(u)
+ \le\frac{\|\theta_0-u\|_2^2}{2\eta T}.
+ \label{eq:convex-comparator}
+\end{equation}
+\end{theorem}
+
+\begin{proof}
+Convexity and the distance recursion give
+\begin{align*}
+ \|\theta_{t+1}-u\|_2^2
+ &=\|\theta_t-u\|_2^2
+ -2\eta\langle\nabla L(\theta_t),\theta_t-u\rangle
+ +\eta^2\|\nabla L(\theta_t)\|_2^2\\
+ &\le\|\theta_t-u\|_2^2
+ -2\eta\bigl(L(\theta_t)-L(u)\bigr)
+ +\eta^2\|\nabla L(\theta_t)\|_2^2.
+\end{align*}
+By \cref{eq:basic-descent},
+\[
+ \eta^2\|\nabla L(\theta_t)\|_2^2
+ \le2\eta\bigl(L(\theta_t)-L(\theta_{t+1})\bigr).
+\]
+Combining the two displays gives
+\[
+ 2\eta\bigl(L(\theta_{t+1})-L(u)\bigr)
+ \le\|\theta_t-u\|_2^2-\|\theta_{t+1}-u\|_2^2.
+\]
+Summing from $t=0$ to $T-1$ makes the squared distances telescope. Since the
+objective values are nonincreasing,
+\[
+ 2\eta T\bigl(L(\theta_T)-L(u)\bigr)
+ \le \|\theta_0-u\|_2^2-\|\theta_T-u\|_2^2
+ \le \|\theta_0-u\|_2^2,
+\]
+which proves the claim.
+\end{proof}
+
+If a finite minimizer $\theta^\star$ exists, choosing $u=\theta^\star$ gives
+the usual $O(1/T)$ rate. A minimizer is not required for convergence. For
+every $\epsilon>0$, choose a finite $u_\epsilon$ satisfying
+$L(u_\epsilon)\le L^\star+\epsilon/2$. The theorem gives
+\[
+ 0\le L(\theta_T)-L^\star
+ \le \frac\epsilon2
+    +\frac{\|\theta_0-u_\epsilon\|_2^2}{2\eta T}.
+\]
+For all sufficiently large $T$, the second term is at most $\epsilon/2$.
+Therefore $L(\theta_T)\to L^\star$. Without a bound relating
+$\|\theta_0-u_\epsilon\|_2$ to $\epsilon$, this argument gives convergence
+but no explicit rate to the unattained infimum.
+
+\Cref{ex:l11-softmax-comparator} asks you to reconstruct the telescoping
+argument and prove the last conclusion using an approximate minimizer.
+
+The distinction between stationarity and objective convergence is also
+visible in iteration complexity. With the largest standard stepsize
+$\eta=1/\beta$, smoothness alone guarantees an iterate with
+$\|\nabla L(\theta_t)\|_2\le\epsilon$ among the first $T$ iterates whenever
+\begin{equation}
+ T\ge
+ \frac{2\beta(L(\theta_0)-L^\star)}{\epsilon^2}
+ \label{eq:stationarity-complexity}
+\end{equation}
+steps. Under PL, the inequality $(1-u)^t\le e^{-ut}$ gives
+\begin{equation}
+ t\ge\frac\beta\mu
+ \log\frac{L(\theta_0)-L^\star}{\epsilon}
+ \quad\Longrightarrow\quad
+ L(\theta_t)-L^\star\le\epsilon.
+ \label{eq:pl-complexity}
+\end{equation}
+The conclusions differ as much as the rates: the first controls a local
+quantity, whereas the second controls the objective gap. The ratio
+$\kappa=\beta/\mu$ is the \emph{condition number} and appears directly in
+\cref{eq:pl-complexity}.
+
+\section{The update need not equal the negative gradient}
+\label{sec:aligned-updates}
+
+Exact gradient descent is one way to obtain local decrease, but it is not the
+only update used in the course. A \emph{preconditioned} update multiplies the
+gradient by a matrix, thereby rescaling or mixing its coordinates. Numerical
+or sampling error can perturb a computed gradient, and Lecture~10 used signed
+gradient descent. To determine which parts of the PL proof survive, we
+separate two requirements: the proposed direction must decrease the
+first-order approximation, and its length must be controlled so that the
+quadratic smoothness term cannot overwhelm that decrease.
+
+\begin{theorem}[Aligned updates]
+\label{thm:aligned-update}
+Let $L$ be $\beta$-smooth, and consider
+\begin{equation}
+ \theta_{t+1}=\theta_t+\eta d_t.
+ \label{eq:aligned-update}
+\end{equation}
+Suppose that constants $c,C>0$ satisfy
+\begin{equation}
+ -\langle\nabla L(\theta_t),d_t\rangle
+ \ge c\|\nabla L(\theta_t)\|_2^2,
+ \qquad
+ \|d_t\|_2\le C\|\nabla L(\theta_t)\|_2
+ \label{eq:alignment-conditions}
+\end{equation}
+for every $t$. If $0<\eta\le c/(\beta C^2)$, then
+\begin{equation}
+ L(\theta_{t+1})
+ \le L(\theta_t)-\frac{\eta c}{2}
+                  \|\nabla L(\theta_t)\|_2^2.
+ \label{eq:aligned-descent}
+\end{equation}
+If $L$ also satisfies the $\mu$-PL inequality, then
+\begin{equation}
+ L(\theta_t)-L^\star
+ \le(1-\eta c\mu)^t
+       \bigl(L(\theta_0)-L^\star\bigr).
+ \label{eq:aligned-linear-rate}
+\end{equation}
+\end{theorem}
+
+\begin{proof}
+The descent lemma and \cref{eq:alignment-conditions} give
+\begin{align*}
+ L(\theta_{t+1})
+ &\le L(\theta_t)+\eta\langle\nabla L(\theta_t),d_t\rangle
+                   +\frac{\beta\eta^2}{2}\|d_t\|_2^2\\
+ &\le L(\theta_t)
+ -\left(\eta c-\frac{\beta\eta^2C^2}{2}\right)
+    \|\nabla L(\theta_t)\|_2^2\\
+ &\le L(\theta_t)-\frac{\eta c}{2}
+    \|\nabla L(\theta_t)\|_2^2.
+\end{align*}
+Under PL, the last term is at least
+$\eta c\mu(L(\theta_t)-L^\star)$. Cauchy--Schwarz gives $c\le C$; together
+with $\mu\le\beta$ and the stepsize bound, this implies
+$0\le1-\eta c\mu<1$. Iteration gives
+\cref{eq:aligned-linear-rate}.
+\end{proof}
+
+For example, if $d_t=-P_t\nabla L(\theta_t)$ and the symmetric matrices
+$P_t$ satisfy
+\[
+ mI\preceq P_t\preceq MI,
+\]
+then \cref{eq:alignment-conditions} holds with $c=m$ and $C=M$. If
+$d_t=-\nabla L(\theta_t)+e_t$ with
+$\|e_t\|_2\le\rho\|\nabla L(\theta_t)\|_2$ for some $\rho<1$, it holds with
+$c=1-\rho$ and $C=1+\rho$.
+
+\Cref{ex:l11-aligned-update} asks you to prove the theorem and specialize it
+to a uniformly positive-definite preconditioner.
+
+The conditions are sufficient, not necessary. For the signed-gradient
+direction from Lecture~10,
+\[
+ d_t=-\operatorname{sign}(\nabla L(\theta_t)),
+ \qquad
+ -\langle\nabla L(\theta_t),d_t\rangle
+ =\|\nabla L(\theta_t)\|_1.
+\]
+The displayed inner product is positive whenever the gradient is nonzero, so
+the signed-gradient direction decreases the first-order approximation. Its
+Euclidean norm, however, is the square root of the number of
+nonzero gradient coordinates and need not approach zero with the gradient
+norm. It therefore fails the second condition in
+\cref{eq:alignment-conditions} near a zero gradient. The signed-gradient
+result in Lecture~10 instead uses a decreasing stepsize and the
+norm-specific steepest-descent calculation. The present theorem does not
+subsume that analysis.
+
+A positive inner product with the negative gradient is not sufficient by
+itself for a fixed-step result. For $L(\theta)=\theta^2/2$, choose
+$d_t=-M\theta_t$ with $M>0$. Then
+$-L'(\theta_t)d_t=M\theta_t^2>0$ whenever $\theta_t\ne0$, but
+\[
+ \theta_{t+1}=(1-\eta M)\theta_t.
+\]
+The objective increases whenever $|1-\eta M|>1$. The norm condition in
+\cref{eq:alignment-conditions} controls the second-order cost of the proposed
+step. A \emph{line search} instead tests candidate stepsizes against the
+objective and accepts one that gives sufficient decrease. Such a procedure, or
+a different Lyapunov argument, can replace the norm condition. The
+inner-product condition alone cannot.
+
+\subsection{What the certificates say about earlier examples}
+
+The results above recover part of the optimization story from the previous
+lectures, while keeping it separate from the statistical and
+solution-selection questions.
+
+\begin{center}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.23\textwidth}
+                    >{\raggedright\arraybackslash}p{0.32\textwidth}
+                    >{\raggedright\arraybackslash}p{0.34\textwidth}@{}}
+\toprule
+Earlier example & Loss-control condition & What this lecture adds \\
+\midrule
+Interpolating least squares
+& PL on the data span, with constant
+$\lambda_{\min}(\mathbf X\mathbf X^\top)$
+& Gradient descent converges linearly in training loss. Its unchanged
+null-space component still determines which interpolant is selected, as in
+Lecture~10.\\
+Nonseparable logistic regression
+& Convex comparison always applies; overlap can give PL after unchanged
+parameter directions are removed
+& The loss reaches its finite optimum, with a linear rate under the overlap
+condition developed below.\\
+Separable logistic regression
+& A non-PL certificate has the form
+$\|\nabla L_n(w)\|_2\ge aL_n(w)$
+& The loss decreases to zero at rate $O(1/t)$, while Lecture~10 describes the
+max-margin direction selected as the parameter norm diverges.\\
+Signed gradient descent
+& Its inner product with the gradient is negative, but its length is not
+proportional to the gradient norm
+& The aligned-update theorem does not apply; the norm-specific argument from
+Lecture~10 is needed.\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+For the least-squares row, $L_n(w)=\|\mathbf Xw-y\|_2^2/2$ and the displayed
+constant assumes the full-row-rank interpolation setting of Lecture~10.
+Parameter convergence and objective convergence answer different questions:
+PL controls the residual, whereas initialization controls the component in
+$\ker(\mathbf X)$.
+
+\section{Unregularized softmax log loss}
+\label{sec:softmax}
+
+This example joins several parts of the course. Lectures~1 and~3 introduced
+softmax probabilities and token log loss. Lecture~10 studied the binary,
+separable case and asked which classifier direction gradient descent selects.
+We now ask the logically prior optimization question: does the loss itself
+approach its infimum, at what rate, and how does the answer change between
+overlap and separation?
+
+In this section, $p$ denotes the feature dimension; the generic optimization
+results above used $d$ for the dimension of a vector-valued parameter. Fix
+feature vectors $x_1,\ldots,x_n\in\R^p$ and labels
+$y_1,\ldots,y_n\in[K]$. Let $W\in\R^{K\times p}$ have row $k$ equal to
+$w_k^\top$. Define
+\begin{align}
+ q_W(k\mid x_i)
+ &=\frac{\exp(w_k^\top x_i)}
+         {\sum_{j=1}^K\exp(w_j^\top x_i)},
+ \label{eq:softmax-probability}\\
+ L_n(W)
+ &=\frac1n\sum_{i=1}^n
+ \left(\log\sum_{k=1}^K\exp(w_k^\top x_i)
+       -w_{y_i}^\top x_i\right).
+ \label{eq:softmax-loss}
+\end{align}
+For a frozen transformer representation, this is the objective for training
+the output head: $x_i$ is a realized hidden vector of the form $h_{t_i}^L$,
+$W$ is the output matrix $W_U$, and $K$ is the vocabulary size. ``Frozen''
+means that the vectors $x_i$ are treated as fixed while $W$ is updated. A bias
+can be included by appending a constant coordinate to every $x_i$. For $K=2$,
+only the difference between the two rows matters, and the model reduces to the
+binary logistic regression of Lecture~10.
+
+\subsection{Gradient, Hessian, and unchanged parameter directions}
+
+Let $e_k\in\R^K$ be the $k$th standard basis vector. Differentiating one
+example gives
+\begin{equation}
+ \nabla_W L_n(W)
+ =\frac1n\sum_{i=1}^n
+    \bigl(q_W(\cdot\mid x_i)-e_{y_i}\bigr)x_i^\top,
+ \label{eq:softmax-gradient}
+\end{equation}
+or, row by row,
+\begin{equation}
+ \nabla_{w_k}L_n(W)
+ =\frac1n\sum_{i=1}^n
+ \bigl(q_W(k\mid x_i)-\one{y_i=k}\bigr)x_i.
+ \label{eq:softmax-row-gradient}
+\end{equation}
+
+For matrices, write
+$\langle A,B\rangle_F=\sum_{k,j}A_{kj}B_{kj}$ and
+$\|A\|_F^2=\langle A,A\rangle_F$; these are the \emph{Frobenius inner
+product and norm}. To state the Hessian, fix $W$ and $i$, and
+let $Y_i^W$ be a random class with mass function
+\[
+ \P(Y_i^W=k)=q_W(k\mid x_i),
+ \qquad k\in[K].
+\]
+The Hessian quadratic form below is the second derivative of
+$s\mapsto L_n(W+s\Delta)$ at $s=0$. It measures the local \emph{curvature} of
+the loss in the direction $\Delta$.
+For a direction $\Delta\in\R^{K\times p}$ whose $k$th row is
+$\delta w_k^\top$, a second differentiation gives
+\begin{equation}
+ \left\langle\Delta,\nabla^2L_n(W)\Delta\right\rangle_F
+ =\frac1n\sum_{i=1}^n
+ \operatorname{Var}\bigl((\delta w_{Y_i^W})^\top x_i\bigr)
+ \ge0.
+ \label{eq:softmax-hessian-variance}
+\end{equation}
+The Hessian is positive semidefinite, so $L_n$ is convex.
+
+Define the empirical feature second-moment matrix
+\begin{equation}
+ G=\frac1n\sum_{i=1}^n x_ix_i^\top.
+ \label{eq:feature-gram}
+\end{equation}
+For any categorical probability vector and any $a\in\R^K$, the elementary
+range bound for variance gives
+\[
+ \operatorname{Var}(a_Y)
+ \le\frac14(\max_k a_k-\min_k a_k)^2
+ \le\frac12\|a\|_2^2.
+\]
+Applying this bound inside \cref{eq:softmax-hessian-variance} yields
+\begin{align*}
+ \left\langle\Delta,\nabla^2L_n(W)\Delta\right\rangle_F
+ &\le\frac1{2n}\sum_{i=1}^n\|\Delta x_i\|_2^2\\
+ &\le\frac12\lambda_{\max}(G)\|\Delta\|_F^2.
+\end{align*}
+Thus $L_n$ is $\beta$-smooth with
+\begin{equation}
+ \beta=\frac12\lambda_{\max}(G).
+ \label{eq:softmax-smoothness}
+\end{equation}
+\Cref{ex:l11-softmax-curvature} asks you to derive the gradient and the
+variance form of the Hessian and then obtain this smoothness constant.
+
+The positive-semidefinite Hessian is not generally positive definite. The
+reason is that different parameter matrices can give exactly the same
+probabilities. Such a parameter transformation is an \emph{invariance} of the
+model. For any $a\in\R^p$,
+\begin{equation}
+ W\longmapsto W+\mathbf 1a^\top
+ \label{eq:common-shift}
+\end{equation}
+adds the same scalar $a^\top x_i$ to all logits and leaves the probabilities
+and loss unchanged. Feature directions orthogonal to
+$\spanop\{x_1,\ldots,x_n\}$ are also invisible on the training examples. To
+choose one representative from each family of common shifts, we work in the
+zero-sum subspace
+\begin{equation}
+ \cH=\left\{W\in\R^{K\times p}:\sum_{k=1}^K w_k=0\right\}.
+ \label{eq:gauge-subspace}
+\end{equation}
+Equation \cref{eq:softmax-row-gradient} shows that the gradient rows sum to
+zero. Gradient descent therefore preserves $\cH$. We may also restrict each
+row to the span of the features.
+
+\Cref{ex:l11-softmax-invariance} asks you to identify both invisible
+parameter directions and to prove that gradient descent preserves the zero-sum
+subspace.
+
+\begin{example}[Binary overlap and separation in one dimension]
+\label{ex:binary-softmax-regimes}
+Consider a single scalar logit difference $s$ and
+$q_s(1)=e^s/(1+e^s)$. If a fraction $r\in[0,1]$ of the labels equal one, the
+average log loss is
+\begin{equation}
+ L_r(s)=-r\log q_s(1)-(1-r)\log(1-q_s(1)).
+ \label{eq:binary-intercept-loss}
+\end{equation}
+Its first two derivatives are
+\begin{equation}
+ L_r'(s)=q_s(1)-r,
+ \qquad
+ L_r''(s)=q_s(1)(1-q_s(1)).
+ \label{eq:binary-intercept-derivatives}
+\end{equation}
+If $0<r<1$, the unique minimizer is the finite log-odds
+$s^\star=\log(r/(1-r))$. A \emph{sublevel set} at height $c$ is the set of
+parameters whose loss is at most $c$. Since $L_r(s)\to\infty$ as
+$|s|\to\infty$, every nonempty sublevel set is bounded. On each such set,
+$q_s(1)(1-q_s(1))$ has a positive minimum. This is the \emph{overlap regime}:
+both
+labels occur with positive frequency at the same feature value.
+
+If $r=1$, then
+\[
+ L_1(s)=\log(1+e^{-s}),
+ \qquad
+ L_1'(s)=-\frac1{1+e^s}.
+\]
+The loss approaches its infimum zero only as $s\to\infty$. Both the second
+derivative and the gradient vanish as the fitted probability approaches one.
+This is the separated regime. The calculation displays all three notions from
+the opening: the loss can converge to its infimum, the parameter need not
+converge to a finite value, and in higher-dimensional versions its normalized
+direction can still converge.
+\end{example}
+
+\subsection{The conclusion available from convexity alone}
+\label{sec:softmax-comparator}
+
+The softmax objective is convex and $\beta$-smooth, so
+\cref{thm:convex-comparator} applies after stacking the entries of $W$ into
+one vector. For every $U\in\R^{K\times p}$,
+\begin{equation}
+ L_n(W_T)-L_n(U)
+ \le\frac{\|W_0-U\|_F^2}{2\eta T}.
+ \label{eq:softmax-comparator}
+\end{equation}
+If a finite minimizer $W^\star$ exists, choosing $U=W^\star$ gives an
+$O(1/T)$ rate. If the infimum is not attained, the approximate-comparator
+argument following \cref{thm:convex-comparator} gives
+\begin{equation}
+ L_n(W_T)\longrightarrow L_n^\star.
+ \label{eq:softmax-general-convergence}
+\end{equation}
+The comparison theorem does not require a regularizer.
+
+\subsection{Overlap gives strong convexity after removing invariances}
+\label{sec:softmax-overlap}
+
+Here, \emph{overlap} means that, after removing parameter directions invisible
+on the sample, the relevant empirical-loss sublevel set is bounded. In the
+binary example above, this holds when both labels occur with positive
+frequency. In general it rules out both complete and quasi-complete
+separation. We now state this condition precisely and show that it gives a
+linear rate.
+
+Restrict the feature space so that $x_1,\ldots,x_n$ span $\R^p$, and suppose
+\begin{equation}
+ G\succeq\lambda_X I
+ \qquad\text{for some }\lambda_X>0.
+ \label{eq:feature-coverage}
+\end{equation}
+The matrix inequality means
+$v^\top Gv\ge\lambda_X\|v\|_2^2$ for every $v\in\R^p$: the observed features
+cover every remaining feature direction. Initialize at $W_0\in\cH$ and define
+the initial sublevel set
+\begin{equation}
+ \cS_0=\{W\in\cH:L_n(W)\le L_n(W_0)\}.
+ \label{eq:initial-sublevel}
+\end{equation}
+This is precisely the set of zero-sum parameters whose loss is no larger than
+the initial loss. Assume that $\cS_0$ is bounded. After the invisible
+directions have been removed, this assumption rules out parameter sequences
+that can escape to infinity without increasing the loss.
+
+The set $\cS_0$ is closed and bounded in a finite-dimensional space, hence
+compact. Every softmax probability is positive and continuous, so
+\begin{equation}
+ \alpha=\min_{W\in\cS_0}\min_{i\in[n]}\min_{k\in[K]}
+ q_W(k\mid x_i)>0.
+ \label{eq:sublevel-probability}
+\end{equation}
+For a probability vector $q$ with $q_k\ge\alpha$ and any $a\in\R^K$,
+\begin{equation}
+ \operatorname{Var}_q(a_Y)
+ =\min_{c\in\R}\sum_{k=1}^Kq_k(a_k-c)^2
+ \ge\alpha\min_{c\in\R}\sum_{k=1}^K(a_k-c)^2.
+ \label{eq:variance-lower}
+\end{equation}
+If $\Delta\in\cH$, then
+$\sum_k(\delta w_k)^\top x_i=0$, so the last minimum in
+\cref{eq:variance-lower} is attained at $c=0$. Therefore, for
+$W\in\cS_0$,
+\begin{align}
+ \left\langle\Delta,\nabla^2L_n(W)\Delta\right\rangle_F
+ &\ge\frac\alpha n\sum_{i=1}^n\sum_{k=1}^K
+       \bigl((\delta w_k)^\top x_i\bigr)^2\notag\\
+ &=\alpha\sum_{k=1}^K(\delta w_k)^\top G\delta w_k\notag\\
+ &\ge\alpha\lambda_X\|\Delta\|_F^2.
+ \label{eq:restricted-curvature}
+\end{align}
+
+Convexity of $L_n$ makes $\cS_0$ convex. Continuity implies that $L_n$ attains
+a global minimum on $\cS_0$: points outside $\cS_0$ have loss greater than
+$L_n(W_0)$, while the minimum inside is no greater than $L_n(W_0)$. Moreover,
+\cref{eq:restricted-curvature} gives the strong-convexity inequality along
+every line segment in $\cS_0$. Gradient descent remains in this sublevel set by
+\cref{eq:basic-descent}. We may therefore apply the PL proof on the sublevel
+set with $\mu=\alpha\lambda_X$.
+
+\begin{corollary}[Linear convergence under overlap]
+\label{cor:softmax-overlap-linear}
+Under \cref{eq:feature-coverage,eq:initial-sublevel} and the bounded-sublevel
+assumption above, gradient descent with $0<\eta\le1/\beta$ satisfies
+\begin{equation}
+ L_n(W_t)-L_n^\star
+ \le(1-\eta\alpha\lambda_X)^t
+       \bigl(L_n(W_0)-L_n^\star\bigr).
+ \label{eq:softmax-overlap-rate}
+\end{equation}
+The minimizer is unique after restricting to the zero-sum subspace and the
+span of the observed features.
+\end{corollary}
+
+\Cref{ex:l11-softmax-overlap} asks you to prove the variance lower bound that
+turns probability overlap and feature coverage into the Hessian lower bound
+used by this corollary.
+
+The constant depends on both feature coverage and the smallest class
+probability encountered in the relevant sublevel set. If fitted probabilities
+approach the boundary of the probability simplex---the set of class-probability
+vectors---this uniform Hessian lower bound disappears.
+Adding $\lambda\|W\|_F^2/2$ would give a global strong-convexity constant
+$\lambda$, but it would also change the objective and the fitted
+probabilities.\endnote{The regularized calculation is still useful as a
+comparison. The Hessian becomes $\nabla^2L_n(W)+\lambda I$, so the objective
+is $\lambda$-strongly convex and satisfies a $\lambda$-PL inequality. The
+results in the main text do not require this modification.}
+
+\subsection{Separation gives a different gradient-to-gap relation}
+\label{sec:softmax-separation}
+
+Suppose there is a multiclass separating direction. To remove the common
+shift, define the normalized margin
+\begin{equation}
+ \gamma=\max_{\substack{U\in\cH\\\|U\|_F\le1}}
+ \min_{i\in[n]}\min_{k\ne y_i}
+ (u_{y_i}-u_k)^\top x_i,
+ \label{eq:multiclass-margin}
+\end{equation}
+and assume $\gamma>0$. Compactness gives a maximizer $\overline W$. For
+every $W$, \cref{eq:softmax-gradient} and the margin definition imply
+\begin{align}
+ -\langle\nabla L_n(W),\overline W\rangle_F
+ &=\frac1n\sum_{i=1}^n\sum_{k\ne y_i}
+ q_W(k\mid x_i)
+ (\overline w_{y_i}-\overline w_k)^\top x_i\notag\\
+ &\ge\frac\gamma n\sum_{i=1}^n
+       \bigl(1-q_W(y_i\mid x_i)\bigr).
+ \label{eq:margin-gradient-inner-product}
+\end{align}
+
+Let
+\[
+ \ell_i(W)=-\log q_W(y_i\mid x_i),
+ \qquad L_0=L_n(W_0).
+\]
+Gradient descent makes $L_n(W_t)\le L_0$, hence
+$0<\ell_i(W_t)\le nL_0$. The function $u\mapsto1-e^{-u}$ is concave and
+vanishes at zero. Its chord on $[0,nL_0]$ gives
+\begin{equation}
+ 1-q_{W_t}(y_i\mid x_i)
+ =1-e^{-\ell_i(W_t)}
+ \ge\rho_0\ell_i(W_t),
+ \qquad
+ \rho_0=\frac{1-e^{-nL_0}}{nL_0}.
+ \label{eq:probability-loss-comparison}
+\end{equation}
+Combining \cref{eq:margin-gradient-inner-product} with
+$\|\overline W\|_F\le1$ gives
+\begin{equation}
+ \|\nabla L_n(W_t)\|_F
+ \ge aL_n(W_t),
+ \qquad a=\gamma\rho_0.
+ \label{eq:separable-gradient-certificate}
+\end{equation}
+This is not a PL inequality: the right side is the loss rather than its
+square root. It nevertheless converts the local gradient into a global
+certificate.
+
+\Cref{ex:l11-softmax-separation} asks you to derive this certificate from the
+multiclass margin.
+
+\begin{theorem}[Loss decay on separable softmax data]
+\label{thm:softmax-separable-rate}
+Assume $\gamma>0$, and let $\beta$ be given by
+\cref{eq:softmax-smoothness}. If
+\begin{equation}
+ 0<\eta\le
+ \min\left\{\frac1\beta,\frac1{a^2L_0}\right\},
+ \label{eq:separable-stepsize}
+\end{equation}
+then gradient descent satisfies
+\begin{equation}
+ L_n(W_t)
+ \le\frac{L_0}{1+(\eta a^2L_0/2)t}.
+ \label{eq:separable-rate}
+\end{equation}
+Moreover, $L_n^\star=0$ is not attained at any finite $W$, and
+$\|W_t\|_F\to\infty$.
+\end{theorem}
+
+\begin{proof}
+Equations \cref{eq:basic-descent,eq:separable-gradient-certificate} give
+\[
+ L_n(W_{t+1})
+ \le L_n(W_t)-\frac{\eta a^2}{2}L_n(W_t)^2.
+\]
+Put $c=\eta a^2/2$. The stepsize assumption and monotonicity give
+$cL_n(W_t)\le1/2$. Since every finite softmax loss is positive,
+\begin{align*}
+ \frac1{L_n(W_{t+1})}
+ &\ge\frac1{L_n(W_t)(1-cL_n(W_t))}\\
+ &\ge\frac1{L_n(W_t)}+c.
+\end{align*}
+Summing this inequality and taking reciprocals proves
+\cref{eq:separable-rate}.
+
+Along the separating ray $r\overline W$,
+\begin{align*}
+ L_n(r\overline W)
+ &=\frac1n\sum_{i=1}^n
+ \log\left(1+\sum_{k\ne y_i}
+ e^{-r(\overline w_{y_i}-\overline w_k)^\top x_i}\right)\\
+ &\le (K-1)e^{-r\gamma}\longrightarrow0.
+\end{align*}
+Thus $L_n^\star=0$. At every finite $W$, every softmax probability is
+strictly below one and $L_n(W)>0$, so the infimum is not attained. Finally,
+\cref{eq:separable-rate} gives $L_n(W_t)\to0$. If $\|W_t\|_F$ did not tend
+to infinity, it would have a bounded subsequence and hence a convergent
+subsequence. Continuity would then give a finite parameter with zero loss, a
+contradiction.
+\end{proof}
+
+The reciprocal step is the only new recursion in this proof:
+\cref{ex:l11-reciprocal-decay} asks you to isolate and prove it.
+
+There cannot be a uniform PL constant in this regime. Let
+$R=\max_i\|x_i\|_2$. For one example,
+\[
+ \|q_W(\cdot\mid x_i)-e_{y_i}\|_2
+ \le\sqrt2\bigl(1-q_W(y_i\mid x_i)\bigr)
+ \le\sqrt2\ell_i(W).
+\]
+The triangle inequality in \cref{eq:softmax-gradient} therefore gives
+\begin{equation}
+ \|\nabla L_n(W)\|_F\le\sqrt2R L_n(W).
+ \label{eq:separable-gradient-upper}
+\end{equation}
+Along the separating ray, $L_n(r\overline W)\to0$, so
+\[
+ \frac{\frac12\|\nabla L_n(r\overline W)\|_F^2}
+      {L_n(r\overline W)-L_n^\star}
+ \le R^2L_n(r\overline W)\longrightarrow0.
+\]
+No positive $\mu$ can satisfy a global PL inequality. The $O(1/t)$ rate is
+therefore not a weakened presentation of a hidden linear rate; it reflects a
+different gradient--loss relation.
+
+\Cref{ex:l11-softmax-no-pl} asks you to establish the gradient upper bound and
+use the separating ray to rule out a uniform PL constant.
+
+The separation inequality is the case $\alpha=2$ of the nonlinear
+gradient-dominance condition in
+\cref{eq:generalized-gradient-dominance}. The PL inequality has
+$\alpha=1$ and gives geometric decay; separated softmax has $\alpha=2$ and
+gives reciprocal decay. The softmax policy-gradient result in
+\cref{sec:softmax-pg} has an additional nonuniformity: its coefficient depends
+on the current policy rather than being a fixed global constant.
+
+The direction selected by gradient descent is a separate question from loss
+decay. Under additional conditions, the normalized iterates approach a
+multiclass max-margin solution, as discussed in Lecture~10. The present
+theorem does not need that directional limit.
+
+\subsection{The three regimes}
+
+The same unregularized objective now has three useful conclusions.
+
+\begin{center}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.25\textwidth}
+                    >{\raggedright\arraybackslash}p{0.31\textwidth}
+                    >{\raggedright\arraybackslash}p{0.32\textwidth}@{}}
+\toprule
+Regime & Certificate & Conclusion for gradient descent\\
+\midrule
+Arbitrary fixed features
+& Convex comparison with every finite $U$
+& $L_n(W_t)\to L_n^\star$; $O(1/t)$ if a finite minimizer is available as a
+fixed comparator\\
+Bounded sublevel after removing invariances
+& Restricted strong convexity, hence PL
+& Linear convergence in objective value\\
+Strict separation
+& $\|\nabla L_n(W)\|_F\ge aL_n(W)$ on the initial sublevel
+& $L_n(W_t)=O(1/t)$, while $\|W_t\|_F\to\infty$\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Convex comparison also supplies a direct, though slightly weaker, finite-time
+bound in the separated regime. With $W_0=0$, $\eta=1/\beta$, and
+$U_T=(\log T/\gamma)\overline W$, \cref{eq:softmax-comparator} gives
+\begin{equation}
+ L_n(W_T)
+ \le\frac{K-1}{T}
+ +\frac{\beta(\log T)^2}{2\gamma^2T}.
+ \label{eq:separable-comparator-rate}
+\end{equation}
+Here the comparator changes with the time horizon. The bound illustrates how
+convex comparison proves convergence to an unattained infimum.
+
+Strict separation is not the only way a minimizer can fail to exist. In binary
+logistic regression, write $z_i=y_ix_i$ for labels $y_i\in\{-1,1\}$. Consider
+three transformed examples
+\[
+ z_1=(1,0)^\top,
+ \qquad z_2=(0,1)^\top,
+ \qquad z_3=(0,-1)^\top.
+\]
+The direction $(1,0)^\top$ has nonnegative margin on every example and a
+strictly positive margin on the first, but no direction has a strictly
+positive margin on all three. The loss is
+\begin{equation}
+ L(w)=\frac13\left[
+ \log(1+e^{-w_1})+\log(1+e^{-w_2})+\log(1+e^{w_2})
+ \right].
+ \label{eq:quasi-separated-example}
+\end{equation}
+Sending $w_1\to\infty$ and setting $w_2=0$ approaches the positive infimum
+$2\log2/3$, which no finite $w$ attains. This is a \emph{quasi-separated}
+case. The
+strict margin in \cref{eq:multiclass-margin} is zero, so
+\cref{thm:softmax-separable-rate} does not apply. The comparator theorem still
+proves $L(w_t)\to2\log2/3$. This example explains why the comparator result is
+the general conclusion and the explicit $O(1/t)$ theorem is a sharper result
+for strict separation.
+
+\section{Stochastic gradient descent under PL}
+\label{sec:stochastic-pl}
+
+Full-batch gradients are rarely used to train a language model. \emph{Stochastic
+gradient descent} (SGD) replaces the exact gradient by a random estimate; a
+minibatch average is the standard example. The deterministic decrease then
+acquires a variance term. Lecture~10 distinguished persistent noise from
+minibatch noise that vanishes at interpolation. The calculation below shows
+where that distinction enters a global convergence proof.
+
+Let $\Theta_0,\Theta_1,\ldots$ be random iterates, and let $G_t\in\R^d$ be a
+random gradient estimate used in
+\begin{equation}
+ \Theta_{t+1}=\Theta_t-\eta G_t.
+ \label{eq:stochastic-update}
+\end{equation}
+Assume that, conditional on $\Theta_t$,
+\begin{equation}
+ \E[G_t\mid\Theta_t]=\nabla L(\Theta_t),
+ \qquad
+ \E\!\left[\|G_t-\nabla L(\Theta_t)\|_2^2
+             \mid\Theta_t\right]\le\frac vB.
+ \label{eq:stochastic-assumptions}
+\end{equation}
+The parameter $B$ represents the minibatch size. These assumptions specify
+the randomness needed in the calculation. The first says that $G_t$ is
+unbiased after the current iterate is fixed. The second bounds its conditional
+mean-squared error by $v/B$. No independence beyond these stated conditional
+properties is required.
+
+\begin{theorem}[Constant-stepsize SGD under PL]
+\label{thm:stochastic-pl}
+Suppose that $L$ is $\beta$-smooth and $\mu$-PL, and that
+\cref{eq:stochastic-update,eq:stochastic-assumptions} hold. If
+$0<\eta\le1/\beta$, then
+\begin{align}
+ \E[L(\Theta_{t+1})-L^\star\mid\Theta_t]
+ &\le(1-\eta\mu)\bigl(L(\Theta_t)-L^\star\bigr)
+ +\frac{\beta\eta^2v}{2B},
+ \label{eq:stochastic-one-step}\\
+ \E[L(\Theta_t)-L^\star]
+ &\le(1-\eta\mu)^t\E[L(\Theta_0)-L^\star]
+ +\frac{\beta\eta v}{2\mu B}.
+ \label{eq:stochastic-unrolled}
+\end{align}
+\end{theorem}
+
+\begin{proof}
+Conditional on $\Theta_t$, smoothness gives
+\[
+ L(\Theta_{t+1})
+ \le L(\Theta_t)-\eta\langle\nabla L(\Theta_t),G_t\rangle
+ +\frac{\beta\eta^2}{2}\|G_t\|_2^2.
+\]
+Write $G_t=\nabla L(\Theta_t)+E_t$. Conditional unbiasedness gives
+$\E[E_t\mid\Theta_t]=0$, so the cross term vanishes and
+\[
+ \E[\|G_t\|_2^2\mid\Theta_t]
+ =\|\nabla L(\Theta_t)\|_2^2
+  +\E[\|E_t\|_2^2\mid\Theta_t]
+ \le\|\nabla L(\Theta_t)\|_2^2+\frac vB.
+\]
+Taking conditional expectations, using $\eta\le1/\beta$, and then applying
+PL proves \cref{eq:stochastic-one-step}. Now set
+\[
+ \delta_t=\E[L(\Theta_t)-L^\star],
+ \qquad q=1-\eta\mu,
+ \qquad b=\frac{\beta\eta^2v}{2B}.
+\]
+Taking expectations gives $\delta_{t+1}\le q\delta_t+b$. Repeated
+substitution yields
+\[
+ \delta_t\le q^t\delta_0+b\sum_{j=0}^{t-1}q^j
+ \le q^t\delta_0+\frac{b}{1-q},
+\]
+which is \cref{eq:stochastic-unrolled}.
+\end{proof}
+
+\Cref{ex:l11-stochastic-pl} asks you to derive the conditional recursion and
+iterate it, keeping the contraction and variance terms separate.
+
+The second term in \cref{eq:stochastic-unrolled} is often called the
+\emph{noise floor} of this bound: after the geometric term becomes small, the
+bound no longer decreases below a quantity of order $\eta/B$. It is an upper
+bound, not a claim that every minibatch method has a nonzero limiting error.
+At an interpolating solution,
+per-example gradients can vanish and the conditional variance can decrease
+with the objective gap, as discussed in Lecture~10. A decreasing stepsize or
+an estimator designed so that its variance decreases over time gives other
+ways to make the additive term vanish.
+
+The update direction need not be a stochastic gradient. Let
+\begin{equation}
+ \Theta_{t+1}=\Theta_t+\eta D_t,
+ \label{eq:stochastic-direction-update}
+\end{equation}
+and suppose that, conditional on $\Theta_t$, constants $c,C>0$ and
+$\sigma^2\ge0$ satisfy
+\begin{equation}
+ -\E[\langle\nabla L(\Theta_t),D_t\rangle\mid\Theta_t]
+ \ge c\|\nabla L(\Theta_t)\|_2^2,
+ \qquad
+ \E[\|D_t\|_2^2\mid\Theta_t]
+ \le C^2\|\nabla L(\Theta_t)\|_2^2+\frac{\sigma^2}{B}.
+ \label{eq:stochastic-alignment}
+\end{equation}
+The first condition gives expected first-order decrease; the second controls
+both the part of the step that scales with the gradient and its remaining
+noise.
+
+\begin{proposition}[Stochastic aligned directions]
+\label{prop:stochastic-aligned}
+Suppose that $L$ is $\beta$-smooth and $\mu$-PL and that
+\cref{eq:stochastic-direction-update,eq:stochastic-alignment} hold. If
+\[
+ 0<\eta\le
+ \min\left\{\frac{c}{\beta C^2},\frac1{c\mu}\right\},
+\]
+then, with $\delta_t=\E[L(\Theta_t)-L^\star]$,
+\begin{align}
+ \E[L(\Theta_{t+1})-L^\star\mid\Theta_t]
+ &\le(1-\eta c\mu)(L(\Theta_t)-L^\star)
+    +\frac{\beta\eta^2\sigma^2}{2B},
+ \label{eq:stochastic-aligned-one-step}\\
+ \delta_t
+ &\le(1-\eta c\mu)^t\delta_0
+    +\frac{\beta\eta\sigma^2}{2Bc\mu}.
+ \label{eq:stochastic-aligned-unrolled}
+\end{align}
+For SGD, take $D_t=-G_t$, $c=C=1$, and $\sigma^2=v$.
+\end{proposition}
+
+\Cref{ex:l11-stochastic-aligned} asks you to prove the proposition. It is the
+conditional-expectation counterpart of the aligned-update theorem in
+\cref{sec:aligned-updates}.
+
+For a time-varying stepsize $\eta_t\le1/\beta$, the same calculation gives
+\[
+ \delta_{t+1}
+ \le(1-\mu\eta_t)\delta_t
+ +\frac{\beta v}{2B}\eta_t^2,
+ \qquad
+ \delta_t=\E[L(\Theta_t)-L^\star].
+\]
+
+\begin{proposition}[A decreasing-stepsize rate]
+\label{prop:decreasing-sgd}
+Under the assumptions of \cref{thm:stochastic-pl}, let
+\[
+ \eta_t=\frac{2}{\mu(t+t_0)},
+ \qquad
+ t_0\ge\frac{2\beta}{\mu}.
+\]
+Then
+\begin{equation}
+ \delta_t
+ \le\frac{1}{t+t_0}
+ \max\left\{
+ t_0\delta_0,\frac{2\beta v}{B\mu^2}
+ \right\}.
+ \label{eq:decreasing-sgd-rate}
+\end{equation}
+In particular, the expected objective gap converges to zero at rate $O(1/t)$.
+\end{proposition}
+
+Here $\eta_t$ is of order $1/t$: the cumulative steps are unbounded, while
+the squared steps are summable. This is a basic \emph{stochastic
+approximation} schedule. Unlike the constant-stepsize bound, the resulting
+bound has no fixed noise floor. \Cref{ex:l11-decreasing-stepsize} asks you to
+prove \cref{eq:decreasing-sgd-rate} directly by induction.
+
+\section{The Lyapunov form of the argument}
+\label{sec:lyapunov}
+
+The preceding proofs use the objective gap to measure progress. The same
+argument can use another nonnegative function of the parameter. Consider a
+deterministic parameter update
+\begin{align}
+ \theta_{t+1}=\cT(\theta_t),
+ \qquad \theta_t\in\R^d.   \label{eq:statupd}
+\end{align}
+For the rate arguments in this lecture, a \emph{Lyapunov function} for a
+stated convergence target is a function
+\[
+ V:\R^d\longrightarrow[0,\infty)
+\]
+whose infimum is zero and whose value does not increase under the update. The
+zero value need not be attained by a finite parameter. A useful convergence proof
+strengthens nonincrease to a quantitative decrease that forces
+$V(\theta_t)\to0$. This is the minimal optimization use of the term needed
+here.\endnote{In dynamical-systems and control texts, a Lyapunov function is
+usually tied to a fixed point $\theta^\star$ and is required to be continuous
+and \emph{positive definite} about it:
+$V(\theta^\star)=0$ and $V(\theta)>0$ for $\theta\ne\theta^\star$.
+Comparison bounds relating $V(\theta)$ to
+$\|\theta-\theta^\star\|_2$ turn decrease of $V$ into control of parameter
+distance. Together with such bounds, nonincrease gives Lyapunov stability,
+while a lower bound on
+$V(\theta)-V(\cT(\theta))$ by a positive function of
+$\|\theta-\theta^\star\|_2$ gives asymptotic convergence. A
+\emph{radially unbounded} function, meaning
+$V(\theta)\to\infty$ as $\|\theta\|_2\to\infty$, has bounded sublevel sets and
+can support global rather than only local conclusions. We do not impose these
+properties here. In separable softmax there is no finite target parameter and
+the parameter norm diverges. Hence no radially unbounded function can both
+decrease along those iterates and serve as a Lyapunov function for their
+limit.}
+
+For example, let $U:\R^d\to[0,\infty)$ measure the progress available at one
+parameter. If constants $c,\kappa>0$ with $c\kappa\le1$ satisfy
+\begin{equation}
+ V(\theta_{t+1})\le V(\theta_t)-cU(\theta_t),
+ \qquad
+ U(\theta_t)\ge\kappa V(\theta_t),
+ \label{eq:lyapunov-template}
+\end{equation}
+then the sequence $V_t=V(\theta_t)$ satisfies
+\begin{equation}
+ V_t\le(1-c\kappa)^tV_0.
+ \label{eq:lyapunov-geometric}
+\end{equation}
+For gradient descent under PL,
+\[
+ V(\theta)=L(\theta)-L^\star,
+ \qquad U(\theta)=\|\nabla L(\theta)\|_2^2.
+\]
+Smoothness proves the first inequality in \cref{eq:lyapunov-template}; PL
+proves the second. For separable softmax, $V(W)=L_n(W)$ is still a Lyapunov
+function even though its infimum is attained only as $\|W\|_F\to\infty$. The
+available progress instead satisfies $U(W)\ge a^2V(W)^2$, which produces
+reciprocal decay. For a random parameter $\Theta_t$, the corresponding statement
+is a \emph{conditional drift inequality}: a bound on the expected one-step
+change after the current parameter is fixed. It controls
+$\E[V(\Theta_{t+1})\mid\Theta_t]$, possibly with an additive noise term.
+
+The aligned-update theorem is one way to prove a Lyapunov decrease. In that
+theorem, $V(\theta)=L(\theta)-L^\star$, and alignment with
+$-\nabla L(\theta)$ makes $V$ decrease. The same proof applies to any smooth
+$V$: if an update direction is aligned with $-\nabla V(\theta)$ and has
+controlled norm, smoothness converts that alignment into a decrease of $V$.
+A direct Lyapunov calculation can also establish decrease without first
+representing the update through the gradient of $V$.
+
+This broader viewpoint matters for methods that do not begin with a loss. A
+\emph{root-finding problem} asks for a parameter $\theta^\star$ satisfying
+$g(\theta^\star)=0$ for a given map $g:\R^d\to\R^d$. One may design an update
+from the computable residual $g(\theta_t)$ and only afterward construct a
+Lyapunov function for its analysis. That function may depend on the unknown
+solution: for example, $V(\theta)=\|\theta-\theta^\star\|_2^2$ can be useful in
+a proof even though the algorithm cannot evaluate it. Calling $V$ a surrogate
+loss would therefore be misleading here: it certifies the update but does not
+define it.
+
+A \emph{fixed point} of a map $\cT:\R^d\to\R^d$ satisfies
+$\cT(\theta^\star)=\theta^\star$. This is the root-finding problem
+$g(\theta)=\theta-\cT(\theta)=0$. The optional material gives precise
+root-finding and fixed-point results. It then treats temporal-difference
+learning, whose mean update is designed from a linear equation rather than
+from a training loss.
+
+For a time-varying or random update, the same role is played by a per-step
+decrease inequality or a conditional drift inequality. The update map itself
+need not be the same at every iteration.
+% More generally, an algorithm with memory can enlarge the variable on which
+% $V$ is defined; for momentum, this variable could be the parameter--velocity
+% pair. None of the examples below needs that extension.
+
+\section{Optional reading\suppmark}
+\label{sec:optional}
+
+\subsection{Beyond PL: nonlinear gradient dominance}
+\label{sec:generalized-gradient-dominance}
+
+The PL inequality compares the squared gradient norm linearly with the
+objective gap. A more general comparison is
+\begin{equation}
+ \frac12\|\nabla L(\theta)\|_2^2
+ \ge \mu\bigl(L(\theta)-L^\star\bigr)^\alpha.
+ \label{eq:generalized-gradient-dominance}
+\end{equation}
+The exponent determines the rate obtained from smooth descent.
+
+\begin{proposition}[Rates from nonlinear gradient dominance]
+\label{prop:generalized-gradient-dominance}
+Let $L$ be differentiable and bounded below, and suppose a gradient-descent
+sequence satisfies
+\[
+ L(\theta_{t+1})
+ \le L(\theta_t)-\frac\eta2\|\nabla L(\theta_t)\|_2^2
+ \qquad(t\ge0)
+\]
+for some $\eta>0$. This descent bound holds, for example, when $L$ is
+$\beta$-smooth and $0<\eta\le1/\beta$. Suppose
+\cref{eq:generalized-gradient-dominance} holds with $\mu>0$ and
+$\alpha\ge1$ throughout the initial sublevel set
+\[
+ \cS_0=\{\theta:L(\theta)\le L(\theta_0)\}.
+\]
+Write $\Delta_t=L(\theta_t)-L^\star$. Then
+\begin{equation}
+ \Delta_{t+1}\le\Delta_t-\eta\mu\Delta_t^\alpha.
+ \label{eq:generalized-gap-recursion}
+\end{equation}
+For $\alpha=1$,
+\[
+ \Delta_t\le(1-\eta\mu)^t\Delta_0.
+\]
+For $\alpha>1$ and $\Delta_0>0$,
+\begin{equation}
+ \Delta_t
+ \le
+ \left(\Delta_0^{1-\alpha}
+       +\eta\mu(\alpha-1)t\right)^{-1/(\alpha-1)}.
+ \label{eq:generalized-gap-rate}
+\end{equation}
+If $\Delta_0=0$, every subsequent gap is zero.
+\end{proposition}
+
+\begin{proof}
+Smooth descent keeps every iterate in $\cS_0$. Combining
+\cref{eq:basic-descent,eq:generalized-gradient-dominance} gives
+\cref{eq:generalized-gap-recursion}. The case $\alpha=1$ is the PL
+recursion.
+
+Suppose $\alpha>1$ and put $s=\alpha-1$. If an iterate reaches zero gap, the
+claim follows. Otherwise, \cref{eq:generalized-gap-recursion} gives
+\[
+ \Delta_{t+1}\le\Delta_t(1-\eta\mu\Delta_t^s).
+\]
+If the factor is zero, then $\Delta_{t+1}=0$. Otherwise it is positive. Using
+$(1-z)^{-s}\ge1+sz$ for $z\in[0,1)$ gives
+\[
+ \Delta_{t+1}^{-s}
+ \ge \Delta_t^{-s}(1-\eta\mu\Delta_t^s)^{-s}
+ \ge \Delta_t^{-s}+s\eta\mu.
+\]
+Summing this inequality and raising both sides to the power $-1/s$ proves
+\cref{eq:generalized-gap-rate}.
+\end{proof}
+
+Two scalar examples show how the exponent changes the conclusion. For
+$L(x)=x^4/4$,
+\[
+ \frac12|L'(x)|^2=4L(x)^{3/2}.
+\]
+If $x_0\ne0$ and $0<\eta\le1/(3x_0^2)$, then
+$x_{t+1}=x_t(1-\eta x_t^2)$ remains in $[-|x_0|,|x_0|]$, where $L$ is
+$3x_0^2$-smooth. The proposition gives
+\[
+ L(x_t)\le\left(L(x_0)^{-1/2}+2\eta t\right)^{-2}.
+\]
+For $L(x)=e^{-x}$,
+\[
+ \frac12|L'(x)|^2=\frac12L(x)^2.
+\]
+Its infimum zero is not attained. If $0<\eta\le1/L(x_0)$, gradient descent
+remains in the initial sublevel set, where the objective is $L(x_0)$-smooth,
+and
+\[
+ L(x_t)\le\left(L(x_0)^{-1}+\frac\eta2t\right)^{-1}.
+\]
+Separated softmax has the same exponent $\alpha=2$.
+
+Exponents below one cannot hold near a smooth infimum along points with
+positive gaps tending to zero. Indeed, the descent lemma applied to
+$v=\theta-\nabla L(\theta)/\beta$ gives
+\[
+ \frac12\|\nabla L(\theta)\|_2^2
+ \le\beta\bigl(L(\theta)-L^\star\bigr).
+\]
+Combining this upper bound with
+\cref{eq:generalized-gradient-dominance} would give
+$\mu\Delta^{\alpha-1}\le\beta$. If $\alpha<1$, the left side diverges as a
+positive gap $\Delta$ tends to zero.
+
+\Cref{ex:l11-gradient-dominance} asks you to prove the polynomial-rate
+recursion, apply it to the quartic objective, and establish the obstruction
+for $\alpha<1$.
+
+\subsection{Nonsmooth convex objectives}
+\label{sec:nonsmooth-convex}
+
+An objective is \emph{nonsmooth} if it is not differentiable everywhere.
+Convexity still supplies a global first-order comparison, but the first-order
+object is now a set rather than a single gradient. For a convex function
+$L:\R^d\to\R$, a vector $s\in\R^d$ is a \emph{subgradient} of $L$ at
+$\theta$ if
+\begin{equation}
+ L(u)\ge L(\theta)+\langle s,u-\theta\rangle
+ \qquad\text{for every }u\in\R^d.
+ \label{eq:subgradient-definition}
+\end{equation}
+The set of all such vectors is the \emph{subdifferential}
+$\partial L(\theta)$. At a differentiable point it contains only
+$\nabla L(\theta)$. For $L(x)=|x|$,
+\[
+ \partial L(x)=
+ \begin{cases}
+  \{1\},&x>0,\\
+  [-1,1],&x=0,\\
+  \{-1\},&x<0.
+ \end{cases}
+\]
+
+\emph{Subgradient descent} chooses $s_t\in\partial L(\theta_t)$ and updates
+\begin{equation}
+ \theta_{t+1}=\theta_t-\eta_t s_t.
+ \label{eq:subgradient-update}
+\end{equation}
+The objective need not decrease at every step, as the fixed-stepsize behavior
+of $|x|$ already shows. Instead, the following result uses squared distance
+to an arbitrary comparator as a Lyapunov function.
+
+\begin{theorem}[Convex subgradient comparator bound]
+\label{thm:subgradient-comparator}
+Let $L:\R^d\to\R$ be convex, let the iterates follow
+\cref{eq:subgradient-update}, and suppose $\|s_t\|_2\le G$ for every $t$.
+For positive stepsizes, define
+\[
+ S_T=\sum_{t=0}^{T-1}\eta_t,
+ \qquad
+ \bar\theta_T=\frac1{S_T}\sum_{t=0}^{T-1}\eta_t\theta_t.
+\]
+Then every comparator $u\in\R^d$ satisfies
+\begin{equation}
+ L(\bar\theta_T)-L(u)
+ \le
+ \frac{\|\theta_0-u\|_2^2
+       +G^2\sum_{t=0}^{T-1}\eta_t^2}{2S_T}.
+ \label{eq:subgradient-comparator}
+\end{equation}
+In particular, if $\|\theta_0-u\|_2\le R$ and $R,G>0$, the constant choice
+$\eta_t=R/(G\sqrt T)$ gives
+\begin{equation}
+ L(\bar\theta_T)-L(u)\le\frac{RG}{\sqrt T}.
+ \label{eq:subgradient-rate}
+\end{equation}
+\end{theorem}
+
+\begin{proof}
+Expanding one update and using the subgradient inequality gives
+\begin{align*}
+ \|\theta_{t+1}-u\|_2^2
+ &=\|\theta_t-u\|_2^2
+   -2\eta_t\langle s_t,\theta_t-u\rangle
+   +\eta_t^2\|s_t\|_2^2\\
+ &\le \|\theta_t-u\|_2^2
+   -2\eta_t\bigl(L(\theta_t)-L(u)\bigr)
+   +\eta_t^2G^2.
+\end{align*}
+Rearrange and sum from $t=0$ to $T-1$. The squared-distance terms telescope,
+and the last one is nonnegative, so
+\[
+ 2\sum_{t=0}^{T-1}\eta_t
+      \bigl(L(\theta_t)-L(u)\bigr)
+ \le \|\theta_0-u\|_2^2
+      +G^2\sum_{t=0}^{T-1}\eta_t^2.
+\]
+Convexity and the definition of $\bar\theta_T$ imply
+\[
+ S_TL(\bar\theta_T)
+ \le\sum_{t=0}^{T-1}\eta_tL(\theta_t).
+\]
+Combining the last two displays proves
+\cref{eq:subgradient-comparator}. For the stated constant stepsize, its
+numerator is at most $2R^2$ and its denominator is
+$2R\sqrt T/G$, which proves \cref{eq:subgradient-rate}.
+\end{proof}
+
+The theorem does not require the infimum to be attained because $u$ is an
+arbitrary finite comparator. It controls an averaged iterate rather than
+every last iterate. With a fixed stepsize $\eta$, its right-hand side becomes
+\[
+ \frac{\|\theta_0-u\|_2^2}{2\eta T}+\frac{\eta G^2}{2},
+\]
+which displays the same fixed-stepsize residual seen for $|x|$. Decreasing
+stepsizes give convergence through this bound when $S_T\to\infty$ and
+$\sum_{t<T}\eta_t^2/S_T\to0$. Under the usual existence and bounded-moment
+conditions, stochastic subgradient arguments commonly use the stronger
+conditions
+$\sum_t\eta_t=\infty$ and $\sum_t\eta_t^2<\infty$ so that progress continues
+while the cumulative squared-stepsize noise remains finite. For a strongly
+convex nonsmooth objective with bounded selected subgradients, stepsizes of
+order $1/t$ with suitable averaging give an $O(1/T)$ objective gap. Strong
+convexity alone does not recover the linear rate obtained from smoothness and
+PL.
+
+\subsection{A Jacobian condition for nonlinear least squares}
+\label{sec:nls-pl}
+
+Let $f_\theta$ be a nonlinear predictor and let $F(\theta)\in\R^r$ collect
+its residuals on $r$ training constraints. For squared-loss training, after
+any desired normalization, the empirical objective has the form
+\[
+ L(\theta)=\frac12\|F(\theta)\|_2^2.
+\]
+Let $J_F(\theta)\in\R^{r\times d}$ be the \emph{Jacobian}, with residual coordinates
+along rows and parameter coordinates along columns; explicitly,
+$[J_F(\theta)]_{j,k}=\partial F_j(\theta)/\partial\theta_k$. The chain rule
+gives
+\[
+ \nabla L(\theta)=J_F(\theta)^\top F(\theta).
+\]
+Suppose $L^\star=0$ and, on the relevant sublevel set,
+\begin{equation}
+ J_F(\theta)J_F(\theta)^\top\succeq\sigma^2I_r.
+ \label{eq:jacobian-coverage}
+\end{equation}
+It follows that
+\[
+ \|\nabla L(\theta)\|_2^2
+ =F(\theta)^\top J_F(\theta)J_F(\theta)^\top F(\theta)
+ \ge\sigma^2\|F(\theta)\|_2^2
+ =2\sigma^2L(\theta).
+\]
+Thus $L$ satisfies a $\sigma^2$-PL inequality on that sublevel set. The
+matrix inequality says that changing the parameters can affect every residual
+direction with strength at least $\sigma$. It can hold when $d>r$ even though
+the parameter itself is not uniquely determined, and it does not require $L$
+to be convex. The residual model in \cref{ex:nonconvex-pl} is the scalar case.
+Interpolating linear least squares is the constant-Jacobian case:
+$F(w)=\mathbf Xw-y$ and full row rank give
+$\mathbf X\mathbf X^\top\succeq
+\lambda_{\min}(\mathbf X\mathbf X^\top)I$. Thus the same calculation explains
+why overparameterized least squares can converge linearly in objective value
+even though Lecture~10 found many possible minimizing parameters.
+
+\subsection{Overparameterized ReLU networks}
+\label{sec:wide-relu}
+
+The one-unit example in \cref{sec:local-global-question} fails because its
+only gate is inactive. Width supplies several gates, so individual dead units
+need not make the whole network dead. The following scalar model isolates
+this effect before we consider several training examples.
+
+For $w=(w_1,\ldots,w_m)\in\R^m$, define
+\begin{equation}
+ f_m(w)=\frac1{\sqrt m}\sum_{r=1}^m[w_r]_+,
+ \qquad
+ L_m(w)=\frac12\bigl(f_m(w)-1\bigr)^2.
+ \label{eq:wide-relu-scalar}
+\end{equation}
+Let $S_1,\ldots,S_m$ be independent random signs satisfying
+$\P(S_r=1)=\P(S_r=-1)=1/2$. For a fixed $a\in(0,1)$, initialize
+\[
+ W_{r,0}=\frac{aS_r}{\sqrt m},
+ \qquad r\in[m],
+\]
+and run gradient descent with $0<\eta\le1$. Put
+\[
+ Q=\sum_{r=1}^m\I\{S_r=1\},
+\]
+the number of initially active units.
+
+\begin{proposition}[Width makes complete ReLU death unlikely]
+\label{prop:wide-relu-scalar}
+On the event $\{Q=0\}$, gradient descent never moves and
+$L_m(W_t)=1/2$ for every $t$. This event has probability $2^{-m}$.
+On the event $\{Q>0\}$, the activation pattern remains fixed and
+\begin{align}
+ 1-f_m(W_t)
+ &=\left(1-\eta\frac Qm\right)^t
+      \bigl(1-f_m(W_0)\bigr),
+ \label{eq:wide-relu-residual}\\
+ L_m(W_t)
+ &=\left(1-\eta\frac Qm\right)^{2t}L_m(W_0).
+ \label{eq:wide-relu-rate}
+\end{align}
+Moreover, for every $\delta\in(0,1/2)$, with probability at least
+$1-e^{-2m\delta^2}$,
+\begin{equation}
+ L_m(W_t)
+ \le\left(1-\eta(1/2-\delta)\right)^{2t}L_m(W_0)
+ \qquad\text{for every }t\ge0.
+ \label{eq:wide-relu-high-probability}
+\end{equation}
+\end{proposition}
+
+\begin{proof}
+The event $\{Q=0\}$ is
+$\bigcap_{r=1}^m\{S_r=-1\}$. Independence gives probability $2^{-m}$.
+Every coordinate is then negative, so every ReLU output and every parameter
+derivative is zero.
+
+Now condition on $Q=q>0$. Initially
+$f_m(W_0)=aq/m<1$. If the initial activation pattern has persisted through
+time $t$ and $f_m(W_t)<1$, then an initially active coordinate satisfies
+\[
+ W_{r,t+1}=W_{r,t}+\frac{\eta}{\sqrt m}
+                 \bigl(1-f_m(W_t)\bigr),
+\]
+so it remains positive; an initially inactive coordinate has zero derivative
+and remains negative. Consequently,
+\[
+ f_m(W_{t+1})
+ =f_m(W_t)+\eta\frac qm\bigl(1-f_m(W_t)\bigr),
+\]
+or equivalently
+\[
+ 1-f_m(W_{t+1})
+ =\left(1-\eta\frac qm\right)
+    \bigl(1-f_m(W_t)\bigr).
+\]
+Because $0<\eta q/m\le1$, induction shows that the activation pattern
+persists, $f_m(W_t)\le1$, and \cref{eq:wide-relu-residual,eq:wide-relu-rate}
+hold for every $t$. Finally, Hoeffding's inequality gives
+\[
+ \P\left(\frac Qm<\frac12-\delta\right)
+ \le e^{-2m\delta^2}.
+\]
+On the complementary event, the factor in
+\cref{eq:wide-relu-rate} is at most
+$1-\eta(1/2-\delta)$, proving
+\cref{eq:wide-relu-high-probability}.
+\end{proof}
+
+This example does not make the ReLU objective smooth. It makes the bad event
+``every available gate is inactive'' exponentially unlikely. For several
+training examples, the corresponding requirement is stronger: the active
+gates must collectively cover every residual direction.
+
+To state that requirement, fix training pairs
+$(x_i,y_i)_{i=1}^n$ with $x_i\in\R^p$, and consider
+\[
+ f_W(x)=\frac1{\sqrt m}\sum_{r=1}^m a_r[w_r^\top x]_+,
+ \qquad a_r\in\{-1,1\},
+\]
+where the output weights $a_r$ are fixed and the hidden weights
+$W=(w_1,\ldots,w_m)$ are trained. Let
+\[
+ F_i(W)=f_W(x_i)-y_i,
+ \qquad
+ L(W)=\frac12\|F(W)\|_2^2.
+\]
+At a parameter with no zero training preactivation, define the
+\emph{empirical tangent Gram matrix}
+\begin{equation}
+ K(W)=J_F(W)J_F(W)^\top.
+ \label{eq:relu-tangent-gram}
+\end{equation}
+Its entries are
+\begin{equation}
+ K_{ij}(W)
+ =\frac{x_i^\top x_j}{m}\sum_{r=1}^m
+   \I\{w_r^\top x_i>0\}\I\{w_r^\top x_j>0\}.
+ \label{eq:relu-tangent-entries}
+\end{equation}
+Thus $K(W)\succeq\lambda I_n$ says that the active parameter derivatives
+can change every training-residual direction with strength at least
+$\sqrt\lambda$.
+
+\begin{proposition}[Persistent tangent coverage gives loss convergence]
+\label{prop:relu-tangent-flow}
+Suppose an absolutely continuous parameter trajectory follows gradient flow
+at almost every time at which $L$ is differentiable, and suppose
+\[
+ K(W(t))\succeq\lambda I_n
+ \qquad\text{for almost every }t\ge0
+\]
+for some $\lambda>0$. Then
+\begin{equation}
+ L(W(t))\le e^{-2\lambda t}L(W(0)).
+ \label{eq:relu-tangent-flow-rate}
+\end{equation}
+\end{proposition}
+
+\begin{proof}
+At every time covered by the assumptions,
+\[
+ \dot W(t)=-\nabla L(W(t))=-J_F(W(t))^\top F(W(t)),
+\]
+and hence
+\[
+ \dot F(W(t))=-K(W(t))F(W(t)).
+\]
+Therefore, at almost every time,
+\[
+ \frac{d}{dt}L(W(t))
+ =-F(W(t))^\top K(W(t))F(W(t))
+ \le-2\lambda L(W(t)).
+\]
+Integrating this differential inequality proves
+\cref{eq:relu-tangent-flow-rate}.
+\end{proof}
+
+At random initialization, \cref{eq:relu-tangent-entries} is an average of
+independent random gate matrices. With sufficiently large width, it can
+concentrate near a positive-definite limiting matrix. The second part of a
+finite-width argument must then prove that the weights move little enough for
+$K(W(t))$ to remain well conditioned. This gives a bootstrap:
+well-conditioned tangent features decrease the loss, the resulting movement
+is small, and the small movement preserves tangent conditioning. Such results
+give global convergence from the stated random initialization, not a claim
+that the objective has favorable geometry at every parameter.
+
+At infinite width under the standard $1/\sqrt m$ scaling, the tangent Gram
+matrix can converge to a deterministic matrix that remains constant during
+training. This is the \emph{neural tangent kernel (NTK) regime}.\endnote{If
+the limiting matrix is
+$K_\infty=U\operatorname{diag}(\lambda_1,\ldots,\lambda_n)U^\top$, then the
+fixed-kernel residual dynamics have the explicit solution
+$F(t)=U\operatorname{diag}(e^{-\lambda_1t},\ldots,e^{-\lambda_nt})U^\top
+F(0)$. The spectrum therefore determines the optimization rates, while the
+fixed kernel together with the initialization determines the selected
+interpolant. This converts nonlinear parameter training into an exactly
+analyzable linear system. It also shifts the substantive questions to the
+conditioning and suitability of the initial tangent features. Because those
+features remain essentially fixed, the regime does not describe substantial
+feature learning. It is a useful optimization model and comparison point,
+rather than a general description of finite-network training.}
+
+\Cref{ex:l11-wide-relu} asks you to derive the exact scalar recursion and,
+as an optional extension, solve the fixed-kernel residual dynamics. The
+finite-width concentration and stability proof is substantially longer and
+is not included here.
+
+\subsection{Softmax policy gradient}
+\label{sec:softmax-pg}
+
+Post-training by reinforcement learning replaces fixed supervised targets by
+rewards obtained from actions. The softmax parameterization remains, but the
+distribution of visited states now depends on the current policy. Even a
+softmax bandit, the one-state special case, already seeks an optimal policy on
+the boundary of the probability simplex.
+
+\emph{Policy gradient} applies gradient ascent to expected discounted return,
+viewed as a function of the policy parameters. We discuss ascent here, whereas
+the rest of the lecture states descent results for losses; changing the sign
+of the objective converts one convention into the other.
+
+A finite discounted \emph{Markov decision process} specifies finite state and
+action sets, transition probabilities, rewards, and a discount factor. A
+tabular softmax policy can be written
+\[
+ \pi_\theta(a\mid s)
+ =\frac{e^{\theta(s,a)}}{\sum_b e^{\theta(s,b)}}.
+\]
+Here \emph{tabular} means that every state--action pair has its own parameter
+$\theta(s,a)$.
+The performance objective is nonconvex in $\theta$, and the objective's
+gradient depends on the state distribution induced by the current policy.
+Nevertheless, exact softmax policy gradient has a global $O(1/t)$ convergence
+guarantee under standard finite tabular assumptions. The proof
+uses a nonuniform PL-type gradient certificate whose coefficient depends on
+the probabilities that the current policy assigns to optimal actions. There
+is no single positive PL constant valid for every policy.
+
+\emph{Entropy regularization} adds a term that rewards policies for spreading
+probability across actions. This prevents the target policy from lying on the
+boundary of the probability simplex, where some action probabilities are
+zero. Under the corresponding
+assumptions, the regularized objective admits a linear convergence result.
+The same distinction appears in supervised softmax: when the target lies on
+the probability-simplex boundary, the certificate can degenerate and the rate
+is sublinear; a uniform positive lower bound on the relevant probabilities can
+give a linear rate. The policy-gradient proof has additional terms involving
+the \emph{discounted occupancy measure}. This measure records how often the
+policy visits each state, with later visits downweighted by the discount
+factor. It depends on the current policy, so the proof cannot treat visited
+states as a fixed supervised dataset.
+
+\subsection{Root finding and fixed points}
+\label{sec:root-finding}
+
+A root-finding update can converge without being derived from an objective.
+One useful condition on the residual map is \emph{strong monotonicity}: for
+some $\mu>0$,
+\begin{equation}
+ \langle g(\theta)-g(\theta'),\theta-\theta'\rangle
+ \ge \mu\|\theta-\theta'\|_2^2
+ \qquad\text{for all $\theta,\theta'\in\R^d$.}
+ \label{eq:strong-monotonicity}
+\end{equation}
+Suppose also that $g$ is $C$-Lipschitz:
+$\|g(\theta)-g(\theta')\|_2\le C\|\theta-\theta'\|_2$.
+
+\begin{proposition}[Strongly monotone root finding]
+\label{prop:strongly-monotone-root}
+Suppose that $g:\R^d\to\R^d$ satisfies
+\cref{eq:strong-monotonicity}, is $C$-Lipschitz, and has a root
+$\theta^\star$. Then the root is unique. For the iteration
+\begin{equation}
+ \theta_{t+1}=\theta_t-\eta g(\theta_t),
+ \label{eq:root-finding-update}
+\end{equation}
+if $0<\eta<2\mu/C^2$, then
+\begin{equation}
+ \|\theta_t-\theta^\star\|_2^2
+ \le \left(1-2\eta\mu+\eta^2C^2\right)^t
+      \|\theta_0-\theta^\star\|_2^2.
+ \label{eq:strongly-monotone-root-rate}
+\end{equation}
+\end{proposition}
+
+\begin{proof}
+Two roots $\theta^\star$ and $\widetilde\theta^\star$ would make the
+left side of \cref{eq:strong-monotonicity} zero, so they must be equal. Put
+$e_t=\theta_t-\theta^\star$. Since $g(\theta^\star)=0$,
+\begin{align*}
+ \|e_{t+1}\|_2^2
+ &=\|e_t-\eta(g(\theta_t)-g(\theta^\star))\|_2^2\\
+ &\le(1-2\eta\mu+\eta^2C^2)\|e_t\|_2^2.
+\end{align*}
+Strong monotonicity, Cauchy--Schwarz, and Lipschitz continuity imply
+$\mu\le C$. Hence the factor is nonnegative, and the stepsize condition makes
+it strictly smaller than one. Iteration proves
+\cref{eq:strongly-monotone-root-rate}.
+\end{proof}
+
+This is also an aligned-update proof with a Lyapunov function. For
+\[
+ V(\theta)=\frac12\|\theta-\theta^\star\|_2^2,
+ \qquad d(\theta)=-g(\theta),
+\]
+we have $\nabla V(\theta)=\theta-\theta^\star$ and
+\[
+ -\langle\nabla V(\theta),d(\theta)\rangle
+ \ge\mu\|\nabla V(\theta)\|_2^2,
+ \qquad
+ \|d(\theta)\|_2\le C\|\nabla V(\theta)\|_2.
+\]
+Thus the alignment is with the gradient of the analysis certificate $V$, not
+with the gradient of an objective used to construct the update.
+
+A map $\cT$ is a \emph{contraction} if
+$\|\cT(\theta)-\cT(\theta')\|_2\le q\|\theta-\theta'\|_2$ for some
+$q<1$. The contraction mapping theorem gives a unique fixed point
+$\theta^\star$, and the direct iteration
+$\theta_{t+1}=\cT(\theta_t)$ satisfies
+\[
+ \|\theta_t-\theta^\star\|_2^2
+ \le q^{2t}\|\theta_0-\theta^\star\|_2^2.
+\]
+Although the distance to $\theta^\star$ is not computable without knowing the
+solution, the fixed-point residual
+$g(\theta)=\theta-\cT(\theta)$ is computable and satisfies
+\[
+ (1-q)\|\theta-\theta^\star\|_2
+ \le\|g(\theta)\|_2
+ \le(1+q)\|\theta-\theta^\star\|_2.
+\]
+\Cref{ex:l11-root-finding,ex:l11-fixed-point} ask you to develop these two
+arguments and to distinguish the update from the Lyapunov function used to
+analyze it.
+
+\subsection{Linear temporal-difference learning}
+\label{sec:linear-td}
+
+Policy evaluation supplies a concrete incremental root-finding example.
+Fix a policy in a finite discounted Markov decision process. Let $P_\pi$ be
+its state-transition matrix, let $d$ be a stationary probability vector with
+positive entries, meaning $d^\top P_\pi=d^\top$. Put $D=\diag(d)$, and let
+$r$ be the vector of expected one-step rewards. Let $\phi(s)\in\R^p$ be a
+feature vector and let
+$\Phi$ have row $s$ equal to $\phi(s)^\top$. The linear value approximation
+is $v_w(s)=\phi(s)^\top w$.
+
+To identify the mean update, consider a transition with
+\[
+ \P(S_t=s)=d_s,
+ \qquad
+ \P(S_{t+1}=s'\mid S_t=s)=P_\pi(s,s'),
+ \qquad
+ \E[R_{t+1}\mid S_t=s]=r_s.
+\]
+With discount factor $\gamma_{\rm disc}\in[0,1)$, the TD(0) increment at a
+fixed parameter $w$ is
+\[
+ \bigl(R_{t+1}+\gamma_{\rm disc}\phi(S_{t+1})^\top w
+       -\phi(S_t)^\top w\bigr)\phi(S_t).
+\]
+Its expectation is $b-Aw$, where
+\begin{equation}
+ A=\Phi^\top D(I-\gamma_{\rm disc}P_\pi)\Phi,
+ \qquad
+ b=\Phi^\top Dr.
+ \label{eq:td-matrices}
+\end{equation}
+The corresponding mean iteration is therefore
+\begin{equation}
+ w_{t+1}=w_t+\eta(b-Aw_t).
+ \label{eq:expected-td}
+\end{equation}
+
+This calculation connects TD to the main lecture. The algorithm starts from
+the linear root equation $g(w)=Aw-b=0$ and uses the computable direction
+$-g(w)=b-Aw$. A \emph{stationary point of the mean iteration} is a parameter
+at which its expected increment vanishes. Thus it must satisfy
+\[
+ Aw^\star=b.
+\]
+This is also a fixed point of \cref{eq:expected-td}. Because $A$ is generally
+nonsymmetric, $b-Aw$ is not usually the negative gradient of a scalar
+objective. This is clearly also an example of root finding. As such, in the proof below
+we check the conditions of \cref{prop:strongly-monotone-root} to get convergence.
+\begin{theorem}[Linear convergence of the mean TD iteration]
+\label{thm:mean-td-convergence}
+Suppose that $d_s>0$ for every state, $d^\top P_\pi=d^\top$,
+$\gamma_{\rm disc}<1$, and $\Phi$ has full column rank. Then $A$ is
+invertible, so the mean TD iteration has the unique stationary point
+$w^\star=A^{-1}b$. Define
+\begin{equation}
+ H=\frac{A+A^\top}{2},
+ \qquad a=\lambda_{\min}(H),
+ \qquad C=\|A\|_{\rm op}.
+ \label{eq:td-monotonicity-constants}
+\end{equation}
+Then $a>0$. If $0<\eta<2a/C^2$, the Lyapunov function
+$V(w)=\|w-w^\star\|_2^2/2$ satisfies
+\begin{equation}
+ V(w_t)
+ \le \left(1-2\eta a+\eta^2C^2\right)^t V(w_0).
+ \label{eq:mean-td-linear-rate}
+\end{equation}
+Consequently, $w_t\to w^\star$.
+\end{theorem}
+
+\begin{proof}
+For vectors indexed by states, write
+$\langle u,v\rangle_D=u^\top Dv$ and $\|u\|_D^2=u^\top Du$. Jensen's inequality and
+$d^\top P_\pi=d^\top$ give
+\[
+ \|P_\pi u\|_D^2
+ \le \sum_s d_s\sum_{s'}P_\pi(s,s')u(s')^2
+ =\|u\|_D^2.
+\]
+Thus Cauchy--Schwarz gives
+$\langle u,P_\pi u\rangle_D\le\|u\|_D^2$. For $u=\Phi z$,
+\[
+ z^\top Az
+ =\|u\|_D^2-\gamma_{\rm disc}\langle u,P_\pi u\rangle_D
+ \ge(1-\gamma_{\rm disc})\|u\|_D^2>0
+ \qquad(z\ne0).
+\]
+Thus the symmetric part $(A+A^\top)/2$ is positive definite. It follows that
+$A$ is \emph{positive stable}: all of its eigenvalues have positive real
+parts. In particular, $A$ is invertible and $w^\star=A^{-1}b$ is the unique
+stationary point.
+
+For $g(w)=Aw-b$ and any $w,w'\in\R^p$,
+\[
+ \langle g(w)-g(w'),w-w'\rangle
+ =(w-w')^\top H(w-w')
+ \ge a\|w-w'\|_2^2,
+\]
+while $\|g(w)-g(w')\|_2\le C\|w-w'\|_2$. Thus $g$ is $a$-strongly
+monotone and $C$-Lipschitz. Applying
+\cref{prop:strongly-monotone-root} proves
+\cref{eq:mean-td-linear-rate}.
+\end{proof}
+
+This proof also makes the relation to aligned updates explicit. If
+$e=w-w^\star$ and $d(w)=b-Aw=-Ae$, then $\nabla V(w)=e$ and
+\begin{equation}
+ -\langle\nabla V(w),d(w)\rangle
+ =e^\top Ae
+ \ge a\|\nabla V(w)\|_2^2,
+ \qquad
+ \|d(w)\|_2\le C\|\nabla V(w)\|_2.
+ \label{eq:td-aligned-with-lyapunov}
+\end{equation}
+The TD direction is therefore aligned with the negative gradient of $V$ even
+though it is not itself the negative gradient of a scalar objective. The
+function $V$ is $1$-smooth and $1$-PL, so
+\cref{thm:aligned-update} gives geometric convergence for
+$0<\eta\le a/C^2$. The direct root-finding calculation in
+\cref{thm:mean-td-convergence} gives the larger sufficient range
+$0<\eta<2a/C^2$. The algorithm evaluates $b-Aw$; it does not know $w^\star$
+and does not evaluate
+$V$. The Lyapunov function is an analysis certificate constructed after the
+update has been specified.
+
+\paragraph{Weighted extension.}
+The TD assumptions above make the symmetric part of $A$ positive definite, so
+the ordinary squared distance is enough. A weighted distance is useful for a
+more general linear root-finding update in which $A$ is positive stable but
+its symmetric part need not be positive definite.
+
+\begin{proposition}[Weighted contraction for a positive-stable update]
+\label{prop:weighted-positive-stable}
+Let $A\in\R^{p\times p}$ be positive stable, let $b\in\R^p$, and consider
+$w_{t+1}=w_t+\eta(b-Aw_t)$. For any $Q\succ0$, let $M\succ0$ be the unique
+solution of the continuous \emph{Lyapunov equation}
+\begin{equation}
+ A^\top M+MA=Q.
+ \label{eq:lyapunov-equation}
+\end{equation}
+Put $w^\star=A^{-1}b$, $e_t=w_t-w^\star$, and
+$V_M(w)=(w-w^\star)^\top M(w-w^\star)$. Let
+$q_Q=\lambda_{\min}(Q)$ and
+$c_A=\lambda_{\max}(A^\top MA)$. If
+\[
+ 0<\eta\le
+ \min\left\{\frac{q_Q}{2c_A},
+             \frac{\lambda_{\max}(M)}{q_Q}\right\},
+\]
+then
+\begin{equation}
+ V_M(w_t)
+ \le\left(1-\frac{\eta q_Q}{2\lambda_{\max}(M)}\right)^tV_M(w_0).
+ \label{eq:weighted-positive-stable-rate}
+\end{equation}
+\end{proposition}
+
+\begin{proof}
+The equation constructs the matrix $M$; the Lyapunov function is $V_M$.
+Since $e_{t+1}=(I-\eta A)e_t$,
+\begin{align}
+ V_M(w_{t+1})-V_M(w_t)
+ &=-\eta e_t^\top(A^\top M+MA)e_t
+   +\eta^2e_t^\top A^\top MAe_t\notag\\
+ &=-\eta e_t^\top Qe_t
+   +\eta^2e_t^\top A^\top MAe_t.
+ \label{eq:td-lyapunov-decrease}
+\end{align}
+The stated stepsize bound gives
+\[
+ V_M(w_{t+1})-V_M(w_t)
+ \le-\frac{\eta q_Q}{2}\|e_t\|_2^2
+ \le-\frac{\eta q_Q}{2\lambda_{\max}(M)}V_M(w_t).
+\]
+The contraction factor belongs to $[1/2,1)$, and iteration proves
+\cref{eq:weighted-positive-stable-rate}.
+\end{proof}
+
+\Cref{ex:l11-td-lyapunov} asks you to derive the Lyapunov contraction and to
+relate it to alignment with $-\nabla V_M$. It also asks you to prove why
+nonsymmetry rules out a gradient interpretation.
+Actual TD uses dependent sampled transitions rather than the mean update
+\cref{eq:expected-td}; its convergence theorem additionally controls sampling
+noise and Markov dependence.
+
+\paragraph{Optional value-function interpretation.}
+The convergence proof uses the stationary equation $Aw^\star=b$ and the
+matrix properties established above; it does not require a Bellman
+interpretation. To connect this equation to policy evaluation, define the
+$D$-orthogonal
+projection onto the column space of $\Phi$ by
+\[
+ \Pi_D=\Phi(\Phi^\top D\Phi)^{-1}\Phi^\top D.
+\]
+Then $Aw^\star=b$ is equivalent to
+\begin{equation}
+ \Phi w^\star
+ =\Pi_D\bigl(r+\gamma_{\rm disc}P_\pi\Phi w^\star\bigr).
+ \label{eq:projected-bellman}
+\end{equation}
+This is the \emph{projected Bellman equation}: the Bellman update
+$r+\gamma_{\rm disc}P_\pi\Phi w^\star$ need not lie in the feature space, so
+$\Pi_D$ projects it back to that space. Thus $\Phi w^\star$ is the projected
+Bellman fixed point.
+
+\section{Take-home messages}
+\label{sec:take-home}
+
+\begin{itemize}[leftmargin=*]
+\item Objective-value convergence is the minimum optimization conclusion used
+by the solution-selection analyses in Lecture~10. It does not by itself imply
+finite parameter convergence; when parameters diverge, their normalized
+directions may still converge.
+\item Smoothness converts a local update into objective decrease. Convex
+comparison, PL, or another gradient-to-gap relation can convert that decrease
+into convergence to the global infimum. Without smoothness, even $|x|$ can
+make a fixed-step method oscillate; convex subgradient descent instead
+controls distance to a comparator and averages the iterates.
+\item Unregularized fixed-feature softmax does not have one universal rate.
+Convexity gives convergence against finite comparators, overlap on a bounded
+reduced parameter set gives a linear rate, and separation gives $O(1/t)$ loss decay toward an
+unattained infimum without a uniform PL inequality.
+\item Under PL, constant-stepsize SGD converges to a variance-dependent
+neighborhood in the stated bound, while a $1/t$ stepsize gives an $O(1/t)$
+expected objective gap. The same calculation applies to stochastic directions
+with expected alignment and a conditional second-moment bound.
+\item The negative gradient is not essential. Aligned directions suffice for
+the same PL argument. More generally, an algorithm can start from a root or
+fixed-point equation rather than a loss; a Lyapunov function can then be
+constructed as an analysis certificate for its parameter update.
+\end{itemize}
+
+\clearpage
+\printendnotes
+
+\section*{Bibliographical notes}
+
+The PL condition was introduced by Polyak and is closely related to an
+inequality of \L{}ojasiewicz. The modern optimization treatment, including
+relations among PL, error bounds, convexity, and stochastic-gradient rates,
+is developed by \citet{karimi2016}. Standard smooth convex comparison bounds
+and the nonsmooth subgradient method appear in many convex-optimization texts;
+see, for example, \citet{bubeck2015}.
+
+The scalar wide-ReLU calculation in \cref{prop:wide-relu-scalar} is included
+to isolate one elementary effect of redundant gates. The finite-sample
+tangent-Gram mechanism is the basis of the two-layer ReLU convergence theorem
+of \citet{du2019}: under random initialization, nondegenerate inputs,
+sufficient width, and a suitably small stepsize, gradient descent reaches zero
+squared training loss at a linear rate with high probability. Deep finite-width
+extensions use related near-initialization and semismoothness arguments; see
+\citet{allenzhu2019}. The infinite-width neural tangent kernel formulation is
+due to \citet{jacot2018}. These results motivate the mechanism summarized in
+\cref{sec:wide-relu}; the concentration and activation-stability arguments
+needed for their full finite-width conclusions are not reproduced here.
+
+Existence of finite logistic-regression maximum-likelihood estimates and the
+distinction among overlap, complete separation, and quasi-complete separation
+were characterized by \citet{albert1984}. The bounded sublevel condition after
+removing invariant parameter directions is a direct sufficient condition for
+the uniform probability and Hessian bounds needed by our proof. In quasi-separated
+cases the infimum may also fail to be attained, while the strict margin
+$\gamma$ in \cref{eq:multiclass-margin} can equal zero. The general comparator
+argument still proves convergence in objective value, but the explicit
+separable rate requires a positive margin. The max-margin directional limit
+for gradient descent on separable logistic and multiclass cross-entropy losses
+is due to \citet{soudry2018}.
+
+The tabular softmax policy-gradient results summarized in
+\cref{sec:softmax-pg} are due to \citet{mei2020}. They prove a global
+$O(1/t)$ rate for the unregularized exact-gradient method and linear
+convergence for an entropy-regularized variant, under their stated finite-MDP
+conditions. The linear TD discussion abstracts the Lyapunov mechanism from
+the on-policy stochastic convergence analysis of \citet{tsitsiklis1997}.
+
+\section*{Glossary}
+
+\begin{description}[style=nextline,leftmargin=1.5em,labelindent=0pt]
+\item[Aligned update]
+An update direction that has a uniformly positive inner product with the
+negative gradient and whose norm is controlled by the gradient norm.
+\item[Averaged iterate]
+A weighted average of earlier parameters, such as
+$\bar\theta_T=(\sum_{t<T}\eta_t)^{-1}\sum_{t<T}\eta_t\theta_t$.
+For nonsmooth convex optimization, its objective value can converge even when
+the individual iterates oscillate.
+\item[Comparator bound]
+A guarantee that compares an iterate's objective value with the value at any
+fixed reference parameter, whether or not a minimizer exists.
+\item[Conditional drift inequality]
+A bound on the expected one-step change of a Lyapunov function after the
+current random parameter is fixed. It is the stochastic counterpart of a
+deterministic decrease inequality.
+\item[Contraction]
+A map $\cT$ satisfying
+$\|\cT(\theta)-\cT(\theta')\|_2\le q\|\theta-\theta'\|_2$ for some
+$q<1$. Repeated application converges to its unique fixed point.
+\item[Condition number]
+The ratio $\kappa=\beta/\mu$ between the smoothness constant and the PL
+constant. It controls the linear-convergence iteration bound proved here.
+\item[Dead ReLU]
+A ReLU unit whose preactivation is negative on the relevant inputs, so both
+its output and its backpropagated parameter derivative vanish. Width can make
+it unnecessary for every individual unit to be active.
+\item[Directional convergence]
+Convergence of normalized iterates $\theta_t/\|\theta_t\|_2$ when the parameter
+norm may diverge. It can describe solution selection even when finite
+parameter convergence fails.
+\item[Discounted occupancy measure]
+The discounted frequency with which a policy visits each state. It changes
+with the policy and enters policy-gradient formulas because the policy affects
+both actions and future state visitation.
+\item[Entropy regularization]
+Adding an entropy term that rewards a policy for spreading probability across
+actions. It discourages action probabilities from approaching zero.
+\item[Fixed point]
+A parameter $\theta^\star$ satisfying
+$\cT(\theta^\star)=\theta^\star$. Equivalently, it is a root of
+$g(\theta)=\theta-\cT(\theta)$.
+\item[Gradient certificate]
+An inequality connecting a locally available quantity, such as the gradient
+norm, to a global objective gap.
+\item[Gradient dominance]
+A gradient certificate of the form
+$\|\nabla L(\theta)\|_2^2/2
+\ge\mu(L(\theta)-L^\star)^\alpha$. Under smooth descent, $\alpha=1$ gives
+geometric decay and $\alpha>1$ gives polynomial decay.
+\item[Invariant parameter direction]
+A parameter direction along which the model predictions and objective do not
+change. Common shifts of all softmax rows and feature-null directions are
+examples in this lecture.
+\item[Line search]
+A procedure that tests candidate stepsizes and accepts one satisfying a stated
+objective-decrease condition.
+\item[Linear convergence]
+Geometric decrease of an error measure: $V_t\le q^tV_0$ for some
+$q\in[0,1)$.
+\item[Lyapunov equation]
+For a positive stable matrix $A$ and $Q\succ0$, the matrix equation
+$A^\top M+MA=Q$. Its positive-definite solution $M$ can be used to construct a
+Lyapunov function; the equation itself is not that function.
+\item[Lyapunov function]
+A nonnegative function of the parameter whose infimum is zero and whose value
+decreases along the update. This is the minimal optimization sense used in
+these notes. Classical stability theory often also requires continuity,
+positive definiteness about a fixed point, and conditions that relate the
+function to distance from that point. The function may be constructed only
+for the convergence proof and need not be evaluated by the algorithm.
+Quantitative decrease can force its values to zero even when no finite
+parameter attains zero.
+\item[Markov decision process (MDP)]
+A sequential decision model specified by states, actions, transition
+probabilities, rewards, and, here, a discount factor. A policy assigns an
+action distribution to each state.
+\item[Neural tangent kernel (NTK) regime]
+An infinite-width training regime in which the Gram matrix of parameter
+derivatives approaches a deterministic limit and remains approximately fixed.
+The prediction dynamics then reduce to kernel gradient descent with fixed
+features.
+\item[Noise floor]
+In a stochastic bound with a fixed stepsize, the additive term that remains
+after the term depending on initialization has decayed. It is a property of
+the bound, not automatically a lower bound on the algorithm's limiting error.
+\item[Nonsmooth objective]
+An objective that is not differentiable everywhere. A ReLU training objective
+can be differentiable within one activation region but fail to be
+differentiable where an activation changes sign.
+\item[Objective gap]
+The difference $L(\theta)-L^\star$ between the current objective value and its
+infimum over all parameters.
+\item[Objective-value convergence]
+Convergence $L(\theta_t)\to L^\star$ of the achieved objective values to their
+infimum. It does not by itself imply convergence of the parameters.
+\item[Overlap regime]
+Here, a regime in which the relevant reduced softmax sublevel set is bounded,
+so every fitted class probability on that set has a uniform positive lower
+bound. This supplies the Hessian lower bound used for linear convergence.
+\item[Parameter convergence]
+Convergence of the iterates themselves to a finite parameter vector. It is
+stronger than objective-value convergence.
+\item[Polyak--\L{}ojasiewicz inequality]
+The gradient certificate
+$\|\nabla L(\theta)\|_2^2/2\ge\mu(L(\theta)-L^\star)$. It does not require
+convexity.
+\item[Policy gradient]
+Gradient ascent on expected return with respect to policy parameters. The
+gradient includes the state-visitation distribution induced by the policy.
+\item[Positive stable matrix]
+A square matrix whose eigenvalues all have positive real parts.
+\item[Preconditioned update]
+An update that multiplies the gradient by a matrix, thereby rescaling or
+mixing parameter coordinates before taking a step.
+\item[Projected Bellman equation]
+The equation $v=\Pi_D(r+\gamma_{\rm disc}P_\pi v)$ for an approximate value
+function $v$ in the feature space. The projection returns the Bellman update
+to that feature space.
+\item[Quasi-separated sample]
+A sample with a direction having nonnegative margins everywhere and a strict
+margin somewhere, but no direction with a strict margin everywhere. Its
+logistic-loss infimum can fail to be attained even when that infimum is
+positive.
+\item[Root-finding problem]
+The problem of finding a parameter $\theta^\star$ satisfying
+$g(\theta^\star)=0$ for a given map $g$. The update can be designed from the
+computable residual $g(\theta)$ without being the gradient of an objective.
+\item[Separable sample]
+In the multiclass softmax setting, a sample admitting a score matrix with a
+strictly positive correct-class score gap against every incorrect class.
+\item[Smoothness]
+The Lipschitz-gradient condition
+$\|\nabla L(u)-\nabla L(v)\|_2\le\beta\|u-v\|_2$. It controls the error of a
+first-order approximation over a finite step.
+\item[Stationary distribution]
+A state distribution $d$ satisfying $d^\top P_\pi=d^\top$. If the state has
+distribution $d$ before one transition under $P_\pi$, it also has distribution
+$d$ afterward.
+\item[Stationary point]
+For a gradient method, a parameter $\theta$ at which $\nabla L(\theta)=0$; it
+is $\epsilon$-stationary when $\|\nabla L(\theta)\|_2\le\epsilon$. For a
+general iteration, a stationary point is a parameter at which the update
+vanishes; the mean TD condition is $Aw=b$.
+\item[Stochastic approximation]
+The analysis of iterative updates driven by noisy estimates. Decreasing
+stepsizes are commonly used so that cumulative progress is unbounded while
+cumulative squared-stepsize noise remains finite.
+\item[Strong convexity]
+Convexity with a uniform positive quadratic lower bound on departure from
+every tangent plane.
+\item[Strong monotonicity]
+For a map $g:\R^d\to\R^d$, the condition
+$\langle g(\theta)-g(\theta'),\theta-\theta'\rangle
+\ge\mu\|\theta-\theta'\|_2^2$ for some $\mu>0$. Together with Lipschitz
+continuity, it gives a contraction rate for the root-finding update studied
+here.
+\item[Subgradient and subdifferential]
+For a convex function, a subgradient $s$ at $\theta$ supplies the global affine
+lower bound
+$L(u)\ge L(\theta)+\langle s,u-\theta\rangle$ for every $u$. The
+subdifferential $\partial L(\theta)$ is the set of all such vectors.
+\item[Sublevel set]
+For a number $c$, the set of parameters satisfying $L(\theta)\le c$.
+\item[Tabular policy]
+A policy parameterization with a separate parameter for every state--action
+pair, rather than parameters shared through features or a neural network.
+\item[Tangent Gram matrix]
+For a vector of training residuals $F(\theta)$ with Jacobian $J_F(\theta)$,
+the matrix $J_F(\theta)J_F(\theta)^\top$. A positive lower eigenvalue means
+that parameter changes can affect every residual direction.
+\item[Temporal-difference learning]
+A value-learning method that updates from the discrepancy between a current
+value estimate and a one-step bootstrapped target: the observed reward plus a
+discounted next-state estimate. Its mean update need not be a gradient of an
+objective.
+\end{description}
+
+\section{Exercises}
+\label{sec:exercises}
+
+\exerciseinstructions
+\setcounter{courseexercise}{0}
+\exercisegroup{Local descent and global certificates}
+\input{../exercises/l11-smoothness-equivalences.tex}
+\input{../exercises/l11-smoothness-trap.tex}
+\input{../exercises/l11-strong-convex-pl.tex}
+\input{../exercises/l11-gradient-dominance.tex}
+\input{../exercises/l11-softmax-comparator.tex}
+\input{../exercises/l11-aligned-update.tex}
+\input{../exercises/l11-wide-relu.tex}
+\exercisegroup{Unregularized softmax}
+\input{../exercises/l11-softmax-curvature.tex}
+\input{../exercises/l11-softmax-invariance.tex}
+\input{../exercises/l11-softmax-overlap.tex}
+\input{../exercises/l11-softmax-separation.tex}
+\input{../exercises/l11-reciprocal-decay.tex}
+\input{../exercises/l11-softmax-no-pl.tex}
+\exercisegroup{Stochastic and incremental updates}
+\input{../exercises/l11-stochastic-pl.tex}
+\input{../exercises/l11-stochastic-aligned.tex}
+\input{../exercises/l11-decreasing-stepsize.tex}
+\exercisegroup{Root finding and Lyapunov functions}
+\input{../exercises/l11-root-finding.tex}
+\input{../exercises/l11-fixed-point.tex}
+\input{../exercises/l11-td-lyapunov.tex}
+
+\clearpage
+\setlength{\bibsep}{4pt}
+\begin{thebibliography}{99}
+
+\bibitem[Albert and Anderson(1984)]{albert1984}
+Adelin Albert and J. A. Anderson.
+\newblock On the existence of maximum likelihood estimates in logistic
+regression models.
+\newblock \emph{Biometrika}, 71(1):1--10, 1984.
+\newblock \url{https://doi.org/10.1093/biomet/71.1.1}.
+
+\bibitem[Allen-Zhu et al.(2019)]{allenzhu2019}
+Zeyuan Allen-Zhu, Yuanzhi Li, and Zhao Song.
+\newblock A convergence theory for deep learning via over-parameterization.
+\newblock In \emph{Proceedings of the 36th International Conference on
+Machine Learning}, pages 242--252, 2019.
+\newblock \url{https://proceedings.mlr.press/v97/allen-zhu19a.html}.
+
+\bibitem[Bubeck(2015)]{bubeck2015}
+S\'ebastien Bubeck.
+\newblock Convex optimization: Algorithms and complexity.
+\newblock \emph{Foundations and Trends in Machine Learning}, 8(3--4):231--357,
+2015.
+\newblock \url{https://doi.org/10.1561/2200000050}.
+
+\bibitem[Du et al.(2019)]{du2019}
+Simon S. Du, Xiyu Zhai, Barnab\'as P\'oczos, and Aarti Singh.
+\newblock Gradient descent provably optimizes over-parameterized neural
+networks.
+\newblock In \emph{International Conference on Learning Representations},
+2019.
+\newblock \url{https://arxiv.org/abs/1810.02054}.
+
+\bibitem[Jacot et al.(2018)]{jacot2018}
+Arthur Jacot, Franck Gabriel, and Cl\'ement Hongler.
+\newblock Neural tangent kernel: Convergence and generalization in neural
+networks.
+\newblock In \emph{Advances in Neural Information Processing Systems 31},
+2018.
+\newblock
+\url{https://papers.nips.cc/paper_files/paper/2018/hash/5a4be1fa34e62bb8a6ec6b91d2462f5a-Abstract.html}.
+
+\bibitem[Karimi et al.(2016)]{karimi2016}
+Hamed Karimi, Julie Nutini, and Mark Schmidt.
+\newblock Linear convergence of gradient and proximal-gradient methods under
+the Polyak--\L{}ojasiewicz condition.
+\newblock In \emph{Machine Learning and Knowledge Discovery in Databases},
+pages 795--811, 2016.
+\newblock \url{https://arxiv.org/abs/1608.04636}.
+
+\bibitem[Mei et al.(2020)]{mei2020}
+Jincheng Mei, Chenjun Xiao, Csaba Szepesv\'ari, and Dale Schuurmans.
+\newblock On the global convergence rates of softmax policy gradient methods.
+\newblock Proceedings of the 37th International Conference on Machine
+Learning, 2020.
+\newblock \url{https://proceedings.mlr.press/v119/mei20b.html}.
+
+\bibitem[Soudry et al.(2018)]{soudry2018}
+Daniel Soudry, Elad Hoffer, Mor Shpigel Nacson, Suriya Gunasekar, and
+Nathan Srebro.
+\newblock The implicit bias of gradient descent on separable data.
+\newblock \emph{Journal of Machine Learning Research}, 19(70):1--57, 2018.
+\newblock \url{https://www.jmlr.org/papers/v19/18-188.html}.
+
+\bibitem[Tsitsiklis and Van Roy(1997)]{tsitsiklis1997}
+John N. Tsitsiklis and Benjamin Van Roy.
+\newblock An analysis of temporal-difference learning with function
+approximation.
+\newblock \emph{IEEE Transactions on Automatic Control}, 42(5):674--690,
+1997.
+\newblock \url{https://doi.org/10.1109/9.580874}.
+
+\end{thebibliography}
+
+\end{document}

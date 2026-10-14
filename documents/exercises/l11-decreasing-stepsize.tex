@@ -1,0 +1,43 @@
+\begin{exercisechunk}
+\item \textbf{Removing the stochastic noise floor.}
+\label[exercise]{ex:l11-decreasing-stepsize}
+\exerciseprofile{2}{2}{2}{\exproof\quad\excalculation\quad\exinterpretation}{%
+Turn the stochastic PL recursion into an explicit $O(1/t)$ bound using a
+decreasing stepsize.}
+Let $\delta_t\ge0$ satisfy
+\[
+ \delta_{t+1}
+ \le(1-\mu\eta_t)\delta_t
+    +\frac{\beta v}{2B}\eta_t^2.
+\]
+Choose
+\[
+ \eta_t=\frac{2}{\mu(t+t_0)},
+ \qquad
+ t_0\ge\frac{2\beta}{\mu},
+\]
+and define
+\[
+ C_0=\max\left\{t_0\delta_0,\frac{2\beta v}{B\mu^2}\right\}.
+\]
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Verify that $\eta_t\le1/\beta$ and rewrite the recursion as
+\[
+ \delta_{t+1}
+ \le\left(1-\frac{2}{t+t_0}\right)\delta_t
+ +\frac{2\beta v}{B\mu^2(t+t_0)^2}.
+\]
+\item Prove by induction that
+\[
+ \delta_t\le\frac{C_0}{t+t_0}
+ \qquad\text{for every }t\ge0.
+\]
+\item State why this bound has no fixed noise floor, in contrast to the
+constant-stepsize bound, whose nondecaying term is
+$\beta\eta v/(2\mu B)$.
+\end{enumerate}
+\begin{hints}
+For (b), put $s=t+t_0$ and use
+$2C_0-2\beta v/(B\mu^2)\ge C_0$.
+\end{hints}
+\end{exercisechunk}

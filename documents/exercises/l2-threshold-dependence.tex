@@ -1,0 +1,21 @@
+% Shared exercise chunk: l2-threshold-dependence
+\begin{exercisechunk}
+\item \textbf{Dependent samples and matching marginals.}
+\label[exercise]{ex:threshold-dependence}
+\exerciseprofile{2}{2}{2}{\exproof\quad\excalculation\quad\exconstruction\quad\exinterpretation}{%
+Construct dependent samples that satisfy conditional coverage and show why
+matching marginals alone do not ensure improvement with sample size.}
+\begin{enumerate}[(a)]
+\item Construct a sampling procedure whose training indices are not independent
+and verify the conditional-coverage inequality in
+\cref{ex:threshold-coverage} for some $\alpha\in(0,1)$.
+\item Let $N=2$, $f=f_1$, and $X_1=\cdots=X_m=Z$ for $m\ge1$, where
+$Z$ is uniform on $\{1,2\}$. Let the test index be independently uniform.
+Compute the learner's risk for every $m\ge1$. Use this expression to determine
+whether increasing $m$ reduces the risk in this example.
+\end{enumerate}
+
+Explain why the first construction satisfies conditional coverage while the
+second has the correct marginal distribution for every training index but
+does not.
+\end{exercisechunk}

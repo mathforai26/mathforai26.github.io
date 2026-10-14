@@ -1,0 +1,27 @@
+\begin{exercisechunk}
+\item \textbf{Continuous EM and reference measures.}
+\label[exercise]{ex:l5-continuous-em-reference}
+\exerciseprofile{3}{3}{3}{\exproof\quad\excalculation\quad\exinterpretation}{%
+Prove continuous-EM monotonicity and show why its complete-data objective is
+invariant under a change of common dominating measure.}
+Use the setup and notation of \cref{ex:l5-continuous-em}. Fix
+\(y_{\mathrm{obs}}\) such that, for every parameter under consideration,
+\(m_\theta(y_{\mathrm{obs}})>0\) and
+\(q_\theta(x,y_{\mathrm{obs}})>0\) for \(P_X\)-almost every \(x\). Put
+\(r_k(x)=r_{\theta_k}(x\mid y_{\mathrm{obs}})\). Continuous EM uses
+\[
+ \theta_{k+1}\in\arg\max_\theta
+ \int_\cX r_k(x)\log q_\theta(x,y_{\mathrm{obs}})\,P_X(dx).
+\]
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Prove the density analogue of the identity in \cref{ex:l5-em} and
+deduce that this update does not decrease
+\(\log m_\theta(y_{\mathrm{obs}})\).
+\item Explain why the reference measure must be common to all parameter
+values. More precisely, suppose another common reference measure satisfies
+\(dP'=h\,dP\), where \(h>0\). Show that replacing \(P\) by \(P'\)
+changes the expected complete-data log density by a term independent of
+\(\theta\). Explain how counting measures recover the finite-space formulas
+in \cref{ex:l5-em}.
+\end{enumerate}
+\end{exercisechunk}

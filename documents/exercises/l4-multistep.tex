@@ -2,23 +2,31 @@
 \begin{exercisechunk}
 \item \textbf{Computing further-ahead predictions.}
 \label[exercise]{ex:multistep}
-Use the autoregressive model in \cref{eq:multistep-marginal}. Fix
+\exerciseprofile{2}{2}{2}{\exproof\quad\excalculation\quad\exconstruction\quad\exinterpretation}{%
+Derive the exponential marginalization cost and use Markov structure to
+replace it with a dynamic program.}
+Fix an autoregressive model $Q_\theta$, a prefix
 \(x_{\le t}\), \(k\ge2\) with \(t+k\le T\), and \(a\in[N]\).
 \begin{enumerate}[(a),beginpenalty=10000]
-\item Derive \cref{eq:multistep-marginal}.
+\item Derive
+\[
+ Q_\theta(X_{t+k}=a\mid X_{\le t}=x_{\le t})
+ =\sum_{y_{1:k-1}\in[N]^{k-1}}
+ \left[\prod_{j=1}^{k-1}
+ Q_\theta(y_j\mid x_{\le t},y_{<j})\right]
+ Q_\theta(a\mid x_{\le t},y_{1:k-1}).
+\]
 Count its terms and the number of conditional evaluations if each term
 is evaluated separately. Explain why sharing prefixes still leaves
 exponentially many distinct prefixes in a general model.
-\item Which conditional probability is trained if the observed
-intervening tokens are supplied as context instead of being marginalized?
+\item Show that supplying the observed intervening tokens trains
+\[
+ Q_\theta(X_{t+k}=x_{t+k}\mid X_{\le t+k-1}=x_{\le t+k-1})
+\]
+instead of the marginalized conditional probability in part~(a).
 \item Suppose \(t\ge1\) and the model is first-order Markov on \([N]\)
 with known transition matrix \(K\). Give a recursion that computes the
 entire \(k\)-step distribution in \(O(kN^2)\) arithmetic operations.
 Why can this recursion merge histories?
-\item A separate head \(h_{\theta,k}(\,\cdot\mid x_{\le t})\) can be
-trained from pairs \((X_{\le t},X_{t+k})\). State the additional
-equality needed for its probabilities to be the original sequence
-model's \(k\)-step marginals. Does perfect prediction on the observed
-prefix--target pairs imply this equality? Give an example or a proof.
 \end{enumerate}
 \end{exercisechunk}

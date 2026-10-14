@@ -1,0 +1,28 @@
+% Shared exercise chunk: l4-single-error-recovery
+\begin{exercisechunk}
+\item \textbf{Recovery from one initial error.}
+\label[exercise]{ex:single-error-recovery}
+\exerciseprofile{2}{1}{1}{\exproof\quad\excalculation\quad\exinterpretation}{%
+Use contraction to derive the exact decay of one initial error and its
+accumulated cost.}
+For the recovery family \(Q_r\), show that the contraction factor is $1-r$
+and that the marginal error probability is
+\[
+ e_t=(1-e^{-\kappa})(1-r)^{t-1}.
+\]
+Deduce
+\[
+ \E_{Q_r}[c_{\mathrm{fin}}]
+ =(1-e^{-\kappa})(1-r)^{T-1}
+\]
+and
+\[
+ \E_{Q_r}[c_{\mathrm{cnt}}]
+ =\begin{cases}
+ (1-e^{-\kappa})[1-(1-r)^T]/r,&r>0,\\
+ T(1-e^{-\kappa}),&r=0.
+ \end{cases}
+\]
+Verify that the stability recurrence is an equality for this family.
+
+\end{exercisechunk}

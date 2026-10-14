@@ -1,0 +1,28 @@
+\begin{exercisechunk}
+\item \textbf{Reciprocal decay from a quadratic decrease.}
+\label[exercise]{ex:l11-reciprocal-decay}
+\exerciseprofile{1}{1}{1}{\exproof\quad\excalculation}{%
+Solve the nonlinear recursion that produces the $O(1/t)$ separable-loss
+rate.}
+Let $r_0,r_1,\ldots$ be positive numbers satisfying
+\[
+ r_{t+1}\le r_t-cr_t^2
+\]
+for some $c>0$, and suppose $cr_0\le1/2$.
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Prove by induction that $r_t$ is nonincreasing and $cr_t\le1/2$.
+\item Use $(1-u)^{-1}\ge1+u$ for $u\in[0,1)$ to prove
+\[
+ \frac1{r_{t+1}}\ge\frac1{r_t}+c.
+\]
+\item Deduce the explicit bound
+\[
+ r_t\le\frac{r_0}{1+cr_0t}.
+\]
+State the values of $r_t$ and $c$ obtained by combining smooth descent with
+$\|\nabla L_n(W_t)\|_F\ge aL_n(W_t)$.
+\end{enumerate}
+\begin{hints}
+Factor the recursion as $r_{t+1}\le r_t(1-cr_t)$ before taking reciprocals.
+\end{hints}
+\end{exercisechunk}

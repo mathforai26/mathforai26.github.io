@@ -1,0 +1,16 @@
+% Shared exercise chunk: l4-multistep-heads
+\begin{exercisechunk}
+\item \textbf{Consistency of a future-token head.}
+\label[exercise]{ex:multistep-heads}
+\exerciseprofile{2}{1}{1}{\exconstruction\quad\exinterpretation}{%
+State the consistency condition for an auxiliary future-token head and
+construct a counterexample to consistency from data fit alone.}
+Fix a prefix \(x_{\le t}\) and an integer \(k\ge2\). A separate head
+\(h_{\theta,k}(\,\cdot\mid x_{\le t})\) can be trained from pairs
+\((X_{\le t},X_{t+k})\).
+State the additional equality needed for its probabilities to be the
+original sequence model's \(k\)-step marginals. Does perfect prediction on
+the observed prefix--target pairs imply this equality? Give an example or a
+proof.
+
+\end{exercisechunk}

@@ -1,0 +1,32 @@
+\begin{exercisechunk}
+\item \textbf{Restricted curvature from overlap.}
+\label[exercise]{ex:l11-softmax-overlap}
+\exerciseprofile{2}{2}{2}{\exproof\quad\excalculation}{%
+Combine probability overlap with feature coverage to obtain strong curvature
+on the identified softmax subspace.}
+Let $q\in\R^K$ be a probability vector with $q_k\ge\alpha>0$ for every $k$.
+Let $G=n^{-1}\sum_i x_ix_i^\top\succeq\lambda_XI$. Suppose
+$\Delta\in\R^{K\times p}$ has rows $\delta w_k^\top$ satisfying
+$\sum_k\delta w_k=0$.
+\begin{enumerate}[(a),beginpenalty=10000]
+\item For a class-valued random variable $Y$ with mass function
+$\P(Y=k)=q_k$, prove
+\[
+ \operatorname{Var}(a_Y)
+ =\min_{c\in\R}\sum_{k=1}^Kq_k(a_k-c)^2
+ \ge\alpha\min_{c\in\R}\sum_{k=1}^K(a_k-c)^2.
+\]
+\item Apply part (a) with $a_k=(\delta w_k)^\top x_i$ and prove
+\[
+ \frac1n\sum_{i=1}^n\operatorname{Var}(a_{Y_i})
+ \ge\alpha\lambda_X\|\Delta\|_F^2
+\]
+whenever every $Y_i$ has all class probabilities at least $\alpha$.
+\item State the PL constant and the gradient-descent convergence factor that
+follow on a sublevel set where these probability bounds hold.
+\end{enumerate}
+\begin{hints}
+The minimizing $c$ in the weighted expression is $\E[a_Y]$. In (b), the
+unweighted minimizing $c$ is the average of the $a_k$, which is zero here.
+\end{hints}
+\end{exercisechunk}

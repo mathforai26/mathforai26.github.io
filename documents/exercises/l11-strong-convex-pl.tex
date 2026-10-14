@@ -1,0 +1,31 @@
+\begin{exercisechunk}
+\item \textbf{From strong convexity to a linear rate.}
+\label[exercise]{ex:l11-strong-convex-pl}
+\exerciseprofile{1}{2}{1}{\exproof\quad\excalculation}{%
+Derive the PL certificate supplied by strong convexity and use it in a
+descent recursion.}
+Let $L:\R^d\to\R$ be differentiable, $\mu$-strongly convex, and
+$\beta$-smooth. Thus, for every $u,v\in\R^d$,
+\[
+ L(v)\ge L(u)+\langle\nabla L(u),v-u\rangle
+             +\frac\mu2\|v-u\|_2^2.
+\]
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Compare $L(u)$ with $L(v)$ for an arbitrary $v$ and prove
+\[
+ \frac12\|\nabla L(u)\|_2^2
+ \ge\mu\bigl(L(u)-L^\star\bigr).
+\]
+\item Suppose gradient descent with $0<\eta\le1/\beta$ satisfies
+\[
+ L(\theta_{t+1})
+ \le L(\theta_t)-\frac\eta2\|\nabla L(\theta_t)\|_2^2.
+\]
+Derive an explicit upper bound on $L(\theta_t)-L^\star$.
+\end{enumerate}
+\begin{hints}
+For (a), rearrange the strong-convexity inequality, apply Cauchy--Schwarz,
+and maximize the resulting bound over $r=\|u-v\|_2$. For (b), first obtain a
+one-step recursion for the objective gap.
+\end{hints}
+\end{exercisechunk}

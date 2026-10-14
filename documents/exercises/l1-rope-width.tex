@@ -1,0 +1,76 @@
+% Shared exercise chunk: l1-rope-width
+The following tool may be used in \cref{ex:rope-width}.
+\begin{theorem}[Hoeffding's inequality]
+\label{thm:hoeffding}
+Let $n\ge1$ be an integer and let $Z_1,\ldots,Z_n$ be independent real
+random variables. Suppose $Z_r\in[a_r,b_r]$ almost surely for each $r\in[n]$,
+where $a_r<b_r$ are real numbers. For every real $t\ge0$,
+\[
+\mathbb P\!\left(\sum_{r=1}^n (Z_r-\mathbb E[Z_r])\ge t\right)
+\le \exp\!\left(-\frac{2t^2}{\sum_{r=1}^n(b_r-a_r)^2}\right).
+\]
+\end{theorem}
+
+\begin{exercisechunk}
+\item \textbf{Reliable RoPE addressing at a fixed score scale.}
+\label[exercise]{ex:rope-width}
+\exerciseprofile{4}{3}{4}{\exproof\quad\excalculation\quad\exconstruction\quad\exinterpretation}{%
+Prove matching logarithmic lower and upper bounds on the width needed for
+uniform relative addressing with bounded coordinates.}
+Fix an integer context length $T\ge2$ and use $S_i=[i]$. Determine, up to
+constant factors, how many coordinates are necessary and sufficient to give
+the requested source attention weight at least $3/4$, simultaneously for every
+integer offset $1\le d<T$ and query position $i>d$.
+
+Let $m$ be the number of coordinate pairs. In pair $r\in[m]$, use a fixed
+unit key $k_r\in\mathbb R^2$, a frequency $\omega_r\in[0,2\pi)$, and the unit
+query $q_r(d)$ from \cref{ex:rope}. With score scale $\lambda=1$, define
+\[
+s_{ij}=\sum_{r=1}^m
+(R_{i\omega_r}q_r(d))^\top(R_{j\omega_r}k_r).
+\]
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Show that all scores lie in $[-m,m]$. Use
+\cref{ex:bounded-attention} to prove that attention weight at least $3/4$ on
+the requested source at $i=T$ requires
+\[
+m\ge\tfrac12\log\bigl(3(T-1)\bigr).
+\]
+\item Prove that, for every integer $m\ge8\log(2T)$, there exist frequencies
+$\omega_1,\ldots,\omega_m$ such that
+\begin{equation}
+\label{eq:rope-separated-addresses}
+\sum_{r=1}^m\cos(\omega_r h)\le m/2
+\quad\text{for every integer }h\text{ with }1\le|h|<T.
+\end{equation}
+\item Fix frequencies satisfying \cref{eq:rope-separated-addresses}. Show
+that the requested source has score $m$ and every other available source has
+score at most $m/2$, simultaneously for all offsets and query positions.
+Prove that the total attention weight outside the requested source is at most
+$(T-1)e^{-m/2}$. Deduce that $m=\lceil8\log(2T)\rceil$ suffices for target
+weight at least $3/4$. State the error bound when every value has norm at most
+$B$, and conclude that $\Theta(\!\log T)$ coordinate pairs are necessary and
+sufficient.
+\end{enumerate}
+
+With suitably chosen frequencies, RoPE therefore supports relative addressing
+with logarithmic width and bounded coordinates. The coordinate pairs both
+distinguish addresses and accumulate the score advantage needed to concentrate
+attention. Width provides an alternative to increasing the score scale.
+
+Standard RoPE uses geometrically spaced frequencies. Its frequencies satisfy
+$0<\omega_r\le1$, so at displacement $h=1$,
+\[
+\sum_{r=1}^m\cos\omega_r\ge m\cos1>m/2.
+\]
+Thus the standard schedule fails the sufficient separation condition in
+part (b); this does not rule out retrieval with that schedule.
+
+\begin{hints}
+For (a), apply \cref{ex:bounded-attention} with $T$ sources and score range
+$2m$. For (b), choose the frequencies independently and uniformly on
+$[0,2\pi)$. Compute $\mathbb E[\cos(\omega_r h)]$ for nonzero integer $h$,
+then apply \cref{thm:hoeffding} and a union bound over $h\in[T-1]$. Use the
+evenness of cosine for negative $h$.
+\end{hints}
+\end{exercisechunk}

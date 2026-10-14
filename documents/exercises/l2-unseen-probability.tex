@@ -2,14 +2,23 @@
 \begin{exercisechunk}
 \item \textbf{The probability of an unseen input.}
 \label[exercise]{ex:unseen-probability}
+\exerciseprofile{2}{2}{2}{\excalculation}{%
+Derive the unseen-input probability and the exact sample-size threshold under
+uniform sampling.}
 Let $X_1,\ldots,X_m,X$ be independent draws from $P$ on $[N]$.
 \begin{enumerate}[(a)]
 \item For $P(x)>0$, compute $\P(U\mid X=x)$, writing out the
 factorization that uses independence.
-\item Apply the law of total probability to derive \cref{eq:unseen-iid}.
+\item Apply the law of total probability to show that
+\[
+ \P(U)=\sum_{x=1}^N P(x)(1-P(x))^m.
+\]
 \item For uniform sampling:
 \begin{enumerate}[label=(\roman*),leftmargin=*,beginpenalty=10000]
-\item Specialize to uniform $P$ to obtain \cref{eq:uniform-risk}.
+\item Specialize to uniform $P$ and show that the minimax risk is
+\[
+ \frac12\left(1-\frac1N\right)^m.
+\]
 \item For $N\ge2$,
 find the smallest integer $m$ for which this risk is at most $0.1$.
 \end{enumerate}

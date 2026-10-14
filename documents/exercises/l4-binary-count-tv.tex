@@ -1,0 +1,23 @@
+% Shared exercise chunk: l4-binary-count-tv
+\begin{exercisechunk}
+\item \textbf{What total-variation bounds discard.}
+\label[exercise]{ex:binary-count-tv}
+\exerciseprofile{3}{2}{3}{\exproof\quad\excalculation\quad\exinterpretation}{%
+Compare exact accumulated costs with total-variation and Pinsker bounds and
+identify the missing duration information.}
+Use the setting and Markov generators from \cref{ex:binary-count}.
+Show that both sequence TVs equal \(1-(1-\varepsilon)^T\).
+For either generator, verify the bounds
+\begin{align}
+ \E_Q[c_{\mathrm{cnt}}]&\le T[1-(1-\varepsilon)^T],
+ &&\text{using exact TV},\label{eq:binary-tv-bound}\\
+ \E_Q[c_{\mathrm{cnt}}]&\le
+ T\min\left\{1,\sqrt{\frac T2\log\frac1{1-\varepsilon}}\right\},
+ &&\text{using Pinsker}.\label{eq:binary-pinsker-bound}
+\end{align}
+Compare these with the exact counts at
+\(T=1000,\varepsilon=10^{-3}\), and their leading terms when
+\(T\varepsilon\to0\). Which information about error duration
+does the TV-to-count bound discard?
+
+\end{exercisechunk}

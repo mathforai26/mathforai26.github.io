@@ -1,0 +1,27 @@
+% Shared exercise chunk: l1-rope-collisions
+\begin{exercisechunk}
+\item \textbf{RoPE collisions and windowed attention.}
+\label[exercise]{ex:rope-collisions}
+\exerciseprofile{2}{2}{3}{\exproof\quad\excalculation\quad\exconstruction}{%
+Characterize periodic address collisions and prove that a minimal attention
+window removes them.}
+Use the construction and attention output from
+\cref{ex:rope,ex:rope-retrieval}. Hold $d$ fixed, let the sequence length grow,
+choose an integer period $P>d$, set $\omega=2\pi/P$, and initially use
+$S_i=[i]$. A \emph{collision} occurs when another source has the same score as
+the requested source $i-d$.
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Determine the set of colliding source positions.
+\item Show that the first collision occurs at $i=d+P+1$.
+\item At this first collision, show that
+\[
+ \lim_{\lambda\to\infty}o_i(\lambda)
+ =\frac{v_1+v_{P+1}}2.
+\]
+\item Now use the window
+$S_i=\{j\in[i]:i-j<w\}$, where $w$ is a positive integer. Show that the
+smallest width retaining $i-d$ is $w=d+1$. For this width, prove that $i-d$ is the unique
+maximizer and that $\lim_{\lambda\to\infty}o_i(\lambda)=v_{i-d}$ for every
+$i>d$, however long the sequence becomes.
+\end{enumerate}
+\end{exercisechunk}

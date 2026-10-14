@@ -1,0 +1,70 @@
+\begin{exercisechunk}
+\item \textbf{Complete the max-margin flow proof.}
+\label[exercise]{ex:l10-flow-proof-details}
+\exerciseprofile{3}{2}{3}{\exproof\quad\excalculation}{%
+Supply the finite-sum and limiting arguments used in the max-margin flow
+proof.}
+Fix linearly separable vectors $z_1,\ldots,z_n\in\R^d$ and let
+\[
+ L_n(w)=\frac1n\sum_{i=1}^n\log(1+e^{-\langle w,z_i\rangle}).
+\]
+Let $w(t)$ be a trajectory such that $L_n(w(t))\to0$ and
+$\|w(t)\|_p\to\infty$. Write
+\[
+ m_i(t)=\langle w(t),z_i\rangle,\quad
+ m_{\min}(t)=\min_{i\in[n]}m_i(t),\quad
+ a_i(t)=\frac1{n(1+e^{m_i(t)})},\quad
+ A(t)=\sum_{i=1}^n a_i(t).
+\]
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Derive
+\[
+ \nabla L_n(w(t))=-\frac1n\sum_{i=1}^n\frac{z_i}{1+e^{m_i(t)}}
+ =-\sum_{i=1}^n a_i(t)z_i.
+\]
+
+\item Prove that every $m_i(t)\to\infty$ and that
+\[
+ \frac{A(t)}{L_n(w(t))}\longrightarrow1.
+\]
+
+\item Prove that, for all sufficiently large $t$,
+\[
+ m_{\min}(t)\le-\log L_n(w(t))
+ \le m_{\min}(t)+\log(2n).
+\]
+Conclude that
+\[
+ -\log L_n(w(t))=m_{\min}(t)+O(1).
+\]
+
+\item Suppose that for every $\varepsilon\in(0,\gamma_p^\star)$ and all
+sufficiently large $t$,
+\[
+ -\frac{d}{dt}\log L_n(w(t))
+ \ge(\gamma_p^\star-\varepsilon)\frac{d}{dt}\|w(t)\|_p.
+\]
+Integrate this inequality and use part (c) to prove
+\[
+ \gamma_p(w(t))\longrightarrow\gamma_p^\star.
+\]
+
+\item Suppose $w(t_k)/\|w(t_k)\|_p\to u$. Prove that
+$\|u\|_p=1$ and
+\[
+ \min_i\langle u,z_i\rangle=\gamma_p^\star.
+\]
+Show that $u/\gamma_p^\star$ solves
+\[
+ \min_w\|w\|_p
+ \quad\text{subject to}\quad
+ \langle w,z_i\rangle\ge1\quad(i\in[n]).
+\]
+\end{enumerate}
+\begin{hints}
+For (b), use the corresponding scalar asymptotic equivalence for each of the
+finitely many summands. For (c), use
+$x/2\le\log(1+x)\le x$ for $x\in[0,1]$.
+For (e), compare an arbitrary feasible vector with its normalized direction.
+\end{hints}
+\end{exercisechunk}

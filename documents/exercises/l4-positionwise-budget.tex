@@ -1,0 +1,19 @@
+% Shared exercise chunk: l4-positionwise-budget
+\begin{exercisechunk}
+\item \textbf{Concentrating KL at the final position.\suppmark}
+\label[exercise]{ex:positionwise-budget}
+\exerciseprofile{2}{1}{1}{\exproof\quad\excalculation\quad\exconstruction\quad\exinterpretation}{%
+Show that an average KL bound permits the entire discrepancy to occur at one
+position.}
+If \(\KL(P, Q)/T\le\eta\), what is the largest possible
+final-position contribution
+\[
+ \E\!\left[\KL\bigl(P(\,\cdot\mid X_{<T})
+       , Q(\,\cdot\mid X_{<T})\bigr)\right],
+ \qquad X_{1:T}\sim P,
+\]
+in \cref{eq:population-kl}? Give an example attaining it.
+Compare the information supplied by the average and by the individual
+positionwise losses.
+
+\end{exercisechunk}

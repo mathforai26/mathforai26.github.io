@@ -1,0 +1,28 @@
+% Shared exercise chunk: l4-kl-directions-failures
+\begin{exercisechunk}
+\item \textbf{Rare failures and reverse KL.}
+\label[exercise]{ex:kl-directions-failures}
+\exerciseprofile{3}{2}{2}{\exproof\quad\excalculation\quad\exinterpretation}{%
+Use data processing to convert reverse KL into a failure-probability bound and
+analyze its rare-event limit.}
+Let \(P,Q\) be laws on a finite domain \(\cX\), let
+\(B=\{x:c(x)>0\}\), \(P(B)=\varepsilon\in(0,1)\), and \(Q(B)=q\).
+Prove
+\[
+ \KL(Q,P)\ge\operatorname{kl}(q,\varepsilon)
+ \ge q\log(1/\varepsilon)-\log2,
+\]
+and deduce that \(\KL(Q,P)\le K\) implies
+\[
+ q\le\min\left\{1,\frac{K+\log2}{\log(1/\varepsilon)}\right\}.
+\]
+For fixed \(q\in(0,1)\), compare the limits of
+\(\operatorname{kl}(q,\varepsilon)\) and
+\(\operatorname{kl}(\varepsilon,q)\) as \(\varepsilon\to0\).
+Explain what changes when \(P(B)=0\).
+
+\begin{hints}
+Apply data processing to \(x\mapsto\I\{x\in B\}\), then use the entropy
+bound for a bit.
+\end{hints}
+\end{exercisechunk}

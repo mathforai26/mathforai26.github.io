@@ -1,0 +1,34 @@
+% Shared exercise chunk: l4-discrepancy-reverse
+\begin{exercisechunk}
+\item \textbf{Reverse discrepancy conversion.\suppmark}
+\label[exercise]{ex:discrepancy-reverse}
+\exerciseprofile{2}{2}{2}{\exproof\quad\excalculation\quad\exconstruction\quad\exinterpretation}{%
+Determine when small task cost controls forward KL and derive the sharp
+fixed-cost interval.}
+Use the definitions in \cref{sec:discrepancy-comparison}. Let
+\(P=\delta_{0^T}\), \(T\ge2\), with
+\(c_{\mathrm{cnt}}(x)=\sum_{t=1}^T x_t\) and
+\(c_{\mathrm{fin}}(x)=x_T\).
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Use the fixed-KL intervals in
+\cref{eq:binary-kl-level,eq:terminal-kl-level} to calculate the reverse
+conversions:
+\begin{align}
+ \omega_{c_{\mathrm{cnt}}\to D}(s;P)
+ &=\begin{cases}-\log(1-s),&0\le s<1,\\
+                 +\infty,&s\ge1,\end{cases}
+ \label{eq:binary-converse-modulus}\\
+ \omega_{c_{\mathrm{fin}}\to D}(s;P)
+ &=+\infty,\qquad s\ge0.
+ \label{eq:terminal-converse-modulus}
+\end{align}
+Exhibit laws attaining each finite bound and laws with infinite KL
+where appropriate. Explain why small expected count forces small
+KL, whereas perfect final answers allow arbitrarily large KL.
+\item Fix an expected count \(s\in[0,1)\). Prove the sharp bounds
+\[
+ -\log(1-s/T)\le\KL(P, Q)\le-\log(1-s).
+\]
+Give a law attaining each endpoint and relate them to part (a).
+\end{enumerate}
+\end{exercisechunk}

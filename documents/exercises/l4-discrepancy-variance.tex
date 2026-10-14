@@ -1,0 +1,19 @@
+% Shared exercise chunk: l4-discrepancy-variance
+\begin{exercisechunk}
+\item \textbf{The variance bound at zero data variance.\suppmark}
+\label[exercise]{ex:discrepancy-variance}
+\exerciseprofile{1}{1}{1}{\excalculation\quad\exconstruction\quad\exinterpretation}{%
+Construct a zero-data-variance example and identify the term that controls
+positive generated cost.}
+Construct probability laws \(P,Q\) and a cost
+\(c:\cX\to[0,C_{\max}]\) such that
+\(\operatorname{Var}_P(c)=0\) but
+\(|\E_P[c]-\E_Q[c]|>0\). In the bound
+\[
+ |\E_P[c]-\E_Q[c]|
+ \le2\sqrt{\operatorname{Var}_P(c)\KL(P,Q)}
+      +C_{\max}\KL(P,Q),
+\]
+identify the term that accounts for the positive discrepancy.
+
+\end{exercisechunk}

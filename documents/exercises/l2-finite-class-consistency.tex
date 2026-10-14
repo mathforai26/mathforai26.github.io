@@ -2,12 +2,21 @@
 \begin{exercisechunk}
 \item \textbf{Generalization by consistency.}
 \label[exercise]{ex:finite-class-consistency}
+\exerciseprofile{2}{2}{3}{\exproof\quad\excalculation\quad\exinterpretation}{%
+Prove the finite-class consistency bound and distinguish a sufficient counting
+bound from the sample size a particular learner actually needs.}
 Use the assumptions and notation of \cref{thm:finite-class-consistency}.
 \begin{enumerate}[(a)]
 \item For a predictor $g\in\cF$, compute the probability that $g$ is
 consistent with all $m$ observations in terms of $L_P(g,f)$. Write the
 factorization that uses the sampling assumptions.
-\item Prove \cref{eq:finite-class-consistency}. You may use the union bound:
+\item Prove that every learner returning a consistent
+$\widehat f\in\cF$ satisfies
+\[
+ \P\bigl(L_P(\widehat f,f)>\epsilon\bigr)
+ \le |\cF|e^{-m\epsilon},\qquad \epsilon\in(0,1).
+\]
+You may use the union bound:
 $\P(\bigcup_{j=1}^r E_j)\le\sum_{j=1}^r\P(E_j)$ for events
 $E_1,\ldots,E_r$. Your proof should apply to every choice among consistent
 members, including randomized choices.

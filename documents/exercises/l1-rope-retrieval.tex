@@ -1,0 +1,45 @@
+% Shared exercise chunk: l1-rope-retrieval
+\begin{exercisechunk}
+\item \textbf{From RoPE scores to retrieval.}
+\label[exercise]{ex:rope-retrieval}
+\exerciseprofile{3}{3}{3}{\exproof\quad\excalculation\quad\exconstruction}{%
+Connect attention weight to worst-case retrieval error and quantify the score
+scale required by a single slowly rotating coordinate pair.}
+Use the construction in \cref{ex:rope}, for which
+\[
+s_{ij}=\cos\bigl((j-i+d)\omega\bigr).
+\]
+Let $d_v\ge1$, and let source position $j\in[T]$ store an arbitrary fixed
+value $v_j\in\mathbb R^{d_v}$. For
+$\varnothing\ne S_i\subseteq[T]$, define, at positive scale $\lambda$,
+\[
+a_{ij}(\lambda)=\frac{e^{\lambda s_{ij}}}
+{\sum_{r\in S_i}e^{\lambda s_{ir}}},\quad j\in S_i,
+\qquad
+o_i(\lambda)=\sum_{j\in S_i}a_{ij}(\lambda)v_j.
+\]
+Fix $\varepsilon\in(0,1/2)$.
+\begin{enumerate}[(a),beginpenalty=10000]
+\item For any $j\in S_i$, show that
+\[
+\|o_i(\lambda)-v_j\|_2
+\le (1-a_{ij}(\lambda))\max_{r\in S_i}\|v_r-v_j\|_2.
+\]
+Deduce that $a_{ij}(\lambda)>1-\varepsilon$ gives error less than
+$2B\varepsilon$ whenever $\|v_r\|_2\le B$ for every $r\in S_i$.
+\item Show that guaranteeing error at most $2B\varepsilon$ for every such
+collection of values requires $a_{ij}(\lambda)\ge1-\varepsilon$.
+\item Use $S_i=[i]$ and suppose $0<\omega<2\pi/T$. Show that $i-d$ is the
+unique maximizing source at every $i>d$. Prove
+$\lim_{\lambda\to\infty}o_i(\lambda)=v_{i-d}$, accounting for every source
+weight.
+\item At any such position, prove that
+$a_{i,i-d}(\lambda)\ge1-\varepsilon$ requires
+\[
+\lambda\ge\frac{T^2}{2\pi^2}
+\log\frac{1-\varepsilon}{\varepsilon}.
+\]
+\end{enumerate}
+Thus, for fixed $\varepsilon$, uniform retrieval over values of norm at most
+$B$ requires $\lambda=\Omega(T^2)$ in this construction.
+\end{exercisechunk}

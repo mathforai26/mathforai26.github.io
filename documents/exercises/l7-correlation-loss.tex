@@ -1,7 +1,7 @@
 \begin{exercisechunk}
 \item \textbf{What signed correlation controls.}
 \label[exercise]{ex:l7-correlation-loss}
-\exerciseprofile{2}{2}{2}{\exproof\quad\excalculation\quad\exconstruction\quad\exinterpretation}{%
+\exerciseprofile{2}{2}{3}{\exproof\quad\excalculation\quad\exinterpretation}{%
 Relate signed correlation to classification and to the gradients of standard
 surrogate losses.}
 Under the fixed-parity law $P_S$, recall
@@ -24,12 +24,23 @@ classification risk of the sign of a real-valued score.
 \E_{P_S}[(f(X)-Y)^2]
 =1+\E_{P_S}[f(X)^2]+2\cC(f).
 \]
+Deduce that $|\cC(f)|\le\varepsilon$ implies squared loss at least
+$1-2\varepsilon$. Prove
+\[
+R_{01}(\operatorname{sign}(f))
+\le\E_{P_S}[(f(X)-Y)^2],
+\qquad \operatorname{sign}(0)=1.
+\]
+For the scores in (b), show that the squared loss tends to $1$ as
+$\varepsilon\downarrow0$ while classification remains perfect.
 \item Derive
 \[
 \E_{P_S}[\log(1+e^{-Yf(X)})]
 =\E_{P_S}\!\left[\log\!\left(2\cosh\frac{f(X)}2\right)\right]
 +\frac12\cC(f).
 \]
+Deduce that $|\cC(f)|\le\varepsilon$ implies log loss at least
+$\log2-\varepsilon/2$.
 If $f=f_\theta$ is differentiable in $\theta$, differentiate the identities
 in parts (c) and (d) and identify every term in addition to
 $\nabla_\theta\cC(f_\theta)$.

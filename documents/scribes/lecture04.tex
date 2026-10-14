@@ -9,7 +9,7 @@
 \usepackage{microtype}
 
 % Revision date: maintained by scripts/build_lecture_notes.py. Keep this command.
-\newcommand{\lecturerevised}{2026-09-16 10:00 UTC-06:00}
+\newcommand{\lecturerevised}{2026-10-09 23:51 UTC-07:00}
 \usepackage{eso-pic}
 \AddToShipoutPictureBG{%
   \AtPageLowerLeft{%
@@ -92,6 +92,10 @@ September 10, 2026
 \end{minipage}}
 \end{center}
 
+\noindent Grayson Lee prepared a scribe of the September 10 lecture.
+Csaba Szepesv\'ari prepared and substantially expanded the present notes.
+
+\medskip
 \noindent\textbf{About these lecture notes.}
 We know how to fit a sequence model by next-token prediction. We now ask
 whether fitting successful examples makes the model generate successful
@@ -205,7 +209,7 @@ Consequently, next-token log-loss minimization, the workhorse of language model 
 
 When evaluating \cref{eq:next-token-loss}, the predictor receives the
 observed prefix, including the observed next input.
-This is \emph{teacher forcing}:
+Evaluating every factor on the observed prefix is \emph{teacher forcing}:
 the student's cost is measured at the
 teacher's data. The metaphore comes from viewing the problem as a teacher generating
 data that a student needs to use to learn.
@@ -979,6 +983,10 @@ times the smallest. Even a sharp upper bound leaves this entire
 factor-\(T\) spread. A model that makes just one mistake on each
 erroneous sequence and a model that makes \(T\) mistakes can have
 exactly the same likelihood.
+This does not contradict the bounded-cost guarantee:
+\(c_{\mathrm{cnt}}\) has range \(T\), so its KL--TV bound also scales
+with \(T\); instead, the comparison shows that likelihood need not
+distinguish recovery from persistence among generators with the same KL.
 
 For terminal cost, an erroneous sequence can still end with a correct
 answer. This changes the lower endpoint to zero.
@@ -1155,7 +1163,7 @@ amount of data and the sequence length.
 
 A simple estimation problem exhibits both possibilities. First suppose
 all tokens are independent \(\operatorname{Bernoulli}(p)\) variables.
-This defines $P$.
+Let $P$ denote the resulting joint law.
 Estimate their common parameter using the smoothed frequency
 \[
  \widehat p=
@@ -1568,32 +1576,46 @@ information should be forgotten, and which must be preserved?
 \paragraph{Direct cost feedback.}
 In some cases, the cost function is available for evaluation.
 That is, there is a cheap way to get the value of $c$ at any sequence $x_{1:T}$.
-(Note that this is not always possible.
-This is the case, for example, when the value of $c(x_{1:T})$ involves asking a human, and no human
-is available to perform this task.)
+(The cost may be unavailable, for example, when evaluating
+$c(x_{1:T})$ requires a human and no human is available.)
 However, when $c$ is available for measurement, this creates a new opportunity
-to get a good model. One can simple run an optimization process
+to get a good model. One can simply run an optimization process
 that aims to minimize
 \begin{equation}
  \min_\theta\E_{Q_\theta}[c].
  \label{eq:direct-cost}
 \end{equation}
-The procedures that aim to perform this optimization are discussed later. In particular,
-Lecture~19 develops reinforcement learning with this feedback, including the policy-gradient
-method for optimizing such an objective. Lectures~20--21 study preference
-feedback and optimization with learned evaluators.
+The procedures that aim to perform this optimization are discussed later.
+Lecture~19 studies preference feedback and the objectives constructed from it.
+Lecture~20 develops reinforcement learning with generated feedback, including
+the policy-gradient method and optimization with learned evaluators.
 
-Note that in practice, as alluded to beforehand, one often combines the various data sources
-and objectives. This should make perfect sense when all the objectives are aligned.
-This would be case when teacher forcing with positive data is used alongside with the above
-optimization objective. The reason to combine the objectives is to take advantage
+In practice, one often combines several data sources and objectives.
+Combining the objectives is coherent when they are aligned, as when teacher
+forcing with positive data is used alongside the optimization objective above.
+The reason to combine the objectives is to take advantage
 of their complementary strengths.
-An example of how access to cost can help consider the problem of minimizing the expected terminal
+For example, consider minimizing the expected terminal
 cost $c_{\rm fin}$. As we have seen, $Q_+$ and $Q_-$ of \cref{sec:endpoint-generators} both have the same
 log-likelihood, while the expected cost of $Q_-$ is zero, and the expected cost of $Q_+$ is \(1-e^{-\kappa}\).
 If the expected cost can be calculated up to sufficient accuracy (less than the performance gap
 between the models), the better, $Q_-$ can be chosen, which is a large win compared to not using cost information.
-TODO: Are there complementary strengths? I would think so, but we better develop some examples. What is nontrivial is why teacher forcing with positive data can help if we can also optimize the cost directly. The answer may be that the other objective has better optimization properties. Also, there is the ``why not'' answer. Two things are better than one (we are assuming they are compatible). Anyhow, need to add some exercise about this.
+
+Direct access to task cost does not imply that its Euclidean gradient gives the
+best training dynamics. A surrogate objective can preserve the desired
+limiting decision while giving a better-conditioned optimization problem.
+Changing the parameter-space geometry, as in natural gradient, can have the
+same purpose without replacing the task objective. In the one-step binary
+problem of \cref{ex:direct-cost-gradient}, the exact expected cost is smooth
+and its gradient can be evaluated without sampling. Nevertheless, from a
+confidently wrong policy, ordinary gradient flow on that cost takes time
+exponential in the initial log-odds deficit to reach even odds. Log-loss
+gradient flow and natural-gradient flow take only linear time. Thus positive
+examples and direct cost feedback can have complementary roles: the cost
+specifies the desired behavior, while log loss can supply a useful training
+signal where the direct cost gradient is small. The example isolates this
+optimization effect from exploration, delayed credit, and action-sampling
+noise.
 
 
 \paragraph{Predicting further ahead.}
@@ -2174,6 +2196,20 @@ in \cref{sec:binary} ask what task-performance variation remains at
 a given likelihood, and hence what additional information is useful
 for choosing a generator.
 
+\paragraph{Direct cost gradients and finite training budgets.}
+\citet{osband2026planning} compare exact expected-accuracy policy gradient
+with cross-entropy in full-information classification. If \(p\) is the
+probability assigned to the correct label and \(z\) is its log-odds, the two
+update weights on \(\nabla z\) are \(p(1-p)\) and \(1-p\), respectively.
+They interpret cross-entropy as cumulative future error along a unit-speed
+increase in \(z\), then truncate this integral at an estimate of the learning
+budget that remains. Their finite-horizon allocation guarantees concern a
+simplified model with independently movable example gaps; their neural-network
+results are empirical, and they do not establish the same conclusion for
+sampled-action reinforcement learning. \Cref{ex:direct-cost-gradient} isolates
+the corresponding single-example gradient slowdown and compares it with
+natural gradient.
+
 \paragraph{Multi-token prediction and auxiliary heads.}
 \phantomsection
 \label{note:multistep-heads}
@@ -2323,22 +2359,54 @@ length, fitting, recovery, and persistent memory.
 \input{../exercises/l4-kl-chain.tex}
 \input{../exercises/l4-positive-data.tex}
 \input{../exercises/l4-reverse.tex}
+\exercisegroup{Task discrepancy conversions}
 \input{../exercises/l4-discrepancy-comparison.tex}
+\input{../exercises/l4-discrepancy-forward.tex}
+\input{../exercises/l4-discrepancy-reverse.tex}
+\input{../exercises/l4-discrepancy-normalization.tex}
+\input{../exercises/l4-discrepancy-variance.tex}
+\exercisegroup{Repeated and persistent errors}
 \input{../exercises/l4-binary-count.tex}
+\input{../exercises/l4-binary-count-accumulation.tex}
+\input{../exercises/l4-binary-count-tv.tex}
+\input{../exercises/l4-binary-count-terminal.tex}
 \input{../exercises/l4-positionwise-kl.tex}
+\exercisegroup{Parameter sharing}
 \input{../exercises/l4-sharing.tex}
+\input{../exercises/l4-sharing-rate.tex}
+\input{../exercises/l4-sharing-leading.tex}
+\exercisegroup{Sequence length and token budgets}
 \input{../exercises/l4-sharing-horizon.tex}
+\input{../exercises/l4-sharing-budget.tex}
 \input{../exercises/l4-sharing-costs.tex}
 \input{../exercises/l4-bernoulli-identification.tex}
+\exercisegroup{Copying and memory}
 \input{../exercises/l4-copying-context.tex}
+\input{../exercises/l4-copying-memory.tex}
+\exercisegroup{A missed final-position dependency}
 \input{../exercises/l4-positionwise-loss.tex}
+\input{../exercises/l4-positionwise-fitting.tex}
+\input{../exercises/l4-positionwise-budget.tex}
+\input{../exercises/l4-positionwise-stability.tex}
 \input{../exercises/l4-optimization-certificate.tex}
+\exercisegroup{Likelihood fitting, task cost, and support}
 \input{../exercises/l4-fitting-support.tex}
+\input{../exercises/l4-fitting-minimizers.tex}
+\input{../exercises/l4-chosen-prompts.tex}
+\input{../exercises/l4-direct-cost-gradient.tex}
 \input{../exercises/l4-multistep-benefit.tex}
+\exercisegroup{Exact and auxiliary multistep prediction}
 \input{../exercises/l4-multistep.tex}
+\input{../exercises/l4-multistep-heads.tex}
+\exercisegroup{Errors detected by the two KL directions}
 \input{../exercises/l4-kl-directions.tex}
+\input{../exercises/l4-kl-directions-omission.tex}
+\input{../exercises/l4-kl-directions-failures.tex}
 \input{../exercises/l4-reverse-variational.tex}
+\exercisegroup{Contraction and error recovery}
 \input{../exercises/l4-stability.tex}
+\input{../exercises/l4-single-error-recovery.tex}
+\input{../exercises/l4-repeated-errors.tex}
 \input{../exercises/l4-cumulative-recovery.tex}
 \input{../exercises/l4-persistent-memory.tex}
 
@@ -2449,7 +2517,8 @@ Define the tilted law by
 \[
  P_\lambda(x)=P(x)e^{\lambda(c(x)-\E_P\,c)-\psi(\lambda)}.
 \]
-This is a probability law. Writing \(\kappa=\KL(Q, P)\), we have
+The normalizing term $\psi(\lambda)$ makes $P_\lambda$ a probability law.
+Writing \(\kappa=\KL(Q, P)\), we have
 \[
  0\le\KL(Q, P_\lambda)
  =\kappa-\lambda(\E_Q[c]-\E_P[c])+\psi(\lambda).
@@ -3102,11 +3171,11 @@ distribution under both candidates.
 No output can equal both \(P_0\) and \(P_1\).
 Averaging over the two equally likely candidates, the probability of
 failure on this event is therefore at least \(1/2\).
-This gives the lower bound on the worst-case failure probability.
+The averaging argument gives the lower bound on the worst-case failure probability.
 
 For equality, use any observed prompt in \(\mathcal A\) to identify \(i\)
 and return \(P_i\). If none occurs, choose one of the two candidates
-with an independent fair coin. This has the stated failure probability
+with an independent fair coin. This randomized rule has the stated failure probability
 under each candidate.
 \end{proof}
 
@@ -3488,6 +3557,12 @@ Sebastian Nowozin, Botond Cseke, and Ryota Tomioka.
 Divergence Minimization.
 \newblock \emph{Advances in Neural Information Processing Systems}, 29, 2016.
 \newblock \url{https://arxiv.org/abs/1606.00709}.
+
+\bibitem[Osband(2026)]{osband2026planning}
+Ian Osband.
+\newblock Planning to Learn.
+\newblock arXiv:2610.03667, 2026.
+\newblock \url{https://arxiv.org/abs/2610.03667}.
 
 \bibitem[Raginsky and Sason(2014)]{raginsky2014}
 Maxim Raginsky and Igal Sason.

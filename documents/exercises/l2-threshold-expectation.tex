@@ -2,6 +2,9 @@
 \begin{exercisechunk}
 \item \textbf{From a tail bound to expected error.}
 \label[exercise]{ex:threshold-expectation}
+\exerciseprofile{2}{2}{2}{\exproof\quad\excalculation}{%
+Convert a tail-probability bound into an expected-error bound using the
+tail-integral identity.}
 \begin{enumerate}[(a),beginpenalty=10000]
 \item Let $Y$ take finitely many values in $[0,1]$. Prove
 \[
@@ -11,8 +14,12 @@ Y=\int_0^1\I(Y>t)\,dt,
 \]
 Justify exchanging the expectation and integral by writing the expectation
 as a finite sum.
-\item Apply this identity to \cref{eq:threshold-bound} to derive
-\cref{eq:threshold-expected}.
+\item Suppose that $M\in[0,1]$ satisfies
+$\P(M>t)\le(1-t)^m$ for every $t\in(0,1)$. Apply the identity in
+part~(a) to show that
+\[
+ \E[M]\le\frac1{m+1}.
+\]
 \item \emph{Optional extension.} \begin{enumerate}[label=(\roman*),leftmargin=*,beginpenalty=10000]
 \item For any nonnegative random variable $Y$,
 prove $\mathbb E[Y]=\int_0^\infty\P(Y>t)\,dt$, allowing both sides to be

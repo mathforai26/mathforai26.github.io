@@ -2,6 +2,9 @@
 \begin{exercisechunk}
 \item \textbf{Probability rules and their notation.}
 \label[exercise]{ex:probability-rules}
+\exerciseprofile{2}{3}{4}{\exproof\quad\excalculation\quad\exconstruction}{%
+Reconstruct the probability identities used throughout the course from the
+axioms, including zero-probability cases.}
 Use the definitions in \cref{app:probability}.
 \begin{enumerate}[(a)]
 \item Derive the following from the probability axioms:
@@ -33,8 +36,12 @@ zero-probability parts of the partition:
 \end{enumerate}
 \item Conditioning and independence:
 \begin{enumerate}[label=(\roman*),leftmargin=*,beginpenalty=10000]
-\item Prove the rule in \cref{eq:conditional-block-independence} by writing
-conditional probabilities as ratios.
+\item Suppose $T$ is independent of $(V,W)$, $C$ is determined by $V$, and
+$\P(C)>0$. Prove, by writing conditional probabilities as ratios, that
+\[
+ \P(T\in D,W\in B\mid C)
+ =\P(T\in D)\P(W\in B\mid C).
+\]
 \item Give an example where two independent
 random variables become dependent after conditioning on an event involving
 both of them.

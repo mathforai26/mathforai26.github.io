@@ -9,7 +9,7 @@
 \usepackage{needspace}
 
 % Revision date: maintained by scripts/build_lecture_notes.py. Keep this command.
-\newcommand{\lecturerevised}{2026-10-05 21:23 UTC-06:00}
+\newcommand{\lecturerevised}{2026-10-09 23:51 UTC-07:00}
 \usepackage{eso-pic}
 \AddToShipoutPictureBG{%
   \AtPageLowerLeft{%
@@ -395,7 +395,8 @@ Above, $\|\cdot\|$ is the $2$-norm, because this is what is selected for by
 gradient descent.
 The problem has a solution as long as the $n\times p$ matrix whose $(i,j)$th
 element is $\varphi_j(X_i)$ has rank $n$. For now, assume this is the case.
-The solution is unique whenever at least one solution exists.
+The minimum-norm parameter vector is unique whenever the interpolation
+constraints are feasible.
 \Cref{ex:l9-minimum-norm} asks you to prove uniqueness and derive the
 minimum-norm solution.
 
@@ -497,8 +498,8 @@ The bibliographical notes give references for approximation,
 least-squares stability, and minimax optimality separately.
 
 The challenge we consider is whether the same rate can be obtained by using minimum-norm
-interpolants -- even when the responses are noisy. 
-This is a challenge because normal least-squares fitting does not interpolate.
+interpolants -- even when the responses are noisy.
+Ordinary least-squares fitting does not interpolate noisy responses.
 Indeed, the best polynomial (as defined in \cref{eq:approximation-error}) approximator,
 given any degree $r$, 
 only depends on the $f^\star$, hence, this polynomial will \emph{not} interpolate.
@@ -506,13 +507,12 @@ Also, standard least-squares fitting, would not interpolate. In fact it is consi
 a strength of least-squares fitting that it ``cleans'' (or ``smoothens''), 
 separating signal ($f^\star$) from noise.
 
-It also follows that to meet the challenge we need to make a deliberate choice of what coordinate (basis)
-functions we use to parametrize the chosen subspace $\cF_p$. First, as noted beforehand,
+Meeting the challenge therefore requires a deliberate choice of the basis
+functions used to parametrize the chosen subspace $\cF_p$. First, as noted beforehand,
 $p\ge n$ is necessary for allowing for interpolation. 
 Our strategy will be to split $p=m+D$ into
-$m\ll p$ basis functions that will span $\cF_m$ -- the goal of these is to capture
-the signal in the data --, and a remaining set of extra $D$ basis functions, whose purpose 
-will be to fit to the noise.
+$m\ll p$ basis functions that span $\cF_m$ and capture the signal in the
+data, and a remaining set of $D$ basis functions used to fit the noise.
 In particular, we choose the basis and scaling of these two blocks so that the selected
 interpolant represents the low-degree component in the first block and uses
 the second block for sample-specific residuals with small population $L^2$
@@ -632,7 +632,7 @@ standard analysis of regression: the approximation and estimation errors need to
 balanced to get good outcomes. If we used $m$ coefficients with standard 
 linear least squares, these are the terms one would expect to see.
 The next, third term, is a small shrinkage bias.
-The last term is unusual: This is the price of fitting to the residual error
+The last term is the population-loss cost of fitting the residual error
 (after the first $m$ coefficients are used to get the ``signal''). To make this 
 error small, $D$ needs to be chosen large relative to $n$ (similarly to how
 $D$ needs to be large to control the error probability).
@@ -643,26 +643,26 @@ after which the value of $D$ is dictated by the need to control
 the last term (and the error probability term).
 Increasing $D$ supplies more directions over which to
 distribute the interpolation correction. 
-Surprisingly, increasing $D$ has no price attached to it -- other than
-the increased computation and memory costs. 
-This is because of the careful selection of the weighting of the Chebyshev polynomial
-basis functions: As $D$ gets large, these are appropriately downweighted 
+The statistical bound contains no increasing penalty in $D$, although
+computation and memory costs grow with $D$.
+This behavior follows from the weighting of the Chebyshev polynomial
+basis functions: as $D$ grows, the basis functions are downweighted
 and as such, the upper bound on the squared error of the resulting residual component decreases as $D$ increases.
 In effect, the procedure closely follows what the point-correction mechanism is aimed
 to achieve: The function that is learnt with the last $D$ coefficients approximates
 the point-mass correction, while the function that is learnt with the first $m$ 
 coefficients approximates the function that would be learnt using just those basis functions.
 
-Again, the intuitive explanation is that when solving for the minimum norm interpolant,
-the price for the last $D$ coefficients is much higher than for the first $m$. 
-The result of this is essentially a two-step fitting: First fit using the first $m$
+When solving for the minimum-norm interpolant, the induced norm penalizes the
+last $D$ coefficients more heavily than the first $m$.
+The resulting procedure is approximately a two-step fit: first fit using the first $m$
 coefficients, then use the last $D$ coefficients to approximate the residual.
 \Cref{ex:l9-two-stage-fitting} asks you to make this comparison precise
 and bound the difference between the coefficient vectors. In general,
 the first stage is generalized least squares, with residual weight
 $(VV^\top)^{-1}$ for the second block's sample matrix $V$, defined next.
-It reduces to ordinary least squares when $VV^\top$ is a scalar multiple
-of $I_n$.
+This generalized least-squares first stage reduces to ordinary least squares
+when $VV^\top$ is a scalar multiple of $I_n$.
 
 Define
 \[
@@ -701,7 +701,7 @@ coefficients $b_z=V^\top(VV^\top)^{-1}z$ give $Vb_z=z$, while
 The first inequality is due to \cref{eq:chebyshev-synthesis}, while the last is 
 from $VV^\top=DH\succeq c_HD I_n$.
 A residual vector with squared length of order $n$ can therefore be fitted
-at population cost of order $n/D$. This is the interpolation mechanism. It
+at population cost of order $n/D$. This interpolation mechanism
 uses a population-norm bound for the second block and a well-conditioned
 sample Gram matrix.
 
@@ -1165,16 +1165,16 @@ it may happen that for $x_1 = X_1$, $x_2 = X_2$, $|Y_1-Y_2| = |f(X_1)-f(X_2)|$ i
 while $X_1$ and $X_2$ are close to each other. But the above inequality must hold
 for $\widehat f$, which means that $\|\widehat f\|_{L^2(\mu)}$ must be large,
 which will be a problem when $f^\star$ has a small squared norm!
-That this mechanism causes the expected risk of the method to explode
+The resulting infinite expected risk
 means that the probability of seeing large errors is poorly controlled; the procedure
 has high risk.
 
-This, of course, is not a desired property. Luckily, at least in the case
-when the responses $Y$ are known to belong to some known interval $[-M,M]$,
+This lack of tail control is undesirable. When the responses $Y$ are known to
+belong to an interval $[-M,M]$,
 the issue can be addressed by simply truncating predictions to $[-M,M]$.
 The resulting method will still interpolate, and its error can only be smaller
 than that of the original method. In fact, one can show that this clipped method
-now gives the some rate that we calculated above but also in expected risk.
+now gives the same rate calculated above, also in expected risk.
 
 \subsection{The same polynomial space with another norm}
 
@@ -1360,7 +1360,7 @@ law $\mu$. For a bounded measurable kernel $k$, define its
  (T_{k,\mu}g)(x)=\int_{\cX} k(x,x')g(x')\,\mu(dx').
  \label{eq:kernel-integral-operator}
 \end{equation}
-This is the population analogue of multiplying a vector of function values
+The integral operator is the population analogue of multiplying a vector of function values
 by a kernel matrix: the integral replaces a finite weighted sum. Its
 eigenfunctions identify orthogonal directions in $L^2(\mu)$ in which the
 RKHS norm has a simple coefficient penalty, as we now explain.
@@ -1457,7 +1457,8 @@ surely, and these are the usual $n$ interpolation constraints.
 The minimum-norm solution lies in the span of
 $k(X_1,\cdot),\ldots,k(X_n,\cdot)$: an orthogonal component vanishes at all
 sample inputs by the reproducing property and only increases the norm.
-This is the interpolation form of the so-called \emph{representer theorem}. Writing the
+The preceding orthogonal-decomposition argument is the interpolation form of
+the so-called \emph{representer theorem}. Writing the
 solution as $\sum_i\alpha_i k(X_i,\cdot)$ turns the constraints into
 $K\alpha=\mathbf Y$, where $K=(k(X_i,X_j))_{i,j=1}^n$.
 When $K$ is invertible, define
@@ -1466,9 +1467,11 @@ $k(x,\mathbf X)=(k(x,X_1),\ldots,k(x,X_n))^\top$ to obtain
  \widehat f_k(x)=k(x,\mathbf X)^\top K^{-1}\mathbf Y.
  \label{eq:ridgeless-formula}
 \end{equation}
-This is also the zero-ridge limit of kernel ridge regression and, under the
-corresponding linearized dynamics, the endpoint selected by gradient flow.
-These facts make \cref{eq:kernel-minnorm} a standard proposal. The next two
+The estimator in \cref{eq:ridgeless-formula} is also the zero-ridge limit of
+kernel ridge regression and, under the corresponding linearized dynamics, the
+endpoint selected by gradient flow.
+The span representation and zero-ridge interpretation make
+\cref{eq:kernel-minnorm} a standard proposal. The next two
 results ask when its selected interpolant is consistent.
 
 \subsection{A fixed-problem failure for the Laplace kernel}
@@ -1602,8 +1605,9 @@ predictor is kernel ridge regression with penalty $\lambda_n=\rho_n/n$
 when empirical squared loss is divided by $n$. Controlling the approximation
 and the population cost of the corrections completes the consistency
 argument. A nearly diagonal Gram matrix controls the sample-fitting part.
-This is the RKHS version of the point-corrected smoother and the weighted
-series rule. The two kernel theorems concern different procedures:
+The smooth-plus-narrow construction is the RKHS version of the point-corrected
+smoother and the weighted series rule. The two kernel theorems concern
+different procedures:
 \cref{thm:haas} uses a changing sum of a smooth kernel and a separate
 increasingly narrow kernel, whereas \cref{thm:rakhlin-zhai} uses a single
 Laplace kernel with an adaptively chosen bandwidth.
@@ -1940,10 +1944,11 @@ therefore require restrictions on the learning procedure or risk criterion.
 \item Exact fitting and small population squared error are compatible. The
 weighted polynomial rule shows how minimum-norm optimization can realize this
 compatibility in one fixed-feature model.
-\item The norm is part of the algorithm. In a series or RKHS, its coordinate
-weights determine whether the selected interpolant recovers the signal and
+\item The norm minimized by the algorithm is part of the algorithm's
+specification. In a series or RKHS, the norm's coordinate weights determine
+whether the selected interpolant recovers the signal and
 where it places the fitted noise.
-\item Minimum norm can succeed or fail. Ordinary Laplace-kernel interpolation
+\item Minimum-norm interpolation can succeed or fail. Ordinary Laplace-kernel interpolation
 fails on a fixed smooth noisy problem; a deliberately structured spiky-smooth
 kernel is consistent. Every deterministic tuning of the scaled all-Legendre
 construction fails for some continuous noiseless target.
@@ -1984,7 +1989,7 @@ represented by an architecture. Some finer bounds also use uniform
 convergence. In particular, \citet{bartlett2002} develop Rademacher-based
 bounds for several function classes; their Theorem~21 gives the kernel
 margin bound discussed in \cref{en:kernel-margin-bound}.
-These are bounds on classification performance, not assumption-free
+The cited bounds concern classification performance, not assumption-free
 guarantees for unbounded squared-loss regression. \citet{zhang2017}
 themselves acknowledge earlier norm-based capacity bounds in
 Sections~1.2 and~2.2, so the issue is what their experiments establish
@@ -2322,11 +2327,12 @@ A kernel formed from a smooth component for learning the regression function
 and a sharply localized component for satisfying interpolation constraints.
 \item[Clipping]
 Replacing a prediction $f(x)$ by $\max\{-M,\min\{M,f(x)\}\}$.
-If $|f^\star|\le M$, this cannot increase squared prediction error.
-It preserves interpolation when the observed responses lie in $[-M,M]$.
+If $|f^\star|\le M$, clipping cannot increase squared prediction error.
+Clipping preserves interpolation when the observed responses lie in $[-M,M]$.
 \item[Generalization gap]
 The population risk of a learned predictor minus its average training
-loss. In the optional discussion these are classification error rates.
+loss. In the optional discussion, both quantities in this difference are
+classification error rates.
 This differs from excess risk, which subtracts the optimal population
 risk rather than training loss.
 \item[VC dimension]

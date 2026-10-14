@@ -12,7 +12,7 @@
 \usepackage{microtype}
 
 % Revision date: maintained by scripts/build_lecture_notes.py. Keep this command.
-\newcommand{\lecturerevised}{2026-10-03 01:15 UTC-06:00}
+\newcommand{\lecturerevised}{2026-10-09 23:46 UTC-07:00}
 \usepackage{eso-pic}
 \AddToShipoutPictureBG{%
   \AtPageLowerLeft{%
@@ -95,6 +95,10 @@ September 29, 2026
 \end{minipage}}
 \end{center}
 
+\noindent Triston Grayston prepared a scribe of the September 29 lecture.
+Csaba Szepesv\'ari prepared and expanded the present notes.
+
+\medskip
 \noindent\textbf{Reading guide.}
 Lecture 7 gave an example in which a small ReLU network represents a fixed
 parity but direct perturbed population-gradient training has no reliable
@@ -105,6 +109,9 @@ example and a constructed transformer theorem show that retrieval and
 combination must also be learned. The transformer theorem is included as
 optional reading because its assumptions and three-update proof are useful for
 understanding the mechanism but are not needed for the parity lower bound.
+A second optional section, added after class, summarizes how intermediate
+supervision and a length curriculum can train a transformer on more general
+state-tracking tasks, and states the restrictions of that guarantee.
 The prerequisites are Gaussian vectors, KL divergence, total variation,
 Pinsker's inequality, Hoeffding's inequality, ReLU networks, and the parity
 setup recalled below.
@@ -140,6 +147,11 @@ F(\theta)=-\E[Y N_\theta(X)].
 \end{equation}
 Lecture 7 constructed a width-$(k+1)$ network representing $\chi_S$. Thus
 the lower bound below concerns optimization rather than representability.
+The title refers to the information available to the optimizer. Each gradient
+coordinate is a label correlation with a parameter derivative of the current
+network. For high-degree parity, these correlations are exponentially small
+at typical Gaussian parameters, so the updates provide little information
+about which parameter changes would reduce the risk.
 
 For fixed $\theta$, define the classifier and its risk by
 \[
@@ -266,6 +278,11 @@ Total variation controls the difference of event probabilities and of
 expectations of $[0,1]$-valued functions. Applying \cref{eq:path-tv} to these
 functions of the final parameter proves both conclusions.
 \end{proof}
+
+\Cref{ex:l8-parameter-sign-symmetry} examines a tempting but incorrect
+alternative to this argument: flipping the signs of every parameter. The
+coordinate transformation $J_j$ works because it corresponds exactly to
+flipping one input bit.
 
 \section{Proof of the parity hardness result}
 \label{sec:parity-proof}
@@ -707,7 +724,8 @@ z_i=z_{i-1}\oplus b_i,
 \qquad 2\le i\le d.
 \label{eq:running-parity}
 \end{equation}
-Then $(-1)^{z_d}=\chi_{[d]}(x)$. Supplying
+XOR is associative, so $z_i=b_1\oplus\cdots\oplus b_i$ and
+$(-1)^{z_d}=\chi_{[d]}(x)$. Supplying
 $z_1,\ldots,z_d$ during training gives a label for every application of the
 same local rule. The following proposition gives that rule explicitly and
 verifies that composing it solves the original parity task.
@@ -742,10 +760,65 @@ at $i-1$, then
 Taking $i=d$ proves the final claim.
 \end{proof}
 
-One implementation can train a network for $g$ and then place copies of that
-network in a prescribed computation graph. The connections are supplied by
-the construction. A single sequence model has the harder job of learning both
-the local rule and the routing that supplies its arguments.
+The recurrence in \cref{eq:running-parity} defines the computation graph in
+\cref{fig:running-parity-graph}. Each box applies the same function $g$. If a
+neural network implements $g$ and shares its parameters across positions, the
+graph is an unrolled recurrent neural network:
+\[
+\widehat z_i=g_\theta(\widehat z_{i-1},b_i),
+\qquad 2\le i\le d.
+\]
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[
+  x=0.78cm,y=0.82cm,
+  >=Latex,
+  font=\sffamily\small,
+  input/.style={circle,draw=courseblue,thick,minimum size=7mm,inner sep=0pt},
+  state/.style={circle,draw=courseblue,thick,fill=courseblue!7,
+    minimum size=8mm,inner sep=0pt},
+  gate/.style={rounded corners=2pt,draw=courseblue,thick,fill=courseblue!13,
+    minimum width=10mm,minimum height=7mm},
+  flow/.style={->,thick,draw=courseblue}
+]
+\node[input] (b1) at (0,2.2) {$b_1$};
+\node[state] (z1) at (0,0) {$z_1$};
+\node[gate] (g2) at (2.3,0) {$g_\theta$};
+\node[input] (b2) at (2.3,2.2) {$b_2$};
+\node[state] (z2) at (4.6,0) {$z_2$};
+\node[gate] (g3) at (6.9,0) {$g_\theta$};
+\node[input] (b3) at (6.9,2.2) {$b_3$};
+\node[state] (z3) at (9.2,0) {$z_3$};
+\node (dots) at (11.2,0) {$\cdots$};
+\node[gate] (gd) at (13.2,0) {$g_\theta$};
+\node[input] (bd) at (13.2,2.2) {$b_d$};
+\node[state] (zd) at (15.5,0) {$z_d$};
+\draw[flow] (b1) -- (z1);
+\draw[flow] (z1) -- (g2);
+\draw[flow] (b2) -- (g2);
+\draw[flow] (g2) -- (z2);
+\draw[flow] (z2) -- (g3);
+\draw[flow] (b3) -- (g3);
+\draw[flow] (g3) -- (z3);
+\draw[flow] (z3) -- (dots);
+\draw[flow] (dots) -- (gd);
+\draw[flow] (bd) -- (gd);
+\draw[flow] (gd) -- (zd);
+\end{tikzpicture}
+\caption{A computation graph for running parity. Associativity of XOR makes
+the final state equal to the parity of all input bits. The repeated label
+$g_\theta$ indicates parameter sharing, as in a recurrent neural network.}
+\label{fig:running-parity-graph}
+\end{figure}
+
+Manually assembling this graph supplies the routing between copies of the
+local rule. A sequence-to-sequence model can instead produce
+$z_1,\ldots,z_d$ with one shared model. The intermediate labels then provide
+process supervision at every position, without training and composing a
+separate model for each step. The model must learn both the local operation
+and which earlier value to retrieve. At inference time it must also remain
+accurate when its own earlier predictions replace the correct prefixes.
 
 Fix the predictors after training. The following proposition relates their
 errors on correct prefixes to the errors made when their own predictions
@@ -1114,7 +1187,8 @@ Substituting $c_i^{(0)}=i^{-1}\sum_{j\le i}v_j$ into
 =\frac{(-1)^a}{2i}\Gamma_{i,a}h
 (e_{s(i),1}-e_{s(i),0})^\top.
 \]
-This is the supervised signal for retrieving position $s(i)$. The finite
+The displayed expected gradient supplies the supervised signal for retrieving
+position $s(i)$. The finite
 batch analysis controls the sampling error and the sum of contributions
 from the different output positions.
 
@@ -1194,6 +1268,189 @@ this construction. Its range $k\le d/\log^4(d/\delta)<d$ covers sparse
 parities. The full-parity construction in \cref{sec:intermediate} has
 $k=d$ and supplies the retrieval connections explicitly.
 
+\section{Optional reading: process supervision and a length curriculum}
+\label{sec:state-tracking}
+
+The running-parity construction suggests a broader question: can a model
+learn a local state update, retrieve its arguments, and repeatedly apply it
+to solve a longer computation? The following results give optimization
+guarantees for this approach on a family of synthetic tasks. They extend
+the positive examples beyond XOR and give a role to increasing the context
+length during training.
+
+\paragraph{The task and supervision.}
+Let $\cY$ be a finite state set and $G$ a finite group of permutations of
+$\cY$: a set of invertible maps containing the identity and closed under
+composition and inverses. A \emph{state-tracking task} asks for the result
+of successive updates
+\begin{equation}
+y_t=g_t(y_{t-1}),\qquad t=1,\ldots,L.
+\label{eq:state-tracking-task}
+\end{equation}
+The input consists of formal assignment instructions $a_t=g_t(a_{t-1})$
+and an initial assignment $a_0=y_0$, where the $a_t$ are distinct variable identifiers from
+a set $\cA$. The supervised answers are $a_t=y_t$ at every step. Each
+instruction and answer is encoded as a five-token clause:
+\[
+(a_t,g_t,a_{t-1},\bot,\bot),
+\qquad
+(\bot,\bot,\bot,a_t,y_t),
+\]
+where $\bot$ is a blank token. Thus the representation already separates
+the roles of identifiers, actions, and states.
+
+For the training and evaluation experiment, choose identifiers
+$A_0,\ldots,A_L$ from $\cA$ uniformly without replacement, $Y_0$ uniformly
+on $\cY$, and $G_1,\ldots,G_L$ independently and uniformly on $G$. These three choices
+are independent. Set $Y_t=G_t(Y_{t-1})$. Let $C$ contain all instruction
+clauses and the initial assignment, and let $Z_t$ denote the correct answer
+clause at step $t$. For parameters $\vartheta$, write
+$p_\vartheta(z\mid c,z_{<t})$ for the model's probability of answer clause
+$z$. Its population log-loss objective and \emph{teacher-forced accuracy}
+are
+\begin{align}
+\operatorname{Loss}_L(\vartheta)
+&=\sum_{t=1}^L\E[-\log p_\vartheta(Z_t\mid C,Z_{<t})],\notag\\
+\operatorname{Acc}_L(\vartheta)
+&=\frac1L\sum_{t=1}^L\E[p_\vartheta(Z_t\mid C,Z_{<t})].
+\label{eq:state-tracking-accuracy}
+\end{align}
+The accuracy averages the probability of sampling the correct next clause
+when supplied with the correct preceding clauses.
+
+\paragraph{Architecture and training restrictions.}
+The vocabulary consists of the identifier, action, state, and blank tokens;
+let $M$ be its size and $r=|\cY|$. In the parameter regimes below,
+the identifier set has size $|\cA|=\Theta(M)$.
+The model has one attention layer followed by a feed-forward network (FFN).
+The following choices are part of the construction and its analysis.
+\begin{itemize}[leftmargin=*]
+\item Nonblank tokens have fixed orthonormal embeddings in $\R^M$; the
+blank embedding is zero. Concatenating the five embeddings gives one
+vector in $\R^{5M}$ per clause. There is no positional encoding.
+\item Attention uses scores $u^\top Qv$, for clause embeddings $u,v$.
+Partition $Q$ into $M\times M$ blocks. Only $Q_{4,3}$ and $Q_{4,4}$ are
+trainable; all other blocks are zero. These blocks compare the current
+identifier with an instruction's input identifier and an answer's identifier.
+Initialize $Q=0$, giving uniform attention.
+\item There are $m$ hidden units for each output slot and vocabulary token,
+with $r<m$ and $m=o(\log^2 M)$. Their input weights have independent
+Gaussian coordinates of variance $1/M$; biases are fixed at
+$M^{-1/2}\log M$ and output coefficients at one. The five output
+distributions are multiplied to form the next-clause kernel.
+\item The FFN analysis uses a prescribed modified smoothed-ReLU activation
+and clips logits above a constant times $\log M$. For the state-output
+neurons it also freezes the weight blocks receiving identifier slots
+$1,3,4$. The action and state slots $2,5$ supply the trainable inputs to
+those neurons.
+\item Training uses exact population gradients. First train the FFN on
+length $1$, holding $Q=0$. Then freeze the FFN and train attention on
+length $2$, using the log loss for the state token. Suitable learning
+rates are inverse polynomial in $M$; the prescribed numbers of updates
+are polynomial in $M$.
+\end{itemize}
+At length $1$, the context contains exactly the instruction and the initial
+assignment. Uniform attention therefore supplies both arguments of the
+local update. Freezing the learned FFN then makes retrieval the remaining
+optimization problem. This training schedule explicitly controls the
+interaction between the two components.
+
+\paragraph{Two optimization guarantees.}
+Here are the reported guarantees for this construction, suppressing the
+polynomial exponents. Their initialization estimates hold with probability
+$1-o(1)$ as $M\to\infty$.
+\begin{enumerate}[label=(\roman*),leftmargin=*]
+\item \textbf{Learning on lengths $1$ and $2$ can suffice.}
+An action is \emph{simply transitive} if for every pair $y,y'\in\cY$
+there is exactly one $g\in G$ with $g(y)=y'$. With
+\[
+\Omega(\log\log M)\le r\le\log M,
+\qquad |G|=r,
+\]
+training the FFN on length $1$, followed by attention training on both
+answer positions of length $2$, yields parameters $\vartheta_*$ for which
+\begin{equation}
+1-\operatorname{Acc}_L(\vartheta_*)\le M^{-\Omega(1)}
+\quad\text{for all }L\le O(M^c),
+\qquad 0<c<1,
+\label{eq:state-tracking-short-long}
+\end{equation}
+for a fixed constant $c$. Cyclic shifts on $r$ states give an example of
+such an action.
+
+\item \textbf{A length curriculum can extend the guarantee.}
+A \emph{length curriculum} increases context length across training stages.
+Take $G=\operatorname{Sym}(\cY)$, the group of all permutations, with
+\[
+r=\Theta\!\left(\frac{\log\log M}{\log\log\log M}\right),
+\qquad |G|=r!=\operatorname{polylog}M.
+\]
+After the initial FFN training, train attention on the second answer of a
+length-$2$ problem. Subsequent stages use context lengths $L_k=2^k$.
+At each stage the preceding model greedily generates the first two answer
+clauses; attention is trained on the second state token with these generated
+labels and prefixes. The FFN remains frozen. For a sufficiently small
+inverse-polynomial population-loss threshold, the resulting parameters
+$\vartheta_k$ satisfy
+\begin{equation}
+1-\operatorname{Acc}_{L_{k+1}}(\vartheta_k)
+\le M^{-\Omega(1)},\qquad L_{k+1}=2L_k,
+\label{eq:state-tracking-curriculum}
+\end{equation}
+whenever that length is admissible. After $O(\log M)$ stages, the guarantee
+covers lengths up to $|\cA|-1=\Theta(M)$. The restriction
+$L+1\le|\cA|$ comes from sampling distinct identifiers.
+\end{enumerate}
+
+The permutation task includes an $\mathsf{NC}^1$-complete family of
+computations.\endnote{The class $\mathsf{NC}^1$ consists of decision
+problems computable by polynomial-size, bounded-fan-in Boolean circuits
+of depth $O(\log L)$. Deciding whether a product of permutations on a fixed
+set of at least five states is the identity gives a complete problem under
+appropriate reductions.}
+\label{en:state-tracking-complexity}
+Thus the positive optimization results extend to a substantially broader
+class of repeated computations. The complexity classification concerns
+worst-case inputs; the learning guarantees average over the specified
+random inputs. The proof separates learning the local
+operation from learning attention that retrieves its arguments reliably
+among increasingly many irrelevant clauses.
+
+\paragraph{From next-clause accuracy to a generated trace.}
+Fix trained parameters $\vartheta$ and generate $\widehat Z_1,\ldots,
+\widehat Z_L$ using $p_\vartheta$ on its own preceding outputs. To bound
+the probability of a mistake, condition on the input $C$. The correct
+trace is determined by $C$, so
+\[
+\P(\widehat Z_{1:L}=Z_{1:L}\mid C)
+=\prod_{t=1}^L p_\vartheta(Z_t\mid C,Z_{<t}).
+\]
+For numbers $a_t\in[0,1]$, $1-\prod_t a_t\le\sum_t(1-a_t)$.
+Taking expectations therefore gives
+\begin{equation}
+\P(\widehat Z_{1:L}\ne Z_{1:L})
+\le L\bigl(1-\operatorname{Acc}_L(\vartheta)\bigr).
+\label{eq:state-tracking-rollout}
+\end{equation}
+This is the sampled-generation version of the first-error argument in
+\cref{prop:rollout-union}. A whole-trace error at most $\delta$ follows
+when $1-\operatorname{Acc}_L\le\delta/L$; the error exponent and the
+generated length must be compared before claiming reliable complete traces.
+
+\paragraph{What this supports about process supervision.}
+The result makes a concrete positive case: intermediate labels can train
+a reusable local operation and its retrieval rule, and a curriculum can
+extend the contexts in which they work. The guarantee applies to the full
+construction: synthetic uniformly sampled tasks, exact initial traces,
+structured embeddings and attention, the modified FFN, and staged population
+optimization. Its self-training guarantee starts from the accuracy obtained
+in the supervised stages. Extending it to finite batches, simultaneous
+training of all components, or less structured data requires further
+analysis. The contribution is an optimization guarantee for this way of
+teaching a multistep computation. A separation from final-answer-only
+training would additionally require a lower bound for the same model and
+data regime.
+
 \section{Take-home messages}
 
 \begin{itemize}[leftmargin=*]
@@ -1206,12 +1463,20 @@ the trained trajectory has nearly the same law. The symmetry obtained by
 flipping a parity input coordinate gives the classification-risk bounds.
 \item Running-parity labels replace one degree-$d$ final target by repeated
 examples of a two-bit rule while preserving the original final answer.
-\item A complete sequence learner must also retrieve the correct arguments and
-control error during rollout. The path-star reduction and the three-update
-transformer theorem isolate these additional requirements.
+Associativity expresses this calculation as a recurrent computation graph.
+\item Sequence-to-sequence prediction permits process supervision within one
+shared model; it does not require composing separately trained models. The
+model must still retrieve the correct arguments and control error during
+rollout. The path-star reduction and the three-update transformer theorem
+isolate these additional requirements.
 \item The transformer theorem proves that the components can cooperate under a
 structured architecture, initialization, and update schedule. These
 assumptions limit what the theorem says about ordinary training.
+\item For structured state-tracking tasks, process supervision can train a
+local update and its retrieval rule; a length curriculum can extend the
+supported context lengths. The guarantees concern population optimization
+with staged training, and their next-step accuracy must be converted to a
+rollout bound before asserting reliability of a complete computation.
 \end{itemize}
 
 \printendnotes
@@ -1233,10 +1498,24 @@ tree-structured parity decomposition in another simplified transformer model.
 The path-star reduction and the forward-prediction shortcut are from
 \citet{hu2025}.
 
+\Cref{sec:state-tracking} summarizes \citet{huang2025}, Theorems 4.1 and
+5.1, Corollary 5.1, and Algorithms 1--2. Our $M$ is their vocabulary size
+$d$; our $r$ is their state count $n_y$. The accuracy in
+\cref{eq:state-tracking-accuracy} is their equation (5). The architectural,
+initialization, and distribution restrictions are in Section 3; the
+additional frozen FFN blocks and modified activation are in Assumptions
+B.1--B.2. These appendix restrictions matter when interpreting the main
+theorems' training claims. Their Theorem 2.1 discusses the complexity
+of the permutation task. \Cref{eq:state-tracking-rollout} records the
+elementary conversion to sampled whole-trace accuracy used in these notes.
+
 \Cref{ex:l8-activation-generalization} asks you to extend the fixed-parity
 argument to general activations. The Gaussian kernel expansion
 supplied in the exercise follows from the Hermite expansion identity in
 \citet{daniely2016}, Section 8.
+
+\Cref{ex:l8-parameter-sign-symmetry} contrasts the input-coordinate symmetry
+used in \cref{thm:classification} with a global parameter sign flip.
 
 \Cref{ex:l8-gradient-features} asks you to identify the derivative features
 whose label correlations determine a gradient step, and to quantify the
@@ -1268,12 +1547,28 @@ For a score $f$ and signed label $y\in\{-1,1\}$, the loss $[1-yf]_+$.
 \item[Intermediate supervision]
 Training labels reveal intermediate computations whose final result is the
 original target behavior.
+\item[Computation graph]
+A directed graph whose nodes are intermediate values or operations and whose
+edges specify which computed values are supplied to later operations.
 \item[Parameter derivative features]
 The coordinates of $\Phi_\theta(x)=\nabla_\theta N_\theta(x)$.
 Their label correlations determine the correlation-objective gradient.
 
 \item[Running parity]
 The partial XOR $z_i=b_1\oplus\cdots\oplus b_i$.
+\item[State tracking]
+Computing successive states $y_t=g_t(y_{t-1})$ from an initial state and
+a sequence of operations.
+\item[Simply transitive action]
+A group action for which exactly one group element sends any specified
+state to any other specified state.
+\item[Length curriculum]
+A training schedule that increases the sequence or context length across
+stages. In \cref{sec:state-tracking}, longer contexts train retrieval while
+the learned local update remains fixed.
+\item[Teacher-forced accuracy]
+The average probability of a correct next prediction when all supplied
+preceding answers are correct; see \cref{eq:state-tracking-accuracy}.
 
 \item[Streaming learner]
 A learner that processes examples in order while retaining a bounded state
@@ -1297,6 +1592,7 @@ the last update.
 \exerciseinstructions
 \setcounter{courseexercise}{0}
 \input{../exercises/l7-path-comparison.tex}
+\input{../exercises/l8-parameter-sign-symmetry.tex}
 \input{../exercises/l8-activation-generalization.tex}
 \input{../exercises/l8-parity-orthogonality.tex}
 \input{../exercises/l8-gradient-features.tex}
@@ -1386,6 +1682,13 @@ Edward S. Hu, Kwangjun Ahn, Qinghua Liu, Haoran Xu, Manan Tomar,
 Ada Langford, Dinesh Jayaraman, Alex Lamb, and John Langford.
 \newblock Learning to achieve goals with belief state transformers.
 \newblock 2025. \url{https://arxiv.org/abs/2410.23506}.
+
+\bibitem[Huang et al.(2025)]{huang2025}
+Yu Huang, Zixin Wen, Aarti Singh, Yuejie Chi, and Yuxin Chen.
+\newblock Transformers provably learn chain-of-thought reasoning with
+length generalization.
+\newblock Advances in Neural Information Processing Systems, 2025.
+\newblock Full version: \url{https://arxiv.org/abs/2511.07378}.
 
 \bibitem[Kim and Suzuki(2025)]{kim2025}
 Juno Kim and Taiji Suzuki.

@@ -1,0 +1,35 @@
+\begin{exercisechunk}
+\item \textbf{Equal margins preserve a signed-gradient ray.}\suppmark
+\label[exercise]{ex:l10-equal-margin-ray}
+\exerciseprofile{2}{2}{2}{\exproof\quad\excalculation\quad\exinterpretation}{%
+Recognize when coordinate normalization confines an adaptive method to one
+parameter ray.}
+Let $\mathbf X\in\R^{n\times d}$ have row $i$ equal to $x_i^\top$, let
+$y\in\{-1,1\}^n$, and define
+\[
+ s=\operatorname{sign}(\mathbf X^\top y).
+\]
+Assume $\mathbf Xs=cy$ for some $c>0$.
+\begin{enumerate}[(a),beginpenalty=10000]
+\item For a differentiable margin loss
+$L(w)=\sum_{i=1}^n\ell(y_i\langle w,x_i\rangle)$, prove that
+\[
+ \nabla L(\alpha s)=\ell'(c\alpha)\mathbf X^\top y.
+\]
+When $\ell'<0$, prove by induction that signed gradient descent initialized
+at zero remains on the ray $\{\alpha s:\alpha\ge0\}$.
+
+\item For the squared loss
+$Q(w)=\frac12\|\mathbf Xw-y\|_2^2$, prove
+\[
+ \nabla Q(\alpha s)=(c\alpha-1)\mathbf X^\top y.
+\]
+Explain why an adaptive update that divides each nonzero gradient coordinate
+by a matching coordinatewise magnitude also remains on the ray.
+
+\item Explain why replacing the denominator $|g_j|$ by $|g_j|+\epsilon$ for
+fixed $\epsilon>0$ generally breaks the exact ray calculation as the gradient
+vanishes. Contrast the consequences for a finite least-squares interpolant
+and for logistic loss on separable data.
+\end{enumerate}
+\end{exercisechunk}

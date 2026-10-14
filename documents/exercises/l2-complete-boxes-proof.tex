@@ -1,9 +1,15 @@
 % Shared exercise chunk: l2-complete-boxes-proof
 \begin{exercisechunk}
-\item \textbf{Completing the boxes proof.}
+\item \textbf{The memorization upper bound.}
 \label[exercise]{ex:complete-boxes-proof}
-Fill the gaps in the proof in \cref{sec:proof}, showing all details.
-Use the intermediate steps and ``why?'' questions in
-\cref{app:detailed-proof} as a guide, and the probability tools in
-\cref{app:probability} as needed.
+\exerciseprofile{2}{2}{2}{\exproof\quad\excalculation}{%
+Prove that randomized memorization attains error $\P(U)/2$ for every fixed
+target under an arbitrary joint sampling law.}
+Show that, for every fixed target $f$, randomized memorization satisfies
+\[
+ R(\cAmem,f)=\frac12\P(U).
+\]
+Use the corresponding
+intermediate steps and ``why?'' questions in \cref{app:detailed-proof} as a
+guide, and the probability tools in \cref{app:probability} as needed.
 \end{exercisechunk}

@@ -1,0 +1,65 @@
+\begin{exercisechunk}
+\item \textbf{Rates beyond PL.}\suppmark
+\label[exercise]{ex:l11-gradient-dominance}
+\exerciseprofile{2}{2}{2}{\exproof\quad\excalculation\quad\exinterpretation}{%
+Derive the polynomial rate produced by nonlinear gradient dominance and
+identify the exponent of a quartic objective.}
+Let $L:\R^d\to\R$ be differentiable and bounded below. Suppose gradient
+descent satisfies
+\[
+ L(\theta_{t+1})
+ \le L(\theta_t)-\frac\eta2\|\nabla L(\theta_t)\|_2^2
+\]
+for some $\eta>0$, and define
+\[
+ \Delta_t=L(\theta_t)-L^\star.
+\]
+Suppose that, throughout the initial sublevel set, constants $\mu>0$ and
+$\alpha\ge1$ satisfy
+\[
+ \frac12\|\nabla L(\theta)\|_2^2
+ \ge\mu\bigl(L(\theta)-L^\star\bigr)^\alpha.
+\]
+
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Prove
+\[
+ \Delta_{t+1}\le\Delta_t-\eta\mu\Delta_t^\alpha.
+\]
+
+\item Suppose $\alpha>1$ and $\Delta_0>0$. Prove that
+\[
+ \Delta_t
+ \le
+ \left(\Delta_0^{1-\alpha}
+       +\eta\mu(\alpha-1)t\right)^{-1/(\alpha-1)}.
+\]
+State the resulting power of $t$ in the asymptotic upper bound.
+
+\item Let $L(x)=x^4/4$, $x_0\ne0$, and
+$0<\eta\le1/(3x_0^2)$. Show that the gradient-descent iterates remain in
+$[-|x_0|,|x_0|]$, that $L$ is $3x_0^2$-smooth on this interval, and that
+\[
+ \frac12|L'(x)|^2=4L(x)^{3/2}.
+\]
+Deduce the explicit bound
+\[
+ L(x_t)
+ \le\left(L(x_0)^{-1/2}+2\eta t\right)^{-2}.
+\]
+
+\item \emph{Optional extension.}
+Suppose a $\beta$-smooth objective has a sequence of parameters whose
+positive objective gaps tend to zero. Prove that no constants $\mu>0$ and
+$\alpha<1$ can satisfy the displayed gradient-dominance inequality along
+this sequence.
+\end{enumerate}
+
+\begin{hints}
+For (b), put $s=\alpha-1$ and apply
+$(1-z)^{-s}\ge1+sz$ to the recurrence from part (a). For the optional
+extension, apply the descent lemma to
+$\theta-\nabla L(\theta)/\beta$ to obtain an upper bound on the squared
+gradient norm in terms of the objective gap.
+\end{hints}
+\end{exercisechunk}

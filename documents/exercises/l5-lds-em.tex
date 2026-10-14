@@ -1,0 +1,87 @@
+\begin{exercisechunk}
+\item \textbf{EM for a linear transition with Gaussian noise.}
+\label[exercise]{ex:l5-lds-em}
+\exerciseprofile{3}{3}{3}{\exproof\quad\excalculation}{%
+Derive the exact E- and M-steps for a Gaussian transition from the conditional
+moments of the hidden trajectory.}
+Use the density form of EM from \cref{ex:l5-continuous-em}. Let
+\(S_0,\ldots,S_T\in\R^d\). Relative to Lebesgue measure, suppose the
+transition density is
+\[
+ p_A(s_{t+1}\mid s_t)
+ =(2\pi\sigma^2)^{-d/2}
+ \exp\!\left(-\frac{\|s_{t+1}-As_t\|^2}{2\sigma^2}\right),
+ \qquad t=0,\ldots,T-1,
+\]
+where \(\sigma^2>0\) is fixed. Let \(p_0\) be the initial-state density
+and let \(g_\eta(z_t\mid s_t)\) be the observation density. Assume that
+neither depends on \(A\). Denote the joint law by \(Q_{A,\eta}\). Its
+complete-data density is
+\[
+ q_{A,\eta}(s_{0:T},z_{1:T})
+ =p_0(s_0)\prod_{t=0}^{T-1}p_A(s_{t+1}\mid s_t)
+   \prod_{t=1}^T g_\eta(z_t\mid s_t).
+\]
+Write its observed-data density as
+\[
+ m_{A,\eta}(z_{1:T})
+ =\int q_{A,\eta}(s_{0:T},z_{1:T})\,ds_{0:T}.
+\]
+Fix an observed sequence \(z_{1:T,\mathrm{obs}}\), and assume that
+\(m_{A_k,\eta_k}(z_{1:T,\mathrm{obs}})>0\) at every iteration. At iteration
+\(k\), let
+\[
+ \Pi_{k,\mathrm{obs}}(ds_{0:T})
+ =Q_{A_k,\eta_k}
+   (ds_{0:T}\mid Z_{1:T}=z_{1:T,\mathrm{obs}})
+\]
+be the conditional law of the entire hidden trajectory given the complete
+observed sequence. This is often called the \emph{smoothing distribution}.
+In contrast, a filtering distribution at time \(t\) conditions only on
+observations through time \(t\).
+
+For this fixed iteration and observed sequence, abbreviate the conditional
+means, covariances, and adjacent-state cross-covariances by
+\begin{align*}
+ \mu_t&=\E_{\Pi_{k,\mathrm{obs}}}[S_t],
+ &P_t&=\E_{\Pi_{k,\mathrm{obs}}}
+   [(S_t-\mu_t)(S_t-\mu_t)^\top],\\
+ P_{t,t+1}
+ &=\E_{\Pi_{k,\mathrm{obs}}}
+   [(S_t-\mu_t)(S_{t+1}-\mu_{t+1})^\top].
+\end{align*}
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Derive the density of \(\Pi_{k,\mathrm{obs}}\) with respect to
+Lebesgue measure on the hidden trajectory:
+\[
+ \pi_{k,\mathrm{obs}}(s_{0:T})
+ =\frac{q_{A_k,\eta_k}
+   (s_{0:T},z_{1:T,\mathrm{obs}})}
+ {m_{A_k,\eta_k}(z_{1:T,\mathrm{obs}})}.
+\]
+Identify the numerator and normalizing constant.
+
+\item Write one exact EM iteration for \((A,\eta)\): give its E-step and its
+M-step as an optimization of the expected complete-data log density under
+\(\Pi_{k,\mathrm{obs}}\). Then show that the part of this M-step objective
+that depends on \(A\) is
+\[
+ -\frac{1}{2\sigma^2}\sum_{t=0}^{T-1}
+   \E_{\Pi_{k,\mathrm{obs}}}[\|S_{t+1}-AS_t\|^2].
+\]
+\item Derive the following expression for each summand:
+\[
+ \E_{\Pi_{k,\mathrm{obs}}}[\|S_{t+1}-AS_t\|^2]
+ =\|\mu_{t+1}-A\mu_t\|^2+\operatorname{tr}(P_{t+1})
+  -2\operatorname{tr}(A P_{t,t+1})
+  +\operatorname{tr}(A^\top A P_t).
+\]
+\item Assume that
+\[
+ M_{k,\mathrm{obs}}
+ =\sum_{t=0}^{T-1}\E_{\Pi_{k,\mathrm{obs}}}[S_tS_t^\top]
+\]
+is invertible. Derive the exact M-step update for \(A\), expressed in
+terms of \(\mu_t,P_t\), and \(P_{t,t+1}\).
+\end{enumerate}
+\end{exercisechunk}
