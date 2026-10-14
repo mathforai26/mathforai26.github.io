@@ -37,11 +37,13 @@ difficulty from execution burden, and give the required calibration procedure.
 
 Place `\exerciseprofile` immediately after the exercise title and label:
 
+{% raw %}
 ```tex
 \exerciseprofile{2}{2}{2}{\exproof\quad\excalculation}{%
 Derive the forward recursion and explain why it avoids enumerating hidden
 trajectories.}
 ```
+{% endraw %}
 
 The first argument is difficulty: 1 is a direct application, 2 uses a familiar
 method, 3 combines several ideas, and 4 is a substantial challenge. The second
