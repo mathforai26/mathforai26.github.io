@@ -112,6 +112,11 @@
   {\setcounter{courseexercise}{\value{enumi}}\end{enumerate}}
 \newcommand{\exercisegroup}[1]{%
   \par\addvspace{0.8em}\noindent{\large\bfseries #1}\par\smallskip}
+% Some lecture preambles define this marker after loading the package. Delay the
+% fallback until the document begins so those established definitions remain
+% valid while exercise chunks can also be used without a lecture-local copy.
+\AtBeginDocument{%
+  \providecommand{\suppmark}{\texorpdfstring{\textsuperscript{*}}{*}}}
 \newenvironment{hints}
   {\par\addvspace{0.2cm}\noindent\textsc{Hints}\enspace\ignorespaces}
   {\par\addvspace{0.2cm}}

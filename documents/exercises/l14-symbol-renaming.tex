@@ -1,0 +1,62 @@
+\begin{exercisechunk}
+\item \textbf{Symbol renaming and external grounding.}
+\label[exercise]{ex:l14-symbol-renaming}
+\exerciseprofile{2}{2}{2}{\exproof\quad\exinterpretation}{%
+Separate invariance under symbol renaming from the external relation that
+assigns meanings to symbols.}
+This exercise gives a precise model of formal symbol manipulation. The model
+isolates what equality, copying, and lookup preserve, and the final parts state
+exactly what additional information a grounding relation supplies.
+
+Let \(\cS\) be a finite set of symbols. A \emph{symbolic input} \(x\) is an
+ordered finite collection of symbols together with zero or more finite tables
+of ordered pairs from \(\cS\times\cS\). A deterministic \emph{symbolic
+program} \(\cA\) has symbol registers and Boolean registers, contains no
+hard-coded element of \(\cS\), and may perform only the following operations:
+\begin{enumerate}[label=(\roman*),leftmargin=*]
+\item copy a symbol from an input location or symbol register;
+\item test whether two symbol registers contain the same symbol;
+\item use a symbol as a key in an input table with distinct keys and copy the
+corresponding value; and
+\item branch according to a Boolean register.
+\end{enumerate}
+Assume that \(\cA\) terminates and returns one symbol in \(\cS\) on every
+valid input.
+
+Let \(\pi:\cS\to\cS\) be a bijection. Define \(\pi x\) by replacing every
+symbol \(s\) occurring in \(x\), including every table key and value, by
+\(\pi(s)\), while preserving positions and table order. For an output symbol
+\(s\), the expression \(\pi(s)\) has its ordinary meaning: apply the map
+\(\pi\) to \(s\). The program \(\cA\) itself is unchanged.
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Prove that copying, equality testing, and table lookup commute with the
+renaming \(\pi\). State the corresponding relation for each operation.
+\item Prove by induction over the executed operations that
+\[
+ \cA(\pi x)=\pi\bigl(\cA(x)\bigr)
+ \qquad\text{for every valid symbolic input }x.
+\]
+\item Let \(\cS=\{s_0,s_1\}\) and let
+\(\cO=\{o_0,o_1\}\) be a set of external objects. A \emph{grounding} is a
+bijection \(g:\cS\to\cO\). Consider
+\[
+ g_0(s_i)=o_i,
+ \qquad
+ g_1(s_i)=o_{1-i},
+ \qquad i\in\{0,1\}.
+\]
+Fix one symbolic input \(x\), and suppose \(\cA\) receives neither \(g_0\)
+nor \(g_1\). Prove that \(\cA(x)\) cannot name the target object \(o_0\)
+under both groundings; that is, at least one of
+\[
+ g_0(\cA(x))=o_0,
+ \qquad
+ g_1(\cA(x))=o_0
+\]
+must fail.
+\item Explain how parts~(b) and (c) differ. Your explanation must identify
+what the renaming result proves, why the impossibility in part~(c) requires
+the grounding to be absent from the input, and what kind of additional input
+could break the ambiguity.
+\end{enumerate}
+\end{exercisechunk}

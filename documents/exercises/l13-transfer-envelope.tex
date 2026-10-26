@@ -1,0 +1,23 @@
+\begin{exercisechunk}
+\item \textbf{Sharpness of the transfer envelope.}
+\label[exercise]{ex:l13-transfer-envelope}
+\exerciseprofile{2}{1}{2}{\exproof\quad\exinterpretation}{%
+Show that the transfer envelope is the strongest target guarantee implied
+only by an average source representation-error bound.}
+Let $\Psi$ be the transfer envelope from \cref{eq:transfer-envelope}.
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Prove that $\Psi$ is nondecreasing and that
+$A_0(h)\le\Psi(\overline A(h))$ for every $h\in\cH$.
+\item Let $\phi:[0,\infty)\to[0,\infty)$ be nondecreasing and satisfy
+$A_0(h)\le\phi(\overline A(h))$ for every $h\in\cH$.
+Prove that $\Psi(u)\le\phi(u)$ for every $u\ge0$.
+When $\{h:\overline A(h)\le u\}$ is nonempty, prove that some feasible
+$h_u$ attains $A_0(h_u)=\Psi(u)$.
+Explain the precise worst-case statement established by these facts.
+\item In the target-feature example of \cref{sec:calibration-examples},
+compute $\Psi(0)$ and identify a maximizing representation.
+Give a joint source-ERM tie-breaking rule that always selects this
+representation. Explain why the value of $\Psi(0)$ does not imply that every
+source learner selects it.
+\end{enumerate}
+\end{exercisechunk}

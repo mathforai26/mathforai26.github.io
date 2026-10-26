@@ -1,0 +1,44 @@
+\begin{exercisechunk}
+\item \textbf{Comparing adaptive methods with tuned methods.}\suppmark
+\label[exercise]{ex:l12-tuned-comparisons}
+\exerciseprofile{2}{2}{3}{\excalculation\quad\exinterpretation}{%
+Compare the guarantees proved in the lecture with the corresponding bounds
+obtained by tuning the stepsizes in advance.}
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Suppose $M_{\mathrm{init}}\le\beta$. Compare
+\cref{thm:backtracking-pl,eq:backtracking-rejections} with gradient descent
+using the tuned stepsize $1/\beta$. Show that the guaranteed contraction factor
+changes from $1-\mu/\beta$ to $1-\mu/(\rho\beta)$ and that the search uses at
+most
+\[
+ \left\lceil\log_\rho\frac{\beta}{M_{\mathrm{init}}}\right\rceil
+\]
+additional objective evaluations.
+
+\item Define
+\[
+ S_T=\left(\sum_{t=1}^T\|g_t\|_2^2\right)^{1/2},
+ \qquad
+ S_i=\left(\sum_{t=1}^Tg_{t,i}^2\right)^{1/2}.
+\]
+Prove, for $a,b>0$, that
+\[
+ \inf_{\eta>0}\left\{\frac{a^2}{2\eta}+\frac{\eta b^2}{2}\right\}
+ =ab,
+ \qquad \eta^\star=\frac ab.
+\]
+Apply the identity to \cref{eq:fixed-eta-oco} and coordinatewise to prove
+\[
+ \inf_{\eta>0}
+ \left\{\frac{D^2}{2\eta}+\frac{\eta S_T^2}{2}\right\}=DS_T,
+ \qquad
+ \inf_{\eta_1,\ldots,\eta_d>0}
+ \sum_{i=1}^d\left(\frac{D_i^2}{2\eta_i}
+                    +\frac{\eta_iS_i^2}{2}\right)
+ =\sum_{i=1}^dD_iS_i.
+\]
+Use \cref{thm:scalar-adaptation,thm:adagrad-regret} to show that each adaptive
+upper bound is at most $3/2$ times its corresponding hindsight-tuned upper
+bound. Interpret a term with $S_i=0$ as an infimum over $\eta_i>0$.
+\end{enumerate}
+\end{exercisechunk}

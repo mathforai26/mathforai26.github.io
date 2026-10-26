@@ -1,0 +1,28 @@
+\begin{exercisechunk}
+\item \textbf{Finite-class zero-loss bound.}
+\label[exercise]{ex:l13-bounded-loss-consistency}
+\exerciseprofile{2}{2}{2}{\exproof\quad\excalculation\quad\exinterpretation}{%
+Extend the finite-class consistency argument from classification to bounded
+losses and independent observations with different laws.}
+Use the setup immediately preceding
+\cref{prop:independent-finite-class-consistency}.
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Let $Z$ be a random variable with values in $[0,1]$. Prove
+\[
+ \P(Z=0)\le 1-\E[Z].
+\]
+Show that equality holds when $Z$ takes values in $\{0,1\}$.
+\item For a fixed $f\in\cF$, use independence and part (a) to prove
+\[
+ \P\bigl(\ell(f(U_i),V_i)=0\text{ for every }i\in[m]\bigr)
+ \le e^{-m\overline R_m(f)}.
+\]
+\item Use a union bound to prove the probability statement in
+\cref{prop:independent-finite-class-consistency}. Your argument must apply to
+every choice among zero-training-loss members of $\cF$, including a randomized
+choice.
+\item Integrate the resulting tail bound to prove the expected-risk statement.
+Explain where the assumption that some $f^\star\in\cF$ has
+$R_i(f^\star)=0$ for every $i$ is used.
+\end{enumerate}
+\end{exercisechunk}

@@ -1,0 +1,32 @@
+\begin{exercisechunk}
+\item \textbf{Adaptive penalties and decoupled weight decay.}
+\label[exercise]{ex:l12-adamw-decoupling}
+\exerciseprofile{1}{1}{1}{\excalculation\quad\exinterpretation}{%
+Distinguish an adaptively preconditioned $\ell_2$ penalty from uniform weight
+decay.}
+Let $D_t$ be a positive diagonal matrix, let $g_t=\nabla L(x_t)$, and let
+$\alpha,\lambda>0$.
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Apply the adaptive update $x_{t+1}=x_t-\alpha D_t^{-1}\nabla F(x_t)$
+to
+\[
+ F(x)=L(x)+\frac\lambda2\|x\|_2^2.
+\]
+Show that
+\[
+ x_{t+1}=(I-\alpha\lambda D_t^{-1})x_t
+          -\alpha D_t^{-1}g_t.
+\]
+\item AdamW instead uses
+\[
+ x_{t+1}=(1-\alpha\lambda)x_t-\alpha D_t^{-1}g_t.
+\]
+State the necessary and sufficient condition on $D_t$ under which the two
+shrinkage maps coincide for every $x_t$. Explain what is decoupled in the
+AdamW update.
+\end{enumerate}
+\begin{hints}
+Differentiate the quadratic penalty. Compare the two matrices multiplying
+$x_t$.
+\end{hints}
+\end{exercisechunk}

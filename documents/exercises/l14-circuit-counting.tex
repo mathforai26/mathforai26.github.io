@@ -1,0 +1,52 @@
+\begin{exercisechunk}
+\item \textbf{Most Boolean functions require large circuits.}
+\label[exercise]{ex:l14-circuit-counting}
+\exerciseprofile{2}{2}{2}{\exproof\quad\excalculation\quad\exinterpretation}{%
+Use a counting argument to distinguish universal representation from efficient
+representation.}
+The Boolean universality theorem constructs a circuit for every Boolean
+function, but the theorem does not give a small circuit for every function.
+This exercise supplies the counting plan, so the task is to carry out its
+consequences rather than invent a circuit encoding.
+
+Fix \(r\) input bits. A circuit has \(s\) numbered gates in topological order.
+Each gate chooses one of the sixteen functions
+\(\{0,1\}^2\to\{0,1\}\), and each of its two ordered incoming wires may
+come from an input or an earlier gate. The circuit output may be any input or
+gate value. Let \(N_{r,s}\) be the number of Boolean functions representable
+by circuits with at most \(s\) gates.
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Prove the description-count bound
+\[
+ N_{r,s}
+ \le (s+1)(r+s)\bigl(16(r+s)^2\bigr)^s.
+\]
+The bound may count several descriptions of the same circuit or function.
+Explain why such overcounting does not invalidate the inequality.
+\item Define
+\[
+ s_r=\left\lfloor\frac{2^r}{16r}\right\rfloor.
+\]
+Show that, for all sufficiently large \(r\),
+\[
+ \log_2 N_{r,s_r}
+ \le 2r+3rs_r
+ \le 2r+\frac{3}{16}2^r
+ <2^r.
+\]
+You may use \(r+s_r\le2^r\) and \(4+2r\le3r\) once \(r\) is sufficiently
+large.
+\item There are \(2^{2^r}\) Boolean functions on \(r\) input bits. Deduce
+that some Boolean function requires more than \(s_r\) gates. Show further
+that the fraction of Boolean functions representable with at most \(s_r\)
+gates tends to zero as \(r\to\infty\).
+\item State what the argument establishes about circuit size and what it does
+not provide about an explicit hard Boolean function.
+\end{enumerate}
+\begin{hints}
+For part~(a), count descriptions gate by gate, using \(r+s\) as an upper
+bound on every predecessor choice, and then choose the output. For part~(b),
+take base-two logarithms before substituting \(s_r\). Part~(c) is a
+pigeonhole argument.
+\end{hints}
+\end{exercisechunk}

@@ -1,0 +1,33 @@
+\begin{exercisechunk}
+\item \textbf{Projection error is representation bias.}
+\label[exercise]{ex:l13-transfer-projection}
+\exerciseprofile{2}{2}{2}{\exproof\quad\excalculation\quad\exinterpretation}{%
+Derive the deterministic approximation term that enters the new-task transfer
+risk.}
+Let $B,\widehat B\in\R^{d\times k}$ have orthonormal columns, and define
+$P_B=BB^\top$, $\widehat P=\widehat B\widehat B^\top$, and
+\[
+ \delta=\|(I_d-\widehat P)B\|_{\mathrm{op}}.
+\]
+Fix an ambient task parameter $\theta\in\R^d$.
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Show that
+\[
+ \min_{b\in\R^k}\|\widehat Bb-\theta\|_2^2
+ =\|(I_d-\widehat P)\theta\|_2^2,
+\]
+and identify a minimizing vector $b$.
+\item If $\theta=Ba$, prove that
+\[
+ \|(I_d-\widehat P)\theta\|_2^2
+ \le\delta^2\|a\|_2^2.
+\]
+\item If $\theta=Ba+r$ with $B^\top r=0$, prove that
+\[
+ \|(I_d-\widehat P)\theta\|_2
+ \le\delta\|a\|_2+\|r\|_2.
+\]
+Identify which term is caused by estimating the shared subspace and which
+term is present even when $\widehat B=B$.
+\end{enumerate}
+\end{exercisechunk}

@@ -1,0 +1,41 @@
+\begin{exercisechunk}
+\item \textbf{Compose two input-specified lookup tables.}
+\label[exercise]{ex:l14-causal-lookup}
+\exerciseprofile{2}{2}{2}{\exproof\quad\excalculation\quad\exconstruction\quad\exinterpretation}{%
+Use the output of one associative lookup as the query for a second table.}
+Let
+\[
+ f:\{\mathtt a,\mathtt b\}\to\{1,2\},
+ \qquad
+ g:\{1,2\}\to\{\mathtt{red},\mathtt{blue}\}
+\]
+be specified by
+\[
+ f(\mathtt a)=2,\quad f(\mathtt b)=1,
+ \qquad
+ g(1)=\mathtt{red},\quad g(2)=\mathtt{blue}.
+\]
+The input sequence contains the tagged records
+\[
+ ((\mathtt F,\mathtt a,2),(\mathtt F,\mathtt b,1),
+  (\mathtt G,1,\mathtt{red}),(\mathtt G,2,\mathtt{blue}),
+  (\mathtt{QUERY},\mathtt b)).
+\]
+In one lookup round, the final position may form a query from its current
+state, equality-select one earlier tagged record, retrieve that record's
+value, and update its state. All lookups must be causal.
+\begin{enumerate}[(a),beginpenalty=10000]
+\item List the query, selected record, retrieved value, and updated final
+state in each of two rounds that return $g(f(\mathtt b))$. Compute the final
+answer.
+\item Let $\cD,\cV,\cW$ be finite sets, let $f:\cD\to\cV$ and
+$g:\cV\to\cW$, and suppose the input contains tagged records for both maps
+followed by a query $x\in\cD$. Assume the keys in each table are distinct.
+Give one two-round lookup program and prove that its output is $g(f(x))$ for
+every choice of the two tables and every allowed set size.
+\item Explain why the final query position cannot in general return
+$g(f(x))$ in one round under the stated one-record-per-round abstraction.
+Identify one change to the input representation that would make one-round
+retrieval possible.
+\end{enumerate}
+\end{exercisechunk}

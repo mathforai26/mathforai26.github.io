@@ -1,0 +1,31 @@
+\begin{exercisechunk}
+\item \textbf{Balancing variation-space approximation and estimation.}\suppmark
+\label[exercise]{ex:l15-bach-rate-balance}
+\exerciseprofile{2}{2}{2}{\excalculation\quad\exinterpretation}{%
+Recover the hidden-dimension exponent by balancing a variation-norm budget
+against approximation error.}
+Let
+\[
+ \beta=\alpha+\frac{s-1}{2},
+ \qquad
+ B_n(D)=A\left(\frac{D}{\sqrt n}+D^{-1/\beta}\log D\right),
+ \qquad D\geq e,
+\]
+where $A$ is independent of $D$ and $n$.
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Ignore the logarithmic factor and balance the two remaining terms.
+Derive the resulting choice of $D$ and rate in $n$.
+\item Restore the logarithm at the level of order notation and show that
+the rate is
+\[
+ \widetilde O\left(n^{-1/(2\alpha+s+1)}\right).
+\]
+For $\alpha=1$, compare the exponents for a one-dimensional projection and
+for a generic $d$-dimensional target.
+\item Explain why replacing $d$ by $s$ is an adaptation statement rather
+than a guarantee over the full $d$-dimensional smoothness class. Identify the
+continuous atom-selection optimization required by a conditional-gradient
+implementation and explain why the statistical analysis does not supply a
+polynomial-time algorithm for that optimization.
+\end{enumerate}
+\end{exercisechunk}

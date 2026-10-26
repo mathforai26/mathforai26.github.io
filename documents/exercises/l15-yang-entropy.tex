@@ -1,0 +1,31 @@
+\begin{exercisechunk}
+\item \textbf{What the universal entropy bound permits.}\suppmark
+\label[exercise]{ex:l15-yang-entropy}
+\exerciseprofile{3}{2}{3}{\exproof\quad\excalculation\quad\exinterpretation}{%
+Use the entropy exponent to distinguish permissible structural adaptation
+from an impossible uniform rate on a larger class.}
+Suppose a regression procedure has squared-risk success set $\cS_\gamma$ at
+rate $n^{-\gamma}$. The entropy theorem gives
+\[
+ M(\epsilon,\cS_\gamma)
+ \lesssim \epsilon^{-2(1-\gamma)/\gamma},
+ \qquad 0<\gamma<1.
+\]
+Assume that the packing entropy of an $r$-dimensional $\alpha$-smooth ball
+has order $\epsilon^{-r/\alpha}$.
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Substitute $\gamma_r=2\alpha/(2\alpha+r)$ into the entropy exponent and
+show that the upper bound matches the smoothness-ball entropy order.
+\item Consider all functions $x\mapsto g(W^\top x)$, where $g$ ranges over
+an $s$-dimensional $\alpha$-smooth ball and $W$ ranges over orthonormal
+$d\times s$ matrices. Suppose $d$ is fixed and that covering the possible
+orientations contributes $O(ds\log(1/\epsilon))$ to the entropy. Explain why
+the entropy theorem permits the rate $n^{-2\alpha/(2\alpha+s)}$ uniformly over
+all orientations.
+\item Show why the same $s$-dimensional rate cannot hold uniformly over a
+full $d$-dimensional smoothness ball when $s<d$.
+\item Explain how one procedure can adapt to several unknown smoothness
+levels without contradicting the entropy theorem. Your explanation should use
+rate-indexed success sets and constants in addition to asymptotic notation.
+\end{enumerate}
+\end{exercisechunk}

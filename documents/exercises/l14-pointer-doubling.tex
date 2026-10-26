@@ -1,0 +1,37 @@
+\begin{exercisechunk}
+\item \textbf{When does a reusable jump table reduce the total cost?}\suppmark
+\label[exercise]{ex:l14-pointer-doubling}
+\exerciseprofile{2}{2}{2}{\exproof\quad\excalculation\quad\exinterpretation}{%
+Count the preprocessing and query operations that the asymptotic depth
+comparison suppresses.}
+Let $p:\cD\to\cD$ be a self-map on a set of size $M$. Suppose full-attention
+preprocessing has constructed
+\[
+ q_\ell(u)=p^{2^\ell}(u),
+ \qquad \ell=0,\ldots,J,
+\]
+at every map-record position. Constructing each of
+$q_1,\ldots,q_J$ costs $M$ table updates.
+Count one application of a stored table entry to one key as one table lookup,
+and count the construction of one new $q_\ell(u)$ value as one table update.
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Let $K=\sum_{\ell=0}^J b_\ell2^\ell$, where
+$b_\ell\in\{0,1\}$. Prove that applying the maps $q_\ell$ for which
+$b_\ell=1$ returns $p^K(x)$ in any order. Deduce that the query uses
+$\sum_{\ell=0}^J b_\ell$ lookups.
+\item Consider the exhaustive batch containing one query for every
+$K\in\{0,\ldots,2^{J+1}-1\}$. Compute exactly the total number of lookups
+used by direct iteration and by the stored jump tables. Your answer should
+include the $MJ$ preprocessing updates in the jump-table total.
+\item Suppose instead that the same input map must answer $Q$ queries, each
+with iteration count
+$K_{\max}=2^{J+1}-1$ but possibly with a different initial state. Compute
+the total jump-table cost and the total direct-iteration cost. State an
+inequality on $M,Q,K_{\max}$ under which the jump tables use fewer total
+operations.
+\item Compare the exhaustive batch in part~(b) with the maximum-length batch
+in part~(c). Explain why a sequential-depth advantage
+does not by itself imply a reduction in the total number of table
+operations.
+\end{enumerate}
+\end{exercisechunk}

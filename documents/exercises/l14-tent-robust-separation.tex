@@ -1,0 +1,59 @@
+\begin{exercisechunk}
+\item \textbf{A robust separation from alternating tent-map labels.}
+\label[exercise]{ex:l14-tent-robust-separation}
+\exerciseprofile{3}{2}{3}{\exproof\quad\excalculation\quad\exinterpretation}{%
+Extend the exact folding separation to a quantitative classification-error
+lower bound.}
+The lecture proves that an exact shallow representation of an iterated tent
+map needs exponentially many hinges. This exercise shows that a shallow
+network also needs exponentially many pieces to obtain small error on a
+specified finite classification problem.
+
+Fix \(L\ge1\), put \(N=2^L\), and define
+\[
+ x_j=\frac{j+1/4}{N},
+ \qquad
+ y_j=\I\bigl(\tau^{\circ L}(x_j)\ge1/2\bigr),
+ \qquad j=0,\ldots,N-1.
+\]
+For a scalar function \(f\), define
+\[
+ \widehat y_j(f)=\I(f(x_j)\ge1/2),
+ \qquad
+ \operatorname{err}_L(f)
+ =\frac1N\sum_{j=0}^{N-1}\I\bigl(\widehat y_j(f)\ne y_j\bigr).
+\]
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Use the slopes and endpoint values of \(\tau^{\circ L}\) to prove
+\[
+ \tau^{\circ L}(x_j)
+ =\begin{cases}1/4,&j\text{ even},\\[1mm]3/4,&j\text{ odd},\end{cases}
+ \qquad
+ y_j=j\bmod2.
+\]
+\item Let \(\widehat y_0,\ldots,\widehat y_{N-1}\) be any binary sequence
+with \(R\) maximal constant runs. Prove that its number of disagreements with
+the alternating sequence \(0,1,0,1,\ldots\) is at least \((N-R)/2\).
+\item Suppose \(f\) is continuous and affine on at most \(K\) intervals.
+Prove that \(\widehat y_0(f),\ldots,\widehat y_{N-1}(f)\) has at most \(2K\)
+constant runs. Deduce
+\[
+ \operatorname{err}_L(f)
+ \ge \frac12-\frac{K}{2^L}.
+\]
+\item A one-hidden-layer scalar ReLU network with \(m\) hidden units is affine
+on at most \(m+1\) intervals. Prove that
+\[
+ \operatorname{err}_L(f)<\frac14
+ \quad\Longrightarrow\quad
+ m+1>2^{L-2}.
+\]
+Compare this necessary shallow width with the \(O(L)\)-unit deep
+representation of \(\tau^{\circ L}\).
+\end{enumerate}
+\begin{hints}
+For part~(b), count the errors inside each constant run separately. For
+part~(c), the superlevel set of an affine function on one interval is empty,
+the full interval, or an interval touching one endpoint.
+\end{hints}
+\end{exercisechunk}

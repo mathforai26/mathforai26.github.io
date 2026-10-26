@@ -1,0 +1,53 @@
+\begin{exercisechunk}
+\item \textbf{Barron approximation versus a fixed linear space.}
+\label[exercise]{ex:l15-barron-linear-comparison}
+\exerciseprofile{3}{2}{3}{\exproof\quad\excalculation\quad\exinterpretation}{%
+Prove the orthogonal-family lower-bound mechanism and compare it with
+target-dependent ridge approximation.}
+Let $e_1,\ldots,e_{2m}$ be orthonormal elements of a Hilbert space $\cH$,
+let $V\subseteq\cH$ satisfy $\dim(V)\leq m$, and let $P_V$ be the
+orthogonal projection onto $V$.
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Prove that
+\[
+ \sum_{j=1}^{2m}\|P_Ve_j\|_{\cH}^2\leq m.
+\]
+Conclude that some $j\in\{1,\ldots,2m\}$ satisfies
+\[
+ \inf_{v\in V}\|e_j-v\|_{\cH}\geq\frac1{\sqrt2}.
+\]
+\item Let $\cF\subseteq\cH$. Suppose that, for every $m\geq1$, there are
+$2m$ orthonormal elements $e_1,\ldots,e_{2m}$ such that
+$\rho_m e_j\in\cF$ for every $j$, where $\rho_m>0$. Prove that the
+Kolmogorov width satisfies
+\[
+ d_m(\cF;\cH)\geq\frac{\rho_m}{\sqrt2}.
+\]
+\item Assume that every $f\in\cB_C(Q)$ has an $m$-unit ridge
+approximation satisfying
+\[
+ \|f-f_m\|_2\leq 2C m^{-1/2},
+\]
+and that every fixed $m$-dimensional linear space $V_m$ satisfies
+\[
+ \sup_{f\in\cB_C(Q)}
+ \inf_{g\in V_m}\|f-g\|_2
+ \geq \kappa(C/d)m^{-1/d}.
+\]
+Give a sufficient width for the ridge approximation to attain error
+at most $\epsilon$. Give a necessary dimension for a fixed linear space to
+attain worst-case error at most $\epsilon$.
+\item Compare the dependence on $\epsilon$ when $d=2$ and when $d=20$.
+Which choices in the ridge approximation are allowed to depend on the
+target, and which choices in the linear lower bound are fixed?
+\item State why the comparison proves neither a smaller minimax regression
+risk for a neural-network estimator nor a contradiction with the minimax
+lower bound for a full $d$-dimensional smoothness ball. Identify the missing
+learning statement in the first case and the different target classes in the
+second case.
+\end{enumerate}
+\begin{hints}
+For part (a), expand $P_V$ in an orthonormal basis of $V$ and apply Bessel's
+inequality to each basis vector.
+\end{hints}
+\end{exercisechunk}

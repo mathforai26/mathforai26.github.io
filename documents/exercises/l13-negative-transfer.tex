@@ -1,0 +1,27 @@
+\begin{exercisechunk}
+\item \textbf{An exact negative-transfer threshold.}
+\label[exercise]{ex:l13-negative-transfer}
+\exerciseprofile{2}{2}{2}{\exproof\quad\excalculation\quad\exinterpretation}{%
+Determine when misspecification outweighs the variance saved by a known
+low-dimensional representation.}
+Assume the Gaussian new-task model of
+\cref{thm:exact-transfer-risk}. Let $n>d+1$, let $k<d$, and suppose the
+noise variance is $\sigma^2>0$ and the parameter is $\theta=Ba+r$,
+where $B^\top B=I_k$, $B^\top r=0$, and the known
+representation $B$ is used for transfer. Compare ordinary least squares in
+$\operatorname{span}(B)$ with ordinary least squares in $\R^d$.
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Use \cref{thm:exact-transfer-risk} to write the exact expected squared
+parameter error of the representation-restricted estimator and of the ambient
+estimator.
+\item Prove that the representation-restricted estimator has smaller expected
+error exactly when
+\[
+ \|r\|_2^2<\frac{\sigma^2(d-k)}{n-d-1}.
+\]
+\item Fix $r\ne0$. Explain how the comparison changes as $n$ grows. Also
+explain what happens to ambient least squares when $k+1<n<d$ and when
+$n\in\{d,d+1\}$. For the latter case, you may use the fact that the expected
+trace of the inverse Gaussian Gram matrix is infinite.
+\end{enumerate}
+\end{exercisechunk}

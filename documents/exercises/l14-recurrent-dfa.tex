@@ -1,0 +1,47 @@
+\begin{exercisechunk}
+\item \textbf{Construct a recurrent ReLU simulation of a finite automaton.}
+\label[exercise]{ex:l14-recurrent-dfa}
+\exerciseprofile{2}{2}{2}{\exproof\quad\exconstruction\quad\exinterpretation}{%
+Construct one fixed neural transition cell and distinguish its parameter count
+from the number of times it is executed.}
+The Turing-machine model separates finite control from external memory.
+This exercise constructs the finite-control part directly and shows how
+recurrence reuses one transition network for every input position.
+
+Let \(Q\) and \(\Sigma\) be finite sets, and let
+\(\delta:Q\times\Sigma\to Q\) be the transition function of a deterministic
+finite automaton. Encode \(q\in Q\) and \(a\in\Sigma\) by the one-hot vectors
+\(e_q\in\{0,1\}^{|Q|}\) and
+\(e_a\in\{0,1\}^{|\Sigma|}\).
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Construct a one-hidden-layer ReLU network
+\[
+ F:\R^{|Q|+|\Sigma|}\to\R^{|Q|}
+\]
+with at most \(|Q||\Sigma|\) hidden units and an affine output layer such
+that
+\[
+ F(e_q,e_a)=e_{\delta(q,a)}
+ \qquad(q\in Q,\ a\in\Sigma).
+\]
+Give all hidden-unit and output formulas.
+\item For an input string \(a_1\cdots a_T\), define
+\[
+ h_0=e_{q_0},
+ \qquad
+ h_t=F(h_{t-1},e_{a_t}),\qquad t\in[T].
+\]
+Prove that \(h_t\) is the one-hot encoding of the automaton state after
+reading \(a_1\cdots a_t\).
+\item Compare the recurrent implementation with a feedforward network obtained
+by unrolling \(T\) copies of \(F\). State separately how the number of distinct
+parameters, the number of executed cell evaluations, and the unrolled depth
+depend on \(T\).
+\end{enumerate}
+\begin{hints}
+On bit inputs, one ReLU can indicate that two specified coordinates are both
+one. If a second hint is needed, introduce one hidden unit for every pair
+\((q,a)\in Q\times\Sigma\), then collect the pairs that lead to the same next
+state.
+\end{hints}
+\end{exercisechunk}

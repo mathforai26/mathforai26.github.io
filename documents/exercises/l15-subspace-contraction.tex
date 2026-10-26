@@ -1,0 +1,43 @@
+\begin{exercisechunk}
+\item \textbf{Contraction toward a teacher subspace.}\suppmark
+\label[exercise]{ex:l15-subspace-contraction}
+\exerciseprofile{2}{2}{2}{\exproof\quad\excalculation\quad\exconstruction\quad\exinterpretation}{%
+Separate contraction of irrelevant weight components from recovery and
+prediction guarantees.}
+Use the population-gradient decomposition in
+\cref{eq:population-gradient-decomposition}. Let
+$U\in\R^{s\times d}$ satisfy $UU^\top=I_s$, set
+$\Pi_\perp=I_d-U^\top U$, and suppose population gradient descent satisfies
+\[
+ W^{(t+1)}=W^{(t)}-\eta\bigl(A_tW^{(t)}+D_tU\bigr),
+\]
+where $W^{(t)}\in\R^{m\times d}$, $D_t\in\R^{m\times s}$, and each
+$A_t\in\R^{m\times m}$ is symmetric with
+\[
+ \mu I_m\preceq A_t\preceq L I_m,
+ \qquad 0<\mu\leq L,\qquad 0<\eta\leq\frac1L.
+\]
+Define $W_\perp^{(t)}=W^{(t)}\Pi_\perp$.
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Prove
+\[
+ W_\perp^{(t+1)}=(I_m-\eta A_t)W_\perp^{(t)}.
+\]
+Identify the algebraic property that removes the term $D_tU$.
+\item Prove
+\[
+ \|W_\perp^{(t+1)}\|_{\mathrm F}
+ \leq(1-\eta\mu)\|W_\perp^{(t)}\|_{\mathrm F}
+\]
+and hence
+\[
+ \|W_\perp^{(T)}\|_{\mathrm F}
+ \leq e^{-\eta\mu T}\|W_\perp^{(0)}\|_{\mathrm F}.
+\]
+\item Give one matrix whose rows lie in the teacher subspace but do not span
+that subspace. Use the example to explain why
+$\|W_\perp^{(T)}\|_{\mathrm F}\to0$ does not prove recovery of every
+teacher direction. Then state which additional network quantities and error
+criterion would have to be controlled to obtain a prediction guarantee.
+\end{enumerate}
+\end{exercisechunk}

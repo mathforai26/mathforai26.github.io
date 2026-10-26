@@ -1,0 +1,47 @@
+\begin{exercisechunk}
+\item \textbf{The diagonal AdaGrad bound.}\suppmark
+\label[exercise]{ex:l12-adagrad-regret}
+\exerciseprofile{3}{3}{3}{\exproof\quad\excalculation\quad\exinterpretation}{%
+Derive a regret bound whose coordinate scales are determined by the observed
+gradients.}
+Let $\cX=\prod_{i=1}^d[a_i,b_i]$ with
+$D_i=b_i-a_i>0$. On round $t$, let $\ell_t:\cX\to\R$ be convex and let
+$g_t\in\partial\ell_t(x_t)$. Define
+\[
+ G_{t,i}=\left(\sum_{s=1}^t g_{s,i}^2\right)^{1/2},
+ \qquad
+ \eta_{t,i}=\frac{D_i}{G_{t,i}}
+\]
+when $G_{t,i}>0$. If $G_{t,i}=0$, leave coordinate $i$ unchanged. Otherwise
+update it by
+\[
+ x_{t+1,i}=\Pi_{[a_i,b_i]}(x_{t,i}-\eta_{t,i}g_{t,i}).
+\]
+\begin{enumerate}[(a),beginpenalty=10000]
+\item For nonnegative $a_1,\ldots,a_T$ and
+$A_t=\sum_{s=1}^ta_s$, prove
+\[
+ \sum_{t=1}^T\frac{a_t}{\sqrt{A_t}}\le2\sqrt{A_T},
+\]
+where a term with $A_t=0$ is defined to be zero.
+\item Fix $u\in\cX$. Prove for each coordinate that
+\[
+ \sum_{t=1}^T g_{t,i}(x_{t,i}-u_i)
+ \le\frac32D_iG_{T,i}.
+\]
+\item Use convexity to prove the regret bound
+\[
+ \sum_{t=1}^T\bigl(\ell_t(x_t)-\ell_t(u)\bigr)
+ \le\frac32\sum_{i=1}^dD_i
+       \left(\sum_{t=1}^Tg_{t,i}^2\right)^{1/2}.
+\]
+State how the right side differs from a bound based only on one worst-case
+gradient norm.
+\end{enumerate}
+\begin{hints}
+For (a), use
+$a_t/\sqrt{A_t}\le2(\sqrt{A_t}-\sqrt{A_{t-1}})$.
+For (b), use nonexpansiveness of interval projection and telescope with the
+nonincreasing stepsizes.
+\end{hints}
+\end{exercisechunk}

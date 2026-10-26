@@ -1,0 +1,30 @@
+\begin{exercisechunk}
+\item \textbf{Construct a two-round induction lookup.}
+\label[exercise]{ex:l14-induction-head}
+\exerciseprofile{2}{2}{2}{\exproof\quad\exconstruction\quad\exinterpretation}{%
+Show how one attention round constructs predecessor--current records and a
+second round uses those records for content-based retrieval.}
+An induction head retrieves the token that followed an earlier occurrence of
+the current token. The construction below expresses that mechanism as two
+causal lookup rounds and makes the dependency between the rounds explicit.
+
+Let \(x_1,\ldots,x_n\in\cS\), where \(n\ge3\). Assume that there is a unique
+index \(j\in[n-2]\) such that \(x_j=x_n\), and that no other index in
+\([n-1]\) contains \(x_n\). Initially, position \(i\) stores \(x_i\) and its
+position index. A round may use a fixed positional query or an equality query,
+retrieve one causal source state, and combine the retrieved value with the
+destination's residual state.
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Give a first causal round after which every position \(i\ge2\) stores
+the record \((x_{i-1},x_i)\). State the source selected at position \(i\) and
+the residual information retained there.
+\item Give a second causal round at position \(n\) that uses \(x_n\) as a key
+and returns \(x_{j+1}\). Identify the unique selected position.
+\item Prove that the two-round program returns the token following the unique
+earlier occurrence of \(x_n\) for every sequence satisfying the assumptions.
+\item Explain why the required key--value record is absent from the round-zero
+states. Under the stated one-source-per-round abstraction, identify the two
+dependent retrievals that prevent the same construction from being performed
+in one round.
+\end{enumerate}
+\end{exercisechunk}

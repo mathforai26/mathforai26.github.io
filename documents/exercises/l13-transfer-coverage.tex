@@ -1,0 +1,26 @@
+\begin{exercisechunk}
+\item \textbf{Coverage of a target and simultaneous task guarantees.}
+\label[exercise]{ex:l13-transfer-coverage}
+\exerciseprofile{2}{2}{2}{\exproof\quad\exinterpretation}{%
+Turn a quantitative source-to-target relation into useful guarantees for
+designated individual tasks.}
+Use the finite-class bounded-loss setup of the lecture, and suppose
+$\P\{\overline A(\widehat h)\le\varepsilon_{\rm src}\}
+\ge1-\delta_{\rm src}$.
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Suppose at least $\rho T$ source tasks have the same law as a fixed
+target $P_0$, where $0<\rho\le1$. Prove that
+$A_0(h)\le\overline A(h)/\rho$ for every $h$.
+Explain why the factor depends on the fraction of relevant source tasks,
+rather than their number alone.
+\item More generally, for targets $j=1,\ldots,q$, suppose known constants
+$\kappa_j,\beta_j\ge0$ satisfy
+$A_j(h)\le\kappa_j\overline A(h)+\beta_j$ for all $h$.
+Each target supplies $m_j$ fresh i.i.d.\ examples independent of the source
+data. Freeze $\widehat h$ and fit each head by exact ERM.
+Give a simultaneous bound on all $q$ excess risks with probability at least
+$1-\delta_{\rm src}-\delta_{\rm heads}$, assigning each head the same failure
+probability. Are the target datasets required to be independent of one
+another for your proof?
+\end{enumerate}
+\end{exercisechunk}

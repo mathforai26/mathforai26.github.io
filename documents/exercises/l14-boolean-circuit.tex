@@ -1,0 +1,22 @@
+\begin{exercisechunk}
+\item \textbf{Prove that unary gates cannot combine input bits.}
+\label[exercise]{ex:l14-boolean-circuit}
+\exerciseprofile{2}{2}{2}{\exproof\quad\exinterpretation}{%
+Identify the structural limitation of circuits whose gates have at most one
+input.}
+Let $r\geq2$. Consider a Boolean circuit with input bits
+$x_1,\ldots,x_r$ in which every gate has fan-in at most one. A zero-input
+gate may output a constant, and a one-input gate may apply any function
+$g:\{0,1\}\to\{0,1\}$. Fan-out is unrestricted.
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Prove by induction over a topological ordering of the circuit that the
+value at every gate is either constant or a function of one input coordinate
+$x_i$.
+\item Deduce that no such circuit computes
+$\operatorname{AND}(x_1,x_2)$ or
+$\operatorname{XOR}(x_1,x_2)$ on all four Boolean inputs.
+\item List all four functions $g:\{0,1\}\to\{0,1\}$. Explain why allowing
+every unary Boolean gate still does not give a functionally complete gate set
+for functions of two or more input bits.
+\end{enumerate}
+\end{exercisechunk}

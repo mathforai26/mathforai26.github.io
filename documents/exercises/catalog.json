@@ -1090,5 +1090,320 @@
     "number": 19,
     "file": "l11-td-lyapunov.tex",
     "group": "Root finding and Lyapunov functions"
+  },
+  {
+    "id": "l12-backtracking-quadratic",
+    "lecture": 12,
+    "number": 1,
+    "file": "l12-backtracking-quadratic.tex",
+    "group": "Unknown smoothness and acceleration"
+  },
+  {
+    "id": "l12-nesterov-equivalence",
+    "lecture": 12,
+    "number": 2,
+    "file": "l12-nesterov-equivalence.tex",
+    "group": "Unknown smoothness and acceleration"
+  },
+  {
+    "id": "l12-accelerated-restart",
+    "lecture": 12,
+    "number": 3,
+    "file": "l12-accelerated-restart.tex",
+    "group": "Unknown smoothness and acceleration"
+  },
+  {
+    "id": "l12-rotated-preconditioner",
+    "lecture": 12,
+    "number": 4,
+    "file": "l12-rotated-preconditioner.tex",
+    "group": "Adaptive geometry"
+  },
+  {
+    "id": "l12-adagrad-regret",
+    "lecture": 12,
+    "number": 5,
+    "file": "l12-adagrad-regret.tex",
+    "group": "Adaptive geometry"
+  },
+  {
+    "id": "l12-adam-forgetting",
+    "lecture": 12,
+    "number": 6,
+    "file": "l12-adam-forgetting.tex",
+    "group": "Adam and weight decay"
+  },
+  {
+    "id": "l12-adamw-decoupling",
+    "lecture": 12,
+    "number": 7,
+    "file": "l12-adamw-decoupling.tex",
+    "group": "Adam and weight decay"
+  },
+  {
+    "id": "l12-tuned-comparisons",
+    "lecture": 12,
+    "number": 8,
+    "file": "l12-tuned-comparisons.tex",
+    "group": "Comparing adaptive and tuned guarantees"
+  },
+  {
+    "id": "l13-bounded-loss-consistency",
+    "lecture": 13,
+    "number": 1,
+    "file": "l13-bounded-loss-consistency.tex",
+    "group": "Joint learning and transfer"
+  },
+  {
+    "id": "l13-sharing-cost",
+    "lecture": 13,
+    "number": 2,
+    "file": "l13-sharing-cost.tex",
+    "group": "Joint learning and transfer"
+  },
+  {
+    "id": "l13-transfer-envelope",
+    "lecture": 13,
+    "number": 3,
+    "file": "l13-transfer-envelope.tex",
+    "group": "Joint learning and transfer"
+  },
+  {
+    "id": "l13-transfer-coverage",
+    "lecture": 13,
+    "number": 4,
+    "file": "l13-transfer-coverage.tex",
+    "group": "Joint learning and transfer"
+  },
+  {
+    "id": "l13-label-reversal",
+    "lecture": 13,
+    "number": 5,
+    "file": "l13-label-reversal.tex",
+    "group": "Joint learning and transfer"
+  },
+  {
+    "id": "l13-task-diversity",
+    "lecture": 13,
+    "number": 6,
+    "file": "l13-task-diversity.tex",
+    "group": "Linear representations"
+  },
+  {
+    "id": "l13-moment-eigenspace",
+    "lecture": 13,
+    "number": 7,
+    "file": "l13-moment-eigenspace.tex",
+    "group": "Linear representations"
+  },
+  {
+    "id": "l13-transfer-projection",
+    "lecture": 13,
+    "number": 8,
+    "file": "l13-transfer-projection.tex",
+    "group": "Linear representations"
+  },
+  {
+    "id": "l13-negative-transfer",
+    "lecture": 13,
+    "number": 9,
+    "file": "l13-negative-transfer.tex",
+    "group": "Linear representations"
+  },
+  {
+    "id": "l14-symbol-renaming",
+    "lecture": 14,
+    "number": 1,
+    "file": "l14-symbol-renaming.tex",
+    "group": "Symbols and grounding"
+  },
+  {
+    "id": "l14-boolean-circuit",
+    "lecture": 14,
+    "number": 2,
+    "file": "l14-boolean-circuit.tex",
+    "group": "Boolean circuits and recurrent computation"
+  },
+  {
+    "id": "l14-boolean-invariants",
+    "lecture": 14,
+    "number": 3,
+    "file": "l14-boolean-invariants.tex",
+    "group": "Boolean circuits and recurrent computation"
+  },
+  {
+    "id": "l14-parity-dnf",
+    "lecture": 14,
+    "number": 4,
+    "file": "l14-parity-dnf.tex",
+    "group": "Boolean circuits and recurrent computation"
+  },
+  {
+    "id": "l14-circuit-counting",
+    "lecture": 14,
+    "number": 5,
+    "file": "l14-circuit-counting.tex",
+    "group": "Boolean circuits and recurrent computation"
+  },
+  {
+    "id": "l14-or-single-relu",
+    "lecture": 14,
+    "number": 6,
+    "file": "l14-or-single-relu.tex",
+    "group": "Boolean circuits and recurrent computation"
+  },
+  {
+    "id": "l14-recurrent-dfa",
+    "lecture": 14,
+    "number": 7,
+    "file": "l14-recurrent-dfa.tex",
+    "group": "Boolean circuits and recurrent computation"
+  },
+  {
+    "id": "l14-finite-precision",
+    "lecture": 14,
+    "number": 8,
+    "file": "l14-finite-precision.tex",
+    "group": "Boolean circuits and recurrent computation"
+  },
+  {
+    "id": "l14-tent-composition",
+    "lecture": 14,
+    "number": 9,
+    "file": "l14-tent-composition.tex",
+    "group": "Depth and symbolic dynamics"
+  },
+  {
+    "id": "l14-tent-robust-separation",
+    "lecture": 14,
+    "number": 10,
+    "file": "l14-tent-robust-separation.tex",
+    "group": "Depth and symbolic dynamics"
+  },
+  {
+    "id": "l14-tent-symbolic-dynamics",
+    "lecture": 14,
+    "number": 11,
+    "file": "l14-tent-symbolic-dynamics.tex",
+    "group": "Depth and symbolic dynamics"
+  },
+  {
+    "id": "l14-causal-lookup",
+    "lecture": 14,
+    "number": 12,
+    "file": "l14-causal-lookup.tex",
+    "group": "Lookup, attention, and associative memory"
+  },
+  {
+    "id": "l14-induction-head",
+    "lecture": 14,
+    "number": 13,
+    "file": "l14-induction-head.tex",
+    "group": "Lookup, attention, and associative memory"
+  },
+  {
+    "id": "l14-hopfield-attention",
+    "lecture": 14,
+    "number": 14,
+    "file": "l14-hopfield-attention.tex",
+    "group": "Lookup, attention, and associative memory"
+  },
+  {
+    "id": "l14-pointer-doubling",
+    "lecture": 14,
+    "number": 15,
+    "file": "l14-pointer-doubling.tex",
+    "group": "Lookup, attention, and associative memory"
+  },
+  {
+    "id": "l14-causal-order",
+    "lecture": 14,
+    "number": 16,
+    "file": "l14-causal-order.tex",
+    "group": "Lookup, attention, and associative memory"
+  },
+  {
+    "id": "l15-monte-carlo-sparsification",
+    "lecture": 15,
+    "number": 1,
+    "file": "l15-monte-carlo-sparsification.tex",
+    "group": "Integral representations and density"
+  },
+  {
+    "id": "l15-density-versus-rate",
+    "lecture": 15,
+    "number": 2,
+    "file": "l15-density-versus-rate.tex",
+    "group": "Integral representations and density"
+  },
+  {
+    "id": "l15-holder-bias-variance",
+    "lecture": 15,
+    "number": 3,
+    "file": "l15-holder-bias-variance.tex",
+    "group": "Integral representations and density"
+  },
+  {
+    "id": "l15-barron-linear-comparison",
+    "lecture": 15,
+    "number": 4,
+    "file": "l15-barron-linear-comparison.tex",
+    "group": "Adaptive atoms and fixed features"
+  },
+  {
+    "id": "l15-fixed-feature-strictness",
+    "lecture": 15,
+    "number": 5,
+    "file": "l15-fixed-feature-strictness.tex",
+    "group": "Adaptive atoms and fixed features"
+  },
+  {
+    "id": "l15-agop-subspace",
+    "lecture": 15,
+    "number": 6,
+    "file": "l15-agop-subspace.tex",
+    "group": "Recovering low-dimensional structure"
+  },
+  {
+    "id": "l15-wavelet-truncation",
+    "lecture": 15,
+    "number": 7,
+    "file": "l15-wavelet-truncation.tex",
+    "group": "Appendix-based extensions"
+  },
+  {
+    "id": "l15-approximate-greedy",
+    "lecture": 15,
+    "number": 8,
+    "file": "l15-approximate-greedy.tex",
+    "group": "Appendix-based extensions"
+  },
+  {
+    "id": "l15-noisy-finite-differences",
+    "lecture": 15,
+    "number": 9,
+    "file": "l15-noisy-finite-differences.tex",
+    "group": "Appendix-based extensions"
+  },
+  {
+    "id": "l15-subspace-contraction",
+    "lecture": 15,
+    "number": 10,
+    "file": "l15-subspace-contraction.tex",
+    "group": "Appendix-based extensions"
+  },
+  {
+    "id": "l15-bach-rate-balance",
+    "lecture": 15,
+    "number": 11,
+    "file": "l15-bach-rate-balance.tex",
+    "group": "Further results from the literature"
+  },
+  {
+    "id": "l15-yang-entropy",
+    "lecture": 15,
+    "number": 12,
+    "file": "l15-yang-entropy.tex",
+    "group": "Further results from the literature"
   }
 ]

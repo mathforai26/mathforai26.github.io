@@ -1,0 +1,48 @@
+\begin{exercisechunk}
+\item \textbf{Greedy approximation with an approximate oracle.}\suppmark
+\label[exercise]{ex:l15-approximate-greedy}
+\exerciseprofile{3}{2}{3}{\exproof\quad\excalculation\quad\exinterpretation}{%
+Determine how accurately a correlation oracle must be solved to preserve the
+$m^{-1/2}$ greedy approximation rate.}
+Use the setting of \cref{prop:greedy-oracle}. Thus
+$\|\phi\|_{\cH}\leq1$ for $\phi\in\cD$,
+$f\in\cK=B\,\overline{\operatorname{conv}}(\cD\cup-\cD)$, and $f_0=0$.
+At step $m\geq1$, write $r_{m-1}=f-f_{m-1}$ and suppose the oracle returns
+$\phi_m\in\cD\cup-\cD$ satisfying
+\[
+ \langle r_{m-1},B\phi_m\rangle_{\cH}
+ \geq
+ \sup_{\phi\in\cD\cup-\cD}
+ \langle r_{m-1},B\phi\rangle_{\cH}-\delta_m,
+\]
+where $\delta_m\geq0$. Set
+\[
+ f_m=\left(1-\frac1{m+1}\right)f_{m-1}
+     +\frac1{m+1}B\phi_m.
+\]
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Prove by induction that $f_m\in\cK$ and hence
+$\|B\phi_m-f_{m-1}\|_{\cH}\leq2B$.
+\item Prove the recursion
+\[
+ \|r_m\|_{\cH}^2
+ \leq
+ \left(1-\frac{2}{m+1}\right)\|r_{m-1}\|_{\cH}^2
+ +\frac{2\delta_m}{m+1}
+ +\frac{4B^2}{(m+1)^2}.
+\]
+\item Suppose that $\delta_m\leq B^2/(m+1)$ for every $m\geq1$.
+Prove by induction that
+\[
+ \|f-f_m\|_{\cH}^2\leq\frac{6B^2}{m+1}.
+\]
+\item State the required order of the oracle's additive accuracy at iteration
+$m$. Explain what the result controls and what additional information would
+be needed to turn the iteration bound into an arithmetic running-time bound
+for a continuous ridge dictionary.
+\end{enumerate}
+\begin{hints}
+For part (b), compare the approximate oracle value with the value of the
+linear functional at $f\in\cK$.
+\end{hints}
+\end{exercisechunk}

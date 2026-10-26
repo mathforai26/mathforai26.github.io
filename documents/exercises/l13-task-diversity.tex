@@ -1,0 +1,30 @@
+\begin{exercisechunk}
+\item \textbf{Many repeated tasks can hide a shared feature.}
+\label[exercise]{ex:l13-task-diversity}
+\exerciseprofile{2}{1}{2}{\exproof\quad\excalculation\quad\exinterpretation}{%
+Distinguish the number of source tasks from coverage of the shared feature
+directions.}
+Let $d=3$, $k=2$, and let every source-task head have the form
+$a_i=(c_i,0)^\top$, where $c_i\in\R$. Consider the two feature matrices
+\[
+ B=[e_1\ e_2]
+ \qquad\text{and}\qquad
+ \widetilde B=[e_1\ e_3].
+\]
+For either feature matrix, source task $i$ generates
+$Y=X^\top Ba_i+\varepsilon$, where $X\sim\cN(0,I_3)$ and the same independent
+noise law is used in both models.
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Prove that the joint law of $(X,Y)$ for every source task is identical
+under $B$ and $\widetilde B$.
+\item For uniform sampling from $M$ source tasks, compute the task-diversity
+matrix
+\[
+ D=\frac1M\sum_{i=1}^M a_ia_i^\top
+\]
+and its eigenvalues.
+\item Let the new-task head be $a_{\rm new}=(0,1)^\top$. Compute its ambient
+parameter under each feature matrix. Explain why no procedure using only the
+source data can determine which of these two new-task parameters is correct.
+\end{enumerate}
+\end{exercisechunk}

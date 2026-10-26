@@ -1,0 +1,27 @@
+\begin{exercisechunk}
+\item \textbf{When the AGOP recovers a multi-index subspace.}
+\label[exercise]{ex:l15-agop-subspace}
+\exerciseprofile{2}{2}{2}{\exproof\quad\excalculation\quad\exconstruction\quad\exinterpretation}{%
+Prove the population identity behind gradient-based dimension reduction and
+identify the nondegeneracy condition required for subspace recovery.}
+Let $X$ be a random vector in $\R^d$, let $W\in\R^{d\times s}$ have full
+column rank, and suppose $f(x)=g(W^\top x)$ with differentiable $g$. Assume
+the displayed expectations below are finite.
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Use the chain rule to prove
+\[
+ G_f:=\E[\nabla f(X)\nabla f(X)^\top]
+ =W G_g W^\top,
+ \qquad
+ G_g:=\E[\nabla g(W^\top X)\nabla g(W^\top X)^\top].
+\]
+\item Prove that $\operatorname{range}(G_f)\subseteq
+\operatorname{range}(W)$. Show that equality holds
+when $G_g$ is positive definite.
+\item Give an example in which $W$ has two columns but $G_f$ has rank one.
+What does the example say about recovering a declared index space from
+gradients? Explain why an arbitrary interpolant can have a different AGOP
+from the regression target and why a recursive feature machine therefore
+needs the AGOP of an accurate predictor.
+\end{enumerate}
+\end{exercisechunk}

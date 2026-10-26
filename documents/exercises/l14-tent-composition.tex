@@ -1,0 +1,36 @@
+\begin{exercisechunk}
+\item \textbf{Construct the exact shallow form of an iterated tent map.}
+\label[exercise]{ex:l14-tent-composition}
+\exerciseprofile{2}{2}{2}{\exproof\quad\excalculation\quad\exconstruction\quad\exinterpretation}{%
+Use slope changes to construct the smallest one-hidden-layer representation
+allowed by the affine-skip form.}
+Define the tent map on $[0,1]$ by
+\[
+ \tau(x)=\min\{2x,2-2x\}.
+\]
+Fix an integer $L\geq1$. You may use the lecture result that
+$\tau^{\circ L}$ is affine on the $2^L$ dyadic subintervals of $[0,1]$ and
+maps each subinterval onto $[0,1]$.
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Show that the slope of $\tau^{\circ L}$ on the interval
+$[j/2^L,(j+1)/2^L]$ is $(-1)^j2^L$. Use the slope changes at the interior
+dyadic points to derive
+\[
+ \tau^{\circ L}(x)
+ =2^Lx+2^{L+1}\sum_{j=1}^{2^L-1}(-1)^j
+ \operatorname{ReLU}\left(x-\frac{j}{2^L}\right),
+ \qquad x\in[0,1].
+\]
+\item Consider the one-hidden-layer form
+\[
+ f(x)=a_0+a_1x+
+ \sum_{r=1}^m c_r\operatorname{ReLU}(w_rx+b_r).
+\]
+Use part~(a) and the lecture's breakpoint lower bound to prove that the
+smallest $m$ for which this form can equal $\tau^{\circ L}$ on $[0,1]$ is
+exactly $2^L-1$.
+\item Compare the shallow representation from part~(b) with the membership
+$\tau^{\circ L}\in\cF_{L\text{-NN}}(3L)$. State separately how depth and
+the total number of hidden units scale with $L$ in the two constructions.
+\end{enumerate}
+\end{exercisechunk}

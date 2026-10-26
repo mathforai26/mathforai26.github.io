@@ -1,0 +1,62 @@
+\begin{exercisechunk}
+\item \textbf{Restarting acceleration under convex PL.}
+\label[exercise]{ex:l12-accelerated-restart}
+\exerciseprofile{2}{2}{3}{\exproof\quad\excalculation\quad\exinterpretation}{%
+Convert the accelerated convex rate into square-root condition-number
+dependence and adapt the restart length by geometric search.}
+Let $L:\R^d\to\R$ be $\beta$-smooth, convex, and $\mu$-PL, let
+$\kappa=\beta/\mu$, and suppose that its minimizer set $\Theta^\star$ is
+nonempty. You may use the quadratic-growth consequence of the PL inequality,
+\begin{equation}
+ \operatorname{dist}(z,\Theta^\star)^2
+ \le\frac2\mu\bigl(L(z)-L^\star\bigr).
+ \label{eq:ex-l12-pl-quadratic-growth}
+\end{equation}
+Here
+$\operatorname{dist}(z,\Theta^\star)
+=\inf_{\theta^\star\in\Theta^\star}\|z-\theta^\star\|_2$.
+Suppose that an
+accelerated method started from any $z$ produces, after $s\ge1$ iterations,
+an output $\mathsf A_s(z)$ satisfying
+\begin{equation}
+ L(\mathsf A_s(z))-L^\star
+ \le \frac{2\beta\operatorname{dist}(z,\Theta^\star)^2}{(s+1)^2}.
+ \label{eq:ex-l12-accelerated-rate}
+\end{equation}
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Prove
+\[
+ L(\mathsf A_s(z))-L^\star
+ \le \frac{4\kappa}{(s+1)^2}\bigl(L(z)-L^\star\bigr).
+\]
+\item Choose an integer epoch length $s$ that makes the multiplicative
+factor at most $1/2$. Starting each epoch from the preceding epoch's output,
+prove that $r$ epochs give objective gap at most
+$2^{-r}(L(\theta_0)-L^\star)$.
+\item Derive a total iteration bound of order
+\[
+ \sqrt\kappa\log\frac{L(\theta_0)-L^\star}{\epsilon}
+\]
+for reaching objective gap at most $\epsilon$. State which of the two
+inequalities used in part (a) comes from smoothness and convexity and which
+comes from the PL inequality.
+\item Suppose that $\kappa$ is unknown but $L^\star$ is available. From a
+fixed point $z$, try epoch lengths $s=1,2,4,\ldots$, restarting every trial
+from $z$, until
+\[
+ L(\mathsf A_s(z))-L^\star
+ \le\frac12\bigl(L(z)-L^\star\bigr).
+\]
+Prove that the first successful trial has $s<2\sqrt{8\kappa}$ and that all
+trials together use fewer than $2s$ gradient evaluations. If the successful
+epoch length is then reused, with each later epoch starting from the preceding
+epoch's output, derive the total bound
+\[
+ O\left(\sqrt\kappa\left(
+ 1+\log\frac{L(\theta_0)-L^\star}{\epsilon}\right)\right).
+\]
+\end{enumerate}
+\begin{hints}
+For part (b), require $(s+1)^2\ge8\kappa$.
+\end{hints}
+\end{exercisechunk}

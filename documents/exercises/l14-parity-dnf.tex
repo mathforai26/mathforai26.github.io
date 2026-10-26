@@ -1,0 +1,33 @@
+\begin{exercisechunk}
+\item \textbf{Parity requires exponentially many DNF terms.}\suppmark
+\label[exercise]{ex:l14-parity-dnf}
+\exerciseprofile{2}{1}{2}{\exproof\quad\exconstruction\quad\exinterpretation}{%
+Prove that changing the allowed representation can change parity from a
+linear-size computation to an exponential-size formula.}
+The parity function has a linear-size XOR circuit. This exercise proves that
+the same function has no comparably small disjunctive normal form, so the
+representation language is part of every size comparison.
+
+Fix an integer \(r\geq 1\), and let
+\[
+ \operatorname{PARITY}_r(x)
+ =x_1\oplus\cdots\oplus x_r,
+ \qquad x\in\{0,1\}^r.
+\]
+A \emph{term} is a conjunction of literals, where a literal is \(x_i\) or
+\(\operatorname{NOT}(x_i)\). A \emph{DNF} is a disjunction of terms. Terms
+containing both \(x_i\) and \(\operatorname{NOT}(x_i)\) may be removed because
+they are never satisfied.
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Prove that exactly \(2^{r-1}\) inputs have parity one.
+\item Let a satisfiable term occur in a DNF that computes
+\(\operatorname{PARITY}_r\). Prove that the term must contain a literal for
+every input coordinate. Deduce that the term is satisfied by at most one
+input.
+\item Prove that every DNF for \(\operatorname{PARITY}_r\) has at least
+\(2^{r-1}\) terms. Construct a DNF with exactly \(2^{r-1}\) terms, and
+therefore prove that the minimum number of terms is exactly \(2^{r-1}\).
+\item Explain why the lower bound concerns the DNF representation and does not
+contradict the existence of a linear-size XOR circuit.
+\end{enumerate}
+\end{exercisechunk}

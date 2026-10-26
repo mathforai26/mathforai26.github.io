@@ -1,0 +1,33 @@
+\begin{exercisechunk}
+\item \textbf{Invariants that prevent functional completeness.}
+\label[exercise]{ex:l14-boolean-invariants}
+\exerciseprofile{2}{2}{2}{\exproof\quad\exinterpretation}{%
+Use closure under composition to prove that two natural Boolean gate families
+are not functionally complete.}
+Functional completeness can fail because every available gate preserves a
+property that some target Boolean function violates. This exercise develops
+the monotone and affine invariants, two basic examples of that method.
+
+For \(x,y\in\{0,1\}^r\), write \(x\le y\) when \(x_i\le y_i\) for every
+\(i\). A Boolean function \(f\) is \emph{monotone} when
+\(x\le y\) implies \(f(x)\le f(y)\). A Boolean function is \emph{affine over
+\(\mathbb F_2\)} when it has the form
+\[
+ f(x)=c\oplus a_1x_1\oplus\cdots\oplus a_rx_r,
+ \qquad c,a_1,\ldots,a_r\in\{0,1\},
+\]
+where \(\oplus\) denotes addition modulo two.
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Prove that every circuit whose gates are monotone computes a monotone
+function. Deduce that \(\{\operatorname{AND},\operatorname{OR},0,1\}\) is
+not functionally complete.
+\item Prove that composing affine Boolean functions produces another affine
+Boolean function. Deduce that
+\(\{\operatorname{XOR},\operatorname{NOT},0,1\}\) is not functionally
+complete by proving that \(\operatorname{AND}\) is not affine.
+\item State the general obstruction illustrated by parts~(a)--(b). Explain why
+finding a composition-closed property shared by all available gates and
+violated by one Boolean function is sufficient to disprove functional
+completeness.
+\end{enumerate}
+\end{exercisechunk}

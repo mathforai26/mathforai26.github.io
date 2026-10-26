@@ -1,0 +1,10 @@
+\begin{exercisechunk}
+\item \textbf{One ReLU unit cannot compute OR.}
+\label[exercise]{ex:l14-or-single-relu}
+\exerciseprofile{2}{1}{1}{\exproof\quad\excalculation\quad\exinterpretation}{%
+Prove that one affine map followed by one ReLU cannot represent OR on the
+Boolean domain.}
+Let $g(x,y)=\operatorname{ReLU}(ax+by+c)$, where $a,b,c\in\R$.
+Prove that no choice of $a,b,c$ makes $g(x,y)$ equal to
+$\operatorname{OR}(x,y)$ for all $(x,y)\in\{0,1\}^2$.
+\end{exercisechunk}

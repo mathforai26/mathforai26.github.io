@@ -1,0 +1,50 @@
+\begin{exercisechunk}
+\item \textbf{Monte Carlo sparsification in a Hilbert space.}
+\label[exercise]{ex:l15-monte-carlo-sparsification}
+\exerciseprofile{2}{2}{3}{\exproof\quad\excalculation\quad\exinterpretation}{%
+Derive the $m^{-1/2}$ approximation rate and adapt the sampling law to
+nonuniform bounds on the dictionary atoms.}
+Let $\cH$ be a real Hilbert space, let $\|\phi_\theta\|_{\cH}\leq1$, and
+suppose
+\[
+ f=\int\phi_\theta\,d\mu(\theta),
+ \qquad B=\|\mu\|_{\TV}\in(0,\infty).
+\]
+Set $\pi=|\mu|/B$ and let $s=d\mu/d|\mu|$. Let
+$\Theta_1,\ldots,\Theta_m$ be independent random elements with common law
+$\pi$, and define
+\[
+ Z_j=B s(\Theta_j)\phi_{\Theta_j},
+ \qquad
+ \widehat f_m=\frac1m\sum_{j=1}^m Z_j.
+\]
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Prove that $\E[Z_j]=f$ and $\|Z_j\|_{\cH}\leq B$ almost surely.
+\item Expand $\E[\|\widehat f_m-f\|_{\cH}^2]$ using the inner product in
+$\cH$. Show that the cross terms vanish and conclude that
+\[
+ \E[\|\widehat f_m-f\|_{\cH}^2]\leq\frac{B^2}{m}.
+\]
+\item Identify the probabilistic-method step that proves the existence of a
+deterministic $m$-term approximation. Then identify two pieces of information
+that the construction uses but a learner observing noisy input--output pairs
+does not automatically possess.
+\item Suppose instead that $q:\Theta\to(0,\infty)$ is measurable,
+$\|\phi_\theta\|_{\cH}\leq q(\theta)$ for $|\mu|$-almost every $\theta$, and
+\[
+ A=\int_\Theta q(\theta)\,d|\mu|(\theta)<\infty.
+\]
+Let $\widetilde\pi$ be the probability measure defined by
+$d\widetilde\pi=q\,d|\mu|/A$. For independent
+$\widetilde\Theta_1,\ldots,\widetilde\Theta_m$ with common law
+$\widetilde\pi$, define
+\[
+ \widetilde Z_j
+ =A\,s(\widetilde\Theta_j)
+ \frac{\phi_{\widetilde\Theta_j}}{q(\widetilde\Theta_j)}.
+\]
+Prove that the average of the $\widetilde Z_j$ is unbiased for $f$ and has
+expected squared error at most $A^2/m$. State how the original construction
+is recovered as a special case.
+\end{enumerate}
+\end{exercisechunk}

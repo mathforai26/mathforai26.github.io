@@ -1,0 +1,1838 @@
+\documentclass[11pt,twoside]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{array}
+\usepackage[inline,shortlabels]{enumitem}
+\usepackage{xcolor}
+\usepackage{microtype}
+\usepackage{../exercises/course-exercises}
+
+% Revision date: maintained by scripts/build_lecture_notes.py. Keep this command.
+\newcommand{\lecturerevised}{2026-10-25 21:25 UTC-06:00}
+\usepackage{eso-pic}
+\AddToShipoutPictureBG{%
+  \AtPageLowerLeft{%
+    \put(\LenToUnit{0.5\paperwidth},\LenToUnit{0.5in}){%
+      \makebox(0,0){\normalfont\footnotesize\color{black!60}Last revised: \lecturerevised}%
+    }%
+  }%
+}
+
+\usepackage[square,authoryear]{natbib}
+\usepackage{xr-hyper}
+\usepackage[colorlinks=true,linkcolor=blue!60!black,
+  urlcolor=blue!60!black,citecolor=blue!60!black]{hyperref}
+\externaldocument[lecture2-]{lecture02}
+\hypersetup{
+  pdftitle={Lecture 13: Representation learning and transfer},
+  pdfauthor={Csaba Szepesvari}
+}
+\usepackage[nameinlink,capitalize]{cleveref}
+\crefname{exercise}{Exercise}{Exercises}
+\Crefname{exercise}{Exercise}{Exercises}
+
+\usepackage{enotez}
+\DeclareInstance{enotez-list}{lecture}{list}{format=\normalsize,number={#1.}}
+\setenotez{list-name=Endnotes,list-style=lecture,backref=true}
+\crefname{endnote}{Endnote}{Endnotes}
+
+\definecolor{courseblue}{HTML}{17365D}
+\newcommand{\E}{\mathbb E}
+\newcommand{\I}{\mathbb I}
+\renewcommand{\P}{\mathbb P}
+\newcommand{\R}{\mathbb R}
+\newcommand{\KL}{D}
+\newcommand{\TV}{\mathrm{TV}}
+\makeatletter
+\@for\@letter:=A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z\do{%
+  \expandafter\edef\csname c\@letter\endcsname{\noexpand\mathcal{\@letter}}}
+\makeatother
+\newcommand{\lecturenumber}{13}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{lemma}[theorem]{Lemma}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{example}[theorem]{Example}
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+
+\renewcommand{\thepage}{13--\arabic{page}}
+\renewcommand{\thesection}{13.\arabic{section}}
+\renewcommand{\theequation}{13.\arabic{equation}}
+\pagestyle{myheadings}
+\markboth{Lecture 13: Representation learning and transfer}
+{Lecture 13: Representation learning and transfer}
+
+\begin{document}
+
+\begin{center}
+\fcolorbox{courseblue}{white}{%
+\begin{minipage}{0.92\textwidth}
+\vspace{1mm}
+\textbf{CMPUT 654: Mathematical Foundations of Modern AI Systems}
+\hfill Fall 2026
+
+\vspace{3mm}
+\begin{center}
+{\Large\bfseries Lecture 13: Representation learning and transfer}
+
+\vspace{1mm}
+October 15, 2026
+\end{center}
+
+\vspace{2mm}
+\textit{Lecturer: Csaba Szepesv\'ari}
+\hfill
+\textit{Note prepared by: Csaba Szepesv\'ari}
+\vspace{1mm}
+\end{minipage}}
+\end{center}
+
+\noindent\textbf{Reading guide.}
+Neural networks, including language models, are often said to be powerful
+because they learn representations. This is usually contrasted with
+``linear'' methods where a feature map needs to be hand-picked
+for the method to work well.
+
+We first define representation-learning algorithms in the context of learning
+a map and connect the definition to neural networks. Representation learning
+has a clear formulation in the multitask setting: learn one feature map from
+several tasks, with a separate predictor for each task. We ask whether sharing
+reduces the samples needed to predict on those tasks. Transfer learning asks a
+further question: do the learned features help a new task? We give a
+finite-class analysis of each problem, then an efficient transfer algorithm
+for a linear model. The statistical and computational questions are separate:
+how much data suffices, and how can the learner compute useful features?
+
+The main results are the joint-ERM bounds in
+\cref{thm:consistent-multitask,thm:agnostic-multitask}, the separation from
+independent learning in \cref{prop:boxes-sharing}, and the transfer guarantees
+in \cref{thm:calibrated-transfer,cor:linear-transfer}. The proofs use the
+finite-class argument from Lecture 2 and concentration from Lecture 6.
+The examples also connect to parameter sharing in Lecture 4 and coverage in
+Lecture 7.
+
+\section{Representation learning}
+\label{sec:representation-learning}
+
+Let $\cX$ be an input space, $\cY$ a label space, and $\cZ$ a feature space.
+We consider learning a predictor $\cX\to\cY$ from $n$ labeled examples.
+
+\begin{definition}[Representation-learning algorithm]
+\label{def:representation-learning}
+Let $\cH$ be a class of maps $\cX\to\cZ$ and $\cG$ a class of maps
+$\cZ\to\cY$. A \emph{representation-learning algorithm}
+for sample size $n$ with representation
+class $\cH$ and head class $\cG$ is a map
+\[
+ \cA:(\cX\times\cY)^n\longrightarrow\cH\times\cG.
+\]
+\end{definition}
+
+
+Writing $\cA(S)=(h_S,g_S)$, the learner returns a \emph{representation} (map)
+$h_S$ and a \emph{head} $g_S$. The resulting predictor is
+$\widehat f_S=g_S\circ h_S$. For example, $h_S$ can compute a neural
+network's hidden features and $g_S$ can classify using those features.
+As can be seen from the definition, the main distinctive feature of a representation
+learner is the signature of the underlying map. Namely,
+that it returns a map that is explicitly decomposed into two maps. This definition
+is meant to capture the essence of these methods and as such is a bit oversimplified.
+Every supervised learning algorithm is a trivial representation learner:
+Just choose $\cZ = \cX$, $\cH$ consist of the $\cX \to \cX$ identity map.
+Of course,
+we are more interested in nontrivial representation learners, for which for at least
+some sample $S\in (\cX\times \cY)^n$, $h_S$ is not the identity map (if $\cZ = \cX$).
+
+Our primary interest in representation learning is to gain insight
+into why learning with neural networks is special as compared to simpler alternatives.
+To explain this connection recall that a feedforward neural network is
+given by a directed (computation) graph, with nodes performing simple computation
+over the information sent to them along the edges ending at them,
+where learning changes the actual computation performed.
+Now, take any minimum-size
+cut that separates the inputs (sources of the graph) from the outputs (sinks of the graph):
+This is a set of nodes such that removing this set, no input is connected to no output,
+while no subset of this set of nodes has the same property.
+If the nodes form a layered graph (with respect to distance to inputs), as
+it happens for example, in multi-layered networks, any node set in a layer
+will be such cut. The map determined by the part of the computation graph up to the cut
+defines $h:x\mapsto z$; the remaining computation defines
+$g:z\mapsto\widehat y$, while the whole network computes $g\circ h$.
+
+It follows that neural networks are in a way ``super representation learners'':
+They are considering many compositional maps simultaneously (corresponding to all possible
+cuts) and I suspect this is one of their strengths. However, for the sake
+of this lecture we stick to a simpler view that ignores this multi-representation
+learning aspect, focusing on just a one-way decomposition of the target
+function.
+
+% TODO: This is at a bad spot; at one point we want to write about
+% how within a single task we often have multiple ``implicit'' tasks.
+% For example, in a language model, the input sequences may come from
+% different languages, natural or artificial. Here, learning each
+% language can be considered its own task. But what can go even deeper
+% and argue that in language modeling you need to learn grammar,
+% and semantics, which are different tasks. It is is not entirely
+% clear though how this maps to our simple definition of representation
+% learning.
+%
+% Shared features also occur within a single prediction problem. In a
+% multiclass classifier, class scores $s_c=g_c(h(x))$ use a common
+% representation. Softmax cross-entropy couples the scores through the loss
+% \[
+%  \ell(s,y)=-s_y+\log\sum_c e^{s_c}.
+% \]
+% The class-specific score functions are trained through this joint loss.
+% In autoregressive language modeling, the same network computes features
+% across contexts and sequence positions, as in Lectures 1 and 4.
+
+\section{Multitask learning}
+\label{sec:multitask-learning}
+The usefulness of representation learning is easiest to argue for
+when the learner needs to solve multiple prediction problems,
+that share a common representation. In this section
+we study this problem
+in \emph{multitask learning},
+where a learner needs to find predictors for several tasks and
+is evaluated on those tasks.
+We extend the learner's output to one
+representation and $T$ heads. The shared-map, separate-head structure makes
+it easy to articulate  the potential benefits of learning a shared representation.
+
+\subsection{The learning problem}
+\label{sec:setup}
+
+The learner receives labeled data from each task of the $t\in [T]$ tasks
+and returns a predictor for
+each task. For the first statistical comparison, take $\cH$ and $\cG$ to be
+finite and nonempty. The finite-class model isolates the accounting created
+by a shared representation: the representation complexity is paid once
+across tasks, while the head complexity is paid once per task. More general
+representation-class bounds replace logarithmic cardinalities by other
+complexity measures and retain this separation.
+Such class-level bounds characterize the statistical behavior of the class.
+Explaining which representation neural-network training selects from a large
+architecture class additionally requires properties of the training procedure
+and the learned representation. The same selection problem is central to
+neural-network generalization theory beyond multitask and representation
+learning.
+In the Gaussian linear model studied later,
+we analyze an explicit representation-learning strategy
+and identify what an algorithm-level guarantee requires.
+
+Let  $P_1,\ldots,P_T$ on $\cX\times\cY$ be the data-generating laws of the
+individual $T$ tasks.
+For each task $t\in [T]$, the sample is
+\[
+ S_t=((X_{t1},Y_{t1}),\ldots,(X_{tn},Y_{tn}))\sim P_t^{\otimes n}.
+\]
+All $nT$ pairs are independent.
+The task identity of each example is given.\endnote{
+We choose the multi-task setting of \cref{sec:setup}  where the task
+identities are known and different heads needs to be learnt for each task
+for pedagogical reasons.
+An alternative, and in many ways more common scenario, is
+when the data is not grouped based on tasks (thus the
+information of which task a given example belongs to is hidden)
+and/or the same
+head is to be used across all the tasks.
+Examples abound; one obvious case is language modeling
+with multiple languages (e.g., English, German, Hungarian, Chinese, Python, Java, $\dots$).
+In these domain-agnostic (or task-agnostic) setting,
+the representation learnt could separate the language agnostic
+content from the language identity,
+thus making the learning of the head across many different
+languages more efficient.
+}
+The laws may differ, including their input marginals.
+No statistical model over the tasks is assumed.
+
+Let $\ell:\cY\times\cY\to[0,1]$ be a loss. Write
+\begin{equation}
+ R_t(f)=\int\ell(f(x),y)\,P_t(dx,dy),
+ \qquad
+ R_{S_t}(f)=\frac1n\sum_{j=1}^n\ell(f(X_{tj}),Y_{tj}).
+ \label{eq:task-risks}
+\end{equation}
+A sample in the subscript marks an empirical risk: $R_t$ is computed from the
+law $P_t$, while $R_{S_t}$ is computed from the sample $S_t$. Write
+$S=(S_1,\ldots,S_T)$ for the entire source sample.
+For an output $(h,\boldsymbol g)\in\cH\times\cG^T$, with
+$\boldsymbol g=(g_1,\ldots,g_T)$, the task-$t$ predictor is $g_t\circ h$.
+We evaluate the output by its average population risk and use the
+corresponding empirical risk for training:
+\begin{equation}
+ \overline R(h,\boldsymbol g)=\frac1T\sum_{t=1}^T R_t(g_t\circ h),
+ \qquad
+ \overline R_S(h,\boldsymbol g)
+ =\frac1T\sum_{t=1}^T R_{S_t}(g_t\circ h).
+ \label{eq:average-risks}
+\end{equation}
+A bar marks an average over the $T$ source tasks, and a hat marks a quantity
+returned by a learner, such as the pair $(\widehat h,\widehat{\boldsymbol g})$
+defined next.
+Joint empirical risk minimization chooses one representation and all the heads:
+\begin{equation}
+ (\widehat h,\widehat{\boldsymbol g})
+ \in\mathop{\rm argmin}_{h\in\cH,\ \boldsymbol g\in\cG^T}
+       \overline R_S(h,\boldsymbol g).
+ \label{eq:joint-erm}
+\end{equation}
+Independent learning instead chooses a separate $(h_t,g_t)$ for every task.
+
+Whether joint learning offers a statistical advantage over independent
+learning depends on the head class \(\mathcal G\).
+An unrestricted head could undo
+the statistical restriction imposed by $h$. The intended regime has a rich
+representation class and a relatively simple head class:
+$\ln|\cH|$ is large compared with $\ln|\cG|$.
+
+\subsection{The statistical benefit of sharing}
+\label{sec:joint-statistics}
+
+We first compare joint and separate learning when one representation permits
+perfect prediction on all tasks. We then allow an approximation cost for
+requiring a common representation.
+
+\subsubsection{Realizable bounded losses}
+
+Suppose one representation $h^\star\in\cH$ and heads
+$g_1^\star,\ldots,g_T^\star\in\cG$ achieve zero risk on every source task.
+Because the loss is nonnegative, every source loss of this predictor tuple
+equals zero almost surely. Joint ERM therefore has zero empirical loss almost
+surely. The consistency argument from
+\cref{lecture2-thm:finite-class-consistency} extends as follows to the bounded
+loss from \cref{sec:setup} and to independent observations whose laws may
+differ.
+
+Let $\cF$ be a finite nonempty class of predictors from $\cU$ to $\cY$.
+Let $(U_1,V_1),\ldots,(U_m,V_m)$ be independent, not necessarily identically
+distributed, and let $\ell:\cY\times\cY\to[0,1]$. For $f\in\cF$, define
+\[
+ R_i(f)=\E[\ell(f(U_i),V_i)],
+ \qquad
+ \overline R_m(f)=\frac1m\sum_{i=1}^m R_i(f).
+\]
+Suppose some $f^\star\in\cF$ satisfies $R_i(f^\star)=0$ for every $i\in[m]$.
+On the same experiment, let $\widehat f$ be an $\cF$-valued random predictor
+with
+\[
+ \ell(\widehat f(U_i),V_i)=0
+ \qquad\text{for every }i\in[m]
+\]
+almost surely. Such a predictor exists because $R_i(f^\star)=0$ and the loss
+is nonnegative.
+
+\begin{proposition}[Finite-class zero-loss bound]
+\label{prop:independent-finite-class-consistency}
+For every $\delta\in(0,1)$,
+\[
+ \P\left\{
+ \overline R_m(\widehat f)
+ \le \frac{\ln|\cF|+\ln(1/\delta)}{m}
+ \right\}\ge1-\delta.
+\]
+Moreover,
+\[
+ \E[\overline R_m(\widehat f)]
+ \le \frac{\ln|\cF|+1}{m}.
+\]
+\end{proposition}
+
+\Cref{ex:l13-bounded-loss-consistency} asks you to prove the proposition. The
+key inequality is
+\[
+ \P\bigl(\ell(f(U_i),V_i)=0\bigr)\le 1-R_i(f),
+\]
+which follows from $0\le\ell\le1$. For $0$--$1$ loss, the inequality is an
+equality and the proposition reduces to the usual consistency bound.
+
+To apply the proposition, augment each input with its task identity and
+consider the class
+\[
+ \cF_{\rm joint}
+ =\{(t,x)\mapsto g_t(h(x)):
+       h\in\cH,\ (g_1,\ldots,g_T)\in\cG^T\}.
+\]
+The class has cardinality at most $|\cH||\cG|^T$. For the $nT$ augmented
+observations $((t,X_{tj}),Y_{tj})$, the quantity $\overline R_{nT}$ in
+\cref{prop:independent-finite-class-consistency} equals
+$\overline R(h,\boldsymbol g)$.
+The subscripts $\mathrm{src}$ and $\mathrm{trg}$ used below abbreviate source
+and target.
+For $\delta\in(0,1)$, put
+\[
+ a_{\rm src}(\delta)
+ =\frac{\ln|\cH|+T\ln|\cG|+\ln(1/\delta)}{nT}.
+\]
+
+\begin{theorem}[Joint zero-loss bound]
+\label{thm:consistent-multitask}
+Under the zero-risk source assumption above, let
+$(\widehat h,\widehat{\boldsymbol g})$ be any predictor tuple with zero loss
+on every source example. For $0<\delta<1$,
+\begin{equation}
+ \P\left\{
+ \overline R(\widehat h,\widehat{\boldsymbol g})
+ \le a_{\rm src}(\delta)
+ \right\}\ge1-\delta.
+ \label{eq:consistent-multitask}
+\end{equation}
+The expected average risk also satisfies
+\begin{equation}
+ \E[\overline R(\widehat h,\widehat{\boldsymbol g})]
+ \le \frac{\ln|\cH|+T\ln|\cG|+1}{nT}.
+ \label{eq:expected-multitask}
+\end{equation}
+\end{theorem}
+
+\begin{proof}
+Apply \cref{prop:independent-finite-class-consistency} with
+$m=nT$ and $|\cF_{\rm joint}|\le|\cH||\cG|^T$.
+\end{proof}
+
+The bound separates the two statistical costs:
+\[
+ a_{\rm src}(\delta)
+ =\underbrace{\frac{\ln|\cH|}{nT}}_{\text{one shared representation}}
+  +\underbrace{\frac{\ln|\cG|}{n}}_{\text{one head per task}}
+  +\frac{\ln(1/\delta)}{nT}.
+\]
+For the comparison below, write
+\[
+ \overline R_{\rm shared}
+ :=\overline R(\widehat h,\widehat{\boldsymbol g})
+\]
+for the risk of the shared learner's output. Independent learning returns a
+separate pair $(\widehat h_t^{\rm ind},\widehat g_t^{\rm ind})\in
+\cH\times\cG$ for each task $t$; define its average risk by
+\[
+ \overline R_{\rm independent}
+ :=\frac1T\sum_{t=1}^T
+ R_t(\widehat g_t^{\rm ind}\circ\widehat h_t^{\rm ind}).
+\]
+The class of independent predictor tuples has size at most
+$(|\cH||\cG|)^T$. The same finite-class result gives the sufficient bound
+\begin{equation}
+ \P\left\{
+ \overline R_{\rm independent}
+ \le \frac{\ln|\cH|+\ln|\cG|}{n}
+       +\frac{\ln(1/\delta)}{nT}
+ \right\}\ge1-\delta.
+ \label{eq:independent-upper}
+\end{equation}
+Thus the representation term in the shared upper bound is smaller by a
+factor of $T$. Comparing upper bounds is a useful first comparison. The next
+example also gives a lower bound for independent learning.
+
+Lecture 4 analyzed pooling across positions when parameters are shared.
+Here the pooled object is a feature map rather than a single probability.
+In both cases the statistical gain depends on a restriction that is correct
+for the tasks being pooled.
+
+\subsubsection{An example where sharing provably helps}
+\label{sec:boxes-sharing}
+
+Return to Lecture 2's boxes. Let $\cX=[d]$ with $d\ge2$. An unknown map
+$h^\star:[d]\to\{0,1\}$ assigns a bit to every box.
+Task $t$ has an unknown bit $b_t$ and label
+\begin{equation}
+ Y=h^\star(X)\mathbin{\oplus} b_t,
+ \qquad X\text{ uniform on }[d],
+ \label{eq:label-reversal-model}
+\end{equation}
+where $\oplus$ denotes addition modulo two. All training inputs are
+independent. Choose all $2^d$ Boolean maps as $\cH$ and the two heads
+$g_b(z)=z\oplus b$ as $\cG$.
+
+\begin{proposition}[Shared boxes versus independent learning]
+\label{prop:boxes-sharing}
+Joint ERM in this model has
+\begin{equation}
+ \E[\overline R_{\rm shared}]
+ \le \frac{(d+T)\ln2+1}{nT}.
+ \label{eq:boxes-shared-upper}
+\end{equation}
+For any collection of learners whose task-$t$ predictor uses only $S_t$
+and independent randomization, there is a fixed choice of
+$(h^\star,b_1,\ldots,b_T)$ for which
+\begin{equation}
+ \E[\overline R_{\rm independent}]
+ \ge \frac12\left(1-\frac1d\right)^n.
+ \label{eq:boxes-independent-lower}
+\end{equation}
+\end{proposition}
+
+\begin{proof}
+The upper bound is \cref{eq:expected-multitask}.
+For the lower bound, set every $b_t=0$ and temporarily draw the $d$ values of
+$h^\star$ independently as fair bits, independently of all inputs and learner
+randomization. A fresh uniform test box is absent from $S_t$ with
+probability $(1-1/d)^n$. Conditional on that event and the task-$t$ data,
+its bit remains fair. Every task-$t$ prediction therefore has conditional
+error $1/2$ on the event. Average over tasks and then over the random map.
+At least one fixed map has average expected error at least the displayed
+lower bound.
+\end{proof}
+
+For a fixed error tolerance $\varepsilon>0$, the shared upper bound shows
+that
+\[
+ n\ge
+ \left\lceil\frac{(d+T)\ln2+1}{\varepsilon T}\right\rceil
+\]
+examples per task suffice to make
+$\E[\overline R_{\rm shared}]\le\varepsilon$. Thus
+$O(1+d/T)$ examples per task suffice for any fixed tolerance. In contrast,
+independent learning needs $n=\Omega(d)$ to guarantee a fixed small tolerance
+uniformly over this family.
+For example, Bernoulli's inequality gives an independent-learning error of
+at least $1/4$ whenever $n\le d/2$. When $T$ is of order $d$, the shared
+upper bound can be made smaller than $1/4$ with a constant $n$.
+These are statistical statements; enumerating all representations need not
+be computationally efficient.
+
+\subsubsection{Misspecification and joint ERM}
+
+We now allow arbitrary task laws and any loss in $[0,1]$. Define
+\begin{equation}
+ R_t^\star=\min_{h\in\cH,\ g\in\cG}R_t(g\circ h),
+ \qquad
+ A_t(h)=\min_{g\in\cG}R_t(g\circ h)-R_t^\star.
+ \label{eq:representation-error}
+\end{equation}
+The quantity $A_t(h)\ge0$ is the extra risk imposed by using representation
+$h$, even with its best head. The benchmark $R_t^\star$ allows task $t$ its
+own representation. It need not equal Bayes risk: the composite class itself
+may be misspecified.
+
+Write
+\begin{equation}
+ \overline A(h)=\frac1T\sum_{t=1}^T A_t(h),
+ \qquad
+ \Delta_{\rm share}=\min_{h\in\cH}\overline A(h).
+ \label{eq:sharing-cost}
+\end{equation}
+The number $\Delta_{\rm share}$ is the approximation cost of requiring one
+representation. Because the heads can be chosen separately,
+\begin{equation}
+ \min_{h,\boldsymbol g}\overline R(h,\boldsymbol g)
+ =\frac1T\sum_{t=1}^T R_t^\star+\Delta_{\rm share}.
+ \label{eq:sharing-benchmark}
+\end{equation}
+Exact sharing means $\Delta_{\rm share}=0$, not necessarily zero label noise.
+
+Allow the source learner an optimization error $\eta_{\rm src}\ge0$:
+\begin{equation}
+ \overline R_S(\widehat h,\widehat{\boldsymbol g})
+ \le\min_{h,\boldsymbol g}\overline R_S(h,\boldsymbol g)
+       +\eta_{\rm src}.
+ \label{eq:approximate-joint-erm}
+\end{equation}
+
+\begin{theorem}[Agnostic joint ERM]
+\label{thm:agnostic-multitask}
+Under \cref{sec:setup} and \cref{eq:approximate-joint-erm}, define
+\[
+ b_{\rm src}(\delta)=
+ \sqrt{\frac{2\{\ln|\cH|+T\ln|\cG|+\ln(2/\delta)\}}{nT}}.
+\]
+With probability at least $1-\delta$,
+\begin{align}
+ \overline R(\widehat h,\widehat{\boldsymbol g})
+   -\frac1T\sum_{t=1}^T R_t^\star
+ &\le \Delta_{\rm share}+\eta_{\rm src}+b_{\rm src}(\delta),
+ \label{eq:agnostic-joint}\\
+ \overline A(\widehat h)
+ &\le \Delta_{\rm share}+\eta_{\rm src}+b_{\rm src}(\delta).
+ \label{eq:source-representation-bound}
+\end{align}
+\end{theorem}
+
+\begin{proof}
+For a fixed tuple, Hoeffding's inequality applies to the $nT$ independent,
+bounded losses, although their laws differ across tasks. A union bound
+over at most $K=|\cH||\cG|^T$ tuples gives
+\[
+ \sup_{h,\boldsymbol g}
+ |\overline R_S(h,\boldsymbol g)-\overline R(h,\boldsymbol g)|
+ \le e_{\rm src}:=\sqrt{\frac{\ln(2K/\delta)}{2nT}}
+\]
+with probability at least $1-\delta$. On this event, for a population
+minimizer $(h^\circ,\boldsymbol g^\circ)$,
+\begin{align*}
+ \overline R(\widehat h,\widehat{\boldsymbol g})
+ &\le\overline R_S(\widehat h,\widehat{\boldsymbol g})+e_{\rm src}\\
+ &\le\overline R_S(h^\circ,\boldsymbol g^\circ)
+       +\eta_{\rm src}+e_{\rm src}\\
+ &\le\overline R(h^\circ,\boldsymbol g^\circ)
+       +\eta_{\rm src}+2e_{\rm src}.
+\end{align*}
+Use \cref{eq:sharing-benchmark} and
+$2e_{\rm src}=b_{\rm src}(\delta)$ for the first
+claim. For the second, minimize each population head risk at $\widehat h$:
+$\overline A(\widehat h)\le
+\overline R(\widehat h,\widehat{\boldsymbol g})-T^{-1}\sum_tR_t^\star$.
+\end{proof}
+
+The estimation term has order
+$\sqrt{\ln|\cH|/(nT)+\ln|\cG|/n}$.
+Independent ERM has an analogous bound with order
+$\sqrt{(\ln|\cH|+\ln|\cG|)/n}$ and no $\Delta_{\rm share}$.
+Sharing reduces the estimation cost but can increase approximation error.
+When $\Delta_{\rm share}>0$, even the best shared predictor has greater
+average risk than the best separate predictors. Whether sharing hurts at a
+finite sample size depends on the estimation errors as well.
+The added approximation error is one source of \emph{negative transfer}:
+sharing can increase
+risk relative to learning separately.
+
+\section{Transfer learning}
+\label{sec:transfer}
+
+In \emph{transfer learning}, information learned from source tasks is used to
+learn a predictor for a target task. We study a two-stage procedure: estimate
+$\widehat h$ from the source samples $S_1,\ldots,S_T$, then freeze
+$\widehat h$ and fit a head using examples from a new target task. Learning
+how to fit new tasks from experience on source tasks is also called
+\emph{learning-to-learn} or \emph{meta-learning}.
+
+Fix a target law $P_0$ and define $R_0$, $R_0^\star$, and $A_0(h)$ as in
+\cref{eq:task-risks,eq:representation-error}. After estimating $\widehat h$,
+the learner receives
+$S_0=((X_{01},Y_{01}),\ldots,(X_{0m},Y_{0m}))\sim P_0^{\otimes m}$,
+independently of all source data and source-learner randomization.
+The output $(\widehat h,\widehat g_0)$ predicts by
+$\widehat f_0=\widehat g_0\circ\widehat h$. The objective is small target
+excess risk $R_0(\widehat f_0)-R_0^\star$.
+
+\subsection{Finite-class analysis}
+
+We retain the finite classes and bounded loss from \cref{sec:setup}.
+\Cref{thm:agnostic-multitask} bounds $\overline A(\widehat h)$. A guarantee for a
+particular task requires the source tasks to constrain the features needed
+by that task. The existence of one representation that works for all tasks
+leaves the behavior of the learned representation undetermined.
+
+The source tasks constrain a candidate representation through its average
+source representation error. Define the \emph{transfer envelope}
+\begin{equation}
+ \Psi(u)
+ =
+ \max\bigl(\{A_0(h):h\in\cH,\ \overline A(h)\le u\}\cup\{0\}\bigr),
+ \qquad u\ge0.
+ \label{eq:transfer-envelope}
+\end{equation}
+The value $\Psi(u)$ is the largest target representation error among the
+candidate representations whose average source representation error is at
+most $u$. Thus $\Psi$ states exactly what source performance permits on the
+target. The envelope is nondecreasing and, by construction,
+\begin{equation}
+ A_0(h)\le\Psi(\overline A(h))
+ \qquad\text{for every }h\in\cH.
+ \label{eq:transfer-calibration}
+\end{equation}
+
+\begin{proposition}[Sharpness of the transfer envelope]
+\label{prop:transfer-envelope-sharpness}
+Let $\phi:[0,\infty)\to[0,\infty)$ be nondecreasing and suppose
+\[
+ A_0(h)\le\phi(\overline A(h))
+ \qquad\text{for every }h\in\cH.
+\]
+Then $\Psi(u)\le\phi(u)$ for every $u\ge0$. Moreover, whenever
+$\{h\in\cH:\overline A(h)\le u\}$ is nonempty, some $h_u\in\cH$ satisfies
+\[
+ \overline A(h_u)\le u,
+ \qquad
+ A_0(h_u)=\Psi(u).
+\]
+\end{proposition}
+
+\Cref{ex:l13-transfer-envelope} asks you to prove the proposition and apply
+it to the dropped-feature example below. Thus $\Psi(u)$ is the exact worst
+case over candidate representations compatible with the source-error
+constraint $\overline A(h)\le u$. A maximizing representation witnesses that
+the source-error constraint permits target representation error $\Psi(u)$.
+An algorithm-specific guarantee can be smaller by using information beyond
+the value of $\overline A(\widehat h)$.
+
+A useful transfer guarantee proves that $\Psi(u)$ is small in the relevant
+range. A common bound is
+\begin{equation}
+ \Psi(u)\le\kappa u+\beta,
+ \qquad \kappa,\beta\ge0.
+ \label{eq:linear-calibration}
+\end{equation}
+The multiplier measures how strongly source accuracy constrains target
+accuracy. The additive term allows imperfect transfer.
+The examples in \cref{sec:calibration-examples} bound the envelope by
+comparing the errors induced by every candidate representation.
+
+\subsubsection{A source-to-target theorem}
+
+With $\widehat h$ frozen, target training searches only over the head class.
+Choose a head with
+\begin{equation}
+ R_{S_0}(\widehat g_0\circ\widehat h)
+ \le\min_{g\in\cG}R_{S_0}(g\circ\widehat h)+\eta_{\rm trg},
+ \label{eq:target-erm}
+\end{equation}
+where $\eta_{\rm trg}\ge0$ and $R_{S_0}$ uses the $m$ target examples.
+
+\begin{theorem}[Transfer from source representation error]
+\label{thm:calibrated-transfer}
+Assume \cref{eq:target-erm}. Suppose that, for some
+$\varepsilon_{\rm src}\ge0$ and $0<\delta_{\rm src},\delta_{\rm trg}<1$,
+the source procedure satisfies
+\[
+ \P\{\overline A(\widehat h)\le\varepsilon_{\rm src}\}
+ \ge1-\delta_{\rm src}.
+\]
+Put
+\[
+ b_{\rm trg}(\delta_{\rm trg})
+ =\sqrt{\frac{2\ln(2|\cG|/\delta_{\rm trg})}m}.
+\]
+With probability at least $1-\delta_{\rm src}-\delta_{\rm trg}$,
+\begin{equation}
+ R_0(\widehat g_0\circ\widehat h)-R_0^\star
+ \le\Psi(\varepsilon_{\rm src})
+     +\eta_{\rm trg}+b_{\rm trg}(\delta_{\rm trg}).
+ \label{eq:general-transfer}
+\end{equation}
+In particular, agnostic joint ERM gives
+\begin{equation}
+ R_0(\widehat g_0\circ\widehat h)-R_0^\star
+ \le
+ \Psi\!\left(
+   \Delta_{\rm share}+\eta_{\rm src}
+   +b_{\rm src}(\delta_{\rm src})\right)
+ +\eta_{\rm trg}+b_{\rm trg}(\delta_{\rm trg}).
+ \label{eq:erm-transfer}
+\end{equation}
+For an exactly optimized, jointly realizable source problem, one may
+instead take
+$\varepsilon_{\rm src}=a_{\rm src}(\delta_{\rm src})$.
+\end{theorem}
+
+\begin{proof}
+Condition on the source data and source-learner randomization, so that
+$\widehat h$ is fixed and the target
+sample still has law $P_0^{\otimes m}$. Apply the Hoeffding--union-bound
+argument to the $|\cG|$ predictors $g\circ\widehat h$. With conditional
+probability at least $1-\delta_{\rm trg}$,
+\[
+ R_0(\widehat g_0\circ\widehat h)
+ -\min_{g\in\cG}R_0(g\circ\widehat h)
+ \le\eta_{\rm trg}+b_{\rm trg}(\delta_{\rm trg}).
+\]
+The conditional failure probability is at most $\delta_{\rm trg}$ for every source
+realization, so the unconditional failure probability is also at most
+$\delta_{\rm trg}$. On the intersection with the source event,
+\[
+ \min_gR_0(g\circ\widehat h)-R_0^\star
+ =A_0(\widehat h)
+ \le\Psi(\overline A(\widehat h))
+ \le\Psi(\varepsilon_{\rm src}).
+\]
+Adding the inequalities proves \cref{eq:general-transfer}.
+Use \cref{thm:agnostic-multitask} or
+\cref{thm:consistent-multitask} for the respective choices of
+$\varepsilon_{\rm src}$. In the realizable case,
+$\overline A(\widehat h)\le
+\overline R(\widehat h,\widehat{\boldsymbol g})$.
+\end{proof}
+
+The target fitting cost contains $\ln|\cG|$, not $\ln|\cH|$.
+Learning the target from scratch has the finite-class ERM bound
+\[
+ R_0(\widehat f_{\rm scratch})-R_0^\star
+ \le \sqrt{
+ \frac{2\{\ln|\cH|+\ln|\cG|+\ln(2/\delta_{\rm trg})\}}m}
+\]
+for an exact ERM. Transfer can improve the guarantee when
+$\Psi(\varepsilon_{\rm src})$ is smaller than the estimation cost saved on the
+target. The target need not be sampled from a distribution over tasks;
+\cref{eq:transfer-calibration} is the explicit connection to the fixed
+source tasks.
+
+The theorem also answers the individual-source-task question. Fix
+$t\in[T]$ and define
+\[
+ \Psi_t(u)
+ =\max\bigl(\{A_t(h):h\in\cH,\ \overline A(h)\le u\}\cup\{0\}\bigr).
+\]
+After freezing $\widehat h$ and refitting task $t$'s head on fresh examples,
+\cref{eq:general-transfer} holds for that task with $\Psi_t$.
+For $q$ designated tasks, the same source event and head failure
+probabilities $\delta_j$ give simultaneous guarantees with failure
+probability at most $\delta_{\rm src}+\sum_{j=1}^q\delta_j$.
+The guarantee uses refitting samples that are independent of the source
+examples used to learn $\widehat h$. It concerns the newly fitted heads;
+guarantees for the original fitted heads require corresponding
+individual-task source bounds.
+
+\subsubsection{Bounding the transfer envelope}
+\label{sec:calibration-examples}
+
+The next two examples identify source tasks that constrain target-relevant
+features and source tasks that leave a necessary feature unconstrained.
+
+\paragraph{Label-reversed tasks.}
+Let's return to the example of \cref{sec:boxes-sharing}.
+In \cref{eq:label-reversal-model}, let the target also have a uniform input
+with the same law $\mu$ as the source tasks, and label $h^\star(X)\oplus b_0$.
+For a candidate $h$, put
+\[
+ q(h)=\mu\bigl(\{x:h(x)\ne h^\star(x)\}\bigr).
+\]
+Recall that $\cG=\{g_0,g_1\}$ with $g_b(z)=z\oplus b$ for $b\in\{0,1\}$.
+For each task $t\in[T]$, the target predictor is $g_{b_t}\circ h^\star$.
+Since each $g_b$ is a bijection on $\{0,1\}$,
+\[
+ R_t(g_{b_t}\circ h)
+ =\mu\bigl(\{x:g_{b_t}(h(x))\ne g_{b_t}(h^\star(x))\}\bigr)
+ =q(h),
+ \qquad
+ R_t(g_{1-b_t}\circ h)=1-q(h).
+\]
+Since $R_t^* = 0$,
+\begin{equation}
+ A_t(h)=\min_{g\in \cG} R_t(g \circ h) =
+ \min\{q(h),1-q(h)\}=A_0(h)=\overline A(h)\,.
+ \label{eq:boxes-calibration}
+\end{equation}
+Thus $\Psi(u)\le u$, independently of $T$. The transfer theorem (\cref{thm:calibrated-transfer})) gives, for
+exact source and target ERM,
+\begin{equation}
+ R_0(\widehat g_0\circ\widehat h)
+ \le
+ \frac{(d+T)\ln2+\ln(1/\delta_{\rm src})}{nT}
+ +\sqrt{\frac{2\ln(4/\delta_{\rm trg})}m}.
+ \label{eq:boxes-transfer}
+\end{equation}
+For fixed accuracy and confidence, $T$ of order $d$ permits constant $n$
+and constant $m$. A learner with only the $m$ target observations still has
+the expected-error lower bound $\frac12(1-1/d)^m$ for some target map.
+For comparison in expectation, a risk bound of $\varepsilon$ with failure
+probability $\delta$ implies expected risk at most $\varepsilon+\delta$.
+Choosing both constants small gives a genuine individual-task advantage.
+
+\paragraph{A target feature unconstrained by the source tasks.}
+Let $\cX=\cZ=\{0,1\}^2$, let $\cY=\{0,1\}$, and use $0$--$1$ loss.
+Let $U,V$ be independent fair bits and set $X=(U,V)$. The representation
+and head classes are
+\[
+ \cH=\{h_{\rm full},h_{\rm drop}\},
+ \qquad
+ h_{\rm full}(u,v)=(u,v),
+ \qquad
+ h_{\rm drop}(u,v)=(u,0),
+\]
+and
+\[
+ \cG=\{\pi_1,\pi_2\},
+ \qquad
+ \pi_1(z_1,z_2)=z_1,
+ \qquad
+ \pi_2(z_1,z_2)=z_2.
+\]
+An observation from each source task is
+$(X,Y)=((U,V),U)$, whereas a target observation is
+$(X,Y)=((U,V),V)$. Thus the source and target input laws are the same and
+uniform on $\{0,1\}^2$, while the label functions differ. The full
+representation has zero risk on every source task using $\pi_1$ and zero
+target risk using $\pi_2$, so $R_t^\star=R_0^\star=0$. For the dropped
+representation,
+\[
+ R_t(\pi_1\circ h_{\rm drop})=0
+ \quad(t\in[T]),
+ \qquad
+ R_0(\pi_1\circ h_{\rm drop})
+ =R_0(\pi_2\circ h_{\rm drop})=\frac12.
+\]
+Consequently,
+\[
+ \overline A(h_{\rm drop})=0,
+ \qquad
+ A_0(h_{\rm drop})=\frac12.
+\]
+No source loss depends on whether a representation retains $V$. The transfer
+envelope therefore satisfies $\Psi(0)=1/2$, and repeating the source tasks
+leaves the target feature $V$ unconstrained.
+
+The last two examples concern whether the source task objectives constrain the
+features needed by the target. In the label-reversal example, every source
+task supplies such a constraint. In the present example, no source task
+constrains retention of $V$.
+
+Lecture 7's coverage condition addresses a separate issue: comparison of
+errors under different input laws. The two forms of coverage can be imposed
+together. For an intermediate representation error $A_{\rm mid}(h)$, suppose
+an input-law comparison gives
+$A_0(h)\le\kappa_1 A_{\rm mid}(h)+\beta_1$ and a source-task comparison gives
+$A_{\rm mid}(h)\le\kappa_2\overline A(h)+\beta_2$. Substitution gives
+\[
+ A_0(h)
+ \le\kappa_1\kappa_2\overline A(h)
+   +\kappa_1\beta_2+\beta_1.
+\]
+Thus distributional coverage and source-task coverage address different
+obstacles and combine directly.
+
+\subsection{Transfer with linear representations}
+\label{sec:linear-computation}
+
+We now give an efficient algorithm for the transfer problem. The learner
+estimates a linear representation from source tasks by an eigendecomposition,
+then fits a linear head on target data. The model lets us verify the
+source-to-target relation and bound the risk of the resulting target
+predictor.
+
+This is the same representation-learning template as in the earlier finite-class
+analysis, specialized to linear maps and squared loss. Concretely,
+$\mathcal X=\mathbb R^d$, $\mathcal Z=\mathbb R^k$, $\mathcal Y=\mathbb R$, and
+we use the squared loss $\ell(y,y')=(y-y')^2$. The representation and head
+classes are
+\begin{align}
+ \cH
+ &=\{h_C:\R^d\to\R^k:
+       h_C(x)=C^\top x,\ C\in\R^{d\times k},\ C^\top C=I_k\},
+ \label{eq:linear-representation-class}\\
+ \cG
+ &=\{g_b:\R^k\to\R:
+       g_b(z)=b^\top z,\ b\in\R^k\}.
+ \label{eq:linear-head-class}
+\end{align}
+The composite predictor is
+$f_{C,b}(x)=g_b(h_C(x))=b^\top C^\top x=x^\top Cb$.
+Thus the linear model is the previous class-based setup with explicit,
+infinite classes $\cH$ and $\cG$.
+
+\subsubsection{The learning problem}
+
+There are $T$ source tasks and one target task, indexed by $0$.
+Let $1\le k<d$. The unknown shared object is a $k$-dimensional subspace of
+$\R^d$. Choose a matrix $B\in\R^{d\times k}$ whose orthonormal columns form
+a basis for this subspace, and let $a_0,a_1,\ldots,a_T\in\R^k$ be the task
+coordinates. The orthonormal convention preserves every full-column-rank
+linear model: if a feature matrix factors as $M=BR$, replacing a task
+coefficient $c_t$ by $a_t=Rc_t$ gives $Mc_t=Ba_t$. An observation from
+task $t$ satisfies
+\begin{equation}
+ Y=X^\top Ba_t+\varepsilon,
+ \qquad X\sim\cN(0,I_d),
+ \label{eq:source-model}
+\end{equation}
+where the noise has mean zero and is independent of $X$, with finite
+variance $\sigma^2$ on each source task and $\sigma_0^2$ on the target task.
+The learner is given $k$, samples $S_1,\ldots,S_T$ of $n$ examples each,
+and a target sample $S_0$ of $m$ examples. All covariates and noises in these
+samples are mutually independent. Write $N=nT$ for the source sample size.
+
+Thus each $C$ selects a candidate $k$-dimensional feature subspace and an
+orthonormal basis for it. Because $\cG$ contains every linear head, a change
+of basis changes the head coordinates but not the available composite
+predictors. The normalization also makes $CC^\top$ the orthogonal projector
+onto the candidate subspace, as used below.
+Use $R_t$, $R_t^\star$, and $A_t$ for these classes and squared loss.
+The learner estimates $\widehat B$ from the source samples alone and fits
+$\widehat a_0$ on $S_0$, returning $(h_{\widehat B},g_{\widehat a_0})$.
+The predictor is $\widehat f_0(x)=x^\top\widehat\theta$, where
+$\widehat\theta=\widehat B\widehat a_0$. The objective is small expected
+target excess risk, which in this model is
+\begin{equation}
+ \E[R_0(\widehat f_0)-R_0^\star]
+ =\E[\|\widehat\theta-Ba_0\|_2^2],
+ \qquad R_0^\star=\sigma_0^2.
+ \label{eq:linear-target-objective}
+\end{equation}
+
+The statistical point is the same as in the finite-class transfer analysis: source
+training constrains the representation only insofar as it rules out bad shared
+subspaces. In this linear model the constraint is explicit. For a candidate
+representation $C$, the squared norm of the component of $Ba_0$ orthogonal to
+$\operatorname{span}(C)$ is the target representation error $A_0(C)$. The comparison is
+therefore between the target representation error $A_0(C)$ and the average source
+representation error $\overline A(C)$, and the source-task matrix
+$D=\frac1T\sum_{t=1}^Ta_ta_t^\top$ measures how strongly the source tasks cover the
+relevant directions. For well-spread sources, $D\succ0$ and a target direction with
+small source representation error inherits a comparable target representation
+error. This is the linear analogue of the earlier calibration bound, with the
+quantitative factor $\kappa_0=a_0^\top D^{-1}a_0$.
+
+The model gives two distinct comparisons with the earlier theory. The
+statistical comparison concerns the number of target examples needed after the
+source tasks have identified a useful representation. The corollary below
+bounds the expected target excess risk by a source term of order
+$\|a_0\|_2^2V/(nT\lambda^2)$ and a target head-fitting term
+$\sigma_0^2 k/(m-k-1)$. Target-only least squares instead has target term
+$\sigma_0^2 d/(m-d-1)$. Thus the ideal sharing benefit is a reduction from
+ambient dimension $d$ to representation dimension $k$ in the target-label cost;
+the source cost is amortized across the $T$ source tasks. The displayed bound
+also quantifies the price of imperfect subspace recovery. This conclusion is a
+property of the stated Gaussian linear model.
+
+The algorithmic comparison asks how to obtain the shared representation. Joint
+source ERM is a natural benchmark:
+\begin{equation*}
+ \min_{C^\top C=I_k,\,b_1,\ldots,b_T}
+ \frac1N\sum_{t=1}^T\sum_{j=1}^n
+ \bigl(Y_{tj}-b_t^\top C^\top X_{tj}\bigr)^2.
+\end{equation*}
+This objective is precisely the source-training objective for a two-layer
+linear network with a shared first layer $C^\top$ and task-specific output
+weights $b_t$. It is a finite-dimensional rank-constrained least-squares
+problem. At the population level, minimizing over the heads makes its excess
+objective
+\[
+ \operatorname{tr}\!\left((I_d-CC^\top)BDB^\top
+                           (I_d-CC^\top)\right).
+\]
+If $D\succ0$, the global minimizers therefore satisfy
+$\operatorname{span}(C)=\operatorname{span}(B)$. Thus population ERM identifies
+the desired representation. With finite samples, one can instead train the
+factorized empirical objective by a first-order method, or minimize over each
+$b_t$ in closed form and optimize the resulting profile objective over
+$C$. Establishing that either procedure reaches a statistically accurate
+solution requires an optimization-landscape analysis in addition to a
+generalization argument; related results are described in the bibliographical
+notes.
+
+Instead, the linear-Gaussian model supplies a more specific route. The
+population second moment of $Y^2XX^\top$ has the shared subspace as its leading
+$k$-dimensional eigenspace. We estimate that moment and compute its leading
+eigenvectors. The spectral estimator is therefore a deliberate choice: it is
+an explicit polynomial-time procedure whose source-data dependence and
+subspace error can be analyzed directly. The following calculations show both
+why the source tasks identify the joint representation and how the statistical
+saving survives after fitting the target head.
+
+\subsubsection{Source diversity controls target representation error}
+
+We first ask which source tasks constrain the representation needed by the
+target. The Gaussian input model makes representation error a projection
+error, so the comparison reduces to a relation between the task coefficients.
+
+For $u=Cb-Ba_t$, the prediction residual is $X^\top u-\varepsilon$. The model
+assumptions imply
+\[
+ \E[XX^\top]=I_d,
+ \qquad
+ \E[\varepsilon X]=\E[\varepsilon]\E[X]=0,
+\]
+where the second identity uses the independence of $\varepsilon$ and $X$.
+Consequently,
+\[
+ R_t(g_b\circ h_C)
+ =\E[(X^\top u-\varepsilon)^2]
+ =u^\top\E[XX^\top]u-2u^\top\E[\varepsilon X]+\E[\varepsilon^2]
+ =\|Cb-Ba_t\|_2^2+\E[\varepsilon^2].
+\]
+Since $C=B$ is allowed, $R_t^\star=\E[\varepsilon^2]$.
+Minimizing over $b$ gives
+\begin{equation}
+ A_t(C)=\|(I_d-CC^\top)Ba_t\|_2^2.
+ \label{eq:linear-representation-error}
+\end{equation}
+Define
+\begin{equation}
+ D=\frac1T\sum_{t=1}^T a_ta_t^\top,
+ \qquad E_C=(I_d-CC^\top)B.
+ \label{eq:task-diversity-matrix}
+\end{equation}
+Then $\overline A(C)=\operatorname{tr}(E_CDE_C^\top)$.
+
+\begin{proposition}[Linear source-to-target comparison]
+\label{prop:linear-calibration}
+If $D\succ0$, every candidate $C$ satisfies
+\begin{equation}
+ A_0(C)\le\kappa_0\,\overline A(C),
+ \qquad
+ \kappa_0=a_0^\top D^{-1}a_0
+ \le\frac{\|a_0\|_2^2}{\lambda_{\min}(D)}.
+ \label{eq:linear-transfer-factor}
+\end{equation}
+\end{proposition}
+
+\begin{proof}
+Cauchy--Schwarz applied to $D^{-1/2}a_0$ and $D^{1/2}v$ gives
+$(v^\top a_0)^2\le(a_0^\top D^{-1}a_0)v^\top Dv$ for every $v$.
+Apply this inequality to each row of $E_C$ and add:
+$\|E_Ca_0\|_2^2\le\kappa_0\operatorname{tr}(E_CDE_C^\top)$.
+Finally, $D\succeq\lambda_{\min}(D)I_k$ implies
+$D^{-1}\preceq\lambda_{\min}(D)^{-1}I_k$.
+\end{proof}
+
+The factor depends on the target direction as well as the source tasks.
+A target aligned with a well-covered direction can have a small factor even
+when other directions are poorly covered.\endnote{Positive definiteness of
+$D$ is sufficient for all targets. For a fixed target with
+$a_0\in\operatorname{range}(D)$, the same proof on that range gives
+$\kappa_0=a_0^\top D^\dagger a_0$, where $D^\dagger$ is the Moore--Penrose
+inverse. Coverage of directions unused by the target is unnecessary.}
+If $\|a_0\|_2\le L$, the bound
+$\Psi(u)\le L^2u/\lambda_{\min}(D)$ holds simultaneously for all such
+targets.
+The matrix $D$ gives a concrete measure of how strongly the source tasks
+constrain the shared representation.
+
+\subsubsection{Estimating the representation from source data}
+
+We estimate the shared subspace using a second moment of the source
+observations. The resulting \emph{spectral estimator} forms a representation
+from leading eigenvectors of a data-dependent matrix. For the sample bound
+below, additionally assume
+$\varepsilon_{tj}\sim\cN(0,\sigma^2)$ on the source tasks. The moment
+identity itself only uses centered noise of variance $\sigma^2$ independent
+of the covariates.
+
+The estimator belongs to the spectral family of representation-learning
+methods. In linear models, the representation is a subspace and the estimator
+recovers that subspace as the leading eigenspace of a covariance or moment
+matrix. Kernel PCA, Laplacian eigenmaps, and spectral clustering replace the
+linear moment matrix by a kernel matrix, graph Laplacian, or population
+operator. Their coordinates can depend nonlinearly on the original input,
+while the learned representation remains an eigenspace or a collection of
+eigenfunctions. Spectral methods therefore cover a broad low-rank and
+operator-based family. The bibliographical notes place this family among
+other representation-learning objectives.
+
+\begin{proposition}[Gaussian task moment]
+\label{prop:gaussian-task-moment}
+For one observation from a task with parameter $Ba$,
+\begin{equation}
+ \E[Y^2XX^\top]
+ =(\|a\|_2^2+\sigma^2)I_d+2Baa^\top B^\top.
+ \label{eq:gaussian-moment}
+\end{equation}
+Consequently the average population moment is
+\begin{equation}
+ M_\star=(\operatorname{tr}D+\sigma^2)I_d+2BDB^\top.
+ \label{eq:population-moment}
+\end{equation}
+If $D\succ0$, its leading $k$-dimensional eigenspace is
+$\operatorname{span}(B)$, with eigengap $2\lambda_{\min}(D)$.
+\end{proposition}
+
+\begin{proof}
+Put $u=Ba$. Since $\varepsilon$ is independent of $X$ and has mean zero,
+\[
+ \E[2\varepsilon(X^\top u)XX^\top]
+ =2\E[\varepsilon]\E[(X^\top u)XX^\top]=0,
+ \qquad
+ \E[\varepsilon^2XX^\top]
+ =\E[\varepsilon^2]\E[XX^\top]=\sigma^2I_d.
+\]
+For standard Gaussian coordinates,
+\[
+ \E[X_iX_jX_rX_s]
+ =\mathbf1_{\{i=j\}}\mathbf1_{\{r=s\}}
+  +\mathbf1_{\{i=r\}}\mathbf1_{\{j=s\}}
+  +\mathbf1_{\{i=s\}}\mathbf1_{\{j=r\}}.
+\]
+Expanding $(X^\top u)^2$ therefore gives
+$\E[(X^\top u)^2XX^\top]=\|u\|_2^2I_d+2uu^\top$.
+Since $u=Ba$ and $B^\top B=I_k$,
+\[
+ \|u\|_2^2=a^\top B^\top Ba=\|a\|_2^2,
+ \qquad
+ uu^\top=Baa^\top B^\top.
+\]
+Combining the three terms in $Y^2=(X^\top u+\varepsilon)^2$ now proves
+\cref{eq:gaussian-moment}.
+Average this identity over the source tasks:
+\begin{align*}
+ \frac1T\sum_{t=1}^T\E[Y_{t1}^2X_{t1}X_{t1}^\top]
+ &=
+ \left(\frac1T\sum_{t=1}^T\|a_t\|_2^2+\sigma^2\right)I_d
+ +2B\left(\frac1T\sum_{t=1}^Ta_ta_t^\top\right)B^\top\\
+ &=(\operatorname{tr}D+\sigma^2)I_d+2BDB^\top,
+\end{align*}
+because $T^{-1}\sum_t\|a_t\|_2^2=\operatorname{tr}D$. This proves
+\cref{eq:population-moment}. Put $c=\operatorname{tr}D+\sigma^2$.
+If $Dq=\lambda_i(D)q$, then
+\[
+ M_\star(Bq)=cBq+2BDq=(c+2\lambda_i(D))Bq.
+\]
+For $v\perp\operatorname{span}(B)$, the identity $B^\top v=0$ gives
+$M_\star v=cv$. Thus the $k$ eigenvalues on $\operatorname{span}(B)$ are
+$c+2\lambda_i(D)$, every eigenvalue on its orthogonal complement is $c$,
+and the eigengap is $2\lambda_{\min}(D)$.
+\end{proof}
+
+The estimator forms
+\begin{equation}
+ \widehat M=\frac1N\sum_{t=1}^T\sum_{j=1}^n
+                 Y_{tj}^2X_{tj}X_{tj}^\top
+ \label{eq:empirical-moment}
+\end{equation}
+and takes its leading $k$ orthonormal eigenvectors as the columns of
+$\widehat B$. Computing the moment and a dense eigendecomposition costs
+$O(Nd^2+d^3)$ arithmetic operations. The procedure consists of one matrix
+accumulation followed by one eigendecomposition.
+
+Here is an elementary finite-sample guarantee that makes the statistical and
+computational claim explicit. Sharper analyses improve its dimension
+dependence.
+
+\paragraph{Davis--Kahan bound used below.}
+Let $M$ and $\widehat M=M+F$ be symmetric matrices. Suppose the leading
+$k$-dimensional eigenspace of $M$ has orthonormal basis $B$ and eigengap
+\[
+ \gamma=\lambda_k(M)-\lambda_{k+1}(M)>0.
+\]
+If $\widehat B$ contains leading $k$ orthonormal eigenvectors of $\widehat M$,
+then the Davis--Kahan theorem gives
+\begin{equation}
+ \|(I_d-\widehat B\widehat B^\top)B\|_{\rm op}
+ \le
+ \min\left\{1,\frac{2\|F\|_{\rm op}}{\gamma}\right\}.
+ \label{eq:davis-kahan-bound}
+\end{equation}
+The left side is the sine of the largest principal angle between the two
+eigenspaces.
+
+\begin{theorem}[A finite-sample spectral guarantee]
+\label{thm:spectral-guarantee}
+Suppose $\lambda=\lambda_{\min}(D)>0$, and let
+\[
+ V=\max_{t\in[T]}\E[Y_{t1}^4\|X_{t1}\|_2^4].
+\]
+The spectral estimator satisfies
+\begin{equation}
+ \E[A_0(\widehat B)]
+ \le\frac{\|a_0\|_2^2 V}{N\lambda^2}.
+ \label{eq:spectral-target-bound}
+\end{equation}
+In the Gaussian model, if
+$s^2=\max_t(\|a_t\|_2^2+\sigma^2)$, then
+\[
+ V\le\sqrt{105}\,s^4\sqrt{d(d+2)(d+4)(d+6)}.
+\]
+\end{theorem}
+
+\begin{proof}
+The goal is to control the target representation error
+$\E[A_0(\widehat B)]$. The representation-error identity
+\cref{eq:linear-representation-error}, which also starts the proof of
+\cref{prop:linear-calibration}, gives
+\begin{align}
+ A_0(\widehat B)
+ &=\|(I_d-\widehat B\widehat B^\top)Ba_0\|_2^2 \notag\\
+ &\le
+ \|a_0\|_2^2
+ \|(I_d-\widehat B\widehat B^\top)B\|_{\rm op}^2.
+ \label{eq:target-error-from-subspace}
+\end{align}
+Thus it suffices to control the angle between
+$\operatorname{span}(\widehat B)$ and $\operatorname{span}(B)$.
+
+Proposition~\ref{prop:gaussian-task-moment} identifies
+$\operatorname{span}(B)$ as the leading eigenspace of $M_\star$ and gives
+the population eigengap
+\[
+ \gamma=2\lambda,\qquad \lambda=\lambda_{\min}(D).
+\]
+Put $F=\widehat M-M_\star$. Applying
+\cref{eq:davis-kahan-bound} with this value of $\gamma$ gives
+\[
+ \|(I_d-\widehat B\widehat B^\top)B\|_{\rm op}
+ \le
+ \min\left\{1,\frac{\|F\|_{\rm op}}{\lambda}\right\}
+ \le\frac{\|F\|_{\rm F}}{\lambda}.
+\]
+Substitution into \cref{eq:target-error-from-subspace} yields
+\begin{equation}
+ A_0(\widehat B)
+ \le\frac{\|a_0\|_2^2}{\lambda^2}\|F\|_{\rm F}^2.
+ \label{eq:target-error-from-moment}
+\end{equation}
+The remaining task is therefore to prove
+$\E[\|F\|_{\rm F}^2]\le V/N$.
+
+For this purpose, define
+\[
+ W_{tj}=Y_{tj}^2X_{tj}X_{tj}^\top,
+ \qquad
+ Q_{tj}
+ =W_{tj}-\E[W_{tj}].
+\]
+Proposition~\ref{prop:gaussian-task-moment} and $N=nT$ give
+\[
+ \E[\widehat M]
+ =\frac1N\sum_{t=1}^T\sum_{j=1}^n\E[W_{tj}]
+ =\frac1T\sum_{t=1}^T\E[W_{t1}]
+ =M_\star.
+\]
+Consequently, $F=N^{-1}\sum_{t,j}Q_{tj}$.
+The matrices $Q_{tj}$ are independent and satisfy $\E[Q_{tj}]=0$. Hence,
+for $(t,j)\ne(s,r)$,
+\[
+ \E[\langle Q_{tj},Q_{sr}\rangle_{\rm F}]
+ =\langle\E[Q_{tj}],\E[Q_{sr}]\rangle_{\rm F}=0.
+\]
+Expanding the squared Frobenius norm therefore gives
+\begin{align*}
+ \E[\|F\|_{\rm F}^2]
+ &=\frac1{N^2}\sum_{t,j}
+   \E[\|Q_{tj}\|_{\rm F}^2]
+ &\le\frac1{N^2}\sum_{t,j}\E[\|W_{tj}\|_{\rm F}^2]\\
+ &=\frac1{N^2}\sum_{t,j}
+   \E[Y_{tj}^4\|X_{tj}X_{tj}^\top\|_{\rm F}^2]\\
+ &=\frac1{N^2}\sum_{t,j}
+   \E[Y_{tj}^4\|X_{tj}\|_2^4]
+ \le\frac VN.
+\end{align*}
+The inequality uses
+$\E[\|W-\E[W]\|_{\rm F}^2]\le\E[\|W\|_{\rm F}^2]$, and the penultimate
+identity uses
+$\|xx^\top\|_{\rm F}^2=\operatorname{tr}(xx^\top xx^\top)=\|x\|_2^4$.
+Taking expectations in \cref{eq:target-error-from-moment} now proves
+\cref{eq:spectral-target-bound}.
+
+It remains to bound $V$ under Gaussian noise. For each source task,
+$Y_{t1}=X_{t1}^\top Ba_t+\varepsilon_{t1}$ is centered Gaussian with variance
+$\|a_t\|_2^2+\sigma^2\le s^2$. Hence
+$\E[Y_{t1}^8]\le105s^8$. Cauchy--Schwarz gives
+$\E[Y_{t1}^4\|X_{t1}\|_2^4]
+\le\sqrt{\E[Y_{t1}^8]\E[\|X_{t1}\|_2^8]}$.
+Since $\E[\|X_{t1}\|_2^8]=d(d+2)(d+4)(d+6)$, we obtain
+\[
+ \E[Y_{t1}^4\|X_{t1}\|_2^4]
+ \le
+ \sqrt{105}\,s^4\sqrt{d(d+2)(d+4)(d+6)}.
+\]
+Taking the maximum over $t$ proves the stated bound on $V$.
+\end{proof}
+
+\subsubsection{Fitting the target head and bounding prediction risk}
+
+With $\widehat B$ fixed, target training is ordinary least squares in $k$
+features. Let $Z_0\in\R^{m\times k}$ have rows
+$(\widehat B^\top X_{0j})^\top$ and let
+$\boldsymbol Y_0=(Y_{01},\ldots,Y_{0m})^\top$. For $m>k+1$, set
+\begin{equation}
+ \widehat a_0=(Z_0^\top Z_0)^{-1}Z_0^\top\boldsymbol Y_0,
+ \qquad \widehat\theta=\widehat B\widehat a_0.
+ \label{eq:linear-target-head}
+\end{equation}
+Computing the target features and fitting the head costs
+$O(mdk+mk^2+k^3)$ arithmetic operations. The exact Gaussian calculation in
+\cref{app:gaussian-transfer} converts the representation bound into a
+guarantee for the final target predictor.
+
+\begin{corollary}[Linear transfer guarantee]
+\label{cor:linear-transfer}
+Under the assumptions of \cref{thm:spectral-guarantee}, let
+$\widehat B$ be the spectral estimate and fit the target head by
+\cref{eq:linear-target-head} using $m>k+1$ target examples.
+With $\lambda$ and $V$ as in that theorem, the expected target excess risk is
+bounded by
+\begin{equation}
+ \E[R_0(\widehat f_0)-R_0^\star]
+ \le
+ \left(1+\frac{k}{m-k-1}\right)
+ \frac{\|a_0\|_2^2V}{N\lambda^2}
+ +\sigma_0^2\frac{k}{m-k-1}.
+ \label{eq:computational-transfer}
+\end{equation}
+\end{corollary}
+
+\begin{proof}
+The target sample is independent of $\widehat B$. Conditional on
+$\widehat B$, \cref{thm:exact-transfer-risk} gives
+\[
+ \E[\|\widehat\theta-Ba_0\|_2^2\mid\widehat B]
+ =\left(1+\frac{k}{m-k-1}\right)A_0(\widehat B)
+  +\sigma_0^2\frac{k}{m-k-1}.
+\]
+Average over the source data, apply \cref{thm:spectral-guarantee}, and use
+\cref{eq:linear-target-objective}.
+\end{proof}
+
+The first term accounts for learning the representation from source data;
+the second accounts for fitting the head from target data. For comparison,
+ordinary least squares using only the target sample in $\R^d$ has expected
+excess risk $\sigma_0^2d/(m-d-1)$ when $m>d+1$. Accurate source-based
+features reduce the dimension in the target estimation term from $d$ to $k$.
+Together with the arithmetic costs above, \cref{cor:linear-transfer} gives a
+computational and statistical guarantee for transfer.
+
+\paragraph{Connection to neural representations.}
+A downstream task can use a neural network's frozen features and a newly
+fitted head. The transfer analyses explain what a guarantee for that use
+requires: source training must control the target representation error, and
+target data must suffice to fit the head. For language-model pretraining,
+the remaining question is how next-token loss constrains downstream
+representation error.
+
+\clearpage
+\section{Take-home messages}
+
+\begin{itemize}[leftmargin=*]
+\item Joint ERM pays the representation complexity once across the source
+tasks and the head complexity once per task. The shared boxes example gives
+a strict statistical advantage over independent learning.
+\item Misspecification contributes the sharing cost $\Delta_{\rm share}$.
+Reduced estimation error must compensate for any added approximation error.
+\item A bound on $A_0(h)$ in terms of $\overline A(h)$ converts source
+learning into a guarantee for a particular target. The examples verify the
+relation and exhibit a case where it fails.
+\item With independent target examples and a frozen representation, head
+fitting pays only the head-class complexity. Simultaneous individual-task
+guarantees require suitable source-to-task relations for those tasks.
+\item In the Gaussian linear model, a spectral representation estimate
+followed by target least squares has an explicit computation cost and a
+finite-sample target-risk guarantee.
+\end{itemize}
+
+\printendnotes
+
+\section*{Bibliographical notes}
+
+For a broad introduction, \citet{bengio2013} survey representation learning,
+and Chapter 15 of \citet{goodfellow2016} gives a textbook treatment.
+The following map organizes several major families by the information used to
+learn the representation and by the property retained in the representation.
+
+\begin{description}[style=unboxed,leftmargin=1.7em,labelindent=0pt]
+\item[Linear, latent, and spectral structure.]
+PCA retains directions of large variance; factor models and ICA seek latent
+coordinates with additional statistical structure; graph and kernel methods
+use eigenvectors or eigenfunctions of similarity operators. The review by
+\citet{jolliffe2016}, the ICA book by \citet{hyvarinen2001}, and the spectral
+clustering tutorial by \citet{vonluxburg2007} provide readable introductions.
+\citet{belkin2003} show how a graph Laplacian produces nonlinear coordinates
+for data near a manifold.
+
+\item[Supervised task sharing and transfer.]
+Labels from several tasks train features that support task-specific heads.
+Multitask learning, learning-to-learn, and the linear model in this lecture
+belong to this family. The statistical sources most closely connected to the
+lecture are discussed below.
+
+\item[Reconstruction and generative modeling.]
+Autoencoders, probabilistic latent-variable models, and related generative
+methods learn coordinates that retain information needed to reconstruct or
+model the observations. \citet{bengio2013} and \citet{goodfellow2016} connect
+these objectives to deep representation learning.
+
+\item[Predictive and contrastive self-supervision.]
+Context prediction, masked or next-token prediction, and contrastive
+objectives derive training signals from the observations themselves.
+\citet{lekhac2020} give an organized review of the contrastive branch.
+
+\item[Representations for sequential decisions.]
+Control and reinforcement-learning methods seek state variables that preserve
+reward-relevant and transition-relevant information. The overview by
+\citet{lesort2018} organizes reconstruction, forward-model, inverse-model, and
+robotic-prior approaches.
+
+\item[Geometric and causal structure.]
+Equivariant methods encode symmetries and relational structure; causal
+representation learning seeks variables that support interventions and
+distributional changes. \citet{bronstein2021} survey geometric deep learning,
+and \citet{scholkopf2021} survey causal representation learning.
+\end{description}
+
+Multitask feature learning and transfer have a substantial statistical
+literature for general classes of representations.
+\citet{baxter2000} studies learning a hypothesis space from tasks sampled
+from an environment. \citet{maurer2016} gives general representation-class
+bounds for both observed-task prediction and learning new tasks, with separate
+costs for representations and task-specific predictors.
+The finite-class results here are elementary versions of this complexity
+separation, proved using the tools already developed in the course.
+
+The closest source for bounds such as \cref{eq:linear-calibration} is the
+task-diversity condition of \citet{tripuraneni2020}, Definition 3. Their
+condition bounds a worst-case target representation discrepancy by an average
+source discrepancy divided by a diversity parameter, plus an additive error.
+Our fixed-target formulation uses the transfer envelope $\Psi$ and
+class-relative approximation errors; the displayed finite-class theorem is
+proved directly. The transfer envelope $\Psi$ expresses the connection to the
+fixed source tasks directly.
+
+The Gaussian linear model and moment estimator follow
+\citet{tripuraneni2021}. The simple Frobenius-moment bound in
+\cref{thm:spectral-guarantee} is deliberately weaker than sharp analyses of
+this model and provides a complete finite-sample argument. The eigenspace
+perturbation step is the Davis--Kahan theorem \citep{daviskahan1970}.
+The inverse-Gram expectation in \cref{eq:inverse-wishart-mean} is the
+standard inverse-Wishart mean identity.
+
+\citet{tripuraneni2021} also study optimization-based representation
+learning. They use a Burer--Monteiro factorization of the task-parameter
+matrix and add a balancing regularizer. Under their sub-Gaussian design,
+task-diversity, incoherence, sample-size, and uniform-task-sampling
+conditions, every local minimum in a specified interior region recovers the
+shared subspace up to statistical error. Their local-minimum result, together
+with general results on escaping strict saddles, gives a route from first-order
+optimization to an accurate representation. Their theorem applies to the
+regularized factorization in its stated constraint region.
+
+Task-boundary terminology is illustrated by \citet{aljundi2019}.
+The optional intrinsic-dimension comparison in
+\cref{app:intrinsic-dimension} uses \citet{kohler2026},
+\citet{kpotufe2011}, \citet{kpotufe2013}, and \citet{farahmand2007}.
+
+\section*{Glossary}
+
+\begin{description}[style=unboxed,leftmargin=1.5em,labelindent=0pt]
+\item[Risk notation]
+A sample in the subscript marks an empirical risk, so $R_t$ uses the law
+$P_t$ and $R_{S_t}$ uses the sample $S_t$. A bar averages over the $T$ source
+tasks, giving $\overline R$ and $\overline R_S$. A hat marks a quantity
+returned by a learner, such as $\widehat h$ or $\widehat B$. The subscripts
+$\mathrm{src}$ and $\mathrm{trg}$ distinguish source- and target-side
+quantities.
+\item[Representation-learning algorithm]
+A map $\cA:(\cX\times\cY)^n\to\cH\times\cG$ returning a representation
+and a head for supervised prediction.
+\item[Representation and head]
+Maps $h:\cX\to\cZ$ and $g:\cZ\to\cY$, whose composition predicts a
+label. In the multitask setting, $h$ is shared and each task has its own head.
+\item[Multitask learning]
+Jointly learning predictors for several tasks and evaluating on those tasks.
+\item[Transfer learning]
+Using information learned from source tasks to learn a predictor for a target
+task; here, fitting a new head on a frozen source-trained representation.
+\item[Learning-to-learn / meta-learning]
+Learning how to fit new tasks from experience on source tasks.
+\item[Joint ERM]
+Minimization of average empirical task risk over one shared representation
+and one head for each task.
+\item[Representation error $A_t(h)$]
+The extra population risk imposed on task $t$ by using $h$, after optimizing
+the head, relative to the best pair in $\cH\times\cG$.
+\item[Sharing cost $\Delta_{\rm share}$]
+The minimum average representation error over one shared $h$.
+\item[Transfer envelope $\Psi$]
+The largest target representation error among candidate representations
+whose average source representation error is at most a specified value.
+\item[Task-diversity matrix]
+The matrix $D=T^{-1}\sum_t a_ta_t^\top$ in the linear model.
+Its quadratic form measures source coverage of a coefficient direction.
+\item[Spectral representation estimator]
+An estimator that uses leading eigenvectors of a data-dependent matrix to
+define the feature map.
+\item[Negative transfer]
+The excess risk of a sharing or transfer procedure relative to a specified
+nonsharing baseline.
+\item[Intrinsic dimension]
+A dimension describing the geometry of an input distribution, rather than
+the complexity of a shared family of tasks.
+\end{description}
+
+\clearpage
+\section{Exercises}
+\label{sec:exercises}
+
+\exerciseinstructions
+\setcounter{courseexercise}{0}
+\exercisegroup{Joint learning and transfer}
+\input{../exercises/l13-bounded-loss-consistency.tex}
+\input{../exercises/l13-sharing-cost.tex}
+\input{../exercises/l13-transfer-envelope.tex}
+\input{../exercises/l13-transfer-coverage.tex}
+\input{../exercises/l13-label-reversal.tex}
+\exercisegroup{Linear representations}
+\input{../exercises/l13-task-diversity.tex}
+\input{../exercises/l13-moment-eigenspace.tex}
+\input{../exercises/l13-transfer-projection.tex}
+\input{../exercises/l13-negative-transfer.tex}
+
+\appendix
+\renewcommand{\thesection}{13.\Alph{section}}
+\section{Exact Gaussian head-estimation risk}
+\label{app:gaussian-transfer}
+
+This appendix gives the exact head-estimation term used in
+\cref{eq:computational-transfer} and a concrete negative-transfer comparison.
+Fix $\widehat B\in\R^{d\times k}$ with orthonormal columns and
+$\theta\in\R^d$. Put
+\begin{equation}
+ \widehat P=\widehat B\widehat B^\top,
+ \qquad
+ A(\theta,\widehat B)=\|(I_d-\widehat P)\theta\|_2^2.
+ \label{eq:projection-bias}
+\end{equation}
+Observe $n$ independent pairs with
+\begin{equation}
+ Y_j=X_j^\top\theta+\varepsilon_j,\qquad
+ X_j\sim\cN(0,I_d),\qquad j\in[n].
+ \label{eq:new-task-model}
+\end{equation}
+The noises are mutually independent and independent of all covariates,
+have mean zero, and have common variance $\sigma^2$.
+Let $Z$ have rows $(\widehat B^\top X_j)^\top$ and let
+$Y=(Y_1,\ldots,Y_n)^\top$. Define
+\begin{equation}
+ \widehat a=(Z^\top Z)^{-1}Z^\top Y,
+ \qquad \widehat\theta=\widehat B\widehat a.
+ \label{eq:new-task-ols}
+\end{equation}
+
+\begin{theorem}[Exact Gaussian transfer risk]
+\label{thm:exact-transfer-risk}
+Under this model, if $n>k+1$, then
+\begin{equation}
+ \E[\|\widehat\theta-\theta\|_2^2]
+ =A(\theta,\widehat B)
+  +(\sigma^2+A(\theta,\widehat B))\frac{k}{n-k-1}.
+ \label{eq:exact-transfer-risk}
+\end{equation}
+For an independent test covariate $X\sim\cN(0,I_d)$, the expected prediction
+error is
+\begin{equation}
+ \E[(X^\top\widehat\theta-X^\top\theta)^2]
+ =\E[\|\widehat\theta-\theta\|_2^2].
+ \label{eq:prediction-risk-equality}
+\end{equation}
+\end{theorem}
+
+\begin{proof}
+Write $b_\star=\widehat B^\top\theta$ and
+$v=(I_d-\widehat P)\theta$. Then
+$\theta=\widehat Bb_\star+v$ with $\widehat B^\top v=0$, and
+\[
+ Y=Zb_\star+\xi,\qquad \xi_j=X_j^\top v+\varepsilon_j.
+\]
+For each $j$,
+\[
+ \operatorname{Cov}(\widehat B^\top X_j,X_j^\top v)
+ =\widehat B^\top\E[X_jX_j^\top]v
+ =\widehat B^\top v=0.
+\]
+The two projections are jointly Gaussian, so zero covariance makes them
+independent. The noise $\varepsilon_j$ is also independent of $X_j$.
+Therefore $\xi$ is independent of $Z$, has mean zero, and has covariance
+$(\sigma^2+\|v\|_2^2)I_n$. Conditional on $Z$,
+\[
+ \E[\|\widehat a-b_\star\|_2^2\mid Z]
+ =(\sigma^2+\|v\|_2^2)\operatorname{tr}((Z^\top Z)^{-1}).
+\]
+The Wishart inverse-mean identity gives, for $n>k+1$,
+\begin{equation}
+ \E[(Z^\top Z)^{-1}]=\frac{I_k}{n-k-1}.
+ \label{eq:inverse-wishart-mean}
+\end{equation}
+Since $\widehat B(\widehat a-b_\star)$ is orthogonal to $v$,
+\[
+ \|\widehat\theta-\theta\|_2^2
+ =\|\widehat a-b_\star\|_2^2+\|v\|_2^2.
+\]
+Take expectations. For the independent test covariate $X$, independence from
+$\widehat\theta$ and
+$\E[XX^\top]=I_d$ give
+\[
+ \E[(X^\top\widehat\theta-X^\top\theta)^2\mid\widehat\theta]
+ =(\widehat\theta-\theta)^\top\E[XX^\top]
+   (\widehat\theta-\theta)
+ =\|\widehat\theta-\theta\|_2^2.
+\]
+\end{proof}
+
+If $\widehat B$ is random but independent of the target sample, apply the
+theorem conditionally on $\widehat B$ and then average. In the exact-sharing
+model $\theta=Ba_0$, the resulting identity and
+\cref{eq:spectral-target-bound} give \cref{eq:computational-transfer}.
+
+For a known correct representation, $A=0$ and the risk is
+$\sigma^2k/(n-k-1)$. Ambient ordinary least squares has risk
+$\sigma^2d/(n-d-1)$ when $n>d+1$.
+For misspecified sharing $\theta=Ba+r$ with $B^\top r=0$ and
+$\widehat B=B$, the representation error is $\|r\|_2^2$.
+Exercise~\ref{ex:l13-negative-transfer} asks you to derive the exact comparison:
+the restricted estimator has smaller expected error if and only if
+\[
+ \|r\|_2^2<\frac{\sigma^2(d-k)}{n-d-1}.
+\]
+The restriction can save variance with little target data, but a fixed
+nonzero residual eventually outweighs that saving.
+\section{Optional comparison: intrinsic input dimension}
+\label{app:intrinsic-dimension}
+
+A single regression problem can become easier because of the input
+distribution's geometry, without any sharing across tasks.
+For a pair $(X,Y)$ with $\E[Y^2]<\infty$, let $P_X$ be the input law on
+$\R^d$ and choose a measurable version $m$ of the regression function, so
+$m(X)=\E[Y\mid X]$ almost surely.
+If $P_X$ concentrates near a $d^\ast$-dimensional set, a regression rate may
+depend on $d^\ast$ rather than $d$.
+
+A theorem of Kohler, Molinero R\"omer, and Krzy\.{z}ak gives such a rate for a
+specified deep sigmoid estimator: prescribed random initialization, random
+pruning before training, output truncation, and full-batch gradient descent
+with data-dependent Armijo-style stepsizes. Include the training sample and
+the estimator's prescribed initialization and pruning in the same joint
+experiment. Under their smoothness, tail,
+architecture, and tuning assumptions, and support in a shrinking neighborhood
+of a compact Lipschitz manifold, their bound has the form
+\[
+ \E[\|\widehat m_n-m\|_{L^2(P_X)}^2]
+ \le C'(\log n)^{4d^\ast L+d+3}n^{-2p/(2p+d^\ast)}.
+\]
+Here $p$ is smoothness, $L$ is the prescribed depth parameter, and the
+the tuning uses $p,d^\ast$. The tube radius is
+$n^{-1/(2p+d^\ast)}(\log n)^{-4L-1}$, not fixed positive thickness.
+The sufficient widths and iteration counts have large polynomial exponents.
+This is a theorem for that procedure under those assumptions, not evidence
+for the manifold hypothesis or a guarantee for ordinary network training.
+
+Classical local methods also obtain intrinsic-dimension rates:
+Kpotufe's nearest-neighbor result adapts to local dimension, and Kpotufe and
+Garg's kernel result adapts to local dimension and local H\"older smoothness.
+Farahmand, Szepesv\'ari, and Audibert developed a related manifold-adaptive
+program. Their assumptions and smoothness ranges should be compared
+explicitly, rather than treating all rates as one identical theorem.
+The neural result's distinctive content is its guarantee for a specified
+gradient-descent estimator. Low-dimensional input geometry and shared
+representations across tasks are different statistical assumptions.
+
+\clearpage
+\begin{thebibliography}{99}
+\raggedright
+
+\bibitem[Aljundi et al.(2019)]{aljundi2019}
+Rahaf Aljundi, Klaas Kelchtermans, and Tinne Tuytelaars.
+\newblock Task-free continual learning.
+\newblock In \emph{Proceedings of the IEEE/CVF Conference on Computer Vision
+and Pattern Recognition}, pages 11254--11263, 2019.
+\newblock \url{https://openaccess.thecvf.com/content_CVPR_2019/html/Aljundi_Task-Free_Continual_Learning_CVPR_2019_paper.html}.
+
+\bibitem[Baxter(2000)]{baxter2000}
+Jonathan Baxter.
+\newblock A model of inductive bias learning.
+\newblock \emph{Journal of Artificial Intelligence Research}, 12:149--198, 2000.
+\newblock \url{https://doi.org/10.1613/jair.731}.
+
+\bibitem[Belkin and Niyogi(2003)]{belkin2003}
+Mikhail Belkin and Partha Niyogi.
+\newblock Laplacian eigenmaps for dimensionality reduction and data
+representation.
+\newblock \emph{Neural Computation}, 15(6):1373--1396, 2003.
+\newblock \url{https://doi.org/10.1162/089976603321780317}.
+
+\bibitem[Bengio et al.(2013)]{bengio2013}
+Yoshua Bengio, Aaron Courville, and Pascal Vincent.
+\newblock Representation learning: A review and new perspectives.
+\newblock \emph{IEEE Transactions on Pattern Analysis and Machine
+Intelligence}, 35(8):1798--1828, 2013.
+\newblock \url{https://doi.org/10.1109/TPAMI.2013.50}.
+
+\bibitem[Bronstein et al.(2021)]{bronstein2021}
+Michael M. Bronstein, Joan Bruna, Taco Cohen, and Petar Veli\v{c}kovi\'c.
+\newblock Geometric deep learning: Grids, groups, graphs, geodesics, and
+gauges.
+\newblock 2021.
+\newblock \url{https://arxiv.org/abs/2104.13478}.
+
+\bibitem[Davis and Kahan(1970)]{daviskahan1970}
+Chandler Davis and William M. Kahan.
+\newblock The rotation of eigenvectors by a perturbation. III.
+\newblock \emph{SIAM Journal on Numerical Analysis}, 7(1):1--46, 1970.
+\newblock \url{https://doi.org/10.1137/0707001}.
+
+\bibitem[Farahmand et al.(2007)]{farahmand2007}
+Amir-massoud Farahmand, Csaba Szepesv\'ari, and Jean-Yves Audibert.
+\newblock Manifold-adaptive dimension estimation.
+\newblock In \emph{Proceedings of the 24th International Conference on
+Machine Learning}, pages 265--272, 2007.
+\newblock \url{https://doi.org/10.1145/1273496.1273530}.
+
+\bibitem[Goodfellow et al.(2016)]{goodfellow2016}
+Ian Goodfellow, Yoshua Bengio, and Aaron Courville.
+\newblock \emph{Deep Learning}.
+\newblock MIT Press, 2016.
+\newblock \url{https://www.deeplearningbook.org/}.
+
+\bibitem[Hyv\"arinen et al.(2001)]{hyvarinen2001}
+Aapo Hyv\"arinen, Juha Karhunen, and Erkki Oja.
+\newblock \emph{Independent Component Analysis}.
+\newblock Wiley, 2001.
+\newblock \url{https://doi.org/10.1002/0471221317}.
+
+\bibitem[Jolliffe and Cadima(2016)]{jolliffe2016}
+Ian T. Jolliffe and Jorge Cadima.
+\newblock Principal component analysis: A review and recent developments.
+\newblock \emph{Philosophical Transactions of the Royal Society A},
+374(2065):20150202, 2016.
+\newblock \url{https://doi.org/10.1098/rsta.2015.0202}.
+
+\bibitem[Kohler et al.(2026)]{kohler2026}
+Michael Kohler, Vincent Molinero R\"omer, and Adam Krzy\.{z}ak.
+\newblock Learning of deep neural network regression estimates using gradient
+descent with pruning.
+\newblock 2026.
+\newblock \url{https://arxiv.org/abs/2608.25743}.
+
+\bibitem[Kpotufe(2011)]{kpotufe2011}
+Samory Kpotufe.
+\newblock $k$-NN regression adapts to local intrinsic dimension.
+\newblock In \emph{Advances in Neural Information Processing Systems 24},
+2011.
+\newblock \url{https://proceedings.neurips.cc/paper/2011/hash/05f971b5ec196b8c65b75d2ef8267331-Abstract.html}.
+
+\bibitem[Kpotufe and Garg(2013)]{kpotufe2013}
+Samory Kpotufe and Vikas K. Garg.
+\newblock Adaptivity to local smoothness and dimension in kernel regression.
+\newblock In \emph{Advances in Neural Information Processing Systems 26},
+2013.
+\newblock \url{https://proceedings.neurips.cc/paper/2013/hash/28fc2782ea7ef51c1104ccf7b9bea13d-Abstract.html}.
+
+\bibitem[Le-Khac et al.(2020)]{lekhac2020}
+Phuc H. Le-Khac, Graham Healy, and Alan F. Smeaton.
+\newblock Contrastive representation learning: A framework and review.
+\newblock \emph{IEEE Access}, 8:193907--193934, 2020.
+\newblock \url{https://doi.org/10.1109/ACCESS.2020.3031549}.
+
+\bibitem[Lesort et al.(2018)]{lesort2018}
+Timoth\'ee Lesort, Natalia D\'iaz-Rodr\'iguez, Jean-Fran\c{c}ois Goudou, and
+David Filliat.
+\newblock State representation learning for control: An overview.
+\newblock \emph{Neural Networks}, 108:379--392, 2018.
+\newblock \url{https://doi.org/10.1016/j.neunet.2018.07.006}.
+
+\bibitem[Maurer et al.(2016)]{maurer2016}
+Andreas Maurer, Massimiliano Pontil, and Bernardino Romera-Paredes.
+\newblock The benefit of multitask representation learning.
+\newblock \emph{Journal of Machine Learning Research}, 17(81):1--32, 2016.
+\newblock \url{https://www.jmlr.org/papers/v17/15-242.html}.
+
+\bibitem[Sch\"olkopf et al.(2021)]{scholkopf2021}
+Bernhard Sch\"olkopf, Francesco Locatello, Stefan Bauer, Nan Rosemary Ke,
+Nal Kalchbrenner, Anirudh Goyal, and Yoshua Bengio.
+\newblock Toward causal representation learning.
+\newblock \emph{Proceedings of the IEEE}, 109(5):612--634, 2021.
+\newblock \url{https://doi.org/10.1109/JPROC.2021.3058954}.
+
+\bibitem[Tripuraneni et al.(2020)]{tripuraneni2020}
+Nilesh Tripuraneni, Michael I. Jordan, and Chi Jin.
+\newblock On the theory of transfer learning: The importance of task diversity.
+\newblock In \emph{Advances in Neural Information Processing Systems 33}, 2020.
+\newblock \url{https://proceedings.neurips.cc/paper/2020/hash/59587bffec1c7846f3e34230141556ae-Abstract.html}.
+
+\bibitem[Tripuraneni et al.(2021)]{tripuraneni2021}
+Nilesh Tripuraneni, Chi Jin, and Michael I. Jordan.
+\newblock Provable meta-learning of linear representations.
+\newblock In \emph{Proceedings of the 38th International Conference on
+Machine Learning}, pages 10434--10443, 2021.
+\newblock \url{https://proceedings.mlr.press/v139/tripuraneni21a.html}.
+
+\bibitem[von Luxburg(2007)]{vonluxburg2007}
+Ulrike von Luxburg.
+\newblock A tutorial on spectral clustering.
+\newblock \emph{Statistics and Computing}, 17:395--416, 2007.
+\newblock \url{https://doi.org/10.1007/s11222-007-9033-z}.
+
+\end{thebibliography}
+
+\end{document}

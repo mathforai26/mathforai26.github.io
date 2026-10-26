@@ -1,0 +1,2882 @@
+\documentclass[11pt,twoside]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{array,booktabs}
+\usepackage[inline,shortlabels]{enumitem}
+\usepackage{xcolor}
+\usepackage{microtype}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,calc,fit}
+\usepackage{../exercises/course-exercises}
+
+% Revision date: maintained by scripts/build_lecture_notes.py. Keep this command.
+\newcommand{\lecturerevised}{2026-10-25 23:41 UTC-06:00}
+\usepackage{eso-pic}
+\AddToShipoutPictureBG{%
+  \AtPageLowerLeft{%
+    \put(\LenToUnit{0.5\paperwidth},\LenToUnit{0.5in}){%
+      \makebox(0,0){\normalfont\footnotesize\color{black!60}Last revised: \lecturerevised}%
+    }%
+  }%
+}
+
+\usepackage[square,authoryear]{natbib}
+\usepackage[colorlinks=true,linkcolor=blue!60!black,
+  urlcolor=blue!60!black,citecolor=blue!60!black]{hyperref}
+\usepackage[nameinlink,capitalize]{cleveref}
+\crefname{exercise}{Exercise}{Exercises}
+\Crefname{exercise}{Exercise}{Exercises}
+\newcommand{\appendixref}[1]{\hyperref[#1]{Appendix~\ref*{#1}}}
+
+\usepackage{enotez}
+\DeclareInstance{enotez-list}{lecture}{list}{format=\normalsize,number={#1.}}
+\setenotez{list-name=Endnotes,list-style=lecture,backref=true}
+\crefname{endnote}{Endnote}{Endnotes}
+\Crefname{endnote}{Endnote}{Endnotes}
+
+\definecolor{courseblue}{HTML}{17365D}
+\definecolor{lightblue}{HTML}{DCE6F1}
+\newcommand{\E}{\mathbb E}
+\newcommand{\I}{\mathbb I}
+\renewcommand{\P}{\mathbb P}
+\newcommand{\Law}{\mathcal L}
+\newcommand{\R}{\mathbb R}
+\newcommand{\relu}{\operatorname{ReLU}}
+\newcommand{\TV}{\operatorname{TV}}
+\makeatletter
+\@for\@letter:=A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z\do{%
+  \expandafter\edef\csname c\@letter\endcsname{\noexpand\mathcal{\@letter}}}
+\makeatother
+\newcommand{\lecturenumber}{15}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{lemma}[theorem]{Lemma}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{example}[theorem]{Example}
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+
+\renewcommand{\thepage}{15--\arabic{page}}
+\renewcommand{\thesection}{15.\arabic{section}}
+\renewcommand{\theequation}{15.\arabic{equation}}
+\pagestyle{myheadings}
+\markboth{Lecture 15: When neural networks approximate efficiently}
+{Lecture 15: When neural networks approximate efficiently}
+
+\begin{document}
+
+\begin{center}
+\fcolorbox{courseblue}{white}{%
+\begin{minipage}{0.92\textwidth}
+\vspace{1mm}
+\textbf{CMPUT 654: Mathematical Foundations of Modern AI Systems}
+\hfill Fall 2026
+
+\vspace{3mm}
+\begin{center}
+{\Large\bfseries Lecture 15: When neural networks approximate efficiently}
+
+\vspace{1mm}
+October 22, 2026
+\end{center}
+
+\vspace{2mm}
+\textit{Lecturer: Csaba Szepesv\'ari}
+\hfill
+\textit{Note prepared by: Csaba Szepesv\'ari}
+\vspace{1mm}
+\end{minipage}}
+\end{center}
+
+\noindent\textbf{Reading guide.}
+\href{lecture14.pdf}{Lecture 14} studied representation questions for maps with discrete inputs and
+outputs. Lecture 15 changes both the domain and the target: the input belongs
+to a subset of $\R^d$, the target is real-valued, and the statistical problem
+is regression. Continuous regression makes three questions distinct. An
+approximation result asks whether a good member of a function family exists.
+A constructive approximation result asks whether an algorithm can produce one
+from specified information about the target. A learning result asks what can
+be estimated from noisy data.
+
+The material presented in class runs through \cref{sec:mousavi}. The
+development begins with the progression from approximation to constructive
+approximation to learning.
+Shallow ridge and radial-basis-function networks make the questions concrete.
+The minimax limit for ordinary smooth regression supplies an
+information-theoretic benchmark. The central Hilbert-space lemma then
+shows that a function with a bounded integral representation has an accurate
+finite approximation. The lemma's proof uses random sampling, although the
+lemma's conclusion is deterministic. The two density corollaries answer the
+minimum approximation question: radial-basis-function and ridge networks can
+make the approximation error arbitrarily small in the stated \(L^2\) spaces.
+Quantitative approximation results for H\"older balls describe how the error
+decreases with the number of terms, and suitable neural-network constructions
+give corresponding rates. The integral representation also identifies
+functions that are easy to approximate by \(m\)-term networks. Barron's
+theorem shows that the same class has the following property: for every fixed
+\(m\)-dimensional linear space, some function in the class is poorly
+approximated by that space, even though target-dependent ridge atoms attain an
+\(m^{-1/2}\) approximation rate.
+
+The Barron comparison makes target-dependent dictionary selection the central
+issue. Fixing the dictionary distribution in advance gives a kernel method.
+Allowing the dictionary elements to depend on the target creates a
+feature-selection problem: can a constructive or statistical method find the
+useful elements? Projection pursuit gives a greedy constructive approach
+conditional on a difficult oracle. The general learning question remains
+open, so the final two main sections restrict the target to a multi-index
+model. Under a rank condition, target gradients and a singular-value
+decomposition identify a predictive subspace. A special two-stage
+stochastic-gradient procedure then gives a learning result under restrictive
+assumptions.
+
+The optional-reading section contains the entropy result that was not
+presented in class, additional classical and neural comparators, and results
+about depth.
+The appendices contain the wavelet, Fourier, active-query, RKHS, and
+staged-SGD details used to support the main development.
+\href{lecture09.pdf}{Lecture 9},
+\href{lecture09.pdf\#nameddest=appendix.A}{Appendix~9.A}, reviews $L^2(P_X)$,
+inner products, Hilbert spaces, orthogonality, and projections.
+
+The lecture's central question is:
+\begin{center}
+\emph{Neural networks can choose features for the target. Can a constructive
+or statistical algorithm find the useful features from the information
+available to the algorithm?}
+\end{center}
+The lecture gives a general representation theorem and a restricted learning
+theorem. A general efficient learning theorem remains open.
+
+\section{From approximation to regression learning}
+\label{sec:questions}
+
+Regression starts from random input--response pairs $(X,Y)$ with
+$X\in\cX\subseteq\R^d$ and $Y\in\R$. Under squared loss, the target is the
+conditional mean
+\[
+ f(x)=\E[Y\mid X=x].
+\]
+The input domain and the target are continuous. Regression leads to a
+progression from approximation, to constructive approximation, to learning.
+
+\paragraph{Approximation.}
+For a target $f$ and a family $\cF_m$, how small can
+\begin{equation}
+ \inf_{g\in\cF_m}\|f-g\|
+ \label{eq:approximation-error}
+\end{equation}
+be? The infimum is an existential quantity and may use complete knowledge of
+$f$.
+
+To make the approximation question concrete, consider the function families
+used throughout the lecture. For an activation $\sigma:\R\to\R$, a width-$m$
+one-hidden-layer \emph{ridge network} belongs to
+\begin{equation}
+ \cN_m^\sigma
+ =\left\{x\mapsto c_0+\sum_{j=1}^m
+ c_j\sigma(a_j^\top x+b_j):
+ a_j\in\R^d,\ b_j,c_j,c_0\in\R\right\}.
+ \label{eq:ridge-network-class}
+\end{equation}
+For $\psi:\R^d\to\R$, a width-$m$ scale--location network belongs to
+\begin{equation}
+ \cR_m^\psi
+ =\left\{x\mapsto c_0+\sum_{j=1}^m
+ c_j\psi\bigl(s_j(x-u_j)\bigr):
+ s_j>0,\ u_j\in\R^d,\ c_j,c_0\in\R\right\}.
+ \label{eq:scale-location-network-class}
+\end{equation}
+If $\psi(z)=\rho(\|z\|_2)$, then
+$\psi(s_j(x-u_j))=\rho(s_j\|x-u_j\|_2)$, and
+\cref{eq:scale-location-network-class} is a \emph{radial-basis-function
+network}. The center $u_j$ selects a location, and the scale $s_j$ selects the
+spatial resolution of the $j$th atom. These formulas specify representation
+families. An approximation theorem may use complete knowledge of the target
+to choose the parameters of each network.
+
+\paragraph{Constructive approximation.}
+Given an information oracle for $f$, can a finite algorithm call the oracle
+and produce an accurate $g$? A point-evaluation oracle returns
+\[
+ L_x(f)=f(x)=\int f\,d\delta_x,
+\]
+where $\delta_x$ is the Dirac point mass. A general linear-information oracle
+returns $L(f)$ for specified linear functionals $L$. Point evaluations are a
+special case. A numerically stable construction changes little when the oracle
+values are perturbed. Numerical stability permits a subsequent analysis of
+observation noise.
+
+\paragraph{Learning.}
+Regression supplies noisy point evaluations. From random noisy observations,
+can an estimator $\widehat f_n$ achieve small prediction risk? For the
+$L^2(P_X)$ loss, the risk is
+\begin{equation}
+ \E\bigl[\|\widehat f_n-f\|_{L^2(P_X)}^2\bigr].
+ \label{eq:learning-risk}
+\end{equation}
+The expectation averages over the training sample and any randomness used by
+the estimator.
+
+The norm used in the main results is
+\begin{equation}
+ \langle g,h\rangle_{L^2(P_X)}=\E[g(X)h(X)],
+ \qquad
+ \|h\|_{L^2(P_X)}^2=\E[h(X)^2],
+ \label{eq:l2-inner-product}
+\end{equation}
+where $\Law(X)=P_X$. Functions that agree $P_X$-almost everywhere represent
+the same element of $L^2(P_X)$. The space is a Hilbert space, so independent
+centered errors add through the inner product exactly as Euclidean vectors do.
+\href{lecture09.pdf}{Lecture 9},
+\href{lecture09.pdf\#nameddest=appendix.A}{Appendix~9.A}, gives the required
+background. Approximation theory also commonly uses the uniform norm
+$\|h\|_\infty=\sup_x|h(x)|$; the present
+lecture uses $L^2(P_X)$ because squared-loss regression averages prediction
+error under the input law.\endnote{Uniform error is the appropriate objective
+when every input must receive a guarantee. Such bounds also arise in dynamic
+programming when a worst-case value-function error must remain controlled
+through repeated Bellman updates. The sampling lemma below extends to any
+Hilbert space, but $L^\infty$ is not a Hilbert space, so the same variance
+calculation does not directly give an $L^\infty$ bound.}
+
+No choice of representation or algorithm can avoid the information-theoretic
+limits of regression. To state the standard benchmark, set
+$\cX=[0,1]^d$. Suppose that $P_X$ has a
+density bounded above and bounded away from zero, and let
+$(X_i,Y_i)_{i=1}^n$ be independent copies of $(X,Y)$ satisfying
+\begin{equation}
+ Y_i=f(X_i)+\varepsilon_i,
+ \qquad
+ \Law(\varepsilon_i)=N(0,\sigma^2),
+ \label{eq:regression-model}
+\end{equation}
+where the noise variables are independent of the inputs. A function $h$ is
+\emph{$\beta$-H\"older} for $0<\beta\leq1$ if
+\begin{equation}
+ |h(x)-h(x')|\leq L\|x-x'\|_2^\beta
+ \quad\text{for every }x,x'.
+ \label{eq:beta-holder}
+\end{equation}
+The case $\beta=1$ is Lipschitz continuity. When $0<\beta<1$, small distances
+satisfy $r^\beta\geq r$ for $0\leq r\leq1$, so the same constant permits
+larger local changes than a Lipschitz condition.
+
+Write $\alpha=k+\beta$ with $k\in\mathbb N_0$ and $0<\beta\leq1$. The
+H\"older ball $\cH_d^\alpha(L)$ contains functions whose partial derivatives
+through order $k$ are bounded by $L$ and whose derivatives of order $k$ are
+$\beta$-H\"older with constant $L$. The minimax mean integrated squared error
+over \(\cH_d^\alpha(L)\)
+satisfies
+\begin{equation}
+ \inf_{\widehat f_n}\sup_{f\in\cH_d^\alpha(L)}
+ \E\bigl[\|\widehat f_n-f\|_{L^2(P_X)}^2\bigr]
+ \asymp n^{-2\alpha/(2\alpha+d)}.
+ \label{eq:generic-smooth-rate}
+\end{equation}
+The infimum ranges over all measurable estimators based on the $n$ observed
+pairs; the notation does not impose a computational model. Thus
+\cref{eq:generic-smooth-rate} is an information-theoretic statement, not a
+claim about an efficiently implementable algorithm. The exponent deteriorates
+with the ambient dimension. A faster rate requires a smaller target class, a
+different observation model, or a different loss. The bound sets the
+regression benchmark. A complementary entropy result was not developed in
+class and appears in the optional reading.
+
+\section{Integral representations and density}
+\label{sec:sampling}
+
+The finite network formulas in
+\cref{eq:ridge-network-class,eq:scale-location-network-class} both start from
+a \emph{dictionary}: a parameterized family
+\(\cD=(\phi_\theta)_{\theta\in\Theta}\) of functions. For a ridge network,
+\(\theta=(a,b)\) and
+\(\phi_\theta(x)=\sigma(a^\top x+b)\). For a scale--location network,
+\(\theta=(s,u)\) and \(\phi_\theta(x)=\psi(s(x-u))\). A finite network
+selects finitely many dictionary elements. Replacing the finite sum by an
+integral permits a continuous collection and gives a useful sufficient
+condition for accurate finite approximation.
+
+\begin{definition}[Finite signed measure and integral representation]
+\label{def:signed-integral-representation}
+Let \(\Theta\) be a measurable parameter space. A
+\emph{finite signed measure} will mean a measure of the form
+\[
+ d\mu(\theta)=s(\theta)\,d\nu(\theta),
+\]
+where \(\nu\) is a finite positive measure and
+\(s:\Theta\to\{-1,1\}\) is measurable. The positive measure
+\(|\mu|:=\nu\) is the \emph{total variation measure} of \(\mu\), and
+\[
+ \|\mu\|_{\TV}:=|\mu|(\Theta)
+\]
+is its \emph{total variation norm}. For a dictionary
+\((\phi_\theta)_{\theta\in\Theta}\) in a Hilbert space \(\cH\), an
+\emph{integral representation} of \(f\in\cH\) is
+\begin{equation}
+ f=\int_\Theta \phi_\theta\,d\mu(\theta).
+ \label{eq:integral-representation}
+\end{equation}
+\end{definition}
+The definition through a sign function is equivalent to the usual definition
+of a finite real-valued signed measure.%
+\endnote{The usual definition starts from a countably additive real-valued
+set function. The Jordan decomposition theorem writes every such measure as
+\(\mu=\mu^+-\mu^-\) for mutually singular positive measures. Consequently,
+\(|\mu|=\mu^++\mu^-\) and
+\(d\mu=s\,d|\mu|\) for a measurable sign function
+\(s\in\{-1,1\}\), up to a \(|\mu|\)-null set. Thus the sign-times-positive-
+measure definition loses no finite signed measures.}
+
+A finite sum is a special integral. If
+\(f=\sum_{j=1}^m c_j\phi_{\theta_j}\), take
+\(\mu=\sum_{j=1}^m c_j\delta_{\theta_j}\). Then
+\(|\mu|=\sum_{j=1}^m|c_j|\delta_{\theta_j}\) after repeated atoms have been
+combined. Integral representations can also describe functions that require
+a limit of finite sums.
+
+The same formula is used in mean-field descriptions of two-layer networks. If
+\(\rho\) is a probability measure on neuron parameters, then
+\begin{equation}
+ f_\rho(x)=\int a\,\sigma(w^\top x+b)\,d\rho(a,w,b).
+ \label{eq:mean-field-representation}
+\end{equation}
+Absorbing the output weight \(a\) into a signed measure on \((w,b)\) gives
+the representation in \cref{eq:integral-representation}. Mean-field training
+adds an evolution equation for \(\rho\); the static integral formula alone is
+a representation statement.
+
+The integral form is useful because every function with a representing
+measure of bounded total variation has an accurate finite-sum approximation.
+The following lemma is the central result of the lecture. The lemma's statement
+requires only Hilbert-space geometry.
+
+\begin{lemma}[Finite approximation of an integral representation]
+\label{lem:mc-sparsification}
+Let \(\cH\) be a real Hilbert space, let
+\(\theta\mapsto\phi_\theta\in\cH\) be measurable, and suppose that
+\(\|\phi_\theta\|_{\cH}\leq1\) for every \(\theta\). If
+\(f=\int\phi_\theta\,d\mu(\theta)\) and
+\(B=\|\mu\|_{\TV}<\infty\), then, for every \(m\geq1\), there are
+\(\theta_1,\ldots,\theta_m\in\Theta\) and
+\(s_1,\ldots,s_m\in\{-1,1\}\) such that
+\begin{equation}
+ \left\|f-\frac{B}{m}\sum_{j=1}^m
+ s_j\phi_{\theta_j}\right\|_{\cH}
+ \leq\frac{B}{\sqrt m}.
+ \label{eq:mc-sparsification-rate}
+\end{equation}
+\end{lemma}
+
+\begin{proof}
+The conclusion is immediate when \(B=0\). Suppose that \(B>0\). Let
+\(\Theta_1,\ldots,\Theta_m\) be independent random elements with common law
+\(\pi=|\mu|/B\), let \(s=d\mu/d|\mu|\), and define
+\[
+ S_j=s(\Theta_j),
+ \qquad
+ Z_j=B S_j\phi_{\Theta_j}.
+\]
+The random elements \(Z_1,\ldots,Z_m\) are independent,
+\(\E[Z_j]=f\), and \(\|Z_j\|_{\cH}\leq B\). The inner product and
+independence give
+\begin{align}
+ \E\left[
+ \left\|\frac1m\sum_{j=1}^mZ_j-f\right\|_{\cH}^2\right]
+ &=\frac1m\E\bigl[\|Z_1-f\|_{\cH}^2\bigr]
+ =\frac1m\left(\E[\|Z_1\|_{\cH}^2]-\|f\|_{\cH}^2\right)
+ \leq\frac{B^2}{m}.
+ \label{eq:mc-proof}
+\end{align}
+At least one realization has squared error no larger than the expectation.
+Fixing that realization proves \cref{eq:mc-sparsification-rate}.
+\end{proof}
+
+The proof is the \emph{probabilistic method}: a random experiment proves that
+a deterministic choice exists. The proof also exposes the limitation of the
+construction. The sampling law \(|\mu|/B\) depends on a representing measure
+for \(f\). Knowing that measure can require essentially the same information
+as knowing the target. The lemma therefore proves economical finite
+representation. The lemma alone does not supply an implementable oracle
+algorithm or a regression estimator.
+
+The lemma gives a route from integral representations to universal
+approximation. If a dense subclass of targets has representing measures of
+finite total variation, finite networks are dense as well. Applying the
+integral-representation argument to scale--location atoms and ridge atoms gives the next two
+corollaries.
+
+For a measurable domain \(D\subseteq\R^d\), \(L^2(D)\) denotes the space of
+measurable functions \(h:D\to\R\)
+such that \(\int_D|h(x)|^2\,dx<\infty\), where functions that agree
+Lebesgue-almost everywhere are identified. The \(L^2(D)\) norm is
+\(\|h\|_{L^2(D)}=(\int_D|h(x)|^2\,dx)^{1/2}\). For a subset
+\(\cF\subseteq L^2(D)\), the notation
+\(\overline{\cF}^{\,L^2(D)}\) denotes the closure of \(\cF\) in the
+\(L^2(D)\) norm. Thus
+\(\overline{\cF}^{\,L^2(D)}=L^2(D)\) means that for every
+\(h\in L^2(D)\) and every \(\epsilon>0\), there is an \(f\in\cF\) such
+that \(\|h-f\|_{L^2(D)}<\epsilon\).
+
+\begin{corollary}[Density of Gaussian radial-basis-function networks]
+\label{cor:rbf-density}
+Let \(\psi(x)=\exp(-\|x\|_2^2/2)\). Then
+\begin{equation}
+ \overline{\bigcup_{m\geq1}
+ \left\{\sum_{j=1}^m c_j
+ \psi\bigl(s_j(\cdot-u_j)\bigr):
+ c_j\in\R,\ s_j>0,\ u_j\in\R^d\right\}}^{\,L^2(\R^d)}
+ =L^2(\R^d).
+ \label{eq:rbf-density}
+\end{equation}
+\end{corollary}
+
+A wavelet proof chooses a Laplacian-of-Gaussian analysis function and the
+Gaussian as the synthesis atom. Translation and dilation then give an
+integral representation, and \cref{lem:mc-sparsification} replaces the
+integral by finitely many scale--location atoms.
+\appendixref{app:wavelet-facts} and \appendixref{app:fourier-basics} give the
+coefficient estimate, reconstruction formula, and Fourier verification.
+
+\begin{corollary}[Density of shallow ridge networks on a cube]
+\label{cor:ridge-density}
+Let \(Q=[0,1]^d\), and let \(\sigma:\R\to[0,1]\) be measurable with
+\begin{equation}
+ \lim_{t\to-\infty}\sigma(t)=0,
+ \qquad
+ \lim_{t\to+\infty}\sigma(t)=1.
+ \label{eq:sigmoidal-activation}
+\end{equation}
+For
+\begin{equation}
+ \cN_\sigma(Q)
+ =\left\{\left.
+ c_0+\sum_{j=1}^m c_j\sigma(a_j^\top x+b_j)
+ \right|_Q:
+ m\geq1,\ c_0,c_j,b_j\in\R,\ a_j\in\R^d\right\},
+ \label{eq:finite-ridge-class}
+\end{equation}
+Then
+\begin{equation}
+ \overline{\cN_\sigma(Q)}^{\,L^2(Q)}=L^2(Q).
+ \label{eq:ridge-density}
+\end{equation}
+\end{corollary}
+
+Fourier inversion writes a smooth target as an integral of oscillations
+\(e^{i\omega^\top x}\). On the cube, each oscillation is a univariate
+function of \(\omega^\top x\), and the fundamental theorem of calculus writes
+the univariate profile as an integral of thresholds. Steep sigmoids
+approximate the thresholds. \appendixref{app:fourier-basics} makes each step
+precise.
+
+The two density corollaries answer a basic minimum question: can a finite
+network make the approximation error arbitrarily small? The answer is yes for
+the stated RBF and ridge families. Density alone gives no relation between the
+required network width and the desired error.
+
+For a H\"older ball, approximation theory asks the quantitative version of
+the same question. Under the input-distribution assumptions used in
+\cref{eq:generic-smooth-rate}, standard local-polynomial or wavelet spaces
+\(V_m\) with \(m\) degrees of freedom can be chosen so that
+\begin{equation}
+ \sup_{f\in\cH_d^\alpha(L)}\inf_{g\in V_m}
+ \|f-g\|_{L^2(P_X)}\lesssim m^{-\alpha/d}.
+ \label{eq:holder-approximation-rate}
+\end{equation}
+Suitable neural-network architectures can implement the same local
+approximations. For example, ReLU networks with \(O(m\log m)\) parameters can
+attain uniform, and hence \(L^2(P_X)\), error of order
+\(m^{-\alpha/d}\) by implementing local Taylor approximations and a partition
+of unity. The parameter count and logarithmic factors depend on the activation
+and architecture. For a classical \(m\)-dimensional series estimator, the
+squared approximation error is of order \(m^{-2\alpha/d}\) by
+\cref{eq:holder-approximation-rate}, and the estimation error is of order
+\(m/n\). Balancing the two terms gives the regression rate
+\(n^{-2\alpha/(2\alpha+d)}\) in \cref{eq:generic-smooth-rate}. The bias--
+estimation balance connects the quantitative approximation result to the
+regression benchmark; approximation and regression still answer different
+questions.
+
+\section{Target-dependent approximation and fixed features}
+\label{sec:adaptive-fixed-features}
+
+The density results are useful, but there is a more interesting fact. Some
+functions have a bounded continuous neural-network representation of the form
+in \cref{eq:integral-representation}. Lemma~\ref{lem:mc-sparsification}
+therefore gives accurate \(m\)-term approximations for those functions. Now fix
+any \(m\) basis functions in advance, whether they come from a classical
+approximation method or from any other proposed basis. Barron's theorem says
+that some function from the same class is nevertheless poorly approximated by
+their span. To state the theorem, first define the target class by fixing the
+Fourier normalization
+\begin{equation}
+ \widehat f(\omega)=\int_{\R^d}e^{-i\omega^\top x}f(x)\,dx.
+ \label{eq:fourier-transform}
+\end{equation}
+
+\begin{definition}[Anchored spectral Barron norm]
+\label{def:spectral-barron-norm}
+Let \(\cB(\R^d)\) be the class of real-valued functions
+\(f:\R^d\to\R\) that admit a representation
+\begin{equation}
+ f(x)=c+\frac1{(2\pi)^d}\int_{\R^d}
+ (e^{i\omega^\top x}-1)F(\omega)\,d\omega,
+ \label{eq:barron-density-representation}
+\end{equation}
+where \(c\in\R\), \(F\in L^1(\R^d;\mathbb C)\), the integral is real for
+every \(x\), and
+\(\int_{\R^d}\|\omega\|_1|F(\omega)|\,d\omega<\infty\). Setting \(x=0\) in
+\cref{eq:barron-density-representation} gives \(c=f(0)\). The weighted spectral
+term assigns value zero to every constant function by taking \(F=0\). Using
+only the weighted spectral term would therefore give a seminorm. Adding
+\(|c|\) records the constant component. Define
+\begin{equation}
+ \|f\|_{\cB(\R^d)}
+ =\inf_{c,F}\left\{
+ |c|+\frac1{(2\pi)^d}\int_{\R^d}
+ \|\omega\|_1|F(\omega)|\,d\omega\right\},
+ \label{eq:barron-norm}
+\end{equation}
+where the infimum ranges over all representations in
+\cref{eq:barron-density-representation}. The ambient Barron ball and its
+restriction to \(Q=[0,1]^d\) are
+\begin{equation}
+ \cB_C(\R^d)=\{f\in\cB(\R^d):\|f\|_{\cB(\R^d)}\leq C\},
+ \qquad
+ \cB_C(Q)=\{f|_Q:f\in\cB_C(\R^d)\}\subseteq L^2(Q).
+ \label{eq:barron-class}
+\end{equation}
+\end{definition}
+Each restriction in \(\cB_C(Q)\) is identified with its equivalence class in
+\(L^2(Q)\). The quantity in \cref{eq:barron-norm} is a norm on the represented
+functions on \(\R^d\).%
+\endnote{One may instead use the spectral moment as a norm modulo constants.
+The network represents \(c\) exactly through its output bias, so the
+approximation rate depends only on the spectral moment. Different Fourier
+normalizations change constants but not the approximation exponents.}
+
+\begin{theorem}[Barron's adaptive upper bound and fixed-space lower bound]
+\label{thm:barron}
+Let \(P_X\) be uniform on \(Q=[0,1]^d\), and let \(\sigma\) satisfy
+\cref{eq:sigmoidal-activation}. There is a universal constant
+\(\kappa>0\) such that the following statements hold.
+\begin{enumerate}[label=(\roman*),leftmargin=*]
+\item For every \(h\in\cB_C(Q)\), every \(m\geq1\), and every
+\(\eta>0\), there is
+\(f_m\in\cN_m^\sigma\) satisfying
+\begin{equation}
+ \|h-f_m\|_{L^2(P_X)}\leq\frac{2(C+\eta)}{\sqrt m}.
+ \label{eq:barron-upper}
+\end{equation}
+\item For every fixed collection \(h_1,\ldots,h_m\in L^2(P_X)\),
+\begin{equation}
+ \sup_{h\in\cB_C(Q)}
+ \inf_{a\in\R^m}
+ \left\|h-\sum_{j=1}^ma_jh_j\right\|_{L^2(P_X)}
+ \geq \kappa\frac{C}{d}m^{-1/d}.
+ \label{eq:barron-lower}
+\end{equation}
+\end{enumerate}
+\end{theorem}
+
+\paragraph{Upper-bound idea.}
+Choose \(f\in\cB_C(\R^d)\) satisfying \(f|_Q=h\), and choose a representation
+of \(f\) whose cost is at most \(C+\eta\). The
+Fourier-to-threshold calculation used for
+\cref{cor:ridge-density} represents \(f-c\) by a signed measure
+over ridge atoms whose total variation is at most twice the spectral moment.
+Lemma~\ref{lem:mc-sparsification} then selects \(m\) atoms. The constant
+\(c\) is represented exactly. The selected ridge directions and biases depend
+on the target.
+
+\paragraph{Lower-bound idea.}
+Choose \(2m\) distinct integer frequencies of size
+\(O(dm^{1/d})\). The associated cosine functions are orthonormal in
+\(L^2(Q)\), and their Barron norms have the same order as their frequencies.
+For any subspace \(V\) of dimension at most \(m\), Bessel's inequality gives
+\[
+ \sum_{j=1}^{2m}\|P_Ve_j\|_{L^2(Q)}^2\leq m.
+\]
+At least one normalized cosine \(e_j\) therefore has
+\[
+ \inf_{v\in V}\|e_j-v\|_{L^2(Q)}^2
+ =1-\|P_Ve_j\|_{L^2(Q)}^2\geq\frac12.
+\]
+Scaling that cosine into \(\cB_C(Q)\) gives
+\cref{eq:barron-lower}. \appendixref{app:fourier-basics} handles the harmless
+smoothing needed to use an integrable spectral density.
+
+The lower bound is a statement about the \emph{Kolmogorov \(m\)-width}
+\begin{equation}
+ d_m(\cF;L^2(P_X))
+ =\inf_{\substack{V\subseteq L^2(P_X)\\ \dim(V)\leq m}}
+ \sup_{f\in\cF}\inf_{v\in V}\|f-v\|_{L^2(P_X)}.
+ \label{eq:kolmogorov-width}
+\end{equation}
+Kolmogorov's question is whether one \(m\)-dimensional subspace can
+approximate every target in \(\cF\). Barron's upper bound allows a different
+set of \(m\) ridge atoms for each target. To reach error \(\epsilon\), the
+upper bound uses \(m=O(C^2\epsilon^{-2})\), while a fixed linear space can
+require \(m=\Omega((C/(d\epsilon))^d)\).%
+\endnote{The comparison is stated for the Barron ball of radius \(C\). The
+theorem does not assert that \(C\) stays bounded along a high-dimensional
+sequence of targets.}
+
+The special feature in Barron's upper bound is that the ridge directions and
+biases are chosen after the target is known. The alternative is to choose the
+dictionary elements in advance. In the integral representation in
+\cref{eq:integral-representation}, choosing the dictionary in advance means
+fixing a probability measure \(\tau\) on \(\Theta\) and permitting only
+measures of the form \(d\mu=p\,d\tau\). Define the resulting function space and
+its coefficient norm by
+\begin{align}
+ \cF_{2,\tau}
+ &=\left\{f:f(x)=\int_\Theta p(\theta)\phi_\theta(x)\,d\tau(\theta)
+              \text{ for some }p\in L^2(\tau)\right\},
+ \notag\\
+ \|f\|_{\cF_{2,\tau}}
+ &=\inf\left\{\|p\|_{L^2(\tau)}:
+       f(x)=\int_\Theta p(\theta)\phi_\theta(x)\,d\tau(\theta)\right\}.
+ \label{eq:F2}
+\end{align}
+The feature locations are distributed according to \(\tau\); only the
+coefficient function \(p\) changes with the target. The corresponding kernel
+is
+\begin{equation}
+ k_\tau(x,x')
+ =\int_\Theta\phi_\theta(x)\phi_\theta(x')\,d\tau(\theta).
+ \label{eq:feature-kernel}
+\end{equation}
+The normed function space in \cref{eq:F2} is the reproducing-kernel Hilbert
+space associated with \(k_\tau\). The infimum is needed because different
+coefficient functions can represent the same function. Conversely, every
+separable reproducing-kernel Hilbert space admits a feature representation of
+the form in \cref{eq:F2}; \appendixref{app:rkhs-features} gives a direct construction.
+
+The integral representation in \cref{eq:integral-representation} allows any
+finite signed measure. Define the corresponding variation space and norm by
+\begin{align}
+ \cF_1
+ &=\left\{f:f(x)=\int_\Theta\phi_\theta(x)\,d\mu(\theta)
+             \text{ for some finite signed measure }\mu\right\},
+ \notag\\
+ \|f\|_{\cF_1}
+ &=\inf\left\{\|\mu\|_{\TV}:
+       f(x)=\int_\Theta\phi_\theta(x)\,d\mu(\theta)\right\}.
+ \label{eq:F1}
+\end{align}
+The two unit balls are
+\begin{equation}
+ B_{\cF_1}=\{f:\|f\|_{\cF_1}\leq1\},
+ \qquad
+ B_{\cF_{2,\tau}}=\{f:\|f\|_{\cF_{2,\tau}}\leq1\}.
+ \label{eq:F1-F2-unit-balls}
+\end{equation}
+For either \(\cG\in\{\cF_1,\cF_{2,\tau}\}\), every nonzero function
+\(f\in\cG\) is a positive scalar multiple of its normalized version in the
+unit ball:
+\(f=\|f\|_{\cG}(f/\|f\|_{\cG})\). Thus the unit ball represents every
+direction in the function space; the norm records the required scale.
+
+The fixed-kernel representation requires \(d\mu=p\,d\tau\) with
+\(p\in L^2(\tau)\). Since \(\tau\) is a probability measure,
+Cauchy--Schwarz gives
+\begin{equation}
+ \|f\|_{\cF_1}
+ \leq\int_\Theta|p|\,d\tau
+ \leq\|p\|_{L^2(\tau)}.
+ \label{eq:F2-F1-norm-inclusion}
+\end{equation}
+Taking the infimum over all coefficient functions representing \(f\) yields
+\(\|f\|_{\cF_1}\leq\|f\|_{\cF_{2,\tau}}\), and hence
+\begin{equation}
+ \cF_{2,\tau}\subseteq\cF_1,
+ \qquad B_{\cF_{2,\tau}}\subseteq B_{\cF_1}.
+ \label{eq:F2-F1-ball-inclusion}
+\end{equation}
+Either inclusion can be strict, depending on the dictionary and feature law.
+The mathematical distinction is that a variation-space representation may
+concentrate mass on features chosen for the target, while an RKHS
+representation must have an \(L^2(\tau)\) density relative to the fixed law
+\(\tau\).
+
+The representation results show a possible advantage of neural networks: the
+dictionary elements can be chosen for the target instead of being fixed in
+advance. Can a constructive or statistical algorithm find the useful
+dictionary elements? Projection pursuit is a classical constructive attempt.
+
+\section{Constructive approximation by projection pursuit}
+\label{sec:structure}
+
+\emph{Projection pursuit regression} selects target-dependent ridge functions
+greedily. Projection pursuit approximates a target by
+\begin{equation}
+ f_K(x)=c_0+\sum_{j=1}^K g_j(a_j^\top x),
+ \qquad a_j\in\R^d,
+ \label{eq:projection-pursuit-model}
+\end{equation}
+where both the directions \(a_j\) and the univariate profiles \(g_j\) are
+selected for the target. A shallow neural network is a restricted
+projection-pursuit model with
+\(g_j(t)=c_j\sigma(t+b_j)\).
+
+A stagewise constructive method begins with a residual \(r_0=f\). At step
+\(j\), the method searches for a direction and profile whose ridge function
+has large correlation with \(r_{j-1}\), adds that function to the current
+approximation, and updates the residual. Backfitting may then revise earlier
+terms. In an abstract Hilbert space, an exact correlation oracle and a bounded
+variation norm give an \(O(K^{-1/2})\) approximation bound.
+\appendixref{app:active-query-recovery} states and proves the greedy result.
+
+The oracle is the main computational issue. For a finite dictionary, one can
+scan every atom. For the continuous ridge dictionary, the oracle must optimize
+over a direction and a univariate function, and the search is generally
+nonconvex.
+
+Projection pursuit therefore gives a constructive approximation method only
+when a strong atom-selection oracle is available. Learning requires an
+efficient algorithm that finds useful features from noisy data, without
+access to the target or to such an oracle. An efficient learning algorithm for
+the general Barron class remains open. The next positive result restricts the
+target to a multi-index model, where the features form one low-dimensional
+linear subspace.
+
+\section{Multi-index models and average derivatives}
+\label{sec:agop}
+
+The multi-index restriction replaces the search for arbitrary ridge sums by
+the recovery of one predictive subspace. Several common structured models
+have the form
+\begin{equation}
+ f(x)=\sum_{j=1}^K g_j(W_j^\top x),
+ \qquad W_j\in\R^{d\times s_j}.
+ \label{eq:structured-family}
+\end{equation}
+An additive model uses coordinate directions. A single-index model has
+\(K=s_1=1\). Projection pursuit uses \(s_j=1\) and unknown directions.
+A one-hidden-layer network is projection pursuit with a specified parametric
+form for the profiles. A \emph{multi-index model} focuses on one term,
+\begin{equation}
+ f(x)=g(W^\top x),
+ \qquad W\in\R^{d\times s},\quad W^\top W=I_s,\quad s\ll d.
+ \label{eq:multi-index-model}
+\end{equation}
+Only the column space of \(W\) matters: an orthogonal change of basis inside
+that space can be absorbed into the unknown link \(g\).
+
+Differentiation reveals the subspace. The chain rule gives
+\begin{equation}
+ \nabla f(x)=W\nabla g(W^\top x),
+ \label{eq:multi-index-gradient}
+\end{equation}
+so every gradient belongs to \(\operatorname{span}(W)\). If gradients are
+available at points \(x_1,\ldots,x_q\), form
+\begin{equation}
+ G=\begin{bmatrix}
+ \nabla f(x_1)&\cdots&\nabla f(x_q)
+ \end{bmatrix}\in\R^{d\times q}.
+ \label{eq:main-sampled-gradient-matrix}
+\end{equation}
+When \(\operatorname{rank}(G)=s\), the columns of \(G\) span
+\(\operatorname{span}(W)\). For a singular-value decomposition
+\begin{equation}
+ G=\sum_{\ell=1}^s\sigma_\ell u_\ell v_\ell^\top,
+ \qquad \sigma_s>0,
+ \label{eq:gradient-svd}
+\end{equation}
+the vectors \(u_1,\ldots,u_s\) therefore form an orthonormal basis of the
+predictive subspace. If target gradients were available, the feature-selection
+problem would therefore reduce to a singular-value decomposition. Recovering
+the subspace is sufficient because the link can be redefined in the recovered
+coordinates.
+
+The subspace gives a dimension reduction. If \(g\) has H\"older smoothness
+\(\alpha\) and the subspace were known, the generic regression benchmark
+would become
+\begin{equation}
+ n^{-2\alpha/(2\alpha+s)}
+ \label{eq:intrinsic-smooth-rate}
+\end{equation}
+instead of the ambient-dimensional rate in
+\cref{eq:generic-smooth-rate}.
+
+Regression observations do not contain the target gradients. Methods that
+estimate averages of derivatives from regression data are called
+\emph{average derivative estimation} methods. A population matrix that can
+expose every direction is the \emph{average gradient outer product}
+\begin{equation}
+ G_f=\E[\nabla f(X)\nabla f(X)^\top]
+ =W\,\E[\nabla g(W^\top X)\nabla g(W^\top X)^\top]W^\top.
+ \label{eq:agop}
+\end{equation}
+If the middle matrix is positive definite, the range of \(G_f\) equals
+\(\operatorname{span}(W)\). A zero or nearly singular middle matrix means
+that the available derivatives fail to reveal one or more active directions.
+
+Point evaluations can estimate gradients by finite differences in a noiseless
+active-query model; \appendixref{app:active-query-recovery} gives a
+quantitative construction followed by the SVD argument. Passive noisy
+regression is harder because the derivative information must first be
+estimated. Classical two-stage methods estimate the
+index space by local smoothing and derivative averages and then fit the link
+in the estimated coordinates. The error of the subspace estimate must not
+dominate the second-stage link error.
+
+Gradients and a singular-value decomposition would recover the predictive
+subspace and reduce the regression problem from dimension \(d\) to dimension
+\(s\). Regression data do not provide the gradients directly. The next result
+asks whether a two-layer network trained from data can exploit the same
+structure. The positive theorem uses an unusual staged procedure under
+restrictive model and algorithmic assumptions.
+
+\section{A theorem for neural feature learning by stochastic gradient descent}
+\label{sec:mousavi}
+
+The positive result concerns a particular two-stage procedure, not ordinary
+simultaneous training of both layers. The student predictor is the two-layer
+network
+\begin{equation}
+\widehat y(x;W,a,b)=\sum_{j=1}^m a_j\sigma(w_j^\top x+b_j),
+\qquad W\in\R^{m\times d}.
+\label{eq:two-layer-student}
+\end{equation}
+$W$ is the first-layer weight matrix, $b$ contains the hidden-unit biases, and
+$a$ contains the second-layer or output weights. In the first stage, only
+$W$ is updated. Every online-SGD update receives a fresh independent pair
+$(X_t,Y_t)$ and has the form
+\begin{equation}
+ W^{(t+1)}=(1-\eta_t\lambda)W^{(t)}
+ -\eta_t\nabla_W\ell\bigl(
+   \widehat y(X_t;W^{(t)},a^{(0)},b^{(0)}),Y_t\bigr).
+ \label{eq:mousavi-first-stage}
+\end{equation}
+$a^{(0)}$ and $b^{(0)}$ remain fixed throughout the first stage.%
+\endnote{\appendixref{app:sgd-contraction} gives a more general first-stage
+result: online SGD contracts the component of \(W\) orthogonal to a teacher
+subspace. The appendix also records the population-gradient identity used in
+the analysis.}
+
+The prediction algorithm then uses a separate second stage. After computing
+$W^{(T)}$, the algorithm draws independent new biases satisfying
+$\Law(b_j)=\operatorname{Unif}[-\Delta,\Delta]$, freezes both $W^{(T)}$ and $b$,
+and updates only the output weights for $t=0,\ldots,T'-1$:
+\begin{equation}
+ a^{(t+1)}=(1-\eta'_t\lambda')a^{(t)}
+ -\eta'_t\nabla_a\ell\bigl(
+   \widehat y(X_{I_t};W^{(T)},a^{(t)},b),Y_{I_t}\bigr),
+ \label{eq:mousavi-second-stage}
+\end{equation}
+where the indices $I_t$ are sampled independently and uniformly from
+$\{0,\ldots,T-1\}$ at the second-stage updates. The second stage
+therefore reuses the same $T$ observations rather than receiving fresh data;
+the sample count is $T$, while the two stages together perform $T+T'$ SGD
+updates. Conditional on $W^{(T)}$ and $b$, the second stage is regularized
+linear prediction in $a$. The guarantee concerns the staged algorithm and
+does not cover ordinary simultaneous training.
+The prediction theorem uses a symmetric first-stage
+initialization: all rows of $W^{(0)}$ equal the same vector drawn from
+$N(0,I_d/d)$, all output weights equal the same positive value of order
+$1/m$, and all initial biases equal the same positive constant. The
+second-stage resampling of $b$ replaces the initial biases. For the prediction theorem,
+$\sigma(z)=z_+$, $\tau\geq1$, and
+\begin{equation}
+ \ell_H(z)=
+ \begin{cases}
+  z^2/2,& |z|\leq1,\\
+  |z|-1/2,& |z|>1.
+ \end{cases}
+ \qquad
+ R_\tau(h)=\E\bigl[\ell_H(h(X)-Y)\wedge\tau\bigr].
+ \label{eq:huber-truncated-risk}
+\end{equation}
+\begin{theorem}[Single-index prediction by staged SGD, informal form]
+Suppose \(\Law(X)=N(0,I_d)\), and suppose the response follows the single-index
+model
+\begin{equation}
+ Y=f(u^\top X)+\varepsilon,
+ \qquad \|u\|_2=1,
+ \label{eq:single-index-model}
+\end{equation}
+where the noise \(\varepsilon\) is independent of \(X\), and where $f$ is
+monotone and twice differentiable, $|f(0)|<1$, the second derivative $f''$ has
+at most polynomial growth, and \(\varepsilon\) is $1$-sub-Gaussian. The
+algorithm uses the two stages in \cref{eq:mousavi-first-stage,eq:mousavi-second-stage}.
+For a sufficiently large second-stage iteration count $T'$ and under the
+specified initialization and tuning assumptions, its returned predictor
+$\widehat y_{T,T',m}$ satisfies, with high probability,
+\begin{equation}
+ R_\tau(\widehat y_{T,T',m})-\E[\ell_H(\varepsilon)]
+ \leq \widetilde C\left(
+       \sqrt{\frac{d+\log(1/\delta)}{T}}
+       +\sqrt{\frac{\log(1/\delta)}{m}}\right),
+ \label{eq:mousavi-risk}
+\end{equation}
+where $R_\tau$ is truncated population Huber risk, $\ell_H$ is the Huber
+loss, and $\widetilde C$ suppresses logarithmic factors and constants
+determined by the fixed link, truncation level, and tuning parameters.
+\end{theorem}
+For a fixed monotone polynomial link and fixed target accuracy, with $m$ and
+$T'$ chosen sufficiently large, the required number $T$ of distinct samples
+is $\widetilde O(d)$. In contrast, learning a degree-$p$ target with a
+rotationally invariant kernel can require $d^{\Omega(p)}$ samples.
+
+The theorem gives a positive learning result for the two-stage procedure. The
+nearly linear dependence on \(d\) requires Gaussian covariates, explicit
+weight decay, online first-stage samples, bias resampling, and separate
+training of the two layers. The theorem does not show that ordinary
+simultaneous training adapts across the structural families in
+\cref{eq:structured-family}.
+
+\section{Optional reading}
+\label{sec:optional}
+
+The material through \cref{eq:mousavi-risk} was presented in class. The
+optional sections compare other feature-adaptation mechanisms, state the
+entropy result that was not presented in class, and summarize what additional
+depth can change.
+
+\subsection{Additional feature-adaptation mechanisms}
+
+Classical structure-adaptive smoothers alternate local derivative estimation
+with an update of the smoothing geometry. Under model-specific smoothness,
+design, and identifiability conditions, such procedures can estimate a
+multi-index subspace before fitting the low-dimensional link. These classical
+procedures show that
+data-dependent directions are not unique to neural networks.
+
+Variation-ball empirical risk minimization treats the representing measure in
+\cref{eq:F1} as the fitted object. Statistical bounds can adapt to
+projection-pursuit targets with a small hidden dimension, but standard
+conditional-gradient implementations require a generally nonconvex
+neuron-selection oracle.
+
+The \emph{recursive feature machine} repeatedly fits a kernel predictor,
+computes the empirical average gradient outer product of that predictor, and
+uses the matrix to update the kernel metric. The method makes feature-metric
+adaptation explicit without training a neural network. The \emph{neural
+feature ansatz} is the empirical relation
+\begin{equation}
+ W_i^\top W_i
+ \ \propto\
+ \frac1n\sum_{r=1}^n
+ \nabla f_i(h_i(X_r))\nabla f_i(h_i(X_r))^\top
+ \label{eq:nfa}
+\end{equation}
+between the Gram matrix of a trained layer and the empirical AGOP of the
+remaining network. Experiments support the relation across several settings;
+available proofs use more restricted training schemes. The ansatz is an
+empirically supported hypothesis, not a general theorem about ordinary deep
+training.
+
+\begin{table}[ht]
+\centering
+\small
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.20\textwidth}
+  >{\raggedright\arraybackslash}p{0.26\textwidth}
+  >{\raggedright\arraybackslash}p{0.25\textwidth}
+  >{\raggedright\arraybackslash}p{0.20\textwidth}@{}}
+\toprule
+Method & What changes with the data? & Positive statement & Main limitation under the stated assumptions \\
+\midrule
+Fixed linear space or fixed RKHS
+& Coefficients only
+& Standard estimation and approximation guarantees
+& No learned directions or feature metric \\
+Projection pursuit and structure-adaptive smoothing
+& Ridge directions, term count, or smoothing geometry
+& Greedy oracle rates; active-query and passive-regression guarantees
+& Specialized observations and models; continuous atom search is nonconvex \\
+Variation-ball ERM
+& Representing measure over neurons
+& Structured statistical rate with hidden dimension $s$
+& Neuron-selection oracle is nonconvex \\
+Recursive feature machine
+& Kernel metric through empirical AGOP
+& Explicit iterative dimension adaptation
+& Not ordinary neural training \\
+Two-layer network trained by online SGD
+& First-layer weights through online SGD
+& Subspace convergence; single-index learning theorem
+& Gaussian model, weight decay, staged training \\
+\bottomrule
+\end{tabular}
+\caption{Different methods adapt different objects and satisfy different
+guarantees; ``neural networks versus classical methods'' is too coarse.}
+\label{tab:method-comparison}
+\end{table}
+
+\subsection{Entropy limits for one regression procedure}
+\label{sec:yang}
+
+The preceding results describe function classes on which particular methods
+perform well. A universal entropy theorem gives a converse question that
+applies to every regression procedure: if a method has risk $Cn^{-\gamma}$
+at every sample size, how large can the set of targets receiving that
+guarantee be?
+
+The entropy theorem assumes a known input law $P_X$. Let
+$X_1,\ldots,X_n$ be independent with common law $P_X$, and let
+\begin{equation}
+ Y_i=f(X_i)+\varepsilon_i,
+ \qquad
+ \Law(\varepsilon_1,\ldots,\varepsilon_n)
+ =N(0,1)^{\otimes n},
+ \label{eq:yang-model}
+\end{equation}
+with the noise variables independent of the inputs. A regression procedure
+$\cA$ produces an estimator $\widehat f_n$ at every sample size. Define
+\begin{equation}
+ R_{\cA}(f,n)=\E\bigl[\|\widehat f_n-f\|_2^2\bigr]
+ \label{eq:yang-risk}
+\end{equation}
+and, for fixed $A,C>0$ and $0<\gamma\leq1$, define its rate-$\gamma$
+success set
+\begin{equation}
+ \cS_{\cA}(C,\gamma)
+ =\left\{f:\|f\|_2\leq A,\quad
+ R_{\cA}(f,n)\leq Cn^{-\gamma}
+ \text{ for every }n\geq1\right\}.
+ \label{eq:success-set}
+\end{equation}
+The requirement at every $n$ matters. A procedure can accidentally perform
+well on a very large set at one fixed sample size without giving a uniform
+rate along the sample-size sequence.
+
+For a subset $\cF\subseteq L_2(P_X)$, let $M(\epsilon,\cF)$ be the logarithm
+of the largest number of elements of $\cF$ separated pairwise by more than
+$\epsilon$ in $L_2(P_X)$. Thus $M$ is packing entropy, not packing number.
+
+\begin{theorem}[A universal entropy bound]
+\label{thm:yang}
+For every regression procedure $\cA$ and every $0<\gamma<1$, there is a
+constant $C'$ depending on $A,C$, and $\gamma$ such that, for all sufficiently
+small $\epsilon>0$,
+\begin{equation}
+ M\bigl(\epsilon,\cS_{\cA}(C,\gamma)\bigr)
+ \leq C'\epsilon^{-2(1-\gamma)/\gamma}.
+ \label{eq:yang-entropy}
+\end{equation}
+For $\gamma=1$, the corresponding upper bound has order
+$\log(1/\epsilon)$.
+\end{theorem}
+
+The proof turns the sequence of estimates produced by $\cA$ into a joint
+coding distribution. The cumulative risk controls the Kullback--Leibler
+divergence between the coding distribution and every regression model in the
+success set. A standard
+testing lower bound then prevents the success set from containing too many
+well-separated functions. The argument is information-theoretic and does
+not depend on whether $\cA$ is a neural network, a kernel method, or a
+classical smoother.
+
+The exponent calibrates the theorem. Substituting the generic smoothness
+rate
+\begin{equation}
+ \gamma_d=\frac{2\alpha}{2\alpha+d}
+ \label{eq:smoothness-gamma}
+\end{equation}
+into \cref{eq:yang-entropy} gives
+\begin{equation}
+ \frac{2(1-\gamma_d)}{\gamma_d}=\frac d\alpha.
+ \label{eq:smoothness-entropy-exponent}
+\end{equation}
+The packing entropy of a $d$-dimensional $\alpha$-smooth ball has the same
+order $\epsilon^{-d/\alpha}$. A minimax-optimal smoothness-adaptive
+procedure can therefore attain the same entropy order. Serving that entire
+ball at its minimax rate does not preclude better performance on smaller
+subsets.
+At the slower $d$-dimensional rate, structured smooth targets may already
+belong to the full smoothness ball. At a faster rate, only a smaller
+structured subset receives the stronger guarantee. Even if an additional
+family lies outside the ball, adding the family need not change the leading
+entropy order of the success set. Saturating the entropy exponent therefore
+does not exhaust a procedure's possible successes.
+
+For an $s$-dimensional multi-index class, the analogous rate
+$\gamma_s=2\alpha/(2\alpha+s)$ gives entropy exponent $s/\alpha$. Allowing
+all $s$-dimensional orientations does not change the leading exponent when
+$d$ is fixed. An $\epsilon$-net over the orientation matrices contributes a
+finite-dimensional term of order
+\begin{equation}
+ O\bigl(ds\log(1/\epsilon)\bigr),
+ \label{eq:orientation-entropy}
+\end{equation}
+which is smaller than $\epsilon^{-s/\alpha}$ as $\epsilon\downarrow0$.
+The entropy theorem therefore permits one procedure to serve all orientations
+and all smooth links at the $s$-dimensional rate. The theorem forbids the
+same rate on a class with substantially larger packing entropy, such as the
+full $d$-dimensional smoothness ball when $s<d$.
+
+The calculation also explains why adaptation to unknown smoothness is
+possible. One estimator may attain the minimax rate separately on many
+nested smoothness classes. At any fixed rate, the corresponding success set
+must satisfy \cref{eq:yang-entropy}; slower rates permit larger sets. The
+constants need not be uniform across every class. A sharper negative result
+holds for specially constructed, mutually separated classes:
+no procedure can achieve each class's minimax risk with one uniform
+finite-sample constant for infinitely many such classes. The theorem does
+not rule out adaptation for particular countable collections.
+
+Packing entropy measures the size of a success set but not its membership.
+Two procedures can both attain the maximal entropy order while one
+procedure's success set strictly contains the other's. The theorem also does
+not identify which functions a given procedure favors. The entropy bound
+therefore places a rate-dependent size limit on the success set of every
+learning procedure, including a neural network trained by gradient descent.
+
+\subsection{Maxisets and a concrete open question}
+\label{sec:maxisets}
+
+A \emph{maxiset} records the targets on which a fixed procedure attains a
+fixed rate. For a positive sequence $r=(r_n)_{n\geq1}$, define
+\begin{equation}
+ \operatorname{MS}(\cA,r)
+ =\left\{f:
+ \sup_{n\geq1}
+ \frac{\E[\|\widehat f_n-f\|_2^2]}{r_n}<\infty
+ \right\}.
+ \label{eq:maxiset}
+\end{equation}
+An ordinary risk upper bound proves that a named function class is contained
+in the maxiset. An exact maxiset characterization also needs a converse:
+targets outside a specified approximation or regularity space cannot attain
+the rate under that procedure. Such characterizations are known for several
+wavelet-thresholding and model-selection procedures.
+
+Maxisets at different rates have a natural nesting. If
+$r_n\leq C_0s_n$ for every $n$, then
+\begin{equation}
+ \operatorname{MS}(\cA,r)\subseteq\operatorname{MS}(\cA,s).
+ \label{eq:maxiset-nesting}
+\end{equation}
+Faster rates have smaller success sets. A smoothness-adaptive procedure has
+the relevant smoothness classes inside these nested sets. The same procedure
+may also contain projection-pursuit or multi-index targets at faster rates
+when those targets add sufficiently little packing entropy.
+
+For neural networks, the important unresolved problem is algorithm-specific:
+characterize the rate-indexed maxisets of a fixed architecture,
+initialization, regularization rule, and gradient-training algorithm. Does
+ordinary training simultaneously adapt to generic smoothness, ridge
+structure, and multi-index structure? Do its success sets attain the maximal
+entropy order? Do they contain the success sets of projection pursuit or a
+recursive feature machine? Existing approximation theorems and restricted
+feature-learning theorems do not answer these questions.
+
+\subsection{Related feature-learning theorems}
+
+The first theorem separates one neural feature-learning scheme from a fixed
+kernel regime.
+\begin{theorem}[Polynomial feature learning, informal form]
+Let $\Law(X)=N(0,I_d)$ and let $f(x)=g(Ux)$ be a degree-$p$ polynomial, where
+$U$ has a small number of rows. Under a nondegeneracy condition on the
+expected Hessian, a two-layer training scheme learns the hidden subspace with
+sample complexity of leading order $d^2$. The corresponding fixed-kernel
+regime requires order $d^p$ samples.
+\end{theorem}
+The training scheme removes the linear component of the target, takes one
+carefully scaled first-layer gradient step, resamples biases, and then trains
+the output layer. The theorem proves feature learning but does not analyze
+ordinary joint training.
+
+The second theorem, discussed in the optional material of
+\href{lecture13.pdf}{Lecture 13}, takes a different route.
+\begin{theorem}[Intrinsic-dimensional rate from pruned gradient training, informal form]
+Suppose that the input law is supported in a shrinking neighborhood of a
+low-dimensional Lipschitz manifold and that the regression function is smooth
+in the ambient coordinates. A prescribed randomly pruned sigmoid network,
+output truncation, and full-batch gradient descent with data-dependent step
+sizes achieve, up to logarithmic factors, the intrinsic-dimensional rate
+\begin{equation}
+ \E\bigl[\|\widehat f_n-f\|_2^2\bigr]
+ \leq C(\log n)^c n^{-2p/(2p+d^*)},
+ \label{eq:kohler-manifold-rate}
+\end{equation}
+where $p$ is the assumed smoothness and $d^*$ is the manifold dimension used
+in tuning the estimator.
+\end{theorem}
+The theorem supplies a rate for a concrete gradient-based neural estimator.
+The assumptions concern input geometry rather than hierarchical composition,
+and the result does not isolate an advantage caused by depth or by feature
+movement. The theorem does not compare the neural estimator with non-neural
+manifold-regression methods, so the rate alone establishes no neural advantage.
+
+\subsection{What depth changes}
+\label{sec:depth}
+
+\href{lecture14.pdf}{Lecture 14} gave an exact representation separation:
+repeated composition of the tent map has a linear-size deep representation,
+while a one-hidden-layer
+ReLU network needs exponentially many units. Approximation theory contains two
+stronger forms of the separation.
+\begin{proposition}[Two depth separations, informal form]
+There are oscillatory target families represented by polynomial-size deep
+ReLU networks for which networks restricted to a specified smaller depth need
+exponentially many units to attain a fixed approximation error. There are also
+radial functions in growing dimension that three-layer networks approximate
+with polynomial size, while every two-layer approximation at the stated
+accuracy requires exponential width.
+\end{proposition}
+The proposition establishes a representation advantage for depth. The
+separations do not show that gradient descent finds the deep representation
+from data.
+
+Hierarchical composition gives a statistical counterpart to the depth
+separations. Consider a target of the form
+\begin{equation}
+ f=g_q\circ g_{q-1}\circ\cdots\circ g_0,
+ \label{eq:hierarchical-composition}
+\end{equation}
+where each coordinate of $g_i$ depends on at most $t_i$ coordinates of its
+input and has H\"older smoothness $\beta_i$. Later nonsmooth maps can reduce
+the effective smoothness of an earlier constituent. Define
+\begin{equation}
+ \beta_i^*=\beta_i\prod_{\ell=i+1}^{q}(\beta_\ell\wedge1).
+ \label{eq:effective-composition-smoothness}
+\end{equation}
+\begin{theorem}[Regression rate for hierarchical compositions, informal form]
+Under bounded-domain and noise assumptions, an empirical risk minimizer over
+a suitably sparse ReLU network class with depth of order $\log n$ satisfies
+for constants $C,c>0$,
+\begin{equation}
+ \E\bigl[\|\widehat f_n-f\|_2^2\bigr]
+ \leq C(\log n)^c
+ \max_{0\leq i\leq q}
+ n^{-2\beta_i^*/(2\beta_i^*+t_i)}.
+ \label{eq:composition-statistical-rate}
+\end{equation}
+If $t_i\leq\min(d_0,\ldots,d_{i-1})$ for $i=1,\ldots,q$, the polynomial
+part of the rate matches the minimax lower bound for the stated composition
+class.
+\end{theorem}
+Each part of the network approximates one
+low-dimensional constituent, and successive layers compose these
+approximations. Depth therefore converts a specified compositional
+description into an estimator whose rate is governed by the hardest local
+constituent rather than by the ambient dimension.
+
+The statistical conclusion has two important boundaries. The estimator is a
+global empirical risk minimizer over a tuned network class; the theorem does
+not show that ordinary gradient training discovers an unknown composition.
+The theorem also does not prove that every shallow neural estimator must have
+a slower rate. Polynomial-spline estimators can exploit related hierarchical
+interaction models. The statistical result shows that deep networks can
+exploit hierarchical composition. The result does not give neural networks
+exclusive access to the structure.
+
+Depth can also change the regularizer induced by parameter norm without
+changing the represented function class. The relevant matrix factorization
+identity makes the effect precise.
+\begin{proposition}[Factorization cost]
+Let $A$ have rank at most every intermediate width. For $L\geq2$,
+\begin{equation}
+ \inf_{A=A_L\cdots A_1}
+ \frac1L\sum_{\ell=1}^L\|A_\ell\|_F^2
+ =\|A\|_{S_{2/L}}^{2/L},
+ \label{eq:factorization-cost}
+\end{equation}
+where $\|A\|_{S_p}=(\sum_j\sigma_j(A)^p)^{1/p}$ is the Schatten
+$p$-quasi-norm.
+\end{proposition}
+For a network with several linear input layers followed by one ReLU layer,
+collapsing the linear layers leaves a shallow ReLU function. Additional linear
+layers therefore leave the represented function class unchanged while the
+sum of squared parameter norms increasingly favors low-rank input matrices as
+$L$ grows. The formal analysis connects the induced cost to single-index and
+multi-index functions; experiments also study standard training. No general
+statistical rate for gradient descent follows from the representation-cost
+result.
+
+The layerwise neural feature ansatz in \cref{eq:nfa} supplies a complementary
+empirical claim: trained layers align with the AGOP of the remaining network.
+Together, the results suggest two precise roles for depth. Nonlinear
+composition can reduce representation size, and even additional linear
+factorization can alter the implicit or explicit regularization. A general
+theorem converting either mechanism into a statistical and computational
+advantage under standard deep-network training remains unavailable.
+
+\section{Take-home messages}
+
+\begin{enumerate}[leftmargin=*]
+\item \textbf{Approximation, constructive approximation, and learning answer
+different questions.} Approximation asks whether a good function exists in
+the family. Constructive approximation specifies information about the target
+and an algorithm. Regression learning specifies noisy observations and a
+prediction risk.
+
+\item \textbf{Bounded integral representations have accurate finite
+approximations.} If
+\(f=\int\phi_\theta\,d\mu(\theta)\) in a Hilbert space and
+\(\|\phi_\theta\|\leq1\), then \(m\) signed atoms attain error at most
+\(\|\mu\|_{\TV}/\sqrt m\). Random sampling appears in the proof; the lemma's
+conclusion is deterministic. The sampling law depends on the unknown
+representing measure.
+
+\item \textbf{Density answers the minimum approximation question.} The RBF
+and ridge density results show that the error can be made arbitrarily small.
+For H\"older balls, quantitative approximation theory relates error to the
+number of terms; suitable neural-network constructions give corresponding
+smoothness-dependent rates.
+
+\item \textbf{Barron's theorem gives a target-dependent representation
+advantage.} On a spectral Barron ball, a shallow ridge network attains an
+\(m^{-1/2}\) approximation rate, while the Kolmogorov \(m\)-width for fixed
+linear spaces can decay only as \(m^{-1/d}\). The comparison depends on the
+target class, norm, and target-dependent choice of ridge atoms.
+
+\item \textbf{A fixed kernel restricts the representing measure.} A fixed
+feature law \(\tau\) permits measures of the form \(d\mu=p\,d\tau\) with
+\(p\in L^2(\tau)\). A variation representation may use a measure concentrated
+on features selected for the target. The larger representation class creates a
+feature-selection problem.
+
+\item \textbf{Gradient information can reduce a multi-index problem from
+dimension \(d\) to dimension \(s\).} For
+\(f(x)=g(W^\top x)\), every gradient lies in
+\(\operatorname{span}(W)\). Informative gradients and an SVD recover that
+subspace when gradients are available. Passive regression must first estimate
+the derivative information accurately.
+
+\item \textbf{The neural learning theorem covers a staged procedure under
+restrictive assumptions.} The procedure first updates only the first-layer
+weights, then freezes those weights, resamples the biases, and trains only the
+output weights. For a monotone single-index model, the procedure satisfies a
+prediction bound with nearly linear dependence on the ambient dimension. The
+result does not show that ordinary simultaneous training realizes the general
+Barron representation advantage.
+\end{enumerate}
+\printendnotes
+
+\section*{Bibliographical notes}
+
+The minimax H\"older benchmark in \cref{eq:generic-smooth-rate} is due to the
+nonparametric regression theory developed by \citet{stone1982}. The infimum
+there is over statistical decision rules, without a computational
+restriction.
+
+The Hilbert-space sampling argument is a standard probabilistic-method form
+of finite approximation in a convex or variation ball. The wavelet route to
+\cref{cor:rbf-density} follows \citet{delyon1995}: a target-dependent
+continuous wavelet transform supplies the representing measure, and sampling
+that measure supplies a finite scale--location approximation. The appendices
+record the reconstruction and Fourier calculations needed for the Gaussian
+example. Countable dyadic wavelet bases and multiresolution analysis are
+developed by \citet{mallat1989}; \citet{daubechies1988} constructs compactly
+supported orthonormal wavelets with high regularity. The RBF corollary uses
+the continuous-wavelet construction rather than the full dyadic theory.
+Classical quantitative approximation rates for H\"older and related smoothness
+classes are discussed by \citet{devore1998}; \citet{petersen2026} survey
+corresponding neural-network approximation results.
+
+The shallow-network upper bound and fixed-linear-space lower bound in
+\cref{thm:barron} are normalized versions of results in
+\citet{barron1993}. Fourier conventions and the precise Barron norm change
+constants. The anchored norm in \cref{eq:barron-norm} includes the constant
+part so that the displayed quantity is a norm rather than a seminorm.
+Barron's lower-bound proof uses an orthogonal family of Fourier modes. The
+resulting fixed-space quantity is a Kolmogorov width. Classical nonlinear
+\(m\)-term approximation and its relation to widths are surveyed by
+\citet{devore1998}.
+
+Bach~\citep{bach2017} develops the fixed-feature RKHS and target-dependent
+variation-space comparison used after \cref{thm:barron}. Bach also
+analyzes structured statistical rates and conditional-gradient selection from
+an infinite neuron dictionary. The selection step remains a nonconvex
+optimization problem for the ridge dictionary. The measure-valued formula in
+\cref{eq:mean-field-representation} is standard in infinite-width two-layer
+network limits; \citet{mei2019} analyze corresponding mean-field dynamics.
+
+Projection pursuit regression was introduced by \citet{friedman1981}.
+\citet{jones1992} proves the Hilbert-space greedy lemma used in
+\appendixref{app:active-query-recovery} and applies the method to projection
+pursuit and neural-network training.
+\citet{barroncohendahmendevore2008} develop several greedy variants and their
+statistical consequences. The constructive guarantees depend on the
+quality and cost of the atom-selection step.
+
+The active point-query literature makes the gradient--SVD mechanism
+quantitative. \citet{cohendaubechiesdevore2012} study ridge-function recovery,
+\citet{fornasierschnassvybiral2012} combine randomized queries with sparse
+recovery, and \citet{tyagicevher2012} study dense multi-index and
+additive-ridge models. \appendixref{app:active-query-recovery} gives an
+elementary coordinate finite-difference version and an obstruction showing
+why an informative-gradient condition is necessary.
+
+Average derivative and structure-adaptive dimension-reduction methods use
+related gradient information under passive noisy sampling.
+\citet{hristache2001}, \citet{dalalyan2008}, and \citet{xia2002} analyze
+different local-smoothing procedures and different dimension, regularity, and
+identifiability regimes. The optional discussion of the AGOP, recursive
+feature machines, and the neural feature ansatz follows
+\citet{radhakrishnan2024}; the empirical ansatz and the available restricted
+theorems must be distinguished.
+
+The population-gradient decomposition, online contraction theorem, and
+staged single-index prediction theorem are due to \citet{mousavi2023}. The
+polynomial feature-learning comparison is from \citet{damian2022}. The
+pruned sigmoid-network theorem is from \citet{kohler2026}. The entropy limit
+and its adaptive-estimation discussion are from \citet{yang2007}; the
+maxiset terminology and comparison with minimax analysis are developed by
+\citet{kerkyacharian2002}.
+
+The optional depth separations are due to \citet{telgarsky2016} and
+\citet{eldan2016}. The effect of additional linear layers on representation
+cost is analyzed by \citet{parkinson2025}. Hierarchical interaction models
+and corresponding neural or spline estimators are studied by
+\citet{kohler2017}, \citet{bauer2019}, \citet{schmidthieber2020}, and
+\citet{kohlerlanger2021}. \citet{petersen2026} provide a broad reference for
+modern neural-network approximation theory.
+\section*{Glossary}
+
+\begin{description}[style=unboxed,leftmargin=1.5em,labelindent=0pt]
+\item[Dictionary]
+A finite, countable, or continuous collection of candidate atoms used to
+represent or approximate functions.
+\item[Constructive approximation]
+Approximation by an algorithm that receives specified information about the
+target, makes finitely many oracle calls and arithmetic operations, and
+returns an approximating function.
+\item[Signed measure]
+A real-valued measure represented in
+\cref{def:signed-integral-representation} as a measurable sign function times
+a finite positive measure.
+\item[Total variation measure and norm]
+For $d\mu=s\,d|\mu|$ with $|s|=1$, the positive measure $|\mu|$ is the
+total variation measure and $\|\mu\|_{\TV}=|\mu|(\Theta)$ is the total
+variation norm.
+\item[H\"older continuity]
+The condition $|h(x)-h(x')|\leq L\|x-x'\|^\beta$ for
+$0<\beta\leq1$. Lipschitz continuity is the case $\beta=1$.
+\item[Nonlinear $m$-term approximation]
+Approximation by a sum of at most $m$ dictionary atoms whose identities and
+coefficients may depend on the target. The selection makes the approximation
+map nonlinear.
+\item[Kolmogorov $m$-width]
+The smallest worst-case approximation error achieved by an $m$-dimensional
+linear space, as defined in \cref{eq:kolmogorov-width}.
+\item[Wavelet]
+A function in a translation--dilation system that satisfies a reconstruction
+property. Compact support provides localization, while vanishing moments
+suppress local low-degree polynomial behavior; the resulting coefficients
+record both location and scale.
+\item[Radial-basis-function network]
+A finite sum $\sum_{j=1}^m c_j\varphi(s_j(x-t_j))$ with a fixed radial
+function $\varphi$ and trainable coefficients, scales, and centers.
+\item[Atomic norm]
+The smallest total variation of a signed measure representing a function as
+an integral of dictionary atoms. For a countable basis with a unique
+coefficient expansion, the atomic norm is the $\ell_1$ norm of the
+coefficients.
+\item[Representation advantage]
+A smaller approximation error or smaller representation size than a named
+comparison class, without a claim that the representation can be estimated
+from data.
+\item[Learning advantage]
+A risk or sample-complexity improvement for a specified estimator and data
+model relative to a specified competing method.
+\item[Ridge function]
+A function of the form $x\mapsto g(w^\top x)$. A multi-index function uses
+several linear projections.
+\item[Projection pursuit]
+A regression method that fits a sum of ridge functions and estimates their
+directions and link functions.
+\item[Atom-selection oracle]
+An operation that returns a dictionary atom maximizing its correlation with
+a supplied residual. Approximate variants require an additional oracle-error
+term in the approximation guarantee.
+\item[Active point-query model]
+An observation model in which an algorithm chooses each input at which the
+target function is evaluated. The model differs from passive regression,
+where the input locations are sampled from a fixed distribution.
+\item[Variation space]
+The class of integral feature representations whose signed representing
+measure has finite total variation.
+\item[Spectral Barron class]
+A class of restrictions of ambient Fourier representations with bounded
+anchored spectral norm, as in \cref{eq:barron-norm,eq:barron-class}.
+\item[Variation Barron space]
+A variation space generated by a ridge-feature dictionary. Spectral Barron
+conditions can imply membership in a variation Barron space, but the two
+definitions are not identical. The literature uses several feature
+normalizations and hence several related Barron norms.
+\item[Mean-field representation]
+An infinite-width two-layer network written as an integral over a probability
+measure on neuron parameters. Mean-field training theory also specifies a
+geometry and an evolution equation for that measure.
+\item[Average gradient outer product]
+The matrix $\E[\nabla f(X)\nabla f(X)^\top]$, whose leading eigenspace records
+directions along which $f$ varies on average.
+\item[Average derivative estimation]
+A family of dimension-reduction methods that estimate averages or moments of
+target derivatives from regression data in order to recover predictive
+directions.
+\item[Recursive feature machine]
+A kernel procedure that alternates predictor fitting with an update of the
+kernel metric to the fitted predictor's empirical AGOP.
+\item[Neural feature ansatz]
+The empirical relation in \cref{eq:nfa} between a trained layer's Gram matrix
+and the AGOP of the remaining network.
+\item[Feature learning]
+A data-dependent change in the features or feature metric used for
+prediction. The phrase alone does not specify a statistical guarantee.
+\item[Hierarchical composition model]
+A function $f=g_q\circ\cdots\circ g_0$ in which each coordinate of $g_i$
+depends on only a bounded number of coordinates from the preceding layer.
+The local arities can be much smaller than the ambient input dimension.
+\item[Packing entropy]
+The logarithm of the largest number of functions separated pairwise by more
+than a given distance.
+\item[Success set]
+The functions on which a fixed procedure attains a stated risk bound at
+every sample size.
+\item[Maxiset]
+The success set of a fixed estimation procedure at a fixed rate, usually
+characterized by both an upper bound and a converse.
+\end{description}
+
+\section{Exercises}
+\label{sec:exercises}
+
+\exerciseinstructions
+\setcounter{courseexercise}{0}
+\exercisegroup{Integral representations and density}
+\input{../exercises/l15-monte-carlo-sparsification.tex}
+\input{../exercises/l15-density-versus-rate.tex}
+\input{../exercises/l15-holder-bias-variance.tex}
+\exercisegroup{Adaptive atoms and fixed features}
+\input{../exercises/l15-barron-linear-comparison.tex}
+\input{../exercises/l15-fixed-feature-strictness.tex}
+\exercisegroup{Recovering low-dimensional structure}
+\input{../exercises/l15-agop-subspace.tex}
+\exercisegroup{Appendix-based extensions}
+\input{../exercises/l15-wavelet-truncation.tex}
+\input{../exercises/l15-approximate-greedy.tex}
+\input{../exercises/l15-noisy-finite-differences.tex}
+\input{../exercises/l15-subspace-contraction.tex}
+\exercisegroup{Further results from the literature}
+\input{../exercises/l15-bach-rate-balance.tex}
+\input{../exercises/l15-yang-entropy.tex}
+
+\appendix
+\renewcommand{\thesection}{15.\Alph{section}}
+
+\section{A basic wavelet coefficient estimate}
+\label{app:wavelet-facts}
+
+The following one-dimensional estimate makes the role of vanishing moments
+explicit. Tensor-product and multivariate wavelets satisfy analogous bounds
+with multi-index derivatives.
+
+\begin{proposition}[Decay in a smooth region]
+\label{prop:wavelet-coefficient-decay}
+Let $\psi\in L_1(\R)$ be compactly supported and satisfy
+\begin{equation}
+ \int_{\R}u^q\psi(u)\,du=0,
+ \qquad q=0,\ldots,r-1.
+ \label{eq:one-dimensional-moments}
+\end{equation}
+Define $\psi_{j,k}(x)=2^{j/2}\psi(2^jx-k)$. If $f$ is $r$ times
+continuously differentiable on
+$I_{j,k}=\operatorname{conv}(\{2^{-j}k\}\cup
+\operatorname{supp}(\psi_{j,k}))$, then
+\begin{equation}
+ \bigl|\langle f,\psi_{j,k}\rangle_{L_2}\bigr|
+ \leq
+ \frac{2^{-j(r+1/2)}}{r!}
+ \left(\int_{\R}|u|^r|\psi(u)|\,du\right)
+ \sup_{x\in I_{j,k}}|f^{(r)}(x)|.
+ \label{eq:wavelet-coefficient-decay}
+\end{equation}
+\end{proposition}
+
+\begin{proof}
+Let $x_0=2^{-j}k$, and let $P_{r-1}$ be the Taylor polynomial of $f$ at
+$x_0$ through degree $r-1$. The moment conditions and the change of variable
+$u=2^jx-k$ give
+$\langle P_{r-1},\psi_{j,k}\rangle_{L_2}=0$. Taylor's theorem therefore
+implies
+\begin{align*}
+ \bigl|\langle f,\psi_{j,k}\rangle_{L_2}\bigr|
+ &=\bigl|\langle f-P_{r-1},\psi_{j,k}\rangle_{L_2}\bigr|\\
+ &\leq
+ \frac{\sup_{x\in I_{j,k}}|f^{(r)}(x)|}{r!}
+ \int_{\R}|x-x_0|^r|\psi_{j,k}(x)|\,dx\\
+ &=\frac{2^{-j(r+1/2)}}{r!}
+ \left(\int_{\R}|u|^r|\psi(u)|\,du\right)
+ \sup_{x\in I_{j,k}}|f^{(r)}(x)|.
+\end{align*}
+\end{proof}
+
+The estimate is local: the derivative supremum is taken over the interval
+joining the wavelet support to its translation point. Smooth regions
+therefore produce rapidly decaying fine-scale coefficients, while a
+singularity influences nearby wavelets. When the dyadic wavelet family forms
+an orthonormal basis, Parseval's identity converts coefficient-tail bounds
+into $L_2$ approximation bounds.
+
+\section{Fourier facts used by the approximation arguments}
+\label{app:fourier-basics}
+
+The wavelet and shallow-network arguments use the same Fourier transform for
+different purposes. The wavelet calculation checks a reconstruction identity
+through a Fourier multiplier. The shallow-network calculation first writes a
+target as an integral of Fourier modes and then writes each mode as an
+integral of ridge functions. This appendix states the required Fourier facts
+with the normalization fixed in \cref{eq:fourier-transform}.
+
+\subsection{Inversion, Plancherel, and elementary identities}
+
+A function $f:\R^d\to\mathbb C$ belongs to the \emph{Schwartz class}
+$\cS(\R^d)$ if $f$ is infinitely differentiable and
+\begin{equation}
+ \sup_{x\in\R^d}|x^\alpha\partial^\beta f(x)|<\infty
+ \quad\text{for every pair of multi-indices $\alpha,\beta$.}
+ \label{eq:schwartz-class}
+\end{equation}
+Every smooth compactly supported function is a Schwartz function. The
+changes of variables, differentiations, and integrations by parts below are
+therefore justified for Schwartz functions and have no boundary terms.
+
+\begin{proposition}[Elementary Fourier identities]
+\label{prop:elementary-fourier-identities}
+Let $f,g\in\cS(\R^d)$, let $t\in\R^d$, and let $s>0$. With
+\begin{equation}
+ (f*g)(x)=\int_{\R^d}f(y)g(x-y)\,dy,
+ \label{eq:convolution-definition}
+\end{equation}
+the Fourier transform satisfies
+\begin{align}
+ \widehat{f(\,\cdot-t)}(\omega)
+ &=e^{-i\omega^\top t}\widehat f(\omega),
+ &
+ \widehat{f(s\,\cdot)}(\omega)
+ &=s^{-d}\widehat f(\omega/s),
+ \label{eq:fourier-translation-dilation}\\
+ \widehat{f*g}(\omega)
+ &=\widehat f(\omega)\widehat g(\omega),
+ &
+ \widehat{\partial^\alpha f}(\omega)
+ &=(i\omega)^\alpha\widehat f(\omega).
+ \label{eq:fourier-convolution-differentiation}
+\end{align}
+In particular,
+\begin{equation}
+ \widehat{(-\Delta)^r f}(\omega)
+ =\|\omega\|_2^{2r}\widehat f(\omega),
+ \qquad r=0,1,\ldots.
+ \label{eq:fourier-laplacian}
+\end{equation}
+If $f$ is real-valued, then
+\begin{equation}
+ \widehat f(-\omega)=\overline{\widehat f(\omega)}.
+ \label{eq:fourier-conjugate-symmetry}
+\end{equation}
+\end{proposition}
+
+\begin{proof}
+The first two identities follow by the substitutions $u=x-t$ and $u=sx$.
+Fubini's theorem followed by the substitution $u=x-y$ proves the convolution
+identity. Integration by parts gives
+$\widehat{\partial_jf}(\omega)=i\omega_j\widehat f(\omega)$; iteration proves
+the multi-index formula and \cref{eq:fourier-laplacian}. Taking the complex
+conjugate of \cref{eq:fourier-transform} proves
+\cref{eq:fourier-conjugate-symmetry}.
+\end{proof}
+
+\begin{theorem}[Fourier inversion and Plancherel]
+\label{thm:fourier-inversion-plancherel}
+For every $f\in\cS(\R^d)$,
+\begin{equation}
+ f(x)=\frac{1}{(2\pi)^d}\int_{\R^d}
+ e^{i\omega^\top x}\widehat f(\omega)\,d\omega.
+ \label{eq:fourier-inversion}
+\end{equation}
+For every $f,g\in\cS(\R^d)$,
+\begin{equation}
+ \int_{\R^d}f(x)\overline{g(x)}\,dx
+ =\frac{1}{(2\pi)^d}\int_{\R^d}
+ \widehat f(\omega)\overline{\widehat g(\omega)}\,d\omega.
+ \label{eq:fourier-parseval}
+\end{equation}
+Consequently, the Fourier transform extends uniquely from
+$\cS(\R^d)$ to $L_2(\R^d)$ and satisfies
+\begin{equation}
+ \|f\|_{L_2}^2
+ =\frac{1}{(2\pi)^d}\|\widehat f\|_{L_2}^2.
+ \label{eq:fourier-plancherel}
+\end{equation}
+\end{theorem}
+
+\begin{proof}[Proof sketch]
+Let
+$g_\epsilon(x)=(2\pi\epsilon)^{-d/2}
+\exp(-\|x\|_2^2/(2\epsilon))$. Completing the square in the Gaussian
+integral gives
+$\widehat g_\epsilon(\omega)=
+\exp(-\epsilon\|\omega\|_2^2/2)$. Substituting the definition of
+$\widehat f$ into the right-hand side below, applying Fubini's theorem, and
+evaluating the inverse Gaussian integral give
+\begin{equation}
+ (f*g_\epsilon)(x)
+ =\frac{1}{(2\pi)^d}\int_{\R^d}e^{i\omega^\top x}
+ e^{-\epsilon\|\omega\|_2^2/2}\widehat f(\omega)\,d\omega.
+ \label{eq:gaussian-regularized-inversion}
+\end{equation}
+The functions $g_\epsilon$ have integral one and concentrate their mass in
+every neighborhood of zero as $\epsilon\downarrow0$. Uniform continuity of a
+Schwartz function therefore gives
+$(f*g_\epsilon)(x)\to f(x)$. The right-hand side converges to
+the right-hand side of \cref{eq:fourier-inversion} by dominated convergence.
+Indeed, integration by parts gives
+$(1+\|\omega\|_2^2)^k\widehat f(\omega)
+=\widehat{(I-\Delta)^kf}(\omega)$, so $\widehat f$ is integrable for
+sufficiently large $k$. Substituting the inversion formula for $g$ into
+$\int f\overline g$ and applying Fubini proves
+\cref{eq:fourier-parseval}. Smooth compactly supported functions are dense in
+$L_2(\R^d)$ and belong to $\cS(\R^d)$, so $\cS(\R^d)$ is dense in
+$L_2(\R^d)$. Continuity in \cref{eq:fourier-parseval} gives the unique extension and
+\cref{eq:fourier-plancherel}.
+\end{proof}
+
+The density argument for ridge networks uses one quantitative consequence of
+smoothness: a compactly supported smooth target has every polynomial spectral
+moment finite.
+
+\begin{proposition}[Rapid Fourier decay of smooth compactly supported functions]
+\label{prop:smooth-fourier-decay}
+If $f\in C_c^\infty(\R^d)$ and $N\geq0$, then there is a finite constant
+$A_{f,N}$ such that
+\begin{equation}
+ |\widehat f(\omega)|
+ \leq A_{f,N}(1+\|\omega\|_2)^{-N},
+ \qquad \omega\in\R^d.
+ \label{eq:smooth-fourier-rapid-decay}
+\end{equation}
+In particular,
+\begin{equation}
+ \int_{\R^d}\|\omega\|_1|\widehat f(\omega)|\,d\omega<\infty.
+ \label{eq:first-spectral-moment-finite}
+\end{equation}
+\end{proposition}
+
+\begin{proof}
+For every integer $k\geq0$, \cref{eq:fourier-laplacian} gives
+\begin{equation}
+ (1+\|\omega\|_2^2)^k|\widehat f(\omega)|
+ =|\widehat{(I-\Delta)^kf}(\omega)|
+ \leq\|(I-\Delta)^kf\|_{L_1}.
+ \label{eq:rapid-decay-from-derivatives}
+\end{equation}
+Choose $k$ with $2k\geq N$ to obtain
+\cref{eq:smooth-fourier-rapid-decay}. Choosing instead
+$2k>d+1$ makes
+$\|\omega\|_1(1+\|\omega\|_2^2)^{-k}$ integrable and proves
+\cref{eq:first-spectral-moment-finite}.
+\end{proof}
+
+\subsection{Fourier verification of the wavelet reconstruction}
+
+Let $\psi,\varphi\in\cS(\R^d)$. For a target $f$, define the continuous
+analysis transform
+\begin{equation}
+ u_f(s,t)=\int_{\R^d}f(x)\psi(s(x-t))\,dx,
+ \qquad s>0,\quad t\in\R^d.
+ \label{eq:wavelet-analysis-transform}
+\end{equation}
+The desired scale--location reconstruction is
+\begin{equation}
+ f(y)=\int_0^\infty\int_{\R^d}
+ u_f(s,t)\varphi(s(y-t))s^{2d-1}\,dt\,ds
+ \quad\text{in $L^2(\R^d)$}.
+ \label{eq:continuous-wavelet-reconstruction}
+\end{equation}
+The next proposition converts \cref{eq:continuous-wavelet-reconstruction}
+into a scalar condition at each nonzero frequency. Truncating the scale
+integral makes the Fourier calculation ordinary; Plancherel then controls the
+limit.
+
+\begin{proposition}[Fourier criterion for a dual scale--location pair]
+\label{prop:fourier-dual-wavelet-criterion}
+Let $\psi,\varphi\in\cS(\R^d)$. For $f\in\cS(\R^d)$ and
+$0<\epsilon<R<\infty$, define
+\begin{equation}
+ T_{\epsilon,R}f(y)
+ =\int_\epsilon^R\int_{\R^d}
+ u_f(s,t)\varphi(s(y-t))s^{2d-1}\,dt\,ds,
+ \label{eq:truncated-wavelet-reconstruction}
+\end{equation}
+where $u_f$ is defined in \cref{eq:wavelet-analysis-transform}. Then
+$T_{\epsilon,R}$ is a Fourier multiplier with
+\begin{align}
+ \widehat{T_{\epsilon,R}f}(\omega)
+ &=M_{\epsilon,R}(\omega)\widehat f(\omega),
+ \label{eq:wavelet-fourier-multiplier}\\
+ M_{\epsilon,R}(\omega)
+ &=\int_\epsilon^R
+ \widehat\psi(-\omega/s)\widehat\varphi(\omega/s)\,\frac{ds}{s}
+ =\int_{1/R}^{1/\epsilon}
+ \widehat\psi(-a\omega)\widehat\varphi(a\omega)\,\frac{da}{a}.
+ \label{eq:wavelet-multiplier}
+\end{align}
+Suppose that
+\begin{equation}
+ \sup_{0<\epsilon<R<\infty}
+ \|M_{\epsilon,R}\|_{L_\infty(\R^d)}<\infty
+ \label{eq:wavelet-uniform-multiplier-bound}
+\end{equation}
+and that
+\begin{equation}
+ \lim_{\epsilon\downarrow0,\ R\uparrow\infty}
+ M_{\epsilon,R}(\omega)=1
+ \quad\text{for almost every $\omega\in\R^d$.}
+ \label{eq:wavelet-multiplier-limit}
+\end{equation}
+Then the multiplier formula extends $T_{\epsilon,R}$ to $L_2(\R^d)$ and
+$T_{\epsilon,R}f\to f$ in $L_2(\R^d)$ for every $f\in L_2(\R^d)$. The limit
+is the reconstruction identity in \cref{eq:continuous-wavelet-reconstruction}.
+\end{proposition}
+
+\begin{proof}
+For fixed $s$, direct integration in $t$ gives
+\begin{equation}
+ \widehat{u_f(s,\,\cdot)}(\omega)
+ =s^{-d}\widehat f(\omega)\widehat\psi(-\omega/s).
+ \label{eq:wavelet-analysis-fourier-transform}
+\end{equation}
+The synthesis function $z\mapsto\varphi(sz)$ has Fourier transform
+$s^{-d}\widehat\varphi(\omega/s)$. The convolution identity in
+\cref{eq:fourier-convolution-differentiation} now gives
+\cref{eq:wavelet-fourier-multiplier}. Multiplying the $s^{-d}$ factor from
+the analysis transform by the $s^{-d}$ factor from the synthesis kernel
+cancels the $s^{2d}$ factor in $s^{2d-1}ds$, leaving $ds/s$. The substitution
+$a=1/s$ gives the second expression in \cref{eq:wavelet-multiplier}.
+By Plancherel, \cref{eq:wavelet-uniform-multiplier-bound} makes
+$T_{\epsilon,R}$ uniformly bounded on $\cS(\R^d)$ and hence gives a unique
+bounded extension to $L_2(\R^d)$. For any $f\in L_2(\R^d)$,
+\cref{eq:fourier-plancherel,eq:wavelet-multiplier-limit} and dominated
+convergence then give $\|T_{\epsilon,R}f-f\|_{L_2}\to0$.
+\end{proof}
+
+\begin{proposition}[Gaussian dual wavelet pair]
+\label{prop:gaussian-wavelet-verification}
+Let
+\begin{equation}
+ \varphi(x)=e^{-\|x\|_2^2/2},
+ \qquad
+ \psi=c_r(-\Delta)^r\varphi,
+ \qquad
+ c_r=\frac{2}{(2\pi)^d\Gamma(r)},
+ \label{eq:normalized-gaussian-wavelet-pair}
+\end{equation}
+where $r\geq1$ is an integer and $\Gamma(r)=(r-1)!$. Then the hypotheses of
+\cref{prop:fourier-dual-wavelet-criterion} hold.
+\end{proposition}
+
+\begin{proof}
+The Gaussian Fourier transform and \cref{eq:fourier-laplacian} give
+\begin{equation}
+ \widehat\varphi(\omega)=(2\pi)^{d/2}e^{-\|\omega\|_2^2/2},
+ \qquad
+ \widehat\psi(\omega)
+ =c_r\|\omega\|_2^{2r}\widehat\varphi(\omega).
+ \label{eq:gaussian-wavelet-fourier-transforms}
+\end{equation}
+Both transforms are real and even. For $\omega\neq0$, the full multiplier is
+\begin{align}
+ \int_0^\infty
+ \widehat\psi(-a\omega)\widehat\varphi(a\omega)\,\frac{da}{a}
+ &=c_r(2\pi)^d\int_0^\infty
+ (a\|\omega\|_2)^{2r}e^{-a^2\|\omega\|_2^2}\,\frac{da}{a}\notag\\
+ &=\frac{c_r(2\pi)^d}{2}\Gamma(r)=1.
+ \label{eq:gaussian-wavelet-multiplier-one}
+\end{align}
+The truncated multipliers lie between $0$ and $1$, so they satisfy
+\cref{eq:wavelet-uniform-multiplier-bound}. The $L_2$ reconstruction identity follows from
+\cref{prop:fourier-dual-wavelet-criterion}.
+\end{proof}
+
+\begin{proposition}[Wavelet proof of Gaussian RBF density]
+\label{prop:gaussian-rbf-density-proof}
+The finite Gaussian scale--location sums in \cref{eq:rbf-density} are dense
+in $L^2(\R^d)$.
+\end{proposition}
+
+\begin{proof}
+Choose an integer $r>d/4$ and the pair $(\psi,\varphi)$ from
+\cref{prop:gaussian-wavelet-verification}. Because
+$C_c^\infty(\R^d)$ is dense in $L^2(\R^d)$, proving the claim for
+$f\in C_c^\infty(\R^d)$ suffices.
+For $0<s\leq1$, Fubini's theorem gives
+\begin{equation}
+ \int_{\R^d}|u_f(s,t)|\,dt
+ \leq s^{-d}\|f\|_{L^1}\|\psi\|_{L^1}.
+ \label{eq:wavelet-coarse-scale-bound}
+\end{equation}
+For $s\geq1$, the identity $\psi=c_r(-\Delta)^r\varphi$ and integration by
+parts give
+\begin{equation}
+ \int_{\R^d}|u_f(s,t)|\,dt
+ \leq c_rs^{-d-2r}\|(-\Delta)^rf\|_{L^1}\|\varphi\|_{L^1}.
+ \label{eq:wavelet-fine-scale-bound}
+\end{equation}
+Because $2r>d/2$, the two estimates imply
+\begin{equation}
+ B_f:=\|\varphi\|_{L^2}
+ \int_0^\infty\int_{\R^d}
+ |u_f(s,t)|s^{3d/2-1}\,dt\,ds<\infty.
+ \label{eq:wavelet-variation-norm}
+\end{equation}
+Normalize the synthesis atoms as
+\[
+ \phi_{s,t}(y)=
+ \frac{s^{d/2}}{\|\varphi\|_{L^2}}\varphi(s(y-t)),
+ \qquad \|\phi_{s,t}\|_{L^2}=1.
+\]
+The reconstruction formula in
+\cref{eq:continuous-wavelet-reconstruction} is then an integral
+representation by the atoms $\phi_{s,t}$ with total variation $B_f$.
+Lemma~\ref{lem:mc-sparsification} supplies finite sums converging to $f$ in
+$L^2$. Absorbing the normalizing factors into the coefficients gives finite
+Gaussian radial-basis-function networks.
+\end{proof}
+
+\subsection{From Fourier modes to ridge functions}
+
+Fourier inversion represents a target through the functions
+$x\mapsto e^{i\omega^\top x}$. Each such function is a complex-valued ridge
+function, but its univariate profile is oscillatory rather than sigmoidal.
+The next identity converts the oscillatory profile into thresholds, which are
+limits of steep sigmoids.
+
+\begin{proposition}[Fourier modes as limits of sigmoidal ridge functions]
+\label{prop:fourier-to-ridge}
+Let $Q=[0,1]^d$, let $P_X$ be uniform on $Q$, and let $\sigma$ satisfy
+\cref{eq:sigmoidal-activation}. For $\omega\in\R^d$, define
+\begin{equation}
+ \alpha_\omega=\sum_{j:\,\omega_j<0}\omega_j,
+ \qquad
+ \beta_\omega=\sum_{j:\,\omega_j>0}\omega_j.
+ \label{eq:fourier-mode-range}
+\end{equation}
+Then $\omega^\top x\in[\alpha_\omega,\beta_\omega]$ for $x\in Q$,
+$\beta_\omega-\alpha_\omega=\|\omega\|_1$, and
+\begin{equation}
+ e^{it}-1
+ =\int_{\alpha_\omega}^{\beta_\omega}
+ ie^{ib}\bigl(\I\{t\geq b\}-\I\{0\geq b\}\bigr)\,db
+ \quad\text{for every $t\in[\alpha_\omega,\beta_\omega]$.}
+ \label{eq:fourier-mode-threshold-identity}
+\end{equation}
+Moreover, for every nonzero $\omega$ and every $b\in\R$,
+\begin{equation}
+ \sigma\bigl(\lambda(\omega^\top x-b)\bigr)
+ \longrightarrow \I\{\omega^\top x\geq b\}
+ \quad\text{in $L_2(P_X)$ as $\lambda\to\infty$.}
+ \label{eq:sigmoid-to-threshold}
+\end{equation}
+Consequently, for every nonzero $\omega$ there are finite complex-valued
+networks
+\begin{equation}
+ g_n(x)=c_{0,n}+\sum_{j=1}^{m_n}
+ c_{j,n}\sigma(a_{j,n}^\top x+b_{j,n})
+ \label{eq:finite-complex-sigmoid-networks}
+\end{equation}
+such that
+\begin{equation}
+ \|g_n-(e^{i\omega^\top(\,\cdot)}-1)\|_{L_2(P_X)}\longrightarrow0,
+ \qquad
+ |c_{0,n}|+\sum_{j=1}^{m_n}|c_{j,n}|
+ \leq2\|\omega\|_1+o(1).
+ \label{eq:fourier-mode-network-limit}
+\end{equation}
+\end{proposition}
+
+\begin{proof}
+The formulas for $\alpha_\omega$ and $\beta_\omega$ follow by minimizing and
+maximizing each coordinate contribution $\omega_jx_j$ separately. The
+fundamental theorem of calculus gives
+\begin{equation}
+ e^{it}-1=\int_0^t ie^{ib}\,db,
+ \label{eq:complex-exponential-calculus}
+\end{equation}
+and writing the oriented interval from $0$ to $t$ with indicators gives
+\cref{eq:fourier-mode-threshold-identity}. The absolute coefficient mass of
+the two indicator terms is at most
+$2(\beta_\omega-\alpha_\omega)=2\|\omega\|_1$.
+
+For nonzero $\omega$, the hyperplane
+$\{x\in Q:\omega^\top x=b\}$ has Lebesgue measure zero. The two limits in
+\cref{eq:sigmoidal-activation} therefore give pointwise convergence almost
+everywhere in \cref{eq:sigmoid-to-threshold}; boundedness of $\sigma$ gives
+$L_2(P_X)$ convergence by dominated convergence. Moreover,
+\begin{equation}
+ \bigl\|\I\{\omega^\top(\,\cdot)\geq b\}
+ -\I\{\omega^\top(\,\cdot)\geq b'\}\bigr\|_{L_2(P_X)}^2
+ =P_X\!\left(\omega^\top X\in
+ [\min\{b,b'\},\max\{b,b'\})\right).
+ \label{eq:threshold-l2-continuity}
+\end{equation}
+The probability on the right tends to zero as $b'\to b$ because
+$\omega^\top X$ has no atoms.
+Thus the integrand in \cref{eq:fourier-mode-threshold-identity} is a
+continuous $L_2(P_X)$-valued function of $b$, and its Riemann sums converge
+in $L_2(P_X)$. Replace the finitely many thresholds in each Riemann sum by
+steep sigmoids using \cref{eq:sigmoid-to-threshold}. Keep the constant
+indicator $\I\{0\geq b\}$ in $c_{0,n}$. The Riemann-sum and sigmoid
+approximations preserve the coefficient bound up to an $o(1)$ term, proving
+\cref{eq:fourier-mode-network-limit}.
+\end{proof}
+
+For a representation satisfying \cref{eq:barron-density-representation}, set
+$d\nu(\omega)=(2\pi)^{-d}F(\omega)\,d\omega$. Integrating the
+threshold representations in \cref{eq:fourier-mode-threshold-identity}
+against $\nu$ produces a complex signed measure on the threshold ridge
+parameters. Taking real parts produces a real signed ridge-parameter measure
+because the represented target is real. The total variation of the real
+ridge-parameter measure is at most
+\begin{equation}
+ 2\int_{\R^d}\|\omega\|_1\,d|\nu|(\omega).
+ \label{eq:fourier-to-ridge-variation-bound}
+\end{equation}
+The right-hand side is twice the spectral-moment term in
+\cref{eq:barron-norm}. Applying \cref{lem:mc-sparsification} to the resulting
+real signed measure proves the upper-bound representation used in
+\cref{thm:barron}. Rapid Fourier decay from
+\cref{prop:smooth-fourier-decay}, followed by approximation of an arbitrary
+$L^2(Q)$ target by smooth compactly supported functions, also proves
+\cref{cor:ridge-density}.
+
+\subsection{Measure-valued spectral representations}
+\label{app:fourier-measure-extension}
+
+The density formulation in \cref{def:spectral-barron-norm} is sufficient for
+the main theorem. A measure-valued formulation enlarges the class and includes
+pure Fourier modes without smoothing. For a real-valued
+\(f:\R^d\to\R\), let \(\mathfrak R(f)\) contain every finite complex Borel
+measure \(\nu\) such that
+\begin{equation}
+ f(x)=f(0)+\int_{\R^d}(e^{i\omega^\top x}-1)\,d\nu(\omega)
+ \quad\text{for every }x\in\R^d,
+ \label{eq:barron-measure-representation}
+\end{equation}
+where the integral is real. Define the anchored measure cost
+\begin{equation}
+ \|f\|_{\cB,\mathrm{meas}}
+ =|f(0)|+\inf_{\nu\in\mathfrak R(f)}
+ \int_{\R^d}\|\omega\|_1\,d|\nu|(\omega).
+ \label{eq:barron-measure-coefficient}
+\end{equation}
+The radius-(C) class on (Q) consists of restrictions of ambient functions
+whose anchored measure cost is at most (C), in parallel with
+\cref{eq:barron-class}. Every density
+\(F\) in \cref{eq:barron-density-representation} defines
+\(d\nu=(2\pi)^{-d}F\,d\omega\), so the density-defined Barron ball is
+contained in the measure-defined ball with the same radius. The
+Fourier-to-threshold construction in \cref{prop:fourier-to-ridge} applies
+directly to \(\nu\) and gives the
+same neural upper bound. The main text uses the density class because smooth
+spectral approximations to cosine modes also give the fixed-space lower bound
+inside that smaller class.
+
+\subsection{Fourier modes on the cube}
+
+The fixed-space lower bound uses the integer Fourier modes as an orthogonal
+collection under the uniform law on the cube.
+
+\begin{proposition}[Orthogonality of integer Fourier modes]
+\label{prop:cube-fourier-orthogonality}
+For $k,\ell\in\mathbb Z^d$,
+\begin{equation}
+ \int_{[0,1]^d}e^{2\pi i(k-\ell)^\top x}\,dx
+ =\I\{k=\ell\}.
+ \label{eq:cube-complex-fourier-orthogonality}
+\end{equation}
+Consequently, if $k_1,\ldots,k_N$ are nonzero and no two are equal up to
+sign, then the real functions
+\begin{equation}
+ x\longmapsto\sqrt2\cos(2\pi k_j^\top x),
+ \qquad j=1,\ldots,N,
+ \label{eq:cube-cosine-orthonormal-family}
+\end{equation}
+are orthonormal in $L_2([0,1]^d)$.
+\end{proposition}
+
+\begin{proof}
+Fubini's theorem factors the integral in
+\cref{eq:cube-complex-fourier-orthogonality} into $d$ one-dimensional
+integrals. For an integer $q$,
+$\int_0^1e^{2\pi iqx}\,dx$ equals $1$ when $q=0$ and $0$ otherwise. The
+cosine claim follows from
+$2\cos u\cos v=\cos(u-v)+\cos(u+v)$.
+\end{proof}
+
+\begin{proposition}[Smooth spectral approximations to cosine modes]
+\label{prop:smooth-cosine-spectra}
+For every nonzero $\omega\in\R^d$ and every $0<\delta\leq1$, there is a
+real-valued function $u_{\omega,\delta}$ satisfying
+\cref{eq:barron-density-representation} such that
+\begin{align}
+ \left\|u_{\omega,\delta}
+ -\sqrt2\cos(\omega^\top\,\cdot)\right\|_{L_\infty(Q)}
+ &\leq\sqrt2\,\delta,
+ \label{eq:smooth-cosine-approximation}\\
+ \|u_{\omega,\delta}\|_{\cB(\R^d)}
+ &\leq\sqrt2\bigl(1+\|\omega\|_1+\delta\bigr).
+ \label{eq:smooth-cosine-spectral-moment}
+\end{align}
+\end{proposition}
+
+\begin{proof}
+Choose a nonnegative, even function $\rho\in C_c^\infty(\R^d)$ supported on
+$\{z:\|z\|_1\leq1\}$ and satisfying
+$\int_{\R^d}\rho(z)\,dz=1$. Set
+$\rho_\delta(z)=\delta^{-d}\rho(z/\delta)$ and define the Fourier density
+\begin{equation}
+ \widehat u_{\omega,\delta}(\xi)
+ =\frac{(2\pi)^d}{\sqrt2}
+ \left(\rho_\delta(\xi-\omega)+\rho_\delta(\xi+\omega)\right).
+ \label{eq:smoothed-cosine-density}
+\end{equation}
+Fourier inversion gives
+\begin{equation}
+ u_{\omega,\delta}(x)
+ =\sqrt2\cos(\omega^\top x)
+ \int_{\R^d}e^{iz^\top x}\rho_\delta(z)\,dz.
+ \label{eq:smoothed-cosine-function}
+\end{equation}
+The last integral is real because $\rho_\delta$ is even. For $x\in Q$ and
+$z$ in the support of $\rho_\delta$,
+$|z^\top x|\leq\|z\|_1\|x\|_\infty\leq\delta$. Therefore
+\begin{equation}
+ \left|\int_{\R^d}(e^{iz^\top x}-1)\rho_\delta(z)\,dz\right|
+ \leq\delta,
+ \label{eq:mollified-mode-uniform-bound}
+\end{equation}
+which proves \cref{eq:smooth-cosine-approximation}. The triangle inequality
+also gives the spectral-moment bound
+\begin{align}
+ \frac1{(2\pi)^d}\int_{\R^d}
+ \|\xi\|_1|\widehat u_{\omega,\delta}(\xi)|\,d\xi
+ &=\frac{1}{\sqrt2}\int_{\R^d}
+ \left(\|\omega+z\|_1+\|-\omega+z\|_1\right)
+ \rho_\delta(z)\,dz\notag\\
+ &\leq\sqrt2\bigl(\|\omega\|_1+\delta\bigr).
+ \label{eq:smoothed-mode-moment-calculation}
+\end{align}
+Because $u_{\omega,\delta}(0)=\sqrt2$, adding the anchored constant cost
+proves \cref{eq:smooth-cosine-spectral-moment}.
+\end{proof}
+
+\section{Greedy and point-query recovery of ridge structure}
+\label{app:active-query-recovery}
+
+The results in this appendix separate two conditional constructions. The
+first result turns the $m^{-1/2}$ convex-hull approximation bound into a
+sequential greedy method, provided that a correlation oracle is available;
+the result is not a near-best $m$-term oracle inequality. The second result
+estimates an active linear subspace from noiseless point evaluations,
+conditional on supplied base points whose gradient matrix is full rank and
+well conditioned. A final example shows why smoothness and a ridge
+representation alone do not guarantee such informative base points.
+
+\subsection{Greedy approximation with a correlation oracle}
+
+The following proposition gives the guarantee summarized in
+\cref{sec:structure}. The proof also identifies the operation that can be
+difficult for a continuous ridge dictionary.
+
+\begin{proposition}[Greedy approximation with a correlation oracle]
+\label{prop:greedy-oracle}
+Let $\cD$ be a collection of elements of a Hilbert space $\cH$ satisfying
+$\|\phi\|_{\cH}\leq1$ for every $\phi\in\cD$. Fix $B>0$, and suppose that
+\begin{equation}
+ f\in \cK:=B\,\overline{\operatorname{conv}}(\cD\cup-\cD).
+ \label{eq:greedy-feasible-set}
+\end{equation}
+Set $f_0=0$. At step $m\geq1$, assume that the supremum displayed below is
+attained and let a correlation oracle return
+$\phi_m\in\cD\cup-\cD$ satisfying
+\begin{equation}
+ \langle f-f_{m-1},B\phi_m\rangle_{\cH}
+ =\sup_{\phi\in\cD\cup-\cD}
+   \langle f-f_{m-1},B\phi\rangle_{\cH},
+ \label{eq:correlation-oracle}
+\end{equation}
+and update
+\begin{equation}
+ f_m=\left(1-\frac1{m+1}\right)f_{m-1}
+     +\frac1{m+1}B\phi_m.
+ \label{eq:relaxed-greedy-update}
+\end{equation}
+Then $f_m$ is a linear combination of at most $m$ atoms and
+\begin{equation}
+ \|f-f_m\|_{\cH}\leq \frac{2B}{\sqrt{m+1}}.
+ \label{eq:greedy-oracle-bound}
+\end{equation}
+\end{proposition}
+
+\begin{proof}
+The set $\cK$ is symmetric and convex, contains $0$, and lies in the closed
+ball of radius $B$. Hence $f_m\in\cK$ for every $m$. Write
+$r_{m-1}=f-f_{m-1}$ and $\gamma_m=1/(m+1)$. Since $f\in\cK$, linearity and
+\cref{eq:correlation-oracle} give
+\begin{equation}
+ \langle r_{m-1},B\phi_m\rangle_{\cH}
+ \geq \langle r_{m-1},f\rangle_{\cH}.
+ \label{eq:oracle-dominates-target}
+\end{equation}
+Consequently,
+\begin{align*}
+ \|f-f_m\|_{\cH}^2
+ &=\|r_{m-1}-\gamma_m(B\phi_m-f_{m-1})\|_{\cH}^2\\
+ &\leq (1-2\gamma_m)\|r_{m-1}\|_{\cH}^2
+       +4\gamma_m^2B^2.
+\end{align*}
+The last term uses
+$\|B\phi_m-f_{m-1}\|_{\cH}\leq2B$. Induction, starting from
+$\|f-f_0\|_{\cH}\leq B$, now gives
+$\|f-f_m\|_{\cH}^2\leq4B^2/(m+1)$.
+The update adds at most one new atom at every step, so $f_m$ uses at most
+$m$ atoms.
+\end{proof}
+
+The proposition concerns the number of selected atoms. The computational
+content of the proposition depends on \cref{eq:correlation-oracle}. The oracle is elementary for
+an explicitly listed finite dictionary. For the ridge dictionary in
+\cref{eq:projection-pursuit-model}, the oracle must choose both a direction
+and a univariate profile. Discretizing all directions can require a set whose
+size is exponential in $d$ at a fixed angular resolution. The rate in
+\cref{eq:greedy-oracle-bound} therefore does not by itself control the
+arithmetic cost of an iteration.
+
+\subsection{Recovering a multi-index subspace from point values}
+
+Noiseless active queries permit a different construction when the target is
+known to have a multi-index form. Write
+\begin{equation}
+ \cB_d(R)=\{x\in\R^d:\|x\|_2\leq R\}.
+ \label{eq:euclidean-ball-notation}
+\end{equation}
+The next theorem uses coordinate finite differences so that the conditional
+subspace-estimation algorithm and its cost are explicit. The theorem assumes
+that informative base points have already been supplied.
+
+\begin{theorem}[Active-subspace recovery from noiseless point queries]
+\label{thm:point-query-subspace}
+Let $f:\cB_d(1+\bar h)\to\R$ satisfy
+\begin{equation}
+ f(x)=g(Ax),
+ \qquad A\in\R^{k\times d},\quad AA^\top=I_k,
+ \label{eq:appendix-multi-index-model}
+\end{equation}
+where $g$ is twice continuously differentiable. Define
+\begin{equation}
+ P=A^\top A,
+ \quad
+ L=\sup_{z\in\cB_d(1+\bar h)}\|\nabla f(z)\|_2,
+ \quad
+ M=\sup_{z\in\cB_d(1+\bar h)}\|\nabla^2f(z)\|_{\mathrm{op}}.
+ \label{eq:active-query-regularity}
+\end{equation}
+Choose $x_1,\ldots,x_q\in\cB_d(1)$ and form
+\begin{equation}
+ G=\begin{bmatrix}\nabla f(x_1)&\cdots&\nabla f(x_q)\end{bmatrix}.
+ \label{eq:sampled-gradient-matrix}
+\end{equation}
+Assume that $\operatorname{rank}(G)=k$ and write
+$\lambda_\star=\sigma_k(G)>0$. For $0<h\leq\bar h$, use the
+$q(d+1)$ point values at $x_j$ and $x_j+he_\ell$ to define
+\begin{equation}
+ \widetilde G_{\ell j}
+ =\frac{f(x_j+he_\ell)-f(x_j)}{h},
+ \qquad \ell=1,\ldots,d,\quad j=1,\ldots,q.
+ \label{eq:coordinate-finite-difference-matrix}
+\end{equation}
+Let $\widehat P$ be the orthogonal projector onto the leading $k$ left
+singular vectors of $\widetilde G$, and set
+\begin{equation}
+ \eta=\frac{Mh\sqrt{dq}}2.
+ \label{eq:finite-difference-perturbation}
+\end{equation}
+If $\eta<\lambda_\star$, then
+\begin{equation}
+ \|\widehat P-P\|_{\mathrm{op}}
+ \leq \frac{\eta}{\lambda_\star-\eta}.
+ \label{eq:projector-recovery-bound}
+\end{equation}
+The reduced function $\widehat f(x)=f(\widehat Px)$ consequently satisfies
+\begin{equation}
+ \sup_{x\in\cB_d(1)}|f(x)-\widehat f(x)|
+ \leq L\frac{\eta}{\lambda_\star-\eta}.
+ \label{eq:active-query-function-bound}
+\end{equation}
+\end{theorem}
+
+\begin{proof}
+The chain rule gives
+\begin{equation}
+ \nabla f(x)=A^\top\nabla g(Ax).
+ \label{eq:appendix-gradient-factorization}
+\end{equation}
+Each column of $G$ is therefore a linear combination of the rows of $A$.
+The columns of $G$ span a $k$-dimensional space by the rank assumption, and
+the $k$ rows of $A$ are orthonormal. Consequently, the columns of $G$ and the
+rows of $A$ span the same subspace of $\R^d$. The matrix $P=A^\top A$ is the
+orthogonal projector onto that subspace.
+
+Taylor's theorem along the coordinate direction $e_\ell$ gives
+\begin{equation}
+ \left|\widetilde G_{\ell j}-\partial_\ell f(x_j)\right|
+ \leq \frac{Mh}{2}.
+ \label{eq:coordinate-difference-error}
+\end{equation}
+For $E=\widetilde G-G$, summing the squared entrywise bounds yields
+\begin{equation}
+ \|E\|_{\mathrm{op}}
+ \leq\|E\|_{\mathrm F}
+ \leq\frac{Mh\sqrt{dq}}2=\eta.
+ \label{eq:gradient-matrix-perturbation}
+\end{equation}
+
+Let $\widehat U\widehat\Sigma\widehat V^\top$ contain the leading $k$
+singular triplets of $\widetilde G$. The singular-value perturbation
+inequality gives
+$\sigma_k(\widetilde G)\geq\lambda_\star-\eta>0$. Since
+$(I-P)G=0$,
+\begin{equation}
+ (I-P)\widehat U
+ =(I-P)E\widehat V\widehat\Sigma^{-1}.
+ \label{eq:subspace-perturbation-identity}
+\end{equation}
+Therefore
+\begin{equation}
+ \|(I-P)\widehat U\|_{\mathrm{op}}
+ \leq\frac{\eta}{\lambda_\star-\eta}.
+ \label{eq:one-sided-subspace-bound}
+\end{equation}
+The two subspaces have the same dimension, so the left-hand side of
+\cref{eq:one-sided-subspace-bound} equals
+$\|\widehat P-P\|_{\mathrm{op}}$. The one-sided subspace bound therefore
+proves \cref{eq:projector-recovery-bound}.
+
+Finally, $AP=A$ implies $f(x)=f(Px)$. Both $Px$ and $\widehat Px$ belong to
+$\cB_d(1)$ when $x\in\cB_d(1)$. The gradient bound in
+\cref{eq:active-query-regularity} and the mean-value theorem give
+\[
+ |f(x)-f(\widehat Px)|
+ =|f(Px)-f(\widehat Px)|
+ \leq L\|(P-\widehat P)x\|_2,
+\]
+which proves \cref{eq:active-query-function-bound}.
+\end{proof}
+
+If $\widehat U$ has orthonormal columns spanning the estimated subspace, then
+\begin{equation}
+ \widehat f(x)=\widehat g(\widehat U^\top x),
+ \qquad
+ \widehat g(y)=f(\widehat Uy),\qquad y\in\cB_k(1).
+ \label{eq:recovered-link}
+\end{equation}
+Each query of $\widehat g$ requires one additional query of $f$. Suppose that
+a grid, spline, or another $k$-dimensional approximation method uses such
+queries to construct $\widetilde g$ satisfying
+$\sup_{y\in\cB_k(1)}|\widehat g(y)-\widetilde g(y)|\leq\delta$. Then
+\begin{equation}
+ \widetilde f(x)=\widetilde g(\widehat U^\top x)
+ \quad\Longrightarrow\quad
+ \sup_{x\in\cB_d(1)}|f(x)-\widetilde f(x)|
+ \leq L\frac{\eta}{\lambda_\star-\eta}+\delta.
+ \label{eq:subspace-plus-link-error}
+\end{equation}
+The additional query count is the cost of obtaining the $k$-dimensional
+interpolation error $\delta$. For a generic smooth link, the interpolation cost can depend
+exponentially on the intrinsic dimension $k$, but not on the ambient dimension
+$d$.
+
+The rank assumption in \cref{thm:point-query-subspace} is the finite-sample
+form of an average-gradient condition. If a random element $X$ has a declared
+law supported on $\cB_d(1)$, define
+\begin{equation}
+ H_f=\E[\nabla f(X)\nabla f(X)^\top]
+ =A^\top\E[\nabla g(AX)\nabla g(AX)^\top]A.
+ \label{eq:active-query-population-agop}
+\end{equation}
+A positive $k$th eigenvalue means that the gradients reveal every active
+direction on average. Strict positivity gives identifiability; a useful
+finite-sample guarantee requires a quantitative lower bound on that eigenvalue.
+Randomized recovery results combine such a lower bound with matrix
+concentration to choose enough base points. For sparse or compressible
+gradients, the directional differences
+\begin{equation}
+ \frac{f(x_j+h\varphi_i)-f(x_j)}h
+ \approx \varphi_i^\top\nabla f(x_j)
+ \label{eq:compressed-directional-differences}
+\end{equation}
+form a compressed-sensing problem. Sparse recovery followed by the same SVD
+can then use fewer than $d$ directions per base point.
+
+\subsection{Why an informative-link condition is necessary}
+
+The next example shows that active queries do not make every smooth ridge
+class tractable. The obstruction is informational: most queries return zero,
+so the algorithm receives no evidence about the hidden direction.
+
+\begin{proposition}[A point-query obstruction for smooth ridge functions]
+\label{prop:ridge-query-lower-bound}
+There are numerical constants $c_0,c_1>0$ such that the following statement
+holds for every sufficiently large $d$. Define
+\begin{equation}
+ g(t)=8(t-1/2)_+^3,
+ \qquad
+ f_a(x)=g(a^\top x),\quad a\in\mathbb S^{d-1},\quad x\in\cB_d(1).
+ \label{eq:hidden-cap-ridge-functions}
+\end{equation}
+The link $g$ is twice continuously differentiable and
+$\|f_a\|_\infty=1$. Any deterministic adaptive algorithm using at most
+$c_0e^{c_1d}$ noiseless point queries in $\cB_d(1)$ has the same query
+transcript on the zero function and on some $f_a$. Consequently, the algorithm
+cannot guarantee uniform error strictly smaller than $1/2$ on
+\begin{equation}
+ \{0\}\cup\{f_a:a\in\mathbb S^{d-1}\}.
+ \label{eq:hidden-cap-function-class}
+\end{equation}
+\end{proposition}
+
+\begin{proof}
+Let $U$ be uniform on $\mathbb S^{d-1}$. Rotational invariance and the density
+of the first coordinate of $U$ imply that, for every fixed
+$x\in\cB_d(1)$,
+\begin{equation}
+ \P(U^\top x>1/2)
+ \leq C\sqrt d\,(3/4)^{(d-3)/2}
+ \leq C_0e^{-c_1d}
+ \label{eq:spherical-cap-bound}
+\end{equation}
+for numerical constants $C,C_0,c_1>0$. If $x=0$, the probability is zero.
+Otherwise, rotate $x/\|x\|_2$ to the first coordinate. Since
+$\|x\|_2\leq1$, the event in \cref{eq:spherical-cap-bound} implies that the
+first coordinate of $U$ exceeds $1/2$. The density of the first coordinate is proportional to
+$(1-t^2)^{(d-3)/2}$ on $[-1,1]$. Integrating the first-coordinate density
+gives the first inequality.
+
+Run the algorithm along the transcript in which every query returns zero.
+The resulting query points $x_1,\ldots,x_q$ are fixed. If
+$qC_0e^{-c_1d}<1$, the union bound applied to
+\cref{eq:spherical-cap-bound} gives a direction $a$ satisfying
+$a^\top x_j\leq1/2$ for every $j$. Hence $f_a(x_j)=0$ for every query, and
+the algorithm produces the same output, say $h$, for the targets $0$ and
+$f_a$. Since $f_a(a)=1$,
+\[
+ 1=\|f_a-0\|_\infty
+ \leq\|f_a-h\|_\infty+\|h-0\|_\infty.
+\]
+At least one of the two errors is at least $1/2$. Reducing $c_0$ if necessary
+ensures $qC_0e^{-c_1d}<1$ for every
+$q\leq c_0e^{c_1d}$.
+\end{proof}
+
+The lower bound does not conflict with
+\cref{thm:point-query-subspace}. Fix $a\in\mathbb S^{d-1}$ and let the random
+element $X$ be uniform on $\mathbb S^{d-1}$. For the target $f_a$ in
+\cref{eq:hidden-cap-ridge-functions},
+\begin{equation}
+ 0<\lambda_1(H_{f_a})
+ =\E\!\left[g'(a^\top X)^2\right]
+ \leq36\P(a^\top X>1/2)
+ \leq36C_0e^{-c_1d}.
+ \label{eq:hidden-cap-small-agop}
+\end{equation}
+Thus the informative eigenvalue is positive but exponentially small. The
+recovery guarantee in \cref{thm:point-query-subspace} is useful only when the
+target supplies gradient information
+at base points that the query strategy can obtain with the desired cost.
+
+\section{Feature representations of reproducing-kernel Hilbert spaces}
+\label{app:rkhs-features}
+
+The next construction characterizes kernels that admit the feature
+representation in \cref{eq:feature-kernel} and identifies changes of feature
+law that preserve the RKHS norm.
+
+\begin{proposition}[Every separable RKHS has a scalar feature representation]
+\label{prop:every-rkhs-feature-representation}
+Let $\cH_k$ be a separable real reproducing-kernel Hilbert space with kernel
+$k$, and let $(e_j)_{j\in J}$ be an orthonormal basis of $\cH_k$, where $J$
+is finite or countably infinite. Choose numbers $\tau_j>0$ satisfying
+$\sum_{j\in J}\tau_j=1$, and define
+\begin{equation}
+ \phi_j(x)=\frac{e_j(x)}{\sqrt{\tau_j}}.
+ \label{eq:rkhs-feature-construction}
+\end{equation}
+Then
+\begin{equation}
+ k(x,x')=\sum_{j\in J}\tau_j\phi_j(x)\phi_j(x'),
+ \label{eq:rkhs-kernel-expansion}
+\end{equation}
+and every $f\in\cH_k$ has a representation
+\begin{equation}
+ f(x)=\sum_{j\in J}\tau_jp_j\phi_j(x),
+ \qquad
+ \|f\|_{\cH_k}^2=\sum_{j\in J}\tau_jp_j^2.
+ \label{eq:rkhs-norm-expansion}
+\end{equation}
+\end{proposition}
+
+\begin{proof}
+For $x\in\cX$, the reproducing property gives
+$e_j(x)=\langle e_j,k(x,\cdot)\rangle_{\cH_k}$. Expanding both kernel
+sections in the orthonormal basis gives
+\[
+ k(x,x')
+ =\langle k(x,\cdot),k(x',\cdot)\rangle_{\cH_k}
+ =\sum_{j\in J}e_j(x)e_j(x'),
+\]
+which becomes \cref{eq:rkhs-kernel-expansion} after substituting
+\cref{eq:rkhs-feature-construction}. If
+$f=\sum_jc_je_j$, set $p_j=c_j/\sqrt{\tau_j}$. Then
+\[
+ \sum_j\tau_jp_j\phi_j(x)=\sum_jc_je_j(x)=f(x),
+ \qquad
+ \sum_j\tau_jp_j^2=\sum_jc_j^2=\|f\|_{\cH_k}^2.
+\]
+\end{proof}
+
+Different bases and weights give different feature representations of the
+same kernel. More generally, suppose $d\widetilde\tau=q\,d\tau$, where
+$q>0$ $\tau$-almost everywhere and $\int q\,d\tau=1$. The simultaneous
+changes
+\begin{equation}
+ \widetilde\phi_v=\frac{\phi_v}{\sqrt q(v)},
+ \qquad
+ \widetilde p(v)=\frac{p(v)}{\sqrt q(v)}
+ \label{eq:feature-measure-change}
+\end{equation}
+preserve the kernel, the represented function, and the coefficient norm:
+\begin{align*}
+ \int\widetilde\phi_v(x)\widetilde\phi_v(x')\,d\widetilde\tau(v)
+ &=\int\phi_v(x)\phi_v(x')\,d\tau(v),\\
+ \int\widetilde p(v)\widetilde\phi_v(x)\,d\widetilde\tau(v)
+ &=\int p(v)\phi_v(x)\,d\tau(v),\\
+ \int|\widetilde p(v)|^2\,d\widetilde\tau(v)
+ &=\int|p(v)|^2\,d\tau(v).
+\end{align*}
+Changing $\tau$ while holding the features fixed generally changes the
+kernel. For a redundant fixed feature representation, several coefficient
+functions $p$ may represent the same $f$; the RKHS norm is the infimum of
+$\|p\|_{L_2(\tau)}$ over those coefficient functions.
+
+\section{First-stage contraction for the staged-SGD result}
+\label{app:sgd-contraction}
+
+The prediction theorem in \cref{sec:mousavi} uses a specialized single-index
+model. The first-stage analysis applies more generally to a multiple-index
+response. Let \(\Law(X)=N(0,I_d)\), let the noise \(\varepsilon\) be independent
+of \(X\), and suppose
+\begin{equation}
+ Y=g(UX;\varepsilon),
+ \qquad U\in\R^{s\times d},\quad UU^\top=I_s,
+ \label{eq:mousavi-model}
+\end{equation}
+where \(z\mapsto g(z;\varepsilon)\) is weakly differentiable for every fixed
+noise value. The rows of \(U\) span the teacher subspace. The student is the
+two-layer network in \cref{eq:two-layer-student}.
+
+The contraction theorem has two assumption regimes. The smooth-activation
+regime uses squared loss, an almost-sure bound on \(Y\), and uniform bounds on
+\(\sigma\), \(\sigma'\), and \(\sigma''\). The ReLU regime instead assumes
+\begin{equation}
+ 0\leq\partial_{11}^2\ell\leq1,
+ \qquad |\partial_1\ell|\leq1,
+ \qquad |\partial_{12}^2\ell|\leq1.
+ \label{eq:mousavi-loss-assumptions}
+\end{equation}
+Appropriately scaled Huber and logistic losses satisfy the ReLU conditions.
+Monotonicity of the link is not required for the contraction theorem.
+
+The key identity comes from Gaussian integration by parts.
+\begin{proposition}[Population-gradient decomposition, informal form]
+Under the smooth-activation assumptions, or under the corresponding
+conditions for a ReLU network and a convex Lipschitz loss, the gradient of the
+regularized population risk has the form
+\begin{equation}
+ \nabla_W R_\lambda(W)
+   =\bigl(H(W)+\lambda I_m\bigr)W+D(W)U,
+ \label{eq:population-gradient-decomposition}
+\end{equation}
+where \(H(W)\in\R^{m\times m}\) and \(D(W)\in\R^{m\times s}\) depend on the
+current network and the data distribution. Let \(\Pi_\perp\) be the
+orthogonal projection onto the complement of the row space of \(U\), and
+write \(W_\perp=W\Pi_\perp\). Right-multiplying
+\cref{eq:population-gradient-decomposition} by \(\Pi_\perp\) removes the target
+term:
+\begin{equation}
+ \nabla_W R_\lambda(W)\Pi_\perp
+ =\bigl(H(W)+\lambda I_m\bigr)W_\perp.
+ \label{eq:orthogonal-gradient}
+\end{equation}
+\end{proposition}
+If the symmetric part of \(H(W)+\lambda I_m\) remains uniformly positive
+along the trajectory and the step size is sufficiently small,
+\cref{eq:orthogonal-gradient} contracts \(W_\perp\). Only the component inside
+the teacher subspace receives the forcing term \(D(W)U\).
+
+\begin{theorem}[Contraction toward the teacher subspace by online SGD, informal form]
+The estimator updates \(W\) according to
+\cref{eq:mousavi-first-stage}, using a fresh independent pair
+\((X_t,Y_t)\) at every update. At initialization, the entries of \(W^{(0)}\)
+are independent \(N(0,1/d)\) variables, the coordinates of \(a^{(0)}\) are
+independent and uniform on \([-1/m,1/m]\), and the coordinates of \(b^{(0)}\)
+are independent uniform signs. The output weights \(a^{(0)}\) and biases
+\(b^{(0)}\) remain fixed. For the specified loss, weight decay, and step-size
+schedules, the decaying-step version satisfies, for \(0<\delta<1\), with
+probability at least \(1-\delta\),
+\begin{equation}
+ \frac{\|W^{(T)}_\perp\|_F}{\sqrt m}
+ \ \lesssim\
+ \sqrt{\frac{d+\log(1/\delta)}{T}},
+ \label{eq:sgd-subspace-rate}
+\end{equation}
+up to constants determined by the regularization schedule. The guarantee
+requires \(m\gtrsim\log(1/\delta)\).
+\end{theorem}
+
+The theorem controls only the component orthogonal to the teacher subspace.
+The conclusion allows \(W^{(T)}\) to approach the zero matrix and does not
+show that the rows of \(W^{(T)}\) span every teacher direction. The theorem
+also gives neither convergence of the component inside the subspace nor
+accurate prediction for every link \(g\).
+
+\begin{thebibliography}{99}
+\raggedright
+\small
+
+\bibitem[Bach(2017)]{bach2017}
+Francis Bach.
+\newblock Breaking the curse of dimensionality with convex neural networks.
+\newblock \emph{Journal of Machine Learning Research}, 18(19):1--53, 2017.
+\newblock \url{https://jmlr.org/papers/v18/14-546.html}.
+
+\bibitem[Barron(1993)]{barron1993}
+Andrew R. Barron.
+\newblock Universal approximation bounds for superpositions of a sigmoidal
+function.
+\newblock \emph{IEEE Transactions on Information Theory}, 39(3):930--945,
+1993.
+\newblock \url{https://doi.org/10.1109/18.256500}.
+
+\bibitem[Barron et al.(2008)]{barroncohendahmendevore2008}
+Andrew R. Barron, Albert Cohen, Wolfgang Dahmen, and Ronald A. DeVore.
+\newblock Approximation and learning by greedy algorithms.
+\newblock \emph{The Annals of Statistics}, 36(1):64--94, 2008.
+\newblock \url{https://doi.org/10.1214/009053607000000631}.
+
+\bibitem[Bauer and Kohler(2019)]{bauer2019}
+Benedikt Bauer and Michael Kohler.
+\newblock On deep learning as a remedy for the curse of dimensionality in
+nonparametric regression.
+\newblock \emph{The Annals of Statistics}, 47(4):2261--2285, 2019.
+\newblock \url{https://doi.org/10.1214/18-AOS1747}.
+
+\bibitem[Cohen et al.(2012)]{cohendaubechiesdevore2012}
+Albert Cohen, Ingrid Daubechies, Ronald DeVore, G\'erard Kerkyacharian, and
+Dominique Picard.
+\newblock Capturing ridge functions in high dimensions from point queries.
+\newblock \emph{Constructive Approximation}, 35(2):225--243, 2012.
+\newblock \url{https://doi.org/10.1007/s00365-011-9147-6}.
+
+\bibitem[Dalalyan et al.(2008)]{dalalyan2008}
+Arnak S. Dalalyan, Anatoly Juditsky, and Vladimir Spokoiny.
+\newblock A new algorithm for estimating the effective dimension-reduction
+subspace.
+\newblock \emph{Journal of Machine Learning Research}, 9:1647--1678, 2008.
+\newblock \url{https://jmlr.org/papers/v9/dalalyan08a.html}.
+
+\bibitem[Damian et al.(2022)]{damian2022}
+Alex Damian, Jason D. Lee, and Mahdi Soltanolkotabi.
+\newblock Neural networks can learn representations with gradient descent.
+\newblock In \emph{Proceedings of the 35th Conference on Learning Theory},
+volume 178 of \emph{Proceedings of Machine Learning Research}, pages
+5413--5452, 2022.
+\newblock \url{https://proceedings.mlr.press/v178/damian22a.html}.
+
+\bibitem[Daubechies(1988)]{daubechies1988}
+Ingrid Daubechies.
+\newblock Orthonormal bases of compactly supported wavelets.
+\newblock \emph{Communications on Pure and Applied Mathematics},
+41(7):909--996, 1988.
+\newblock \url{https://doi.org/10.1002/cpa.3160410705}.
+
+\bibitem[Delyon et al.(1995)]{delyon1995}
+Bernard Delyon, Anatoli Juditsky, and Albert Benveniste.
+\newblock Accuracy analysis for wavelet approximations.
+\newblock \emph{IEEE Transactions on Neural Networks}, 6(2):332--348, 1995.
+\newblock \url{https://doi.org/10.1109/72.363469}.
+
+\bibitem[DeVore(1998)]{devore1998}
+Ronald A. DeVore.
+\newblock Nonlinear approximation.
+\newblock \emph{Acta Numerica}, 7:51--150, 1998.
+\newblock \url{https://doi.org/10.1017/S0962492900002816}.
+
+\bibitem[Eldan and Shamir(2016)]{eldan2016}
+Ronen Eldan and Ohad Shamir.
+\newblock The power of depth for feedforward neural networks.
+\newblock In \emph{Proceedings of the 29th Conference on Learning Theory},
+volume 49 of \emph{Proceedings of Machine Learning Research}, pages
+907--940, 2016.
+\newblock \url{https://proceedings.mlr.press/v49/eldan16.html}.
+
+\bibitem[Fornasier et al.(2012)]{fornasierschnassvybiral2012}
+Massimo Fornasier, Karin Schnass, and Jan Vyb\'iral.
+\newblock Learning functions of few arbitrary linear parameters in high
+dimensions.
+\newblock \emph{Foundations of Computational Mathematics}, 12(2):229--262,
+2012.
+\newblock \url{https://doi.org/10.1007/s10208-012-9115-y}.
+
+\bibitem[Friedman and Stuetzle(1981)]{friedman1981}
+Jerome H. Friedman and Werner Stuetzle.
+\newblock Projection pursuit regression.
+\newblock \emph{Journal of the American Statistical Association},
+76(376):817--823, 1981.
+\newblock \url{https://doi.org/10.1080/01621459.1981.10477729}.
+
+\bibitem[Hristache et al.(2001)]{hristache2001}
+Marian Hristache, Anatoli Juditsky, J\"org Polzehl, and Vladimir Spokoiny.
+\newblock Structure adaptive approach for dimension reduction.
+\newblock \emph{The Annals of Statistics}, 29(6):1537--1566, 2001.
+\newblock \url{https://doi.org/10.1214/aos/1015345954}.
+
+\bibitem[Jones(1992)]{jones1992}
+Lee K. Jones.
+\newblock A simple lemma on greedy approximation in Hilbert space and
+convergence rates for projection pursuit regression and neural network
+training.
+\newblock \emph{The Annals of Statistics}, 20(1):608--613, 1992.
+\newblock \url{https://doi.org/10.1214/aos/1176348546}.
+
+\bibitem[Kerkyacharian and Picard(2002)]{kerkyacharian2002}
+G\'erard Kerkyacharian and Dominique Picard.
+\newblock Minimax or maxisets?
+\newblock \emph{Bernoulli}, 8(2):219--253, 2002.
+\newblock \url{https://projecteuclid.org/journals/bernoulli/volume-8/issue-2/Minimax-or-maxisets/10.3150/bj/1068128976.full}.
+
+\bibitem[Kohler and Krzy\.{z}ak(2017)]{kohler2017}
+Michael Kohler and Adam Krzy\.{z}ak.
+\newblock Nonparametric regression based on hierarchical interaction models.
+\newblock \emph{IEEE Transactions on Information Theory}, 63(3):1620--1630,
+2017.
+\newblock \url{https://doi.org/10.1109/TIT.2016.2634401}.
+
+\bibitem[Kohler and Langer(2021)]{kohlerlanger2021}
+Michael Kohler and Sophie Langer.
+\newblock On the rate of convergence of fully connected deep neural network
+regression estimates.
+\newblock \emph{The Annals of Statistics}, 49(4):2231--2249, 2021.
+\newblock \url{https://doi.org/10.1214/20-AOS2034}.
+
+\bibitem[Kohler et al.(2026)]{kohler2026}
+Michael Kohler, Adam Krzy\.{z}ak, and Vincent Molinero R\"omer.
+\newblock Learning of deep neural network regression estimates using gradient
+descent with pruning.
+\newblock 2026.
+\newblock \url{https://arxiv.org/abs/2608.25743}.
+
+\bibitem[Mallat(1989)]{mallat1989}
+St\'ephane G. Mallat.
+\newblock A theory for multiresolution signal decomposition: The wavelet
+representation.
+\newblock \emph{IEEE Transactions on Pattern Analysis and Machine
+Intelligence}, 11(7):674--693, 1989.
+\newblock \url{https://doi.org/10.1109/34.192463}.
+
+\bibitem[Mei et al.(2019)]{mei2019}
+Song Mei, Theodor Misiakiewicz, and Andrea Montanari.
+\newblock Mean-field theory of two-layers neural networks: Dimension-free
+bounds and kernel limit.
+\newblock In \emph{Proceedings of the 32nd Conference on Learning Theory},
+volume 99 of \emph{Proceedings of Machine Learning Research}, pages
+2388--2464, 2019.
+\newblock \url{https://proceedings.mlr.press/v99/mei19a.html}.
+
+\bibitem[Mousavi-Hosseini et al.(2023)]{mousavi2023}
+Alireza Mousavi-Hosseini, Sejun Park, Manuela Girotti, Ioannis Mitliagkas,
+and Murat A. Erdogdu.
+\newblock Neural networks efficiently learn low-dimensional representations
+with SGD.
+\newblock 2023.
+\newblock \url{https://arxiv.org/abs/2209.14863}.
+
+\bibitem[Parkinson et al.(2025)]{parkinson2025}
+Suzanna Parkinson, Greg Ongie, and Rebecca Willett.
+\newblock ReLU neural networks with linear layers are biased towards single-
+and multi-index models.
+\newblock \emph{SIAM Journal on Mathematics of Data Science}, 7(3):1021--1052,
+2025.
+\newblock \url{https://doi.org/10.1137/24M1672158}.
+
+\bibitem[Petersen and Zech(2026)]{petersen2026}
+Philipp Petersen and Jakob Zech.
+\newblock Mathematical theory of deep learning.
+\newblock 2026.
+\newblock \url{https://arxiv.org/abs/2407.18384}.
+
+\bibitem[Radhakrishnan et al.(2024)]{radhakrishnan2024}
+Adityanarayanan Radhakrishnan, Daniel Beaglehole, Parthe Pandit, and
+Mikhail Belkin.
+\newblock Mechanism for feature learning in neural networks and
+backpropagation-free machine learning models.
+\newblock \emph{Science}, 383(6690):1461--1467, 2024.
+\newblock \url{https://doi.org/10.1126/science.adi5639}.
+
+\bibitem[Schmidt-Hieber(2020)]{schmidthieber2020}
+Johannes Schmidt-Hieber.
+\newblock Nonparametric regression using deep neural networks with ReLU
+activation function.
+\newblock \emph{The Annals of Statistics}, 48(4):1875--1897, 2020.
+\newblock \url{https://doi.org/10.1214/19-AOS1875}.
+
+\bibitem[Stone(1982)]{stone1982}
+Charles J. Stone.
+\newblock Optimal global rates of convergence for nonparametric regression.
+\newblock \emph{The Annals of Statistics}, 10(4):1040--1053, 1982.
+\newblock \url{https://doi.org/10.1214/aos/1176345969}.
+
+\bibitem[Telgarsky(2016)]{telgarsky2016}
+Matus Telgarsky.
+\newblock Benefits of depth in neural networks.
+\newblock In \emph{Proceedings of the 29th Conference on Learning Theory},
+volume 49 of \emph{Proceedings of Machine Learning Research}, pages
+1517--1539, 2016.
+\newblock \url{https://proceedings.mlr.press/v49/telgarsky16.html}.
+
+\bibitem[Tyagi and Cevher(2012)]{tyagicevher2012}
+Hemant Tyagi and Volkan Cevher.
+\newblock Active learning of multi-index function models.
+\newblock In \emph{Advances in Neural Information Processing Systems 25},
+pages 1475--1483, 2012.
+\newblock \url{https://papers.nips.cc/paper/4820-active-learning-of-multi-index-function-models}.
+
+\bibitem[Xia et al.(2002)]{xia2002}
+Yingcun Xia, Howell Tong, W. K. Li, and Li-Xing Zhu.
+\newblock An adaptive estimation of dimension reduction space.
+\newblock \emph{Journal of the Royal Statistical Society: Series B},
+64(3):363--410, 2002.
+\newblock \url{https://www.stat.purdue.edu/~yuzhu/stat598m3/Papers/AdaptiveEstimation.pdf}.
+
+\bibitem[Yang(2007)]{yang2007}
+Yuhong Yang.
+\newblock How powerful can any regression learning procedure be?
+\newblock In \emph{Proceedings of the 11th International Conference on
+Artificial Intelligence and Statistics}, volume 2 of \emph{Proceedings of
+Machine Learning Research}, pages 636--643, 2007.
+\newblock \url{https://proceedings.mlr.press/v2/yang07a.html}.
+
+\end{thebibliography}
+
+\end{document}

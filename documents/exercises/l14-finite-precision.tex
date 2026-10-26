@@ -1,0 +1,33 @@
+\begin{exercisechunk}
+\item \textbf{Finite precision produces an eventually periodic state.}\suppmark
+\label[exercise]{ex:l14-finite-precision}
+\exerciseprofile{2}{1}{2}{\exproof\quad\exinterpretation}{%
+Identify the finite-state limitation created by fixed memory and fixed
+precision.}
+Turing-completeness claims depend on the available memory or numerical
+precision. This exercise proves a limitation that follows from fixed finite
+precision without using any architecture-specific lower bound.
+
+Consider a deterministic recurrent system with \(d\) state coordinates, each
+stored with exactly \(b\) bits. The system reads the unary input
+\(a^t=a\cdots a\) one symbol at a time and produces one output bit after each
+update. The state-update rule and output rule are fixed for all input lengths.
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Prove that the recurrent system has at most \(2^{bd}\) internal states.
+Deduce that its state sequence on the infinite unary stream
+\(a,a,a,\ldots\) is eventually periodic, with both the preperiod and period
+bounded by \(2^{bd}\).
+\item Deduce that the output sequence is eventually periodic.
+\item Let
+\[
+ \cL_{\mathrm{pow2}}=\{a^{2^k}:k\ge0\}.
+\]
+Prove that the indicator sequence
+\(y_t=\I(a^t\in\cL_{\mathrm{pow2}})\) is not eventually periodic. Conclude
+that no recurrent system satisfying the stated fixed-precision assumptions
+recognizes \(\cL_{\mathrm{pow2}}\) correctly at every input length.
+\item Explain which step of the proof fails when the system has an external
+unbounded tape or a state coordinate whose available precision can grow with
+the execution length.
+\end{enumerate}
+\end{exercisechunk}

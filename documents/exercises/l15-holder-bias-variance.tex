@@ -1,0 +1,38 @@
+\begin{exercisechunk}
+\item \textbf{From H\"older approximation to regression risk.}
+\label[exercise]{ex:l15-holder-bias-variance}
+\exerciseprofile{2}{2}{2}{\excalculation\quad\exinterpretation}{%
+Derive the smoothness-dependent regression rate by balancing approximation
+and estimation errors.}
+Suppose an estimator based on an $m$-dimensional approximation space satisfies
+\begin{equation}
+ \sup_{f\in\cH_d^\alpha(L)}
+ \E\bigl[\|\widehat f_{n,m}-f\|_{L^2(P_X)}^2\bigr]
+ \leq A m^{-2\alpha/d}+B\frac mn,
+ \label{eq:exercise-holder-risk-bound}
+\end{equation}
+where $A,B>0$ do not depend on $m$ or $n$.
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Balance the two terms in
+\cref{eq:exercise-holder-risk-bound}. Show that a choice
+\[
+ m\asymp n^{d/(2\alpha+d)}
+\]
+gives risk of order $n^{-2\alpha/(2\alpha+d)}$. Explain why rounding $m$ to
+a positive integer does not change the rate.
+\item Suppose that the target has the form $f(x)=g(W^\top x)$, the matrix
+$W\in\R^{d\times s}$ is known, and the same approximation and estimation
+bounds hold in the reduced $s$-dimensional coordinates. Derive the choices
+\[
+ m\asymp n^{s/(2\alpha+s)},
+ \qquad
+ \E\bigl[\|\widehat f_{n,m}-f\|_{L^2(P_X)}^2\bigr]
+ \lesssim n^{-2\alpha/(2\alpha+s)}.
+\]
+\item Explain why the calculation in part (b) proves neither the
+$s$-dimensional rate for the full $d$-dimensional H\"older ball nor the
+existence of an algorithm that finds an unknown subspace from noisy
+regression data. Your explanation must identify the target-class restriction
+and the missing estimation task separately.
+\end{enumerate}
+\end{exercisechunk}

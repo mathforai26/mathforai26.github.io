@@ -1,0 +1,43 @@
+\begin{exercisechunk}
+\item \textbf{A fixed feature law can give a strictly smaller space.}
+\label[exercise]{ex:l15-fixed-feature-strictness}
+\exerciseprofile{2}{2}{3}{\exproof\quad\excalculation\quad\exinterpretation}{%
+Use a discrete dictionary to distinguish variation representations from
+fixed-feature RKHS representations.}
+Let $\cH=\ell_2(\mathbb N)$, let $(e_j)_{j\geq1}$ be its standard
+orthonormal basis, and set $\tau_j=2^{-j}$. Use the dictionary
+$\phi_j=e_j$. Define
+\begin{align*}
+ \cF_1
+ &=\left\{f=\sum_{j\geq1}\mu_j e_j:
+                \sum_{j\geq1}|\mu_j|<\infty\right\},\\
+ \cF_{2,\tau}
+ &=\left\{f=\sum_{j\geq1}\tau_jp_je_j:
+                \sum_{j\geq1}\tau_jp_j^2<\infty\right\},
+\end{align*}
+with the norms defined by the corresponding coefficient costs.
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Use uniqueness of coordinates in the orthonormal basis to prove
+\[
+ \|f\|_{\cF_1}=\sum_{j\geq1}|f_j|,
+ \qquad
+ \|f\|_{\cF_{2,\tau}}^2
+ =\sum_{j\geq1}\frac{f_j^2}{\tau_j}.
+\]
+\item Prove that
+\[
+ \|f\|_{\cF_1}\leq\|f\|_{\cF_{2,\tau}}
+ \qquad\text{for every }f\in\cF_{2,\tau},
+\]
+and conclude that
+$B_{\cF_{2,\tau}}\subseteq B_{\cF_1}$.
+\item Define $f_j=2^{-j/2}/\sqrt j$. Prove that
+$f\in\cF_1$ but $f\notin\cF_{2,\tau}$. Set
+$g=f/\|f\|_{\cF_1}$ and prove that
+$g\in B_{\cF_1}\setminus B_{\cF_{2,\tau}}$. Conclude that both inclusions
+in \cref{eq:F2-F1-ball-inclusion} can be strict.
+\item For the function in part (c), identify the signed-measure coefficients
+$\mu_j$ and the density coefficients $p_j$. Explain why their summability
+properties exhibit the restriction imposed by the fixed feature law $\tau$.
+\end{enumerate}
+\end{exercisechunk}

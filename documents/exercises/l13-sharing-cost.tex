@@ -1,0 +1,24 @@
+\begin{exercisechunk}
+\item \textbf{The approximation cost of sharing.}
+\label[exercise]{ex:l13-sharing-cost}
+\exerciseprofile{2}{2}{2}{\excalculation\quad\exproof\quad\exinterpretation}{%
+Compute a sharing cost when every task is individually realizable, and
+compare its effect with the estimation cost.}
+Let $U,V$ be independent fair bits and let $X=(U,V)$ on every task.
+A fraction $p$ of the $T$ source tasks have label $U$, and the remaining
+fraction have label $V$, where $pT$ is an integer.
+Take $\cH=\{h_U,h_V\}$ with $h_U(U,V)=U$ and $h_V(U,V)=V$,
+$\cG=\{z\mapsto z,\ z\mapsto1-z\}$, and $0$--$1$ loss.
+Each task supplies $n$ independent examples, and the task samples are
+independent.
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Compute $R_t^\star$, $A_t(h_U)$, and $A_t(h_V)$ for both kinds of
+task. Deduce the exact value of $\Delta_{\rm share}$.
+\item Specialize the agnostic joint-ERM bound to these classes, assuming
+exact empirical optimization.
+\item Suppose $0<p<1$. Explain why increasing $n$ cannot make the average
+risk of a shared predictor tend to zero. Compare with consistent independent
+learning. Identify the assumption of the realizable joint zero-loss
+theorem that fails.
+\end{enumerate}
+\end{exercisechunk}

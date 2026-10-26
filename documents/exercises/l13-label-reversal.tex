@@ -1,0 +1,30 @@
+\begin{exercisechunk}
+\item \textbf{A small target sample can select the head.}
+\label[exercise]{ex:l13-label-reversal}
+\exerciseprofile{3}{2}{3}{\exproof\quad\excalculation\quad\exinterpretation}{%
+Sharpen the generic target-ERM bound when only the orientation of a shared
+Boolean feature remains to be learned.}
+Use the label-reversal model of \cref{eq:label-reversal-model}.
+Suppose the source procedure has an event of probability at least
+$1-\delta_{\rm src}$ on which
+$r:=A_0(\widehat h)\le\varepsilon\le1/4$.
+Freeze $\widehat h$ and select one of the two heads by ERM on $m$
+fresh target examples independent of all source data.
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Conditional on a source sample in that event, prove that the
+probability of choosing the higher-risk head is at most
+$\exp(-m/8)$. Allow arbitrary tie breaking.
+\item Deduce a guarantee that the final target risk is at most $\varepsilon$
+with probability at least $1-\delta_{\rm src}-\delta_{\rm trg}$.
+Give sufficient $n$ and $m$ when the source learner is joint ERM with
+$n$ examples from each of $T$ tasks.
+\item For fixed $\varepsilon\in(0,1/4)$ and fixed confidence, compare the
+target sample requirement with the boxes lower bound for a learner using
+only target data. Explain which information the source data supply and which
+information the target data supply.
+\end{enumerate}
+\begin{hints}
+For each target example, the two heads' mistake indicators sum to one.
+Apply Hoeffding's inequality to the empirical risk of the better head.
+\end{hints}
+\end{exercisechunk}

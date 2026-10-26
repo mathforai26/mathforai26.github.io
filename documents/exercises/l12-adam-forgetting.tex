@@ -1,0 +1,40 @@
+\begin{exercisechunk}
+\item \textbf{Complete forgetting can give linear regret.}
+\label[exercise]{ex:l12-adam-forgetting}
+\exerciseprofile{2}{2}{2}{\exproof\quad\excalculation\quad\exinterpretation}{%
+Verify a convex failure mechanism caused by normalizing only with the current
+gradient magnitude.}
+Let $\cX=[-1,1]$, choose $C>2$ and $\alpha\in(0,2]$, and repeat the three
+linear losses
+\[
+ \ell_{3k+1}(x)=Cx,
+ \qquad
+ \ell_{3k+2}(x)=\ell_{3k+3}(x)=-x,
+ \qquad k\ge0.
+\]
+Consider the projected Adam special case with no momentum, complete
+second-moment forgetting, and no stabilizer:
+\[
+ m_t=g_t,
+ \qquad v_t=g_t^2,
+ \qquad
+ x_{t+1}=\Pi_{[-1,1]}
+ \left(x_t-\alpha\frac{m_t}{\sqrt{v_t}}\right),
+ \qquad x_1=1,
+\]
+where $g_t=\ell_t'(x_t)$.
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Prove that every three-round block begins at $x_{3k+1}=1$ and list the
+three iterates used to evaluate its losses.
+\item Prove that the minimizer of the sum of the three losses over $[-1,1]$
+is $u=-1$. Compute the three-round regret against $u$ and show that it equals
+$2C-4+\alpha>0$.
+\item Conclude that the regret after $3K$ rounds grows linearly in $K$.
+Explain why the squared-gradient statistic in this example is not a reliable
+curvature estimate.
+\end{enumerate}
+\begin{hints}
+The normalized update uses only $\operatorname{sign}(g_t)$. Track the
+projection after each of the two gradients equal to $-1$.
+\end{hints}
+\end{exercisechunk}

@@ -1,0 +1,40 @@
+\begin{exercisechunk}
+\item \textbf{Density does not determine an approximation rate.}
+\label[exercise]{ex:l15-density-versus-rate}
+\exerciseprofile{2}{2}{2}{\exproof\quad\excalculation\quad\exinterpretation}{%
+Distinguish density of an approximation family from the rate for an
+individual target.}
+Let $\cH=\ell_2(\mathbb N)$ with standard orthonormal basis
+$(e_j)_{j\geq1}$, and let
+$V_m=\operatorname{span}\{e_1,\ldots,e_m\}$.
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Prove that $\bigcup_{m\geq1}V_m$ is dense in $\cH$.
+\item Fix $p>0$ and define $f^{(p)}\in\cH$ by
+$f_j^{(p)}=j^{-p-1/2}$. Prove that
+\[
+ \inf_{v\in V_m}\|f^{(p)}-v\|_2
+ =\left(\sum_{j>m}j^{-2p-1}\right)^{1/2}
+ \asymp m^{-p}
+ \qquad\text{as }m\to\infty.
+\]
+\item Define $f^{(\log)}_1=0$ and
+\[
+ f^{(\log)}_j=\frac1{\sqrt j\log j},\qquad j\geq2.
+\]
+Prove that $f^{(\log)}\in\cH$ and
+\[
+ \inf_{v\in V_m}\|f^{(\log)}-v\|_2
+ \asymp\frac1{\sqrt{\log m}}
+ \qquad\text{as }m\to\infty.
+\]
+\item Explain which statement is common to all targets in parts (b) and (c),
+and which quantitative conclusion depends on the target. Use the two examples
+to state precisely why density alone does not imply a polynomial approximation
+rate.
+\end{enumerate}
+\begin{hints}
+The best approximation in $V_m$ is the orthogonal projection onto the first
+$m$ coordinates. Compare each tail sum with the corresponding improper
+integral.
+\end{hints}
+\end{exercisechunk}

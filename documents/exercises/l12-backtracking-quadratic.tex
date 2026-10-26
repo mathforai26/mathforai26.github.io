@@ -1,0 +1,62 @@
+\begin{exercisechunk}
+\item \textbf{Backtracking avoids conservative curvature scales.}
+\label[exercise]{ex:l12-backtracking-quadratic}
+\exerciseprofile{2}{2}{3}{\exproof\quad\excalculation\quad\exinterpretation}{%
+Quantify the work saved by testing a locally sufficient curvature scale.}
+Let
+\[
+ L(\theta)=\frac{\beta}{2}\theta^2,
+ \qquad \beta>0,
+\]
+and consider the trial point
+$\theta^+(M)=\theta-L'(\theta)/M$ for $M>0$.
+The sufficient-decrease test is
+\begin{equation}
+ L(\theta^+(M))\le L(\theta)-\frac{1}{2M}|L'(\theta)|^2.
+ \label{eq:ex-l12-backtracking-test}
+\end{equation}
+\begin{enumerate}[(a),beginpenalty=10000]
+\item For $\theta\ne0$, prove that \cref{eq:ex-l12-backtracking-test} holds if
+and only if $M\ge\beta$. State what happens when $\theta=0$.
+
+\item Let $0<a<b$ and define
+\[
+ \widetilde L(\theta)=
+ \begin{cases}
+  a\theta^2/2,&\theta\le0,\\
+  b\theta^2/2,&\theta>0.
+ \end{cases}
+\]
+Prove that $\widetilde L$ is differentiable and $b$-smooth. Starting from
+$\theta_0<0$,
+show that the globally certified step $1/b$ gives
+\[
+ \theta_t=\left(1-\frac ab\right)^t \theta_0,
+\]
+whereas the trial curvature $M=a$ passes
+\cref{eq:ex-l12-backtracking-test} with $\widetilde L$ in place of $L$ and reaches the
+minimizer in one step. Deduce that the globally certified method
+requires
+\[
+ t\ge
+ \frac{\log(1/\epsilon)}{-\log(1-a/b)}
+\]
+iterations to obtain $|\theta_t|\le\epsilon|\theta_0|$, for
+$0<\epsilon<1$.
+
+\item Return to $L(\theta)=\beta\theta^2/2$. Starting from an arbitrary
+$M_0>0$, repeatedly replace $M$ by $2M$ until the test holds. Prove that the accepted
+value satisfies
+\[
+ M_{\rm acc}\le\max\{M_0,2\beta\}
+\]
+and that the number of rejected trials is at most
+\[
+ \max\left\{0,\left\lceil\log_2\frac{\beta}{M_0}\right\rceil\right\}.
+\]
+\end{enumerate}
+\begin{hints}
+For (a), expand $(1-\beta/M)^2$. For (b), check pairs of points on the same
+side of zero and pairs that straddle zero separately.
+\end{hints}
+\end{exercisechunk}

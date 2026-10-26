@@ -1,0 +1,29 @@
+\begin{exercisechunk}
+\item \textbf{A rotated quadratic defeats diagonal preconditioning.}
+\label[exercise]{ex:l12-rotated-preconditioner}
+\exerciseprofile{2}{2}{2}{\exproof\quad\excalculation\quad\exinterpretation}{%
+Distinguish coordinatewise rescaling from correction of rotated curvature.}
+Let $\kappa>1$ and
+\[
+ Q=\frac1{\sqrt2}\begin{pmatrix}1&-1\\1&1\end{pmatrix},
+ \qquad
+ H=Q\begin{pmatrix}1&0\\0&\kappa\end{pmatrix}Q^\top,
+ \qquad
+ L(\theta)=\frac12\theta^\top H\theta.
+\]
+For a positive-definite preconditioner $P$, the transformed Hessian is
+$P^{1/2}HP^{1/2}$.
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Compute $H$ and prove that its condition number is $\kappa$.
+\item Let $P_{\rm diag}=\diag(H)^{-1}$. Compute
+$P_{\rm diag}^{1/2}HP_{\rm diag}^{1/2}$ and prove that its condition number
+remains $\kappa$.
+\item Let $P_{\rm full}=H^{-1}$. Compute the transformed Hessian and its
+condition number. Explain precisely which geometric information is absent
+from $P_{\rm diag}$.
+\end{enumerate}
+\begin{hints}
+The two diagonal entries of $H$ are equal. Orthogonal similarity preserves
+eigenvalues.
+\end{hints}
+\end{exercisechunk}

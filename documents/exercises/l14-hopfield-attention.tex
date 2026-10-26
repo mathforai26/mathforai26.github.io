@@ -1,0 +1,54 @@
+\begin{exercisechunk}
+\item \textbf{Attention as a modern Hopfield update.}\suppmark
+\label[exercise]{ex:l14-hopfield-attention}
+\exerciseprofile{2}{2}{2}{\exproof\quad\excalculation\quad\exinterpretation}{%
+Derive the energy update underlying softmax attention and quantify its approach
+to hard associative lookup.}
+Earlier exercises analyze how score ranges control softmax concentration and
+retrieval error. The new result here is the energy interpretation: when keys
+are also values, one softmax-attention update is one gradient step for a
+modern Hopfield energy.
+
+Let \(M\ge2\), let \(k_1,\ldots,k_M\in\R^d\), let \(\beta>0\), and define
+\[
+ \alpha_i(q)=\frac{e^{\beta k_i^\top q}}
+ {\sum_{j=1}^M e^{\beta k_j^\top q}},
+ \qquad
+ E_\beta(q)=\frac12\|q\|_2^2-
+ \frac1\beta\log\left(\sum_{i=1}^M e^{\beta k_i^\top q}\right).
+\]
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Differentiate \(E_\beta\) and prove
+\[
+ \nabla E_\beta(q)=q-\sum_{i=1}^M\alpha_i(q)k_i.
+\]
+\item Show that one gradient step of length one gives
+\[
+ q^+=q-\nabla E_\beta(q)
+ =\sum_{i=1}^M\alpha_i(q)k_i.
+\]
+Identify the queries, keys, and values in the corresponding one-query
+attention operation. Explain why a general attention output
+\(\sum_i\alpha_i(q)v_i\) with arbitrary \(v_i\) need not be a gradient step
+in the query space \(\R^d\).
+\item Suppose \(i^\star\) uniquely maximizes \(k_i^\top q\), define
+\[
+ \Delta=k_{i^\star}^\top q-\max_{i\ne i^\star}k_i^\top q>0,
+\]
+and assume \(\|k_i\|_2\le B\) for every \(i\). You may use
+\[
+ 1-\alpha_{i^\star}(q)
+ \le (M-1)e^{-\beta\Delta}.
+\]
+Prove
+\[
+ \|q^+-k_{i^\star}\|_2
+ \le2B(M-1)e^{-\beta\Delta}.
+\]
+For \(0<\varepsilon<2B(M-1)\), give a sufficient lower bound on \(\beta\)
+for this error to be at most \(\varepsilon\).
+\item Explain which limit produces hard associative lookup and identify the
+roles of the score margin \(\Delta\), the number of memories \(M\), and the
+norm bound \(B\) in the quantitative approximation.
+\end{enumerate}
+\end{exercisechunk}

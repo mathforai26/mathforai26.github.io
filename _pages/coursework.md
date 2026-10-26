@@ -18,7 +18,7 @@ Homework materials and submission links are added as assignments are released.
 | Homework 2: sequence objectives, state, and dependence | 10% | Fri, Oct 2, 11:59 p.m. | [PDF]({{ '/documents/assignments/assignment2.pdf' | relative_url }}) · [LaTeX source bundle]({{ '/documents/assignments/assignment2-source.zip' | relative_url }}) · [Submit on Canvas](https://canvas.ualberta.ca/courses/37231/assignments/817841) |
 | Research-question first draft | Part of 10% | Sun, Oct 11, 11:59 p.m. | [Template]({{ '/documents/misc_files/research_question_template.tex' | relative_url }}) · [Submit on Canvas](https://canvas.ualberta.ca/courses/37231/assignments/823020) |
 | Homework 3: distribution shift, learnability, and interpolation | 10% | Fri, Oct 16, 11:59 p.m. | [PDF]({{ '/documents/assignments/assignment3.pdf' | relative_url }}) · [LaTeX source bundle]({{ '/documents/assignments/assignment3-source.zip' | relative_url }}) · [Submit on Canvas](https://canvas.ualberta.ca/courses/37231/assignments/821347) |
-| Homework 4 | 10% | End of Week 9 | To be posted |
+| Homework 4 | 10% | To be announced | To be posted |
 | Homework 5 | 10% | End of Week 11 | To be posted |
 | Research-question revised note | Part of 10% | Sun, Nov 29, 11:59 p.m. | [Guidelines]({% link _pages/research-question.md %}) · [Submit on Canvas](https://canvas.ualberta.ca/courses/37231/assignments/823021) |
 | Homework 6 | 10% | End of Week 13 | To be posted |
@@ -46,9 +46,24 @@ Homework serves three purposes:
 
 A typical two-week assignment will have about four substantial problems, usually with several parts. Some problems will develop one result in stages. Others will ask for a counterexample, a theorem audit, or a short explanation connecting a mathematical model to a current AI system.
 
+### Reading an exercise profile
+
+Exercise profiles describe the work before you begin it. Filled mountain
+pictograms rate difficulty from a direct application to a substantial
+challenge. Filled cog pictograms rate the amount of formal calculation, proof,
+or bookkeeping. Filled hourglasses show estimated time: one means under 20
+minutes, two means 20--45 minutes, three means 45--90 minutes, and four means
+more than 90 minutes. Pale pictograms show the unused part of each scale. Work
+pictograms always appear in this order when applicable: proof, calculation,
+construction, computation, interpretation. The target pictogram introduces the
+intended learning outcome. Time estimates cover the non-optional parts. These
+ratings are not prerequisites or grading weights.
+
 ## Submission format
 
 Use the [homework LaTeX template]({{ '/documents/misc_files/homework_template.tex' | relative_url }}). Submit each graded homework through [Canvas Assignments](https://canvas.ualberta.ca/courses/37231/assignments) as a ZIP archive named `hwNN-ccid.zip`, where `NN` is the two-digit homework number and `ccid` is your University of Alberta CCID. For example: `hw01-jsmith.zip`.
+
+On a resubmission, Canvas may append a suffix such as `-1` to the uploaded archive's filename. This is expected and does not violate the naming convention. Do not submit again merely to remove the suffix. The required filenames and directory name inside the archive must remain unchanged.
 
 The archive must contain a single top-level directory named `hwNN-ccid`. This directory must contain at least:
 

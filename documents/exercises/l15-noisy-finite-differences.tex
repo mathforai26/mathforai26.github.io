@@ -1,0 +1,54 @@
+\begin{exercisechunk}
+\item \textbf{Stable finite differences for active subspace recovery.}\suppmark
+\label[exercise]{ex:l15-noisy-finite-differences}
+\exerciseprofile{2}{2}{2}{\exproof\quad\excalculation\quad\exinterpretation}{%
+Quantify the tradeoff between truncation error and observation error in
+finite-difference gradient estimates.}
+Use the active-query setting of
+\cref{thm:point-query-subspace}. Suppose
+$\|\nabla^2f(x)\|_{\mathrm{op}}\leq M$ on every line segment used below,
+where $M>0$. Instead of $f(x)$, the oracle returns
+\[
+ y(x)=f(x)+\xi(x),
+ \qquad |\xi(x)|\leq\zeta,
+\]
+where $\zeta>0$ and the errors may be chosen adversarially. For base points
+$x_1,\ldots,x_q$, define
+\[
+ \widetilde G_{\ell j}
+ =\frac{y(x_j+he_\ell)-y(x_j)}h,
+ \qquad \ell=1,\ldots,d,\quad j=1,\ldots,q.
+\]
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Prove the entrywise bound
+\[
+ |\widetilde G_{\ell j}-\partial_\ell f(x_j)|
+ \leq\frac{Mh}{2}+\frac{2\zeta}{h}.
+\]
+\item Minimize the right-hand side over $h>0$. Show that
+\[
+ h_\star=2\sqrt{\frac\zeta M},
+ \qquad
+ \frac{Mh_\star}{2}+\frac{2\zeta}{h_\star}
+ =2\sqrt{M\zeta}.
+\]
+Assume that the query domain permits the step size $h_\star$.
+\item Let $G$ be the exact gradient matrix. Prove
+\[
+ \|\widetilde G-G\|_{\mathrm{op}}
+ \leq2\sqrt{M\zeta dq}
+\]
+when $h=h_\star$. If $\sigma_k(G)=\lambda_\star$ and
+$2\sqrt{M\zeta dq}<\lambda_\star$, use
+\cref{thm:point-query-subspace} to prove
+\[
+ \|\widehat P-P\|_{\mathrm{op}}
+ \leq
+ \frac{2\sqrt{M\zeta dq}}
+      {\lambda_\star-2\sqrt{M\zeta dq}}.
+\]
+\item Compare the noiseless limit $\zeta=0$ with the case $\zeta>0$.
+Explain why decreasing $h$ improves the truncation error but can worsen the
+effect of inaccurate point evaluations.
+\end{enumerate}
+\end{exercisechunk}

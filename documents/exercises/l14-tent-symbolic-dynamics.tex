@@ -1,0 +1,47 @@
+\begin{exercisechunk}
+\item \textbf{Symbolic histories of the tent map.}
+\label[exercise]{ex:l14-tent-symbolic-dynamics}
+\exerciseprofile{2}{2}{2}{\exproof\quad\excalculation\quad\exinterpretation}{%
+Connect the affine pieces of an iterated tent map with uniformly distributed
+binary symbolic histories.}
+The term \emph{symbolic dynamics} records which branch of a dynamical system
+an orbit visits. This exercise shows that the \(2^L\) affine pieces of the
+tent-map iterate correspond exactly to \(L\)-bit branch histories.
+
+Let \(X\) be uniformly distributed on \([0,1]\) under the ambient probability
+measure \(\P\). Define
+\[
+ B_t=\I\bigl(\tau^{\circ t}(X)\ge1/2\bigr),
+ \qquad t=0,1,\ldots.
+\]
+Events involving dyadic endpoints may be assigned to either adjacent branch;
+these endpoints have probability zero.
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Prove directly from the two inverse branches of \(\tau\) that
+\[
+ \P(\tau(X)\le y)=y,
+ \qquad 0\le y\le1.
+\]
+Thus \(\tau(X)\) is uniformly distributed on \([0,1]\).
+\item For \(b=(b_0,\ldots,b_{L-1})\in\{0,1\}^L\), define
+\[
+ C_b=\left\{x\in[0,1]:
+ \I(\tau^{\circ t}(x)\ge1/2)=b_t
+ \text{ for }t=0,\ldots,L-1\right\}.
+\]
+Prove by induction on \(L\) that, up to endpoints, \(C_b\) is one interval
+of length \(2^{-L}\), and \(\tau^{\circ L}\) maps that interval affinely
+onto \([0,1]\).
+\item Deduce that
+\[
+ \P(B_0=b_0,\ldots,B_{L-1}=b_{L-1})=2^{-L}
+ \qquad(b\in\{0,1\}^L).
+\]
+Conclude that \(B_0,\ldots,B_{L-1}\) are independent Bernoulli random
+variables with success probability \(1/2\).
+\item Use part~(a) inductively to identify the law of
+\(\tau^{\circ t}(X)\) for every \(t\ge0\). Explain how parts~(b)--(c)
+relate the \(2^L\) affine pieces to symbolic histories rather than merely
+counting pieces.
+\end{enumerate}
+\end{exercisechunk}

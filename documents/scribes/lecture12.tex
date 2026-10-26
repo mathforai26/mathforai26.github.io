@@ -1,0 +1,3072 @@
+\documentclass[11pt,twoside]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage[inline,shortlabels]{enumitem}
+\usepackage{booktabs,array}
+\usepackage{xcolor}
+\usepackage{microtype}
+\usepackage{needspace}
+
+% Revision date: maintained by scripts/build_lecture_notes.py. Keep this command.
+\newcommand{\lecturerevised}{2026-10-25 21:25 UTC-06:00}
+\usepackage{eso-pic}
+\AddToShipoutPictureBG{%
+  \AtPageLowerLeft{%
+    \put(\LenToUnit{0.5\paperwidth},\LenToUnit{0.5in}){%
+      \makebox(0,0){\normalfont\footnotesize\color{black!60}Last revised: \lecturerevised}%
+    }%
+  }%
+}
+
+\usepackage[square,authoryear]{natbib}
+\usepackage[colorlinks=true,linkcolor=blue!60!black,
+  urlcolor=blue!60!black,citecolor=blue!60!black]{hyperref}
+\usepackage[nameinlink,capitalize]{cleveref}
+\crefname{exercise}{Exercise}{Exercises}
+\Crefname{exercise}{Exercise}{Exercises}
+\hypersetup{pdftitle={Lecture 12: Accelerated and adaptive first-order methods},
+  pdfauthor={Csaba Szepesvari}}
+
+\usepackage{../exercises/course-exercises}
+
+\usepackage{enotez}
+\DeclareInstance{enotez-list}{lecture}{list}{format=\normalsize,number={#1.}}
+\setenotez{list-name=Endnotes,list-style=lecture,backref=true}
+\crefname{endnote}{Endnote}{Endnotes}
+\Crefname{endnote}{Endnote}{Endnotes}
+
+\definecolor{courseblue}{HTML}{17365D}
+\newcommand{\E}{\mathbb E}
+\newcommand{\I}{\mathbb I}
+\renewcommand{\P}{\mathbb P}
+\newcommand{\R}{\mathbb R}
+\newcommand{\argmin}{\operatorname*{arg\,min}}
+\newcommand{\diag}{\operatorname{diag}}
+\newcommand{\suppmark}{\texorpdfstring{\textsuperscript{*}}{*}}
+\makeatletter
+\@for\@letter:=A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z\do{%
+  \expandafter\edef\csname c\@letter\endcsname{\noexpand\mathcal{\@letter}}}
+\makeatother
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{lemma}[theorem]{Lemma}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{example}[theorem]{Example}
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+
+\renewcommand{\thepage}{12--\arabic{page}}
+\renewcommand{\thesection}{12.\arabic{section}}
+\renewcommand{\theequation}{12.\arabic{equation}}
+\pagestyle{myheadings}
+\markboth{Lecture 12: Accelerated and adaptive first-order methods}
+{Lecture 12: Accelerated and adaptive first-order methods}
+
+\begin{document}
+
+\begin{center}
+\fcolorbox{courseblue}{white}{%
+\begin{minipage}{0.92\textwidth}
+\vspace{1mm}
+\textbf{CMPUT 654: Mathematical Foundations of Modern AI Systems}
+\hfill Fall 2026
+
+\vspace{3mm}
+\begin{center}
+{\Large\bfseries Lecture 12: Accelerated and adaptive first-order methods}
+
+\vspace{1mm}
+October 13, 2026
+\end{center}
+
+\vspace{2mm}
+\textit{Lecturer: Csaba Szepesv\'ari}
+\hfill
+\textit{Note prepared by: Csaba Szepesv\'ari}
+\vspace{1mm}
+\end{minipage}}
+\end{center}
+
+\noindent\textbf{Reading guide.}
+Lecture~11 showed that a $\beta$-smooth objective decreases under gradient
+descent when the stepsize satisfies $\eta\le1/\beta$. Under a $\mu$-PL
+inequality, the same update reduces the objective gap geometrically, and the
+number of iterations needed for a fixed relative reduction is proportional
+to $\beta/\mu$. Two questions remain.
+First, an implementation may not know $\beta$. Second, even the best safe
+scalar step can be slow when different directions have very different
+curvature.
+
+The two questions concern different limitations of gradient descent. An
+unknown $\beta$ prevents the algorithm from choosing a certified scalar
+stepsize. A large ratio $\beta/\mu$ means that every safe scalar stepsize is
+slow in some directions. Backtracking addresses the first limitation by
+testing proposed finite steps. Acceleration and preconditioning address the
+second limitation by changing how information from different iterations or
+different parameter directions is used. Keeping stepsize adaptation separate
+from conditioning improvement is important: a method can choose a safe
+stepsize automatically and still
+converge slowly on an ill-conditioned problem.
+
+The first part of this lecture develops backtracking line search, which tests
+the finite-step inequality needed by the proof and therefore avoids advance
+knowledge of $\beta$. The second part explains the condition-number barrier
+for gradient descent and proves the main acceleration result: for smooth,
+strongly convex objectives, the number of gradient evaluations needed to
+reduce the objective gap by a fixed relative amount improves from order
+$\kappa$ to order $\sqrt\kappa$. The third part separates scalar stepsize
+adaptation from adaptation of the update geometry. It first studies
+preconditioning for a fixed smooth objective and then changes the information
+available to the update: AdaGrad and Adam adapt to the subgradients or
+stochastic gradients observed during the run. AdamW adds a separate choice
+about weight decay.
+
+The principal results for a first reading are the backtracking guarantee, the
+linear acceleration theorem and the corresponding lower-bound comparison, the
+preconditioning calculation, and the distinction between scalar online
+adaptation, diagonal AdaGrad, and Adam. Material marked with $\suppmark$ may
+be skipped on a first reading. The prerequisites are the smoothness,
+convexity, strong-convexity, and PL results from Lecture~11, together with
+eigenvalues of symmetric matrices.
+
+\section{Review: Gradient descent with smooth objectives}
+\label{sec:tuning-problem}
+
+This section recalls why the usual gradient-descent stepsize depends on the
+smoothness constant. The argument also separates the condition used by the
+convergence proof---a one-step decrease inequality---from one sufficient
+certificate for that condition---a known global smoothness constant.
+
+Let $L:\R^d\to\R$ be differentiable and bounded below, and put
+\[
+ L^\star=\inf_{\theta\in\R^d}L(\theta).
+\]
+The function is $\beta$-smooth when
+\begin{equation}
+ \|\nabla L(u)-\nabla L(v)\|_2
+ \le\beta\|u-v\|_2
+ \qquad\text{for every }u,v\in\R^d.
+\label{eq:smoothness}
+\end{equation}
+Smoothness converts first-order information at $u$ into the quadratic upper
+bound
+\begin{equation}
+ L(v)\le L(u)
+ +\langle\nabla L(u),v-u\rangle
+ +\frac\beta2\|v-u\|_2^2.
+\label{eq:quadratic-upper-bound}
+\end{equation}
+Applying \cref{eq:quadratic-upper-bound} with
+$u=\theta$ and $v=\theta^+=\theta-\eta\nabla L(\theta)$ gives
+\begin{equation}
+ L(\theta^+)
+ \le L(\theta)-\eta\left(1-\frac{\beta\eta}{2}\right)
+                  \|\nabla L(\theta)\|_2^2.
+\label{eq:smooth-gradient-decrease}
+\end{equation}
+The usual stepsize restriction now enters at one precise point. If
+$\eta\le1/\beta$, then
+\begin{equation}
+ L(\theta^+)\le L(\theta)-\frac\eta2\|\nabla L(\theta)\|_2^2.
+\label{eq:sufficient-decrease-eta}
+\end{equation}
+
+The role of $\beta$ is therefore quite specific. Knowledge of $\beta$
+guarantees \cref{eq:sufficient-decrease-eta} at every parameter, for every
+step with $\eta\le1/\beta$. The convergence proof, however, uses the decrease
+inequality itself; the proof does not otherwise use the numerical value of
+$\beta$.
+Moreover, the argument gives only a sufficient restriction on the stepsize.
+A larger step may still satisfy the same decrease inequality at the current
+parameter. Section~\ref{sec:backtracking} uses the distinction between the
+decrease inequality and the numerical value of $\beta$ to construct a
+stepsize rule: propose a step, test the required decrease, and shorten the
+step only when the test fails.
+
+\section{Adapting to an unknown smoothness constant}
+\label{sec:backtracking}
+
+This section develops a stepsize rule for the common situation in which a
+useful value of $\beta$ is not known. Sometimes the available analysis gives
+only a conservative bound $B\ge\beta$. The stepsize $1/B$ is safe, but a
+large ratio $B/\beta$ makes gradient descent take smaller steps, and possibly
+more iterations, than the sharper bound would require. The first part of
+\cref{ex:l12-backtracking-quadratic} asks you to quantify the additional
+iteration cost on a quadratic objective. In other problems, no finite upper
+bound on $\beta$ may be available to the practitioner.
+
+The preceding decrease calculation suggests searching for a safe upper
+estimate of $\beta$. At a parameter $\theta$, let $g=\nabla L(\theta)$ and
+let $M>0$ be a tentative upper bound on $\beta$. The estimate $M$ defines the
+trial point
+\begin{equation}
+ \theta^+(M)=\theta-\frac1M g.
+\label{eq:trial-point}
+\end{equation}
+If $M$ is indeed an upper bound, so that $M\ge\beta$, then
+\cref{eq:smooth-gradient-decrease} with $\eta=1/M$ gives
+\[
+ L(\theta^+(M))
+ \le L(\theta)
+ -\frac1M\left(1-\frac{\beta}{2M}\right)\|g\|_2^2
+ \le L(\theta)-\frac1{2M}\|g\|_2^2.
+\]
+Thus $M\ge\beta$ is a universally safe range: every estimate in that range
+guarantees a decrease of at least $\|g\|_2^2/(2M)$. The factor $1/2$ is the
+largest constant certified uniformly over all $\beta\le M$, because the worst
+case $\beta=M$ makes the preceding coefficient exactly $1/2$.
+
+Although the value of $\beta$ is unknown, the promised decrease can be tested
+using function values. For a tentative estimate $M$, accept the trial point
+when
+\begin{equation}
+ L(\theta^+(M))
+ \le L(\theta)-\frac1{2M}\|g\|_2^2.
+\label{eq:backtracking-test}
+\end{equation}
+Every quantity in \cref{eq:backtracking-test} is available: the gradient $g$
+determines $\theta^+(M)$, and one objective evaluation gives
+$L(\theta^+(M))$. If the test fails, increase the estimate geometrically by
+replacing $M$ with $\rho M$ for a fixed $\rho>1$, form the new trial point,
+and test again. Repeating these operations is called \emph{backtracking line
+search}. The search variable is the curvature estimate $M$; after $M$ is
+accepted, the gradient step uses the corresponding stepsize $1/M$.
+
+The search must terminate because every $M\ge\beta$ passes
+\cref{eq:backtracking-test}. Starting from $M_{\rm start}$, after $k$ failures
+the estimate is $\rho^kM_{\rm start}$, so a safe estimate is reached after
+only logarithmically many trials. If $M_{\rm start}<\beta$, the first estimate
+that reaches the safe range is smaller than $\rho\beta$. Geometric increases
+therefore find an estimate within a factor $\rho$ of the threshold $\beta$;
+an additive increase would depend on the numerical scale of $\beta$.
+
+The name \emph{backtracking} describes the movement of the trial point. Each
+increase of $M$ shortens the step and moves $\theta^+(M)$ back toward
+$\theta$ along the negative-gradient direction.
+
+The acceptance test is local and can succeed before $M$ reaches $\beta$. The
+constant $\beta$ controls the quadratic upper bound for every pair of
+parameters, whereas \cref{eq:backtracking-test} concerns only $\theta$ and the
+proposed successor $\theta^+(M)$. If the test accepts a value $M<\beta$, the
+algorithm takes a step larger than $1/\beta$ without requiring the same
+curvature bound to hold elsewhere.
+
+\paragraph{Backtracking gradient descent.}
+The complete method uses an initial estimate $M_{\mathrm{init}}>0$ and a
+multiplier $\rho>1$. At iteration $t$:
+\begin{enumerate}[(1),leftmargin=*]
+\item compute $g_t=\nabla L(\theta_t)$;
+\item set $M=M_{\mathrm{init}}$ when $t=0$, and set $M=M_{t-1}$ when
+$t\ge1$;
+\item form $\theta^+(M)=\theta_t-g_t/M$ and test whether
+\[
+ L(\theta^+(M))
+ \le L(\theta_t)-\frac1{2M}\|g_t\|_2^2.
+\]
+If the test fails, replace $M$ by $\rho M$ and repeat this item;
+\item set $M_t=M$ and $\theta_{t+1}=\theta^+(M_t)$.
+\end{enumerate}
+Rejected trials do not require additional gradient evaluations. The current
+parameter has not changed, so the method reuses $g_t$ and pays only for the
+objective values at the new trial points.
+
+At every iteration $t\ge1$, the algorithm begins with $M_{t-1}$.
+Consequently, $(M_t)$ is nondecreasing, and every rejected trial causes a
+permanent geometric increase in the estimate. The monotone rule gives the
+simple one-time bound on rejected trials proved below. The limitation is that
+the method may miss a smaller locally safe estimate, and hence a larger safe
+stepsize, at a later iteration.
+
+\begin{example}[The safe range is exact on a scalar quadratic]
+\label{ex:scalar-backtracking}
+The smoothness argument proves that every $M\ge\beta$ passes the acceptance
+test. The scalar quadratic shows that this sufficient condition is also
+necessary in the worst case. Let $L(\theta)=\beta\theta^2/2$. Then
+\[
+ \theta^+(M)=\left(1-\frac\beta M\right)\theta.
+\]
+For $\theta\ne0$, substituting into \cref{eq:backtracking-test} and dividing
+by $\beta\theta^2/2$ gives the exact equivalence
+\begin{equation}
+ \left(1-\frac\beta M\right)^2
+ \le 1-\frac\beta M
+ \quad\Longleftrightarrow\quad
+ M\ge\beta.
+ \label{eq:scalar-backtracking-threshold}
+\end{equation}
+Thus the threshold $\beta$ is
+not an artifact of the proof: on this objective, every smaller estimate
+fails. More general objectives can still accept $M<\beta$ when the curvature
+encountered by the current step is smaller than the global worst case.
+\Cref{ex:l12-backtracking-quadratic} asks you to analyze both the exact
+quadratic threshold and the possible gain from local curvature.
+\end{example}
+
+\begin{proposition}[Termination and a bound on $M_t$]
+\label{prop:backtracking-termination}
+Suppose that $L$ is $\beta$-smooth. Run the backtracking gradient descent
+defined above with $M_{\mathrm{init}}>0$ and $\rho>1$. Every search terminates
+after finitely many trials, and, for every $t\ge0$,
+\begin{equation}
+ M_t\le\max\{M_{\mathrm{init}},\rho\beta\}.
+ \label{eq:accepted-scale}
+\end{equation}
+\end{proposition}
+
+\begin{proof}
+The calculation preceding \cref{eq:backtracking-test} shows that every
+$M\ge\beta$ passes the test, so each search terminates. We prove
+\cref{eq:accepted-scale} by induction on $t$. At $t=0$, the algorithm first
+tests $M_{\mathrm{init}}$. If the first trial passes, then
+$M_0=M_{\mathrm{init}}$. Otherwise, the algorithm multiplies the trial value
+by $\rho$ until $M_0$ passes. The immediately preceding value $M_0/\rho$ was
+rejected and must therefore satisfy $M_0/\rho<\beta$. Hence either
+$M_0=M_{\mathrm{init}}$ or $M_0<\rho\beta$, which proves
+\cref{eq:accepted-scale} at $t=0$.
+
+Now suppose the bound holds at $t-1$. If iteration $t$ accepts its first
+trial, then $M_t=M_{t-1}$ and the induction hypothesis applies. If iteration
+$t$ rejects at least one trial, then its last rejected value is
+$M_t/\rho<\beta$, so $M_t<\rho\beta$. The bound follows in both cases.
+\end{proof}
+
+Proposition~\ref{prop:backtracking-termination} also bounds the extra
+objective evaluations used by the search. Across all iterations, the number
+of rejected trial points is
+at most
+\begin{equation}
+ N_{\rm reject}
+ \le
+ \max\left\{0,
+   \left\lceil\log_\rho\frac{\beta}{M_{\mathrm{init}}}\right\rceil
+ \right\}.
+ \label{eq:backtracking-rejections}
+\end{equation}
+Every rejection multiplies the current estimate by $\rho$, the sequence
+$(M_t)$ is nondecreasing, and every estimate at least $\beta$ passes the test.
+Hence $T$
+iterations require at most $T+N_{\rm reject}$ objective evaluations at trial
+points, in addition to the $T$ gradient evaluations.
+
+\subsection{The deterministic price is a constant}
+
+Proposition~\ref{prop:backtracking-termination} and
+\cref{eq:backtracking-rejections} bound the extra objective evaluations used
+to choose the steps. The next theorem bounds the number of gradient
+iterations: under the PL inequality, the gradient-iteration bound needed to
+reach a prescribed objective gap is at most a factor $\rho$ larger than the
+corresponding known-$\beta$ bound.
+
+\begin{theorem}[Backtracking under PL]
+\label{thm:backtracking-pl}
+Suppose that $L$ is $\beta$-smooth and satisfies
+\begin{equation}
+ \frac12\|\nabla L(\theta)\|_2^2
+ \ge\mu(L(\theta)-L^\star)
+ \qquad\text{for every }\theta\in\R^d.
+ \label{eq:pl-condition}
+\end{equation}
+Run the backtracking gradient descent defined above with multiplier $\rho>1$
+and initial estimate $M_{\mathrm{init}}>0$. Put
+$\overline M=\max\{M_{\mathrm{init}},\rho\beta\}$. Then
+\begin{equation}
+ L(\theta_t)-L^\star
+ \le\left(1-\frac\mu{\overline M}\right)^t
+      \bigl(L(\theta_0)-L^\star\bigr).
+ \label{eq:backtracking-pl-rate}
+\end{equation}
+\end{theorem}
+
+\begin{proof}
+Acceptance and \cref{eq:pl-condition} give
+\begin{align*}
+ L(\theta_{t+1})-L^\star
+ &\le L(\theta_t)-L^\star
+      -\frac1{2M_t}\|\nabla L(\theta_t)\|_2^2\\
+ &\le\left(1-\frac\mu{M_t}\right)
+      \bigl(L(\theta_t)-L^\star\bigr).
+\end{align*}
+By \cref{prop:backtracking-termination}, $M_t\le\overline M$. Replacing
+$\mu/M_t$ by the smaller number $\mu/\overline M$ and iterating proves the
+claim.
+\end{proof}
+
+With the fixed stepsize $1/\beta$, the objective gap satisfies
+\[
+ L(\theta_{t+1})-L^\star
+ \le\left(1-\frac\mu\beta\right)
+       \bigl(L(\theta_t)-L^\star\bigr).
+\]
+If $M_{\mathrm{init}}\le\beta$, backtracking instead guarantees the one-step
+objective-gap multiplier $1-\mu/(\rho\beta)$ and adds the trial objective
+evaluations counted above.
+The number of gradient iterations remains
+\[
+ O\left(\frac\beta\mu
+ \log\frac{L(\theta_0)-L^\star}{\epsilon}\right).
+\]
+Thus adaptation to an unknown deterministic smoothness constant changes the
+iteration bound only by the constant factor $\rho$. Backtracking may do
+better than the worst-case factor-$\rho$ comparison when the values $M_t$
+that pass the local test are smaller than the global constant $\beta$.
+
+The conclusion relies on access to exact objective values at the trial
+points. A noisy minibatch loss does not generally certify the same inequality
+for the full empirical objective or the population objective. Adaptation in
+the stochastic setting therefore requires a different argument.
+
+\section{The condition number and gradient descent}
+\label{sec:conditioning}
+
+This section identifies the limitation that remains after backtracking has
+found a safe scalar step. One scalar must accommodate every parameter
+direction, so a step that is stable in a high-curvature direction can make
+little progress in a low-curvature direction. A strongly convex quadratic
+makes this condition-number obstruction exact and prepares the acceleration
+analysis in the next section.
+
+Consider
+\begin{equation}
+ L(\theta)=\frac12\theta^\top H\theta-b^\top\theta,
+ \qquad
+ 0<\mu I\preceq H\preceq\beta I.
+ \label{eq:quadratic-objective}
+\end{equation}
+The quadratic objective has the unique minimizer
+$\theta^\star=H^{-1}b$. If
+$e_t=\theta_t-\theta^\star$, gradient descent gives
+\begin{equation}
+ e_{t+1}=(I-\eta H)e_t.
+ \label{eq:quadratic-error-recursion}
+\end{equation}
+After diagonalizing $H=Q\diag(\lambda_1,\ldots,\lambda_d)Q^\top$, every
+eigencomponent evolves as
+\begin{equation}
+ \langle q_j,e_t\rangle
+ =(1-\eta\lambda_j)^t\langle q_j,e_0\rangle.
+ \label{eq:eigencomponent-gd}
+\end{equation}
+
+For this quadratic, the sharp choices of the smoothness constant and the
+strong-convexity or PL constant are $\beta=\lambda_{\max}(H)$ and
+$\mu=\lambda_{\min}(H)$. With these choices, the condition number defined in
+Lecture~11 equals the spectral ratio
+\begin{equation}
+ \kappa=\frac\beta\mu
+ =\frac{\lambda_{\max}(H)}{\lambda_{\min}(H)}.
+ \label{eq:condition-number}
+\end{equation}
+If $\beta$ and $\mu$ are instead loose bounds in
+$\mu I\preceq H\preceq\beta I$, then $\beta/\mu$ is an upper bound on the
+spectral ratio.
+A step small enough to be stable in the largest-curvature direction changes
+a smallest-curvature component by only a fraction of order $1/\kappa$ per
+iteration.
+
+The two-dimensional diagonal case makes the obstruction explicit. For
+\[
+ L(\theta)=\frac12\bigl(\mu\theta_1^2+\beta\theta_2^2\bigr),
+\]
+the step $\eta=1/\beta$ eliminates the second coordinate in one iteration,
+whereas the first coordinate obeys
+\[
+ \theta_{t+1,1}=\left(1-\frac1\kappa\right)\theta_{t,1}.
+\]
+The same scalar stepsize must accommodate both directions. Backtracking can
+discover that $1/\beta$ is safe, but discovering the safe value does not
+change the recursion
+$\theta_{t+1,1}=(1-1/\kappa)\theta_{t,1}$ in the flatter direction.
+
+\begin{proposition}[Best constant step on a quadratic]
+\label{prop:best-constant-step}
+For \cref{eq:quadratic-objective}, define
+\begin{equation}
+ q(\eta)=\max_{\lambda\in[\mu,\beta]}|1-\eta\lambda|.
+ \label{eq:quadratic-uniform-contraction}
+\end{equation}
+For every $H$ satisfying $\mu I\preceq H\preceq\beta I$, gradient descent
+satisfies
+\begin{equation}
+ \|e_{t+1}\|_2\le q(\eta)\|e_t\|_2.
+ \label{eq:quadratic-error-one-step}
+\end{equation}
+The constant step
+\begin{equation}
+ \eta_{\rm opt}=\frac{2}{\beta+\mu}
+ \label{eq:optimal-quadratic-step}
+\end{equation}
+minimizes $q(\eta)$ over $\eta>0$:
+\begin{equation}
+ \min_{\eta>0}q(\eta)
+ =q(\eta_{\rm opt})
+ =\frac{\kappa-1}{\kappa+1}.
+ \label{eq:gd-spectral-factor}
+\end{equation}
+Consequently,
+\begin{equation}
+ \|e_t\|_2
+ \le\left(\frac{\kappa-1}{\kappa+1}\right)^t\|e_0\|_2.
+ \label{eq:quadratic-error-t-step}
+\end{equation}
+If $e_0\ne0$ and $He_0=\lambda e_0$ for some
+$\lambda\in\{\mu,\beta\}$, then equality holds in
+\cref{eq:quadratic-error-t-step}. Hence, when $\kappa>1$, for every fixed
+$c\in(0,1)$ and every such pair $(H,e_0)$,
+\begin{equation}
+ \min\{t\ge0:\|e_t\|_2\le c\|e_0\|_2\}
+ =\left\lceil
+   \frac{\log(1/c)}{\log((\kappa+1)/(\kappa-1))}
+  \right\rceil
+ =\Theta(\kappa)
+ \qquad(\kappa\to\infty).
+ \label{eq:quadratic-fixed-reduction}
+\end{equation}
+\end{proposition}
+
+\begin{proof}
+Diagonalizing $H$ in \cref{eq:quadratic-error-recursion} gives
+\[
+ \|e_{t+1}\|_2
+ \le \max_j|1-\eta\lambda_j|\,\|e_t\|_2
+ \le q(\eta)\|e_t\|_2,
+\]
+which proves \cref{eq:quadratic-error-one-step}. For fixed $\eta>0$, the
+function $\lambda\mapsto |1-\eta\lambda|$ is convex, so its maximum on
+$[\mu,\beta]$ occurs at $\lambda=\mu$ or $\lambda=\beta$. Expanding the two
+absolute values gives four affine functions. The inequalities
+$1-\eta\beta\le 1-\eta\mu$ and
+$\eta\mu-1\le\eta\beta-1$ remove the two dominated functions, so
+$q(\eta)=\max\{1-\eta\mu,\eta\beta-1\}$. The first function decreases with
+$\eta$, the second increases with $\eta$, and they are equal exactly at
+$\eta=\eta_{\rm opt}=2/(\beta+\mu)$. Consequently,
+\[
+ q(\eta)=
+ \begin{cases}
+  1-\eta\mu,&0<\eta\le\eta_{\rm opt},\\
+  \eta\beta-1,&\eta\ge\eta_{\rm opt}.
+ \end{cases}
+\]
+The maximum therefore decreases up to $\eta_{\rm opt}$ and increases after
+$\eta_{\rm opt}$, so its minimum occurs at $\eta_{\rm opt}$. Substitution
+gives \cref{eq:gd-spectral-factor}. Iterating
+\cref{eq:quadratic-error-one-step} proves
+\cref{eq:quadratic-error-t-step}. If $He_0=\lambda e_0$ for
+$\lambda\in\{\mu,\beta\}$, then $e_t=(1-\eta_{\rm opt}\lambda)^t e_0$.
+For $\lambda=\mu$, the multiplier is
+$(\kappa-1)/(\kappa+1)$; for $\lambda=\beta$, the multiplier is
+$-(\kappa-1)/(\kappa+1)$. Hence
+$\|e_t\|_2=((\kappa-1)/(\kappa+1))^t\|e_0\|_2$ in both cases. The sign
+alternates when $\lambda=\beta$, but the norm is unchanged. Thus equality
+holds in
+\cref{eq:quadratic-error-t-step}. Solving
+$q(\eta_{\rm opt})^t\le c$ gives
+the exact iteration count in \cref{eq:quadratic-fixed-reduction}. The
+$\Theta(\kappa)$ relation follows from
+$\log((\kappa+1)/(\kappa-1))=2/\kappa+O(1/\kappa^2)$.
+\end{proof}
+
+The error after $t$ steps has the form
+\[
+ e_t=p_t(H)e_0,
+ \qquad p_t(\lambda)=(1-\eta\lambda)^t.
+\]
+A method that combines past iterates can generate a degree-$t$ polynomial
+with a smaller maximum magnitude on $[\mu,\beta]$. Acceleration chooses such
+a polynomial without computing an eigendecomposition.
+
+The polynomial formulation also explains why acceleration concerns more than
+a larger stepsize. Repeated gradient descent applies the same linear factor
+to every eigenvalue at every iteration. A method with memory can choose the
+coefficients of a degree-$t$ polynomial to reduce
+$\max_{\lambda\in[\mu,\beta]}|p_t(\lambda)|$. The iterates implement the
+recurrence for the chosen polynomial using gradients and a small amount of
+stored state.
+
+\section{Reducing the condition-number dependence with acceleration}
+\label{sec:acceleration}
+
+This section asks whether a first-order method can make faster progress in
+low-curvature directions without taking an unstable gradient step in
+high-curvature directions. The backtracking procedure used smoothness, and its
+linear-rate theorem added the PL inequality without convexity. The direct
+acceleration argument below narrows the setting.
+Throughout the derivation, $L$ is $\beta$-smooth and $\mu$-strongly convex,
+and $\theta^\star$ is its unique minimizer. Acceleration retains the preceding
+displacement and reduces the iteration-count dependence from $\kappa$ to
+$\sqrt\kappa$.
+
+The design begins by deciding what the method may store and what quantity the
+analysis should decrease. Gradient descent stores one parameter vector. We
+permit one additional parameter-sized vector $v_t\in\R^d$ and treat
+$(\theta_t,v_t)$ as the state. Thus the method uses twice the parameter
+memory of gradient descent, apart from the gradient and temporary vectors.
+For an undetermined coefficient $\nu>0$, consider the Lyapunov function
+\begin{equation}
+ V(\theta,v)
+ =L(\theta)-L^\star+\frac\nu2\|v-\theta^\star\|_2^2.
+ \label{eq:accelerated-design-potential}
+\end{equation}
+The objective gap is the quantity that we want to control. The second term
+allows the analysis to record progress that is stored in the auxiliary
+state. Since
+\begin{equation}
+ L(\theta)-L^\star\le V(\theta,v)
+ \qquad\text{for every }\theta,v\in\R^d,
+ \label{eq:accelerated-potential-dominates-gap}
+\end{equation}
+a geometric bound on $V$ immediately gives the same bound on the
+objective gap. We therefore seek an update and a number $\tau\in(0,1]$ such
+that
+\begin{equation}
+ V(\theta_{t+1},v_{t+1})
+ \le(1-\tau)V(\theta_t,v_t).
+ \label{eq:accelerated-design-target}
+\end{equation}
+
+We search within a four-parameter update family. Requiring the intermediate
+point to equal the common stored vector when $\theta_t=v_t$ suggests an affine
+combination of $\theta_t$ and $v_t$. The parameter update takes a gradient step
+from that point, and the auxiliary-state update combines the two state vectors
+affinely and adds a gradient correction. A general linear two-state update
+would introduce more coefficients. We use the restricted family below with
+$b\in(0,1]$, so the state part of the $v_t$ update is a convex combination.
+The verification will determine $a,b,c,\eta$, and the potential coefficient
+$\nu$:
+\begin{align}
+ y_t&=(1-a)\theta_t+a v_t,\notag\\
+ \theta_{t+1}&=y_t-\eta g_t,\qquad g_t=\nabla L(y_t),\notag\\
+ v_{t+1}&=(1-b)v_t+b y_t+c g_t.
+ \label{eq:accelerated-affine-search}
+\end{align}
+
+We now substitute the update directly into the next potential. Smoothness gives
+\begin{align}
+ V(\theta_{t+1},v_{t+1})
+ &=L(\theta_{t+1})-L^\star
+   +\frac\nu2\|v_{t+1}-\theta^\star\|_2^2\notag\\
+ &\le L(y_t)-L^\star
+ -\left(\eta-\frac{\beta\eta^2}{2}\right)\|g_t\|_2^2\notag\\
+ &\quad+\frac\nu2\left\|(1-b)(v_t-\theta^\star)
+       +b(y_t-\theta^\star)+c g_t\right\|_2^2.
+ \label{eq:accelerated-design-initial-expansion}
+\end{align}
+The coefficient subtracted from $\|g_t\|_2^2$ is largest at $\eta=1/\beta$.
+With that choice, expanding the squared norm gives
+\begin{align}
+ V(\theta_{t+1},v_{t+1})
+ \le{}&L(y_t)-L^\star
+ +\frac\nu2\left\|(1-b)(v_t-\theta^\star)
+                    +b(y_t-\theta^\star)\right\|_2^2\notag\\
+ &+\nu c\left\langle g_t,
+          (1-b)(v_t-\theta^\star)+b(y_t-\theta^\star)\right\rangle
+ +\left(\frac{\nu c^2}{2}-\frac1{2\beta}\right)\|g_t\|_2^2.
+ \label{eq:accelerated-design-expanded}
+\end{align}
+The coefficient $b$ in the auxiliary-state update suggests trying
+$\tau=b$ in the contraction target \cref{eq:accelerated-design-target}. The
+state part of the update satisfies
+\begin{equation}
+ \left\|(1-b)(v_t-\theta^\star)+b(y_t-\theta^\star)\right\|_2^2
+ =(1-b)\|v_t-\theta^\star\|_2^2+b\|y_t-\theta^\star\|_2^2
+ -b(1-b)\|v_t-y_t\|_2^2.
+ \label{eq:accelerated-convex-combination-identity}
+\end{equation}
+The identity assigns weight $1-b$ to the squared distance involving $v_t$ and
+weight $b$ to the squared distance involving $y_t$. To use the same split for
+the objective gap, fix $0<\nu\le\mu$ and apply strong convexity to its
+$b$-weighted part:
+\begin{equation}
+ b\bigl(L(y_t)-L^\star\bigr)
+ \le b\langle g_t,y_t-\theta^\star\rangle
+ -\frac{b\nu}{2}\|y_t-\theta^\star\|_2^2.
+ \label{eq:accelerated-design-strong-convexity}
+\end{equation}
+Combining
+\cref{eq:accelerated-design-expanded,eq:accelerated-convex-combination-identity,eq:accelerated-design-strong-convexity}
+then gives
+\begin{align}
+ V(\theta_{t+1},v_{t+1})
+ \le{}&(1-b)\left(
+ L(y_t)-L^\star+\frac\nu2\|v_t-\theta^\star\|_2^2
+ -\frac{b\nu}{2}\|v_t-y_t\|_2^2\right)\notag\\
+ &+b\langle g_t,y_t-\theta^\star\rangle
+ +\nu c\left\langle g_t,
+ (1-b)(v_t-\theta^\star)+b(y_t-\theta^\star)\right\rangle\notag\\
+ &+\left(\frac{\nu c^2}{2}-\frac1{2\beta}\right)\|g_t\|_2^2.
+ \label{eq:accelerated-design-after-strong-convexity}
+\end{align}
+The first line has the proposed factor $1-b$. The next two lines determine
+the remaining coefficient choices.
+
+At this point, the design has imposed
+\begin{equation*}
+ \eta=\frac1\beta,
+ \qquad
+ \tau=b,
+ \qquad
+ 0<\nu\le\mu.
+\end{equation*}
+The values of $a,b,c$, and $\nu$ remain to be selected within these
+restrictions. To eliminate $\theta^\star$ from the two inner products in
+\cref{eq:accelerated-design-after-strong-convexity} and produce another factor
+$1-b$, set
+\begin{equation}
+ \nu c=-b
+ \qquad\Longleftrightarrow\qquad
+ c=-\frac b\nu.
+ \label{eq:accelerated-design-c-choice}
+\end{equation}
+Indeed, the two inner products then satisfy
+\begin{align}
+ &b\langle g_t,y_t-\theta^\star\rangle
+ -b\left\langle g_t,
+ (1-b)(v_t-\theta^\star)+b(y_t-\theta^\star)\right\rangle\notag\\
+ &\qquad=-b(1-b)\langle g_t,v_t-y_t\rangle.
+ \label{eq:accelerated-design-gradient-cancellation}
+\end{align}
+Substituting \cref{eq:accelerated-design-c-choice,eq:accelerated-design-gradient-cancellation}
+into \cref{eq:accelerated-design-after-strong-convexity} gives
+\begin{align}
+ V(\theta_{t+1},v_{t+1})
+ \le{}&(1-b)\left(
+ L(y_t)-L^\star+\frac\nu2\|v_t-\theta^\star\|_2^2
+ -\frac{b\nu}{2}\|v_t-y_t\|_2^2
+ -b\langle g_t,v_t-y_t\rangle\right)\notag\\
+ &+\left(\frac{b^2}{2\nu}-\frac1{2\beta}\right)\|g_t\|_2^2.
+ \label{eq:accelerated-design-general-bound}
+\end{align}
+
+The squared-gradient term in
+\cref{eq:accelerated-design-general-bound} is nonpositive when
+$b^2\le\nu/\beta$. Under this condition,
+\begin{equation}
+ V(\theta_{t+1},v_{t+1})
+ \le(1-b)\left(
+ L(y_t)-L^\star+\frac\nu2\|v_t-\theta^\star\|_2^2
+ -\frac{b\nu}{2}\|v_t-y_t\|_2^2
+ -b\langle g_t,v_t-y_t\rangle
+ \right).
+ \label{eq:accelerated-design-before-convexity}
+\end{equation}
+Add and subtract $\langle g_t,\theta_t-y_t\rangle$ in
+\cref{eq:accelerated-design-before-convexity}. Convexity gives
+$L(y_t)+\langle g_t,\theta_t-y_t\rangle\le L(\theta_t)$, and hence
+\begin{equation}
+ V(\theta_{t+1},v_{t+1})
+ \le(1-b)\left(V(\theta_t,v_t)-\frac{b\nu}{2}\|v_t-y_t\|_2^2
+ +\left\langle g_t,b(y_t-v_t)-(\theta_t-y_t)\right\rangle\right).
+ \label{eq:accelerated-design-after-convexity}
+\end{equation}
+Choose the intermediate point so that the last inner product vanishes:
+\begin{equation}
+ \theta_t-y_t=b(y_t-v_t).
+ \label{eq:accelerated-design-displacement}
+\end{equation}
+For $y_t=(1-a)\theta_t+a v_t$,
+\begin{align}
+ \theta_t-y_t&=a(\theta_t-v_t),\notag\\
+ b(y_t-v_t)&=b(1-a)(\theta_t-v_t).
+\end{align}
+Thus \cref{eq:accelerated-design-displacement} determines
+\begin{equation}
+ a=b(1-a)
+ \qquad\Longleftrightarrow\qquad
+ a=\frac{b}{1+b}.
+ \label{eq:accelerated-coupling-coefficient}
+\end{equation}
+Using \cref{eq:accelerated-design-displacement} in
+\cref{eq:accelerated-design-after-convexity} gives
+\begin{equation}
+ V(\theta_{t+1},v_{t+1})
+ \le(1-b)\left(
+ V(\theta_t,v_t)-\frac\nu{2b}\|\theta_t-y_t\|_2^2
+ \right)
+ \le(1-b)V(\theta_t,v_t).
+ \label{eq:accelerated-design-contraction}
+\end{equation}
+The contraction factor is $1-b$, subject to $b^2\le\nu/\beta$ and
+$0<\nu\le\mu$. The largest admissible $b$ is obtained from
+\begin{equation}
+ \nu=\mu,
+ \qquad
+ b=\tau=\sqrt{\frac\mu\beta}=\frac1{\sqrt\kappa}.
+ \label{eq:accelerated-design-balance}
+\end{equation}
+This choice proves the target \cref{eq:accelerated-design-target}. The
+completed coefficient choices give the coupled updates
+\begin{align}
+ y_t&=\frac{\theta_t+\tau v_t}{1+\tau},
+ \label{eq:accelerated-design-coupling}\\
+ \theta_{t+1}&=y_t-\frac1\beta\nabla L(y_t),
+ \label{eq:accelerated-design-gradient-step}\\
+ v_{t+1}&=(1-\tau)v_t+\tau\left(y_t-\frac1\mu\nabla L(y_t)\right).
+ \label{eq:accelerated-design-center-step}
+\end{align}
+
+The auxiliary state $v_t$ was useful for choosing the coefficients and proving
+the contraction. Eliminating $v_t$ gives an equivalent implementation that
+stores the two most recent parameter iterates. Set $\theta_{-1}=\theta_0$ and
+\begin{equation}
+ \gamma=\frac{1-\tau}{1+\tau}
+ =\frac{\sqrt\kappa-1}{\sqrt\kappa+1}.
+ \label{eq:accelerated-momentum}
+\end{equation}
+The coupled update is equivalent to the two-step recursion
+\begin{align}
+ y_t&=\theta_t+\gamma(\theta_t-\theta_{t-1}),
+ \label{eq:accelerated-extrapolation}\\
+ \theta_{t+1}&=y_t-\frac1\beta\nabla L(y_t).
+ \label{eq:accelerated-gradient-step}
+\end{align}
+This two-step recursion is the usual form of Nesterov's accelerated gradient
+method. Exercise~\ref{ex:l12-nesterov-equivalence} asks you to verify the
+equivalence and complete the proof of the accelerated rate.
+
+The point $y_t$ extrapolates the displacement
+$\theta_t-\theta_{t-1}$, and the second line takes an ordinary gradient step
+from the extrapolated point. The update evaluates one gradient and stores two
+parameter vectors per iteration.
+The derivation illustrates the general strategy: specify the desired progress
+measure, introduce state that can retain the missing information, and choose
+the coefficients so that the available inequalities prove the desired
+one-step change. Eliminating the auxiliary state then gives a simpler
+implementation.
+
+\begin{theorem}[Accelerated linear convergence]
+\label{thm:accelerated-strongly-convex}
+Suppose that $L$ is $\beta$-smooth and $\mu$-strongly convex, let
+$\kappa=\beta/\mu$, and let $\theta^\star$ be its minimizer. Set $\gamma$ as
+in \cref{eq:accelerated-momentum} and initialize $\theta_{-1}=\theta_0$. The
+iterates defined by
+\cref{eq:accelerated-extrapolation,eq:accelerated-gradient-step} satisfy
+\begin{equation}
+ L(\theta_t)-L^\star
+ \le 2\left(1-\frac1{\sqrt\kappa}\right)^t
+ \bigl(L(\theta_0)-L^\star\bigr).
+ \label{eq:accelerated-linear-rate}
+\end{equation}
+Consequently, for
+$0<\epsilon<2(L(\theta_0)-L^\star)$,
+$L(\theta_t)-L^\star\le\epsilon$ whenever
+\begin{equation}
+ t\ge \sqrt\kappa
+ \log\frac{2(L(\theta_0)-L^\star)}{\epsilon}.
+ \label{eq:accelerated-strong-rate}
+\end{equation}
+\end{theorem}
+
+The proof is completed in
+\cref{ex:l12-nesterov-equivalence}. The preceding calculation supplies the
+potential contraction \cref{eq:accelerated-design-contraction}; the exercise
+eliminates $v_t$, bounds the initial potential using strong convexity, and
+derives \cref{eq:accelerated-linear-rate,eq:accelerated-strong-rate}.
+
+\paragraph{Quadratic interpretation.}
+The quadratic calculation explains how the resulting method acts in different
+curvature directions. Let $q$ be an eigenvector of $H$ with eigenvalue
+$\lambda$, and write
+\[
+ e_t(\lambda)=\langle q,\theta_t-\theta^\star\rangle.
+\]
+For the quadratic objective in \cref{eq:quadratic-objective},
+\cref{eq:accelerated-extrapolation,eq:accelerated-gradient-step} give
+\begin{equation}
+ e_{t+1}(\lambda)
+ =\left(1-\frac{\lambda}{\beta}\right)
+  \bigl((1+\gamma)e_t(\lambda)-\gamma e_{t-1}(\lambda)\bigr).
+ \label{eq:accelerated-eigendirection}
+\end{equation}
+Gradient descent uses a first-order recurrence in each eigendirection;
+accelerated gradient uses the second-order recurrence
+\cref{eq:accelerated-eigendirection}. The calculation explains the role of
+memory after the method has been derived. The related Chebyshev construction
+in \cref{sec:chebyshev} solves the exact finite-degree minimax polynomial
+problem for quadratics.
+
+\paragraph{Nesterov and heavy-ball momentum.}
+Nesterov's method evaluates the gradient at the extrapolated point $y_t$.
+Polyak's heavy-ball method instead uses
+\[
+ \theta_{t+1}
+ =\theta_t-\eta_{\rm HB}\nabla L(\theta_t)
+  +\gamma_{\rm HB}(\theta_t-\theta_{t-1}).
+\]
+For a quadratic with spectrum in $[\mu,\beta]$, the quadratic-optimal fixed
+parameters and the resulting worst-case asymptotic spectral factor are
+\[
+ \eta_{\rm HB}=\frac{4}{(\sqrt\beta+\sqrt\mu)^2},
+ \qquad
+ \gamma_{\rm HB}=r^2,
+ \qquad
+ r=\frac{\sqrt\kappa-1}{\sqrt\kappa+1}
+   =1-\Theta\left(\frac1{\sqrt\kappa}\right).
+\]
+Thus heavy ball has accelerated $\sqrt\kappa$ dependence on strongly convex
+quadratics. The quadratic guarantee is not uniform over all smooth, strongly
+convex objectives: the same parameters can fail to converge on a
+nonquadratic objective. By contrast,
+\cref{thm:accelerated-strongly-convex} gives Nesterov's guarantee over the
+entire smooth, strongly convex class. Section~\ref{sec:chebyshev} shows that
+Chebyshev semi-iteration has the heavy-ball form with coefficients that vary
+with $t$ and converge to $\eta_{\rm HB}$ and $\gamma_{\rm HB}$.
+
+The gradient-evaluation comparison is
+\begin{equation}
+ \underbrace{O\left(\kappa
+ \log\frac{L(\theta_0)-L^\star}{\epsilon}\right)}
+ _{\text{gradient descent}}
+ \qquad\text{and}\qquad
+ \underbrace{O\left(\sqrt\kappa
+ \log\frac{L(\theta_0)-L^\star}{\epsilon}\right)}
+ _{\text{acceleration}}.
+ \label{eq:gd-acceleration-comparison}
+\end{equation}
+Both methods require one gradient evaluation per iteration.
+\Cref{ex:l12-accelerated-restart} asks you to derive the same square-root
+dependence by restarting a smooth convex accelerated method.
+
+The reduction from $\kappa$ to $\sqrt\kappa$ in the worst-case number of
+first-order oracle calls is optimal in the standard first-order oracle model.
+In this model, the method queries a parameter $\theta$ and receives
+$L(\theta)$ and $\nabla L(\theta)$; each new query may depend on the preceding
+queries and replies. The lower bounds also explain why the assumptions must be
+stated carefully.
+
+\begin{proposition}[Relevant first-order lower bounds]
+\label{prop:acceleration-lower-bounds}
+Fix $\kappa>1$ and consider dimensions large enough relative to the number of
+oracle calls. Let $N_\epsilon$ denote the number of oracle calls required to
+produce $\theta$ satisfying
+\begin{equation}
+ L(\theta)-L^\star
+ \le\epsilon\bigl(L(\theta_0)-L^\star\bigr).
+ \label{eq:relative-gap-target}
+\end{equation}
+\begin{enumerate}[(a),leftmargin=*]
+\item For every deterministic first-order method, there is a smooth, strongly
+convex quadratic instance on which
+\begin{equation}
+ N_\epsilon
+ =\Omega\left(\sqrt\kappa\log\frac1\epsilon\right).
+ \label{eq:strongly-convex-lower-bound}
+\end{equation}
+\item For the larger class of smooth objectives satisfying the PL inequality,
+without a convexity assumption, every deterministic first-order method has an
+instance on which
+\begin{equation}
+ N_\epsilon
+ =\Omega\left(\kappa\log\frac1\epsilon\right).
+ \label{eq:pl-lower-bound}
+\end{equation}
+\end{enumerate}
+\end{proposition}
+
+Part (a) shows that the square-root dependence on $\kappa$ is optimal over
+the smooth, strongly convex class. Part (b) concerns the general smooth PL
+class, which includes nonconvex objectives, and rules out a general
+$O(\bigl(\sqrt\kappa\log(1/\epsilon)\bigr)$ guarantee over the full smooth PL
+class. Smooth convex PL objectives form an intermediate class: the restart
+construction below attains the square-root dependence for that class.
+
+The smooth convex $O(1/t^2)$ result is a different acceleration theorem. The
+main result here is the linear convergence bound
+\cref{eq:accelerated-linear-rate}; the smooth convex result and a restart
+argument are summarized in \cref{sec:restart-optional}.
+
+\subsection{Accelerating when the condition number is unknown}
+
+The fixed parameters in
+\cref{eq:accelerated-momentum,eq:accelerated-gradient-step} use both $\beta$
+and $\mu$. If certified bounds $B\ge\beta$ and $0<m\le\mu$ are available,
+one may use $B$ and $m$ in their place; the resulting guarantee depends on
+$B/m$. We now separate the two kinds of missing information.
+
+First suppose that $\mu$ is known and $\beta$ is unknown. Section~\ref{sec:backtracking}
+searched for a curvature estimate by testing the smooth quadratic upper bound
+at a proposed gradient step. The same test can be applied at the extrapolated
+point $y_t$. A trial curvature estimate $M>0$ defines
+\begin{equation}
+ \theta^+(M)=y_t-\frac1M\nabla L(y_t)
+ \label{eq:accelerated-trial-step}
+\end{equation}
+and is accepted when
+\begin{equation}
+ L(\theta^+(M))
+ \le L(y_t)+\langle\nabla L(y_t),\theta^+(M)-y_t\rangle
+       +\frac{M}{2}\|\theta^+(M)-y_t\|_2^2.
+ \label{eq:accelerated-model-test}
+\end{equation}
+The acceptance inequality is the smooth quadratic upper bound with $M$ in
+place of $\beta$, evaluated only at $y_t$ and $\theta^+(M)$. Every
+$M\ge\beta$ passes the test. After a rejection, replace $M$ by $\rho M$ for a
+fixed $\rho>1$ and test the shorter step. The search therefore terminates
+after finitely many objective evaluations.
+
+Acceleration links the gradient step and the momentum coefficient in the same
+potential inequality. An \emph{accelerated backtracking} method supplies the
+accepted curvature estimate to both parts of the accelerated update. With
+$\mu$ known and exact objective values available, standard accelerated
+backtracking schemes attain
+\begin{equation}
+ N_\epsilon
+ =O\left(\sqrt{\frac\beta\mu}
+       \log\frac{L(\theta_0)-L^\star}{\epsilon}\right)
+ \label{eq:accelerated-backtracking-rate}
+\end{equation}
+without receiving $\beta$ as input. Changing the gradient-step denominator
+while keeping $\gamma$ fixed leaves the potential calculation in
+\cref{eq:accelerated-design-contraction} unjustified; accelerated
+backtracking recomputes the coupling coefficients when the curvature estimate
+changes.
+
+Unknown $\mu$ requires a different procedure because the momentum coefficient
+cannot be obtained from the smoothness test. Suppose now that $L$ is convex,
+its minimum is attained, and it is $\beta$-smooth and $\mu$-PL for an unknown
+$\mu>0$. Write $\Theta^\star=\argmin L$ and define
+\begin{equation}
+ \operatorname{dist}(z,\Theta^\star)
+ =\inf_{\theta^\star\in\Theta^\star}\|z-\theta^\star\|_2.
+ \label{eq:distance-to-minimizers}
+\end{equation}
+The PL inequality implies the quadratic-growth bound
+\begin{equation}
+ L(z)-L^\star
+ \ge\frac\mu2\operatorname{dist}(z,\Theta^\star)^2.
+ \label{eq:pl-quadratic-growth}
+\end{equation}
+Run the smooth-convex accelerated method for $s$ iterations and then set both
+stored parameter iterates equal to the current parameter before continuing.
+The inner method can use a known $\beta$ or the accelerated backtracking
+procedure above.
+One such run between resets is a \emph{restart epoch}. If one epoch uses $s$
+gradients,
+\cref{eq:accelerated-restart-one-epoch} gives
+\begin{equation}
+ L(\mathsf A_s(z))-L^\star
+ \le\frac{4\kappa}{(s+1)^2}\bigl(L(z)-L^\star\bigr).
+ \label{eq:accelerated-restart-main}
+\end{equation}
+Thus an epoch length $s=\Theta(\sqrt\kappa)$ reduces the objective gap by a
+constant factor, and repeated restarts attain
+\begin{equation}
+ N_\epsilon
+ =O\left(\sqrt\kappa
+ \log\frac{L(\theta_0)-L^\star}{\epsilon}\right).
+ \label{eq:accelerated-restart-main-complexity}
+\end{equation}
+When $\kappa$ is unknown, an adaptive restart rule searches for an epoch
+length on the scale $\sqrt\kappa$. For example, if $L^\star$ is available,
+one can try epoch lengths $1,2,4,\ldots$ from the same starting point until
+the observed objective gap decreases by one half. The successful search uses
+$O(\sqrt\kappa)$ gradients, after which the accepted epoch length can be
+reused. \Cref{ex:l12-accelerated-restart} asks you to prove this claim. Choosing
+the epoch length without either $\mu$ or $L^\star$ requires a different test;
+the bibliographical notes cite provable rules and common practical heuristics.
+The optional reading derives the smooth-convex Lyapunov bound and the restart
+calculation.
+
+\section{Preconditioning changes the geometry}
+\label{sec:preconditioning}
+
+This section studies a different response to poor conditioning. Backtracking
+chooses one scalar step, whereas preconditioning changes the relative scale
+and direction of the parameter coordinates. A \emph{preconditioned gradient
+update} uses a symmetric positive-definite matrix $P$:
+\begin{equation}
+ \theta_{t+1}=\theta_t-\eta P\nabla L(\theta_t).
+ \label{eq:preconditioned-update}
+\end{equation}
+The matrix can rescale coordinates and mix them. The purpose of $P$ is to make
+the objective better conditioned in the geometry used by the update.
+
+Matrix preconditioning introduces a second meaning of adaptation. A line
+search changes one scalar according to the objective decrease observed at the
+current point. A
+preconditioner changes the relative scale and direction of the coordinates.
+The difference between scalar line search and matrix preconditioning matters
+in a large model: one scalar can control overall stability, while a matrix can
+assign substantially different effective stepsizes to different parameter
+directions.
+
+\begin{proposition}[Preconditioning as a change of coordinates]
+\label{prop:preconditioning-coordinates}
+Let $\theta=P^{1/2}z$ and define
+$\widetilde L(z)=L(P^{1/2}z)$. If
+\begin{equation}
+ z_{t+1}=z_t-\eta\nabla\widetilde L(z_t),
+ \label{eq:preconditioned-z-update}
+\end{equation}
+then $\theta_t=P^{1/2}z_t$ satisfies
+\begin{equation}
+ \theta_{t+1}=\theta_t-\eta P\nabla L(\theta_t).
+ \label{eq:preconditioning-coordinate-equivalence}
+\end{equation}
+If $L$ is quadratic with Hessian $H$, then
+the Hessian in the $z$ coordinates is
+\begin{equation}
+ \widetilde H=P^{1/2}HP^{1/2}.
+ \label{eq:preconditioned-hessian}
+\end{equation}
+\end{proposition}
+
+\begin{proof}
+The chain rule gives
+$\nabla\widetilde L(z)=P^{1/2}\nabla L(P^{1/2}z)$. Thus
+\[
+ z_{t+1}=z_t-\eta\nabla\widetilde L(z_t)
+\]
+maps, after multiplication by $P^{1/2}$, to
+\[
+ \theta_{t+1}=\theta_t-\eta P\nabla L(\theta_t).
+\]
+Applying the chain rule twice gives \cref{eq:preconditioned-hessian}.
+\end{proof}
+
+For the quadratic in \cref{eq:quadratic-objective}, the ideal choice
+$P=H^{-1}$ gives $\widetilde H=I$ and condition number one. A dense global
+matrix, however, requires $\Theta(d^2)$ storage and arithmetic per
+matrix--vector product for a model with $d$ parameters. Such a cost is not a
+realistic per-iteration option at modern model dimensions. A whole-model
+preconditioner must normally cost $O(d)$, or at most about $O(d\log d)$, to
+store and apply. More expensive factorizations can be useful only on small
+blocks or when the factorization cost is amortized over many gradient steps.
+
+Restricting the cost also restricts the matrices that can be represented. A diagonal
+preconditioner costs $O(d)$ but cannot represent any cross-coordinate
+interaction. A block-diagonal preconditioner with blocks of size at most $b$
+costs $O(db)$ to store and apply; the block-diagonal form discards
+interactions between blocks.
+Factoring all such blocks can cost $O(db^2)$ when the factors are refreshed.
+Low-rank and Kronecker-factored forms retain other selected interactions, but
+neither type can represent an arbitrary dense inverse Hessian. If the
+discarded interactions contain the poorly conditioned directions, no general
+condition-number improvement follows. \Cref{ex:l12-rotated-preconditioner}
+gives a two-dimensional example in which diagonal Hessian scaling leaves the
+condition number unchanged while full preconditioning reduces it to one.
+
+A common neural-network example makes the approximation explicit. The Fisher
+information matrix is the expected outer product of log-likelihood gradients.
+For a fully connected layer with weight matrix $W$, a per-example gradient has
+the outer-product form
+\[
+ \nabla_W\ell=\delta a^\top,
+\]
+where $a$ is the incoming activation and $\delta$ is the back-propagated
+derivative at the layer output. The corresponding Fisher block contains
+\begin{equation}
+\E\bigl[(aa^\top)\otimes(\delta\delta^\top)\bigr].
+ \label{eq:exact-fisher-block}
+\end{equation}
+Here $\otimes$ denotes the Kronecker product.
+A Kronecker-factored approximation replaces the expectation in
+\cref{eq:exact-fisher-block} by
+\begin{equation}
+ \E[aa^\top]\otimes\E[\delta\delta^\top].
+ \label{eq:kfac-block}
+\end{equation}
+The factorization discards dependence between activations and
+back-propagated derivatives, and a layerwise block approximation also
+discards cross-layer interactions. Rigorous convergence results exist for
+restricted overparameterized or infinite-width network models, but no
+general theorem says that a low-rank or Kronecker-factored preconditioner
+improves the conditioning of a finite multilayer network.
+
+Preconditioning also changes solution selection when the minimizer is not
+unique. Lecture~10 showed that the optimization geometry can determine which
+interpolating or separating solution is approached. Better conditioning and
+changed implicit bias are therefore separate consequences of the same matrix
+update.
+
+\section{AdaGrad adapts to observed gradient geometry}
+\label{sec:adagrad}
+
+Backtracking adapts to curvature by evaluating the objective at trial points.
+That test is practical when reliable objective values are inexpensive. In
+large-scale minibatch training, evaluating the full empirical objective
+requires a pass over the data, and every trial on the current minibatch
+requires another forward pass. Trials evaluated on different minibatches also
+produce noisy values for different functions. These costs motivate adaptive
+rules that use the first-order observations already computed by the training
+procedure.
+
+AdaGrad gives a clean example of such a rule. Its guarantee applies to
+subgradients of convex losses, including losses with no smoothness constant
+$\beta$. This section first studies scalar adaptation in online convex
+optimization: the method nearly matches the bound obtained by choosing the
+best constant stepsize after all gradients have been observed, without
+knowing the horizon or the future gradient norms. AdaGrad then applies the
+same idea coordinate by coordinate. The coordinatewise refinement can improve
+the scalar bound when gradient activity is sparse or uneven.
+
+\paragraph{Scope of the online model.}
+The online model supplies the historical and mathematically clean setting for
+AdaGrad's adaptive subgradient guarantee. The regret theorem gives an exact
+comparison with a stepsize selected after the gradient sequence is known.
+Its formal scope is online convex optimization. Under an i.i.d.\ sampling
+model with $L(x)=\E[\ell_t(x)]$, convexity and the averaged decision
+$\overline x_T=T^{-1}\sum_{t=1}^T x_t$ give the online-to-batch relation
+\begin{equation}
+ \E[L(\overline x_T)-L(u)]
+ \le\frac1T\E[\operatorname{Reg}_T(u)].
+ \label{eq:online-to-batch}
+\end{equation}
+Language-model training is a nonconvex stochastic problem outside that scope.
+Here the theorem identifies the origin and precise meaning of AdaGrad's
+adaptive update.
+
+The online problem supplies a sequence of convex losses instead of the one
+fixed objective $L$ used above. To mark the change of setting, we write $x_t$
+for the online decisions. At round $t$, the learner chooses $x_t$ before
+seeing the current loss $\ell_t$ and then receives a subgradient
+$g_t\in\partial\ell_t(x_t)$. Performance is compared with one fixed decision
+$u$ chosen after the whole sequence is known. The regret is
+\begin{equation}
+ \operatorname{Reg}_T(u)
+ =\sum_{t=1}^T\bigl(\ell_t(x_t)-\ell_t(u)\bigr).
+ \label{eq:online-regret}
+\end{equation}
+A sublinear regret bound means that, for every fixed comparator $u$,
+\begin{equation}
+ \operatorname{Reg}_T(u)=o(T)
+ \quad\Longleftrightarrow\quad
+ \frac1T\sum_{t=1}^T
+ \bigl(\ell_t(x_t)-\ell_t(u)\bigr)\longrightarrow0.
+ \label{eq:sublinear-regret-meaning}
+\end{equation}
+The guarantee is deterministic and allows the loss sequence to be
+adversarial; no sampling model is required.
+
+Let $\cX$ be a closed convex set with Euclidean diameter at most $D>0$. Projected
+online gradient descent with a constant stepsize $\eta>0$ satisfies
+\begin{equation}
+ \operatorname{Reg}_T(u)
+ \le \frac{D^2}{2\eta}
+      +\frac\eta2\sum_{t=1}^T\|g_t\|_2^2.
+ \label{eq:fixed-eta-oco}
+\end{equation}
+If the entire sequence were known before the run and at least one gradient
+were nonzero, the right side would be minimized by
+\begin{equation}
+ \eta^\star
+ =\frac{D}{\sqrt{\sum_{t=1}^T\|g_t\|_2^2}}.
+ \label{eq:hindsight-stepsize}
+\end{equation}
+The best value of the constant-stepsize upper bound is
+\begin{equation}
+ \inf_{\eta>0}
+ \left\{
+  \frac{D^2}{2\eta}
+  +\frac\eta2\sum_{t=1}^T\|g_t\|_2^2
+ \right\}
+ =D\left(\sum_{t=1}^T\|g_t\|_2^2\right)^{1/2}.
+ \label{eq:hindsight-bound-value}
+\end{equation}
+The tuned stepsize depends on future gradients and therefore cannot be
+supplied to the online algorithm.
+
+\begin{theorem}[Scalar adaptation to the observed gradient scale]
+\label{thm:scalar-adaptation}
+Define
+\[
+ S_t=\left(\sum_{s=1}^t\|g_s\|_2^2\right)^{1/2}
+\]
+and use the projected update
+\begin{equation}
+ x_{t+1}=\Pi_{\cX}\left(x_t-\frac{D}{S_t}g_t\right),
+ \label{eq:scalar-adaptive-update}
+\end{equation}
+with no change when $S_t=0$. Then, for every $u\in\cX$,
+\begin{equation}
+ \operatorname{Reg}_T(u)
+ \le\frac32D
+      \left(\sum_{t=1}^T\|g_t\|_2^2\right)^{1/2}.
+ \label{eq:scalar-adaptive-regret}
+\end{equation}
+\end{theorem}
+
+\begin{proof}
+If $S_T=0$, then every $g_t=0$, and convexity gives
+$\ell_t(x_t)-\ell_t(u)\le0$ on every round. Suppose therefore that $S_T>0$,
+and let $t_0$ be the first index for which $S_{t_0}>0$. Rounds before $t_0$
+again contribute nonpositive regret. For $t\ge t_0$, set
+$\eta_t=D/S_t$. Since $u\in\cX$, the projection inequality gives
+\begin{equation}
+ \|x_{t+1}-u\|_2^2
+ \le \|x_t-\eta_tg_t-u\|_2^2
+ =\|x_t-u\|_2^2
+   -2\eta_t\langle g_t,x_t-u\rangle
+   +\eta_t^2\|g_t\|_2^2.
+ \label{eq:scalar-adaptive-projection-step}
+\end{equation}
+Rearranging \cref{eq:scalar-adaptive-projection-step} yields
+\begin{equation}
+ \langle g_t,x_t-u\rangle
+ \le
+ \frac{\|x_t-u\|_2^2-\|x_{t+1}-u\|_2^2}{2\eta_t}
+ +\frac{\eta_t}{2}\|g_t\|_2^2.
+ \label{eq:scalar-adaptive-inner-product-step}
+\end{equation}
+Convexity gives
+\[
+ \ell_t(x_t)-\ell_t(u)\le\langle g_t,x_t-u\rangle.
+\]
+Combining the last two inequalities gives the one-step bound
+\[
+ \ell_t(x_t)-\ell_t(u)
+ \le \frac{\|x_t-u\|_2^2-\|x_{t+1}-u\|_2^2}{2\eta_t}
+      +\frac{\eta_t}{2}\|g_t\|_2^2.
+\]
+
+We next sum the distance terms. Summation by parts is the discrete analogue
+of integration by parts. The mnemonic
+\[
+ \int Fg=FG-\int fG,
+ \qquad F'=f,\quad G'=g,
+\]
+says to move the derivative---or, for a sum, the finite difference---from one
+factor to the other and retain the boundary terms. Put
+$A_t=\|x_t-u\|_2^2$. Directly expanding the finite sum gives
+\begin{align}
+ \sum_{t=t_0}^T\frac{A_t-A_{t+1}}{2\eta_t}
+ &=\frac{A_{t_0}}{2\eta_{t_0}}
+   +\sum_{t=t_0+1}^T
+    \left(\frac1{2\eta_t}-\frac1{2\eta_{t-1}}\right)A_t
+   -\frac{A_{T+1}}{2\eta_T}.                       \label{eq:scalar-sbp}
+\end{align}
+The sequence $S_t$ is nondecreasing, so $1/\eta_t=S_t/D$ is also
+nondecreasing. Every coefficient in the middle sum of
+\cref{eq:scalar-sbp} is therefore nonnegative. Using $A_t\le D^2$ and
+discarding the final nonpositive term yields
+\begin{equation}
+ \sum_{t=t_0}^T\frac{A_t-A_{t+1}}{2\eta_t}
+ \le D^2\left[
+       \frac1{2\eta_{t_0}}
+       +\sum_{t=t_0+1}^T
+        \left(\frac1{2\eta_t}-\frac1{2\eta_{t-1}}\right)
+      \right]
+ =\frac{D^2}{2\eta_T}
+  =\frac{DS_T}{2}.                                  \label{eq:scalar-distance-sum}
+\end{equation}
+
+For the gradient terms, $S_t^2-S_{t-1}^2=\|g_t\|_2^2$ and hence
+\begin{equation}
+ \sum_{t=t_0}^T\frac{\|g_t\|_2^2}{S_t}
+ =\sum_{t=t_0}^T
+   (S_t-S_{t-1})\frac{S_t+S_{t-1}}{S_t}
+ \le2\sum_{t=t_0}^T(S_t-S_{t-1})
+  =2S_T.                                             \label{eq:scalar-gradient-sum}
+\end{equation}
+Multiplying \cref{eq:scalar-gradient-sum} by $D/2$ bounds the gradient
+sum in the one-step inequality by $DS_T$. Combining the two sums proves
+\cref{eq:scalar-adaptive-regret}.
+\end{proof}
+
+Combining \cref{eq:scalar-adaptive-regret,eq:hindsight-bound-value} gives
+\begin{equation}
+ \operatorname{Reg}_T(u)
+ \le\frac32
+ \inf_{\eta>0}
+ \left\{
+  \frac{D^2}{2\eta}
+  +\frac\eta2\sum_{t=1}^T\|g_t\|_2^2
+ \right\}.
+ \label{eq:scalar-adaptation-versus-hindsight}
+\end{equation}
+Thus the adaptive guarantee is within a factor $3/2$ of the best value of the
+constant-stepsize upper bound \cref{eq:fixed-eta-oco}. The procedure does not
+need the horizon or a bound on the gradient norms, but the procedure still
+uses the domain diameter $D$. Adaptation is always relative to a specified set
+of unknown and known quantities.
+
+Diagonal AdaGrad applies the same argument separately to each coordinate.
+Let $\cX=\prod_{i=1}^d[a_i,b_i]$, with coordinate diameter
+$D_i=b_i-a_i$.
+
+Define the accumulated coordinate magnitude
+\begin{equation}
+ G_{t,i}=\left(\delta^2+\sum_{s=1}^t g_{s,i}^2\right)^{1/2},
+ \qquad \delta\ge0.
+ \label{eq:adagrad-accumulator}
+\end{equation}
+Diagonal AdaGrad uses
+\begin{equation}
+ x_{t+1,i}
+ =\Pi_{[a_i,b_i]}
+  \left(x_{t,i}-\frac{D_i}{G_{t,i}}g_{t,i}\right).
+ \label{eq:adagrad-update}
+\end{equation}
+When $\delta=0$ and $G_{t,i}=0$, the coordinate is left unchanged. A small
+positive $\delta$ is commonly used to avoid division by zero.
+
+\begin{theorem}[Data-dependent regret of diagonal AdaGrad]
+\label{thm:adagrad-regret}
+With $\delta=0$, the iterates in \cref{eq:adagrad-update} satisfy, for every
+$u\in\cX$,
+\begin{equation}
+ \sum_{t=1}^T\bigl(\ell_t(x_t)-\ell_t(u)\bigr)
+ \le\frac32\sum_{i=1}^d D_i
+       \left(\sum_{t=1}^Tg_{t,i}^2\right)^{1/2}.
+ \label{eq:adagrad-regret}
+\end{equation}
+\end{theorem}
+
+\Cref{ex:l12-adagrad-regret} asks you to prove the theorem. To compare the
+diagonal and scalar guarantees, define
+\[
+ D_2=\left(\sum_{i=1}^dD_i^2\right)^{1/2},
+ \qquad
+ S_i=\left(\sum_{t=1}^Tg_{t,i}^2\right)^{1/2}.
+\]
+Cauchy--Schwarz gives
+\begin{equation}
+ \sum_{i=1}^dD_iS_i
+ \le D_2\left(\sum_{t=1}^T\|g_t\|_2^2\right)^{1/2}.
+ \label{eq:diagonal-versus-scalar}
+\end{equation}
+Thus the diagonal AdaGrad bound is never worse than the corresponding scalar
+adaptive bound with the box's Euclidean diameter. The comparison is between
+the two upper bounds; a comparison of realized losses requires separate
+analysis. If all
+$D_i$ are equal and only $k$ coordinates ever receive gradients of comparable
+cumulative magnitude, then, in the exactly equal case,
+\begin{equation}
+ \frac{\sum_{i=1}^dD_iS_i}
+ {D_2\bigl(\sum_{t=1}^T\|g_t\|_2^2\bigr)^{1/2}}
+ =\sqrt{\frac{k}{d}}.
+ \label{eq:adagrad-sparse-gain}
+\end{equation}
+The diagonal regret upper bound is therefore smaller by the factor
+$\sqrt{d/k}$, with the largest factor $\sqrt d$ attained when $k=1$.
+
+The theorem identifies the specific sense in which AdaGrad is adaptive.
+AdaGrad records the gradient magnitudes observed in each coordinate, and the
+regret bound depends on the same recorded quantities. A sparse or uneven
+gradient sequence can therefore yield a smaller comparator bound than scalar
+adaptation.
+
+The smooth-objective and online analyses use gradient information
+differently. For one fixed smooth objective, the quadratic upper bound
+converts a gradient step into objective descent, giving an $O(1/T)$ convex
+objective-gap bound or geometric objective-gap decay under the PL inequality.
+In online convex optimization, adversarially changing losses prevent
+telescoping of objective values from different rounds. The online proof uses a
+squared-distance recursion and retains the cumulative squared gradients.
+Under bounded gradients, the
+theorem gives the usual average-regret bound: if $\|g_t\|_2\le G$, then
+\begin{equation}
+ \frac1T\sum_{t=1}^T\bigl(\ell_t(x_t)-\ell_t(u)\bigr)
+ \le\frac{3DG}{2\sqrt T}.
+ \label{eq:scalar-average-regret}
+\end{equation}
+
+AdaGrad pays for long-term memory in another way. The denominator
+$G_{t,i}$ never decreases. A large gradient early in training permanently
+reduces later steps in that coordinate. Permanent dependence on early
+gradients is appropriate for the adversarial online regret theorem but can be
+too conservative when gradient scales change during nonconvex training.
+
+The statistic $G_{t,i}^2$ is a sum of squared gradients. A diagonal entry of
+the Hessian is a derivative of a gradient coordinate. Particular
+probabilistic models can relate these quantities, but their definitions and
+general roles are different. AdaGrad constructs an adaptive diagonal geometry
+from the observed gradients.
+
+\section{Adapting to changing gradient scales}
+\label{sec:adam}
+
+AdaGrad retains every past squared gradient in its denominator. A large
+gradient therefore reduces every later step in the same coordinate, even
+after the relevant gradient scale has changed. Neural-network gradients can
+also differ greatly across coordinates and across stages of training. Adam
+uses recent squared gradients to set coordinatewise scales and uses recent
+gradients to set the update direction. This section first explains that
+design and then studies an exact logistic-regression example.
+
+Given a stochastic gradient $g_t\in\R^d$ at $\theta_t$ and initial states
+$m_0=v_0=0$, Adam uses
+\begin{align}
+ m_t&=\beta_1m_{t-1}+(1-\beta_1)g_t,
+ \label{eq:adam-first-moment}\\
+ v_t&=\beta_2v_{t-1}+(1-\beta_2)(g_t\odot g_t),
+ \label{eq:adam-second-moment}\\
+ \widehat m_t&=\frac{m_t}{1-\beta_1^t},
+ \qquad
+ \widehat v_t=\frac{v_t}{1-\beta_2^t},
+ \label{eq:adam-bias-correction}\\
+ \theta_{t+1}&=\theta_t-\alpha
+ \frac{\widehat m_t}{\sqrt{\widehat v_t}+\varepsilon}.
+ \label{eq:adam-update}
+\end{align}
+Products, square roots, and division are coordinatewise. The numerator
+$\widehat m_t$ averages recent gradients and supplies the direction. The
+denominator supplies one scale per coordinate. Unrolling its recursion gives
+\begin{equation}
+ v_t=(1-\beta_2)\sum_{s=1}^t\beta_2^{t-s}(g_s\odot g_s).
+ \label{eq:adam-exponential-memory}
+\end{equation}
+Thus a squared gradient observed $t-s$ iterations ago receives weight
+$\beta_2^{t-s}$. AdaGrad assigns weight one to every past squared gradient;
+Adam assigns geometrically decreasing weights. The parameters
+$\beta_1,\beta_2\in[0,1)$ determine the two memory timescales,
+$\alpha>0$ is a base stepsize, and $\varepsilon\ge0$ controls the update when
+the recent squared gradients are small. When $\varepsilon=0$, the coordinate
+$i$ update in \cref{eq:adam-update} is defined whenever
+$\widehat v_{t,i}>0$; the scalar examples below have a nonzero gradient at
+every finite iterate.
+
+The factors $1-\beta_1^t$ and $1-\beta_2^t$ correct the initialization at
+zero. For a constant gradient sequence, the corrected quantities equal the
+corresponding first and squared gradients at every iteration. The quantities
+$\alpha$, $\beta_1$, $\beta_2$, and $\varepsilon$ remain algorithmic choices.
+
+RMSProp is the earlier method that uses the same recent-square scaling with
+the current gradient in the numerator. A common version uses
+\begin{equation}
+ \theta_{t+1}=\theta_t-\alpha
+ \frac{g_t}{\sqrt{v_t}+\varepsilon},
+ \qquad
+ v_t=\beta_2v_{t-1}+(1-\beta_2)(g_t\odot g_t).
+ \label{eq:rmsprop-update}
+\end{equation}
+Setting $\beta_1=0$ in Adam gives the bias-corrected version of this update.
+Convergence-to-stationarity guarantees for RMSProp require explicit
+smoothness, noise, and hyperparameter conditions. Convex counterexamples rule
+out an unconditional convergence guarantee.
+
+We next examine Adam's behavior on a simple separable logistic problem.
+For the special case $\beta_1=\beta_2=0$, the calculation gives an exact
+comparison between the normalized update and constant-stepsize gradient
+descent, and shows that normalization can produce faster loss decay in this
+setting.
+\begin{example}[Loss decay on a one-dimensional logistic problem]
+\label{ex:logistic-normalization}
+Let
+\begin{equation}
+ L(\theta)=\log(1+e^{-\theta}),
+ \qquad
+ L'(\theta)=-\frac1{1+e^\theta}.
+ \label{eq:scalar-logistic-loss}
+\end{equation}
+Constant-stepsize gradient descent satisfies
+\begin{equation}
+ \theta_{t+1}=\theta_t+\frac\eta{1+e^{\theta_t}}.
+ \label{eq:scalar-logistic-gd}
+\end{equation}
+For every $\eta>0$, the iterates obey
+\begin{equation}
+ \lim_{t\to\infty}tL(\theta_t)=\frac1\eta.
+ \label{eq:scalar-logistic-gd-rate}
+\end{equation}
+The normalized update with $\alpha>0$ gives
+\begin{equation}
+ \theta_{t+1}
+ =\theta_t-\alpha\frac{L'(\theta_t)}{|L'(\theta_t)|}
+  =\theta_t+\alpha,
+ \qquad
+ \lim_{t\to\infty}e^{\alpha t}L(\theta_t)
+ =e^{-\theta_0}.
+ \label{eq:scalar-logistic-normalized-rate}
+\end{equation}
+Thus the loss decays as $1/t$ for the constant gradient-descent stepsize and
+exponentially for the normalized update.
+\end{example}
+
+To verify \cref{eq:scalar-logistic-gd-rate}, set
+$u_t=e^{\theta_t}$. The iterates in \cref{eq:scalar-logistic-gd} increase
+without bound, and
+\[
+ u_{t+1}-u_t
+ =u_t\left[
+   \exp\left(\frac\eta{1+u_t}\right)-1
+  \right]\longrightarrow\eta.
+\]
+The Stolz--Ces\`aro theorem gives $u_t/t\to\eta$, and
+$\log(1+1/u_t)\sim1/u_t$ proves
+\cref{eq:scalar-logistic-gd-rate}. The identity
+$\theta_t=\theta_0+\alpha t$ proves
+\cref{eq:scalar-logistic-normalized-rate}.
+
+The normalized update in the example is the RMSProp and Adam special case
+$\beta_1=\beta_2=0$ and $\varepsilon=0$. The calculation proves exponential
+loss decay for this scalar problem. Comparisons on other objectives require
+their own analysis.
+
+The same special case gives an exact interpretation of
+$\varepsilon>0$. The update becomes
+\begin{equation}
+ \theta_{t+1}
+ =\theta_t+\alpha
+  \frac{|L'(\theta_t)|}{|L'(\theta_t)|+\varepsilon}.
+ \label{eq:scalar-logistic-epsilon-update}
+\end{equation}
+For $0<\varepsilon<1$, the gradient threshold
+$|L'(\theta)|=\varepsilon$ corresponds exactly to the loss level
+\begin{equation}
+ L(\theta)=-\log(1-\varepsilon).
+ \label{eq:scalar-logistic-epsilon-level}
+\end{equation}
+When $|L'(\theta_t)|\gg\varepsilon$, the update in
+\cref{eq:scalar-logistic-epsilon-update} is approximately the normalized
+update. When $|L'(\theta_t)|\ll\varepsilon$, the update is approximately a
+gradient step with stepsize $\alpha/\varepsilon$. In fact,
+\begin{equation}
+ \lim_{t\to\infty}tL(\theta_t)=\frac{\varepsilon}{\alpha}.
+ \label{eq:scalar-logistic-epsilon-rate}
+\end{equation}
+To obtain the limit, again set $u_t=e^{\theta_t}$ and observe that
+$u_{t+1}-u_t\to\alpha/\varepsilon$. Thus $\varepsilon=0$ preserves
+exponential decay, whereas every fixed $\varepsilon>0$ eventually returns to
+$1/t$ decay after a potentially long normalized phase. For general Adam, the
+transition occurs when $\sqrt{\widehat v_{t,i}}$ is comparable to
+$\varepsilon$. Each coordinate has its own transition, determined by the
+recent gradient history.
+
+Exponential forgetting removes the monotonicity used in AdaGrad's regret
+proof. An old large gradient can cease to constrain the effective step even
+when that gradient remains important for the optimization objective.
+
+\begin{example}[An extreme forgetting failure]
+\label{ex:adam-forgetting}
+On $[-1,1]$, repeat the three linear losses
+\[
+ \ell_{3k+1}(x)=Cx,
+ \qquad
+ \ell_{3k+2}(x)=\ell_{3k+3}(x)=-x,
+ \qquad C>2.
+\]
+The three losses sum to $(C-2)x$ over each block, so the best fixed point is
+$x=-1$. Take the projected Adam special case $\beta_1=\beta_2=0$ and
+$\varepsilon=0$, and fix $0<\alpha\le2$. For
+$g_t=\ell_t'(x_t)$, the update is
+\begin{equation}
+ x_{t+1}=\Pi_{[-1,1]}
+ \left(x_t-\alpha\frac{g_t}{|g_t|}\right).
+ \label{eq:adam-forgetting-update}
+\end{equation}
+The update normalizes every nonzero gradient to its sign. Starting from
+$x=1$, the iterates used for one block are
+$1,1-\alpha,1$. The next block again begins at $1$. Every block therefore
+incurs the same positive regret. After $K$ blocks,
+\begin{equation}
+ \sum_{t=1}^{3K}\bigl(\ell_t(x_t)-\ell_t(-1)\bigr)
+ =K\bigl(2(C-2)+\alpha\bigr).
+ \label{eq:adam-linear-regret}
+\end{equation}
+\Cref{ex:l12-adam-forgetting} asks you to calculate the iterates and the exact
+block regret.
+\end{example}
+
+The example proves an online convex optimization failure:
+\begin{equation}
+ \frac{\operatorname{Reg}_{3K}(-1)}{3K}
+ =\frac{2(C-2)+\alpha}{3}>0.
+ \label{eq:adam-nonvanishing-average-regret}
+\end{equation}
+Failures also occur in stochastic convex optimization and in deterministic
+batch optimization. Separate counterexamples establish the following two
+statements.
+\begin{enumerate}[(a),leftmargin=*]
+\item Let $\Xi$ be a random data example. There is a convex loss
+$\ell(\theta;\Xi)$ for which Adam applied to the stochastic objective
+\begin{equation}
+ L(\theta)=\E[\ell(\theta;\Xi)]
+ \label{eq:adam-stochastic-objective}
+\end{equation}
+produces iterates satisfying
+\begin{equation}
+ \operatorname{dist}\bigl(\theta_t,\argmin_\theta L(\theta)\bigr)
+ \not\longrightarrow0.
+ \label{eq:adam-stochastic-nonconvergence}
+\end{equation}
+\item A deterministic batch version of Adam with bias correction has
+trajectories that approach a nonoptimal period-two limit cycle on the strongly
+convex quadratic
+\begin{equation}
+ L(\theta)=\frac c2\theta^2,
+ \qquad c>0.
+ \label{eq:adam-quadratic-objective}
+\end{equation}
+For such a trajectory, there are two distinct states
+$s_+=(a,m_+,v_+)$ and $s_-=(-a,m_-,v_-)$ with $a\ne0$ such that
+\begin{equation}
+ (\theta_{2t},m_{2t},v_{2t})\longrightarrow s_+,
+ \qquad
+ (\theta_{2t+1},m_{2t+1},v_{2t+1})\longrightarrow s_-.
+ \label{eq:adam-two-cycle}
+\end{equation}
+\end{enumerate}
+The deterministic construction uses $\sqrt{v_t+\varepsilon}$ in the
+denominator; the update in \cref{eq:adam-update} uses
+$\sqrt{v_t}+\varepsilon$. The construction rules out a global convergence
+guarantee for the former batch Adam variant. Its conclusion concerns the
+existence of particular trajectories and leaves behavior from standard
+initializations and default hyperparameters open. Long-memory variants such
+as AMSGrad restore a nondecreasing second-moment envelope for the corresponding
+convex analysis.
+
+Positive convergence theorems for Adam provide basic reassurance under
+restricted assumptions. An advantage over scalar adaptation or SGD requires
+a sharper comparison. Recent results identify settings in which the
+coordinatewise normalization can improve the bound. Examples
+include objectives with nonuniform smoothness of the schematic form
+\[
+ \|\nabla L(u)-\nabla L(v)\|_2
+ \lesssim
+ \bigl(L_0+L_1\|\nabla L(u)\|_2\bigr)
+ \|u-v\|_2
+\]
+locally, and problems whose gradients or curvature are favorable in
+$\ell_\infty$ or blockwise geometry. These results give problem-dependent
+comparisons with scalar methods. A universal ordering of Adam and tuned SGD
+and a hindsight-best diagonal guarantee comparable to AdaGrad's theorem
+remain unavailable.
+
+Adam remains a practically important optimizer, including for transformer
+training. Existing theory and empirical evidence support particular
+mechanisms and regimes. The denominator is an exponential average of squared
+gradients. Default hyperparameters still require empirical validation, and
+the available theorems apply to specified objective and noise classes.
+
+\subsection{Decoupling weight decay from adaptive scaling}
+
+The logistic example sends the parameter to infinity along the separating
+direction. Practical training often includes weight decay to control parameter
+growth. For an adaptive method, the placement of this shrinkage changes the
+update. This subsection derives two common updates and then returns to
+the scalar logistic example.
+
+Suppose an adaptive method uses a positive diagonal matrix $D_t$ and applies
+an $\ell_2$ penalty to the objective:
+\[
+ F(\theta)=L(\theta)+\frac\lambda2\|\theta\|_2^2.
+\]
+The update is
+\begin{equation}
+ \theta_{t+1}
+ =\theta_t-\alpha D_t^{-1}(\nabla L(\theta_t)+\lambda\theta_t)
+ =(I-\alpha\lambda D_t^{-1})\theta_t
+   -\alpha D_t^{-1}\nabla L(\theta_t).
+ \label{eq:adaptive-l2-update}
+\end{equation}
+The adaptive matrix scales the penalty gradient. Coordinates with different
+entries of $D_t$ receive different amounts of shrinkage.
+
+AdamW applies \emph{decoupled weight decay}:
+\begin{equation}
+ \theta_{t+1}
+ =(1-\alpha\lambda)\theta_t
+  -\alpha D_t^{-1}\nabla L(\theta_t).
+ \label{eq:adamw-update}
+\end{equation}
+The factor multiplying $\theta_t$ is independent of the adaptive gradient
+geometry. For ordinary unpreconditioned gradient descent, $D_t=I$ and the two
+updates coincide. For a general adaptive diagonal matrix, the two updates
+define different algorithms. \Cref{ex:l12-adamw-decoupling} asks you to verify
+the distinction.
+
+For the normalized scalar logistic update in
+\cref{ex:logistic-normalization}, AdamW gives
+\begin{equation}
+ \theta_{t+1}=(1-\alpha\lambda)\theta_t+\alpha.
+ \label{eq:scalar-logistic-adamw}
+\end{equation}
+If $0<\alpha\lambda<2$, then
+\begin{equation}
+ \theta_t\longrightarrow\frac1\lambda,
+ \qquad
+ L(\theta_t)\longrightarrow\log(1+e^{-1/\lambda})>0.
+ \label{eq:scalar-logistic-adamw-limit}
+\end{equation}
+The limiting parameter is finite, and the limiting unregularized logistic
+loss is positive. The weight-decayed and unregularized procedures therefore
+optimize different training criteria.
+
+The algebra also clarifies the design choice. An $\ell_2$ penalty belongs to
+the objective, so an adaptive optimizer preconditions the penalty gradient
+together with the loss gradient. Decoupled weight decay prescribes uniform
+multiplicative shrinkage in the chosen parameterization. The two updates
+encode different parameter preferences.
+
+\subsection{How acceleration and adaptation enter neural-network training}
+
+The methods in this lecture solve different problems, and practical training
+often combines several of them. Momentum SGD and Nesterov-style momentum are
+used for neural networks. The smooth strongly convex acceleration theorem
+assumes a deterministic objective with global constants $\mu$ and $\beta$.
+General neural-network training has a nonconvex objective and noisy minibatch
+gradients, so the theorem supplies no rate for that setting. The momentum
+coefficient and the base learning rate therefore remain empirical choices in
+such applications.
+
+AdaGrad and Adam modify a different part of the update. AdaGrad assigns
+coordinatewise scales from all past squared gradients. The permanent
+accumulator is useful when rare or sparse coordinates should receive larger
+updates, but the same permanence can make later updates too small when the
+gradient scale changes. Adam uses exponential memory so that the
+coordinatewise scales can change. AdamW combines that normalization with
+uniform weight decay. Transformer training provides extensive empirical use
+of AdamW. Available theory gives guarantees in restricted models and leaves a
+universal comparison with momentum SGD open.
+
+A learning-rate schedule controls the global multiplier left outside these
+direction and normalization choices. For a known training budget $T$, a
+single cosine decay has the form
+\begin{equation}
+ \alpha_t
+ =\alpha_{\min}
+  +\frac{\alpha_{\max}-\alpha_{\min}}2
+   \left(1+\cos\frac{\pi t}{T}\right),
+ \qquad 0\le t\le T.
+ \label{eq:cosine-learning-rate}
+\end{equation}
+The schedule makes relatively large updates early and reduces the global
+step scale smoothly near the end of a fixed-budget run. A \emph{warmup phase}
+increases the learning rate from a smaller initial value to
+$\alpha_{\max}$ during a prescribed number of initial iterations and is often
+placed before the decay. Cosine decay is fixed before training:
+$\alpha_t$ depends only on $t$ and the chosen schedule parameters. The choices
+of $\alpha_{\max}$,
+$\alpha_{\min}$, the warmup length, and $T$ still require specification.
+When cosine decay is used with Adam, the coefficients $\beta_1$ and $\beta_2$
+usually remain fixed. The weights $\beta_1^{t-s}$ and $\beta_2^{t-s}$ assigned
+to past gradients therefore decay at the same rate throughout training. Near
+the end of training, however, the smaller $\alpha_t$ means that the parameters
+move less during one fixed-length memory window, so the remembered gradients
+come from more similar parameter values. Forgetting per iteration is constant;
+the memory window becomes longer relative to the rate at which the parameters
+move.
+The original cosine-annealing proposal used repeated cycles with warm
+restarts; a single decay uses one cycle without restarting.
+
+\section{How much tuning can be removed?}
+\label{sec:tuning-free}
+
+Each method studied above removes a particular tuning requirement.
+Backtracking selects a safe stepsize without being supplied with $\beta$;
+scalar and diagonal AdaGrad select stepsizes without knowing the future
+gradient scales. RMSProp and Adam track recent coordinatewise scales while
+retaining a base learning rate and memory parameters.
+\Cref{ex:l12-tuned-comparisons} asks you to recover the exact comparisons with
+the corresponding methods tuned in advance. This section addresses the
+broader question: can one algorithm match a tuned method when several
+properties of the problem are unknown?
+
+We use the phrase \emph{tuning-free} for a comparison between a self-tuning
+method and a specified reference method. A tuning-free claim must specify the
+quantities supplied to the reference method, the looser information supplied
+to the self-tuning method, and the performance criterion. Two important
+results show both the scope and the limits of such claims.
+
+\subsection{Adapting to the regularity of a deterministic objective}
+
+Universal convex methods address an entire family of regularity regimes.
+Suppose that $L$ is convex and that, for some unknown $\nu\in[0,1]$ and
+$H_\nu>0$, the first-order oracle obeys
+\begin{equation}
+ \|g(u)-g(v)\|_2
+ \le H_\nu\|u-v\|_2^\nu,
+ \qquad g(u)\in\partial L(u).
+ \label{eq:holder-first-order-oracle}
+\end{equation}
+Let $R=\|\theta_0-\theta^\star\|_2$. Given a target objective error
+$\epsilon>0$, a universal accelerated method can attain
+\begin{equation}
+ L(\theta_N)-L^\star\le\epsilon
+ \quad\text{after}\quad
+ N=O\left(
+   \inf_{\nu\in[0,1]}
+   \left(\frac{H_\nu}{\epsilon}\right)^{\frac{2}{1+3\nu}}
+   R^{\frac{2+2\nu}{1+3\nu}}
+ \right)
+ \label{eq:universal-convex-complexity}
+\end{equation}
+first-order oracle calls, without being supplied with $\nu$ or $H_\nu$.
+For $\nu=1$, the bound becomes
+$O(\sqrt{H_1R^2/\epsilon})$, the accelerated smooth-convex rate. For
+$\nu=0$, it becomes $O(H_0^2R^2/\epsilon^2)$, the nonsmooth rate. The same
+method selects the appropriate rate from the observed first-order behavior.
+
+\subsection{Matching tuned SGD with several unknown scales}
+
+Stochastic optimization makes the comparison more demanding because the
+observations used for tuning are noisy. Consider a convex,
+$\beta$-smooth objective on a convex set of diameter $D$. At a query
+$\theta$, suppose the oracle returns $G(\theta)$ satisfying
+\begin{equation}
+ \E[G(\theta)\mid\theta]=\nabla L(\theta),
+ \qquad
+ \|G(\theta)-\nabla L(\theta)\|_2\le\sigma
+ \quad\text{almost surely}.
+ \label{eq:tuning-free-oracle}
+\end{equation}
+With suitable tuning, variants of SGD attain the high-probability rate
+\begin{equation}
+ L(\widehat\theta_T)-L^\star
+ =\widetilde O\left(
+    \frac{\beta D^2}{T}+\frac{\sigma D}{\sqrt T}
+  \right),
+ \label{eq:tuned-sgd-stochastic-rate}
+\end{equation}
+where $\widetilde O$ suppresses logarithmic factors in the failure probability
+and the number of oracle calls. A tuning-free counterpart of SGD receives
+loose ranges containing $\beta$, $D$, and $\sigma$, and must match
+\cref{eq:tuned-sgd-stochastic-rate} up to logarithmic factors in the widths of
+those ranges.
+
+\begin{proposition}[Scope of tuning-free stochastic convex optimization]
+\label{prop:tuning-free-scope}
+For the bounded-domain problem above, algorithms exist that match
+\cref{eq:tuned-sgd-stochastic-rate} up to logarithmic factors without the exact
+values of $\beta$, $D$, and $\sigma$. On the unbounded domain $\R^d$, replace
+$D$ by the initial distance
+\begin{equation}
+ D_\star=\|\theta_0-\theta^\star\|_2.
+ \label{eq:initial-distance-tuning}
+\end{equation}
+No algorithm supplied only with loose ranges for the problem scales can
+guarantee
+\begin{equation}
+ L(\widehat\theta_T)-L^\star
+ =\widetilde O\left(
+    \frac{\beta D_\star^2}{T}
+    +\frac{\sigma D_\star}{\sqrt T}
+  \right)
+ \label{eq:unbounded-tuning-free-target}
+\end{equation}
+uniformly over all smooth convex objectives and bounded-noise stochastic
+oracles. The impossibility already holds for one-dimensional objectives.
+\end{proposition}
+
+The logarithmic factors depend on the loose parameter ranges, $T$, and the
+requested failure probability.
+
+The bounded domain supplies a finite upper bound on how far a minimizer can be
+from the initial point. On an unbounded domain, two stochastic
+problems can produce the same observations with substantial probability while
+having different values of $D_\star$ and different optimal tuning. An
+algorithm then makes the same choices on both problems, although matching
+\cref{eq:unbounded-tuning-free-target} would require different choices. Extra
+assumptions on the noise can make its scale estimable and restore positive
+results. The bibliographical notes give the precise theorems and references.
+
+For neural-network training, the result identifies the information that a
+strong tuning claim would have to address. The parameter domain is usually
+unbounded, the objective is nonconvex, and the minibatch oracle is noisy.
+Adam's coordinatewise normalization leaves the base learning-rate schedule,
+memory parameters, numerical stabilizer, and weight decay to be selected.
+A theorem comparing an automatically selected training recipe with the best
+tuned AdamW or SGD recipe would require a specified model class, stochastic
+oracle, training budget, and performance measure.
+
+\section{Optional reading\suppmark}
+\label{sec:optional}
+
+This optional section proves the smooth-convex accelerated rate with a
+time-varying Lyapunov function, uses that rate to obtain linear convergence by
+restarting, and gives a spectral explanation for quadratic acceleration.
+
+\subsection{A Lyapunov proof of smooth-convex acceleration}
+\label{sec:convex-acceleration-lyapunov}
+
+The smooth-convex accelerated method uses a growing coefficient in its
+Lyapunov function. The growth of that coefficient produces the $1/t^2$ rate
+that will be converted into geometric decay by restarting.
+
+Let $A_0=0$ and initialize $\theta_0=v_0=z$. For the state
+$(\theta_t,v_t)$, consider
+\begin{equation}
+ E_t=A_t\bigl(L(\theta_t)-L^\star\bigr)
+ +\frac12\|v_t-\theta^\star\|_2^2.
+ \label{eq:convex-acceleration-potential}
+\end{equation}
+The design objective is to keep $E_t$ nonincreasing while making $A_t$ grow.
+For $v_{t+1}=v_t-a_{t+1}g_t$, expansion gives
+\begin{equation}
+ \frac12\|v_{t+1}-\theta^\star\|_2^2
+ =\frac12\|v_t-\theta^\star\|_2^2
+ -a_{t+1}\langle g_t,v_t-\theta^\star\rangle
+ +\frac{a_{t+1}^2}{2}\|g_t\|_2^2.
+ \label{eq:convex-acceleration-state-step}
+\end{equation}
+For $\theta_{t+1}=y_t-g_t/\beta$, smoothness gives
+\begin{equation}
+ A_{t+1}\bigl(L(\theta_{t+1})-L^\star\bigr)
+ \le A_{t+1}\bigl(L(y_t)-L^\star\bigr)
+ -\frac{A_{t+1}}{2\beta}\|g_t\|_2^2.
+ \label{eq:convex-acceleration-smooth-step}
+\end{equation}
+The two squared-gradient terms cancel when
+\begin{equation*}
+ \frac{A_{t+1}}{2\beta}=\frac{a_{t+1}^2}{2}
+ \qquad\Longleftrightarrow\qquad
+ A_{t+1}=\beta a_{t+1}^2.
+\end{equation*}
+Use $a_{t+1}>0$ also as the increment $A_{t+1}-A_t$. The two design
+requirements are therefore
+\begin{equation}
+ A_{t+1}=A_t+a_{t+1}=\beta a_{t+1}^2,
+ \label{eq:convex-acceleration-weights}
+\end{equation}
+and define
+\begin{align}
+ y_t&=\frac{A_t\theta_t+a_{t+1}v_t}{A_{t+1}},\notag\\
+ g_t&=\nabla L(y_t),\notag\\
+ v_{t+1}&=v_t-a_{t+1}g_t,\notag\\
+ \theta_{t+1}&=\frac{A_t\theta_t+a_{t+1}v_{t+1}}{A_{t+1}}
+ =y_t-\frac1\beta g_t.
+ \label{eq:convex-accelerated-coupling}
+\end{align}
+
+\begin{proposition}[Smooth-convex acceleration]
+\label{prop:smooth-convex-acceleration}
+Suppose that $L$ is convex and $\beta$-smooth and that the minimizer set
+$\Theta^\star$ is nonempty. The iterates in
+\cref{eq:convex-accelerated-coupling} satisfy $E_{t+1}\le E_t$. Consequently,
+for every $t\ge1$,
+\begin{equation}
+ L(\theta_t)-L^\star
+ \le\frac{2\beta\operatorname{dist}(z,\Theta^\star)^2}{(t+1)^2}.
+ \label{eq:convex-acceleration-lyapunov-rate}
+\end{equation}
+\end{proposition}
+
+\begin{proof}
+The smoothness and auxiliary-state terms have already been expanded in
+\cref{eq:convex-acceleration-smooth-step,eq:convex-acceleration-state-step}.
+After substituting $A_{t+1}=\beta a_{t+1}^2$ into the smoothness bound, it
+remains to control the term $L(y_t)-L^\star$.
+Convexity at $y_t$, applied to $\theta_t$ and $\theta^\star$ with weights
+$A_t$ and $a_{t+1}$, respectively, gives
+\begin{align*}
+ &A_t\bigl(L(\theta_t)-L(y_t)\bigr)
+ +a_{t+1}\bigl(L^\star-L(y_t)\bigr)\\
+ &\quad\ge\left\langle g_t,
+ A_t(\theta_t-y_t)+a_{t+1}(\theta^\star-y_t)\right\rangle
+ =-a_{t+1}\langle g_t,v_t-\theta^\star\rangle,
+\end{align*}
+where the equality uses
+$A_{t+1}y_t=A_t\theta_t+a_{t+1}v_t$. Rearranging yields
+\begin{equation}
+ A_{t+1}\bigl(L(y_t)-L^\star\bigr)
+ \le A_t\bigl(L(\theta_t)-L^\star\bigr)
+ +a_{t+1}\langle g_t,v_t-\theta^\star\rangle.
+ \label{eq:convex-acceleration-convex-step}
+\end{equation}
+Adding
+\cref{eq:convex-acceleration-smooth-step,eq:convex-acceleration-convex-step,eq:convex-acceleration-state-step}
+cancels the inner-product and squared-gradient terms and proves
+$E_{t+1}\le E_t$.
+
+The rate now follows from a lower bound on $A_t$. If
+$q_t=\sqrt{\beta A_t}$, then
+\cref{eq:convex-acceleration-weights} implies
+$q_{t+1}^2=q_t^2+q_{t+1}$, and hence
+$q_{t+1}\ge q_t+1/2$. Since $q_1=1$,
+\begin{equation}
+ A_t\ge\frac{(t+1)^2}{4\beta}
+ \qquad(t\ge1).
+ \label{eq:convex-acceleration-weight-growth}
+\end{equation}
+Finally, choose a minimizer $\theta^\star$ closest to $z$. Then
+$E_t\le E_0=\operatorname{dist}(z,\Theta^\star)^2/2$ and
+$A_t(L(\theta_t)-L^\star)\le E_t$ give
+\cref{eq:convex-acceleration-lyapunov-rate}.
+\end{proof}
+
+The cancellation in the proof explains the coefficient equation
+$A_{t+1}=\beta a_{t+1}^2$. The method is a standard coupled representation of
+Nesterov's smooth-convex accelerated gradient method; eliminating $v_t$ gives
+its familiar two-step form.
+
+\subsection{Restarting acceleration under convex PL}
+\label{sec:restart-optional}
+
+This subsection derives the accelerated linear rate for smooth convex PL
+objectives. The argument combines smooth-convex acceleration with the
+quadratic-growth consequence of PL. Strong convexity is one sufficient
+condition for this result.
+
+Let $\mathsf A_s(z)$ denote the output $\theta_s$ of
+\cref{eq:convex-accelerated-coupling} after $s$ gradient evaluations, starting
+from $z$. By \cref{prop:smooth-convex-acceleration},
+\begin{equation}
+ L(\mathsf A_s(z))-L^\star
+ \le\frac{2\beta\operatorname{dist}(z,\Theta^\star)^2}{(s+1)^2}.
+ \label{eq:accelerated-convex-rate}
+\end{equation}
+The quadratic-growth bound \cref{eq:pl-quadratic-growth} gives
+\begin{equation}
+ \operatorname{dist}(z,\Theta^\star)^2
+ \le\frac2\mu\bigl(L(z)-L^\star\bigr).
+ \label{eq:quadratic-growth-distance-gap}
+\end{equation}
+Combining the two inequalities yields
+\begin{equation}
+ L(\mathsf A_s(z))-L^\star
+ \le\frac{4\kappa}{(s+1)^2}
+       \bigl(L(z)-L^\star\bigr).
+ \label{eq:accelerated-restart-one-epoch}
+\end{equation}
+Choose $s=\lceil\sqrt{8\kappa}\rceil-1$ and restart the method from the
+preceding output after every $s$ gradients. If $z_r$ is the parameter after
+$r$ epochs, then
+\begin{equation}
+ L(z_r)-L^\star
+ \le 2^{-r}\bigl(L(z_0)-L^\star\bigr).
+ \label{eq:accelerated-restart-linear-rate}
+\end{equation}
+The total number of gradient evaluations needed to obtain
+$L(z_r)-L^\star\le\epsilon$ is therefore
+\begin{equation}
+ O\left(\sqrt\kappa
+ \log\frac{L(z_0)-L^\star}{\epsilon}\right).
+ \label{eq:accelerated-restart-complexity}
+\end{equation}
+The additional symbols $\mathsf A_s$, $s$, and $r$ describe the inner method,
+the epoch length, and the epoch index. They are needed only for this restart
+construction.
+
+\subsection{Implementing the minimax polynomial by Chebyshev iteration}
+\label{sec:chebyshev}
+
+This subsection identifies the degree-$t$ polynomial with the smallest
+worst-case residual on $[\mu,\beta]$ and derives a first-order iteration that
+generates that polynomial. Chebyshev semi-iteration has the algebraic form of
+a heavy-ball update with time-varying coefficients. It is neither the
+fixed-coefficient Polyak heavy-ball method nor the Nesterov method in
+\cref{sec:acceleration}.
+
+For the quadratic \cref{eq:quadratic-objective}, a linear first-order method
+whose iterates use past gradients and linear combinations has an error of the
+form
+\[
+ e_t=p_t(H)e_0,
+ \qquad p_t(0)=1,
+\]
+for a polynomial $p_t$ of degree at most $t$. The condition $p_t(0)=1$
+has a direct meaning: when $\lambda=0$, every gradient vanishes in that
+eigendirection, so the error remains equal to its initial value.
+For every $H$ satisfying $\mu I\preceq H\preceq\beta I$, the Euclidean error
+satisfies
+\begin{equation}
+ \|e_t\|_2
+ \le
+ \max_{\lambda\in[\mu,\beta]}|p_t(\lambda)|\,\|e_0\|_2.
+ \label{eq:polynomial-worst-case}
+\end{equation}
+
+\begin{proposition}[Polynomials generated by gradient descent]
+\label{prop:gd-polynomials}
+Constant-step gradient descent generates
+\[
+ p_t(\lambda)=(1-\eta\lambda)^t.
+\]
+Gradient descent with predetermined steps $\eta_0,\ldots,\eta_{t-1}$
+generates
+\[
+ p_t(\lambda)=\prod_{j=0}^{t-1}(1-\eta_j\lambda).
+\]
+Thus repeated constant-step gradient descent restricts $p_t$ to a power of
+one linear factor.
+\end{proposition}
+
+\begin{proof}
+Each eigencoordinate satisfies
+$e_{j+1}(\lambda)=(1-\eta_j\lambda)e_j(\lambda)$. Iterating the scalar
+recursion gives both formulas.
+\end{proof}
+
+Let $T_t$ be the degree-$t$ Chebyshev polynomial, characterized by
+$T_t(\cos\phi)=\cos(t\phi)$.
+Assume $0<\mu<\beta$ throughout this subsection. If $\mu=\beta$, then
+$H=\beta I$, and one gradient step with stepsize $1/\beta$ reaches
+$\theta^\star$.
+
+\begin{theorem}[Minimax residual polynomial]
+\label{thm:chebyshev-minimax}
+For every integer $t\ge1$,
+\begin{equation}
+ \min_{\substack{p\in\R[\lambda],\ \deg(p)\le t\\p(0)=1}}
+ \max_{\lambda\in[\mu,\beta]}|p(\lambda)|
+ =
+ \frac{1}{\left|T_t\left(\frac{\beta+\mu}{\beta-\mu}\right)\right|}.
+ \label{eq:chebyshev-minimax-value}
+\end{equation}
+A minimizer is
+\begin{equation}
+ p_t^\star(\lambda)
+ =\frac{T_t\left(\frac{\beta+\mu-2\lambda}{\beta-\mu}\right)}
+        {T_t\left(\frac{\beta+\mu}{\beta-\mu}\right)}.
+ \label{eq:chebyshev-polynomial}
+\end{equation}
+\end{theorem}
+
+\begin{proof}
+The affine map
+\[
+ x=\frac{\beta+\mu-2\lambda}{\beta-\mu}
+\]
+sends $[\mu,\beta]$ to $[-1,1]$ and sends $\lambda=0$ to
+$a=(\beta+\mu)/(\beta-\mu)>1$. Under the displayed affine change of variable,
+a feasible polynomial $p$ becomes a degree-$t$ polynomial $q$ satisfying
+$q(a)=1$.
+The displayed polynomial is feasible, and
+$|T_t(x)|\le1$ on $[-1,1]$, so the maximum magnitude of the displayed
+polynomial is the right side of
+\cref{eq:chebyshev-minimax-value}.
+
+To prove optimality, suppose that another transformed feasible polynomial
+$q$ had a
+strictly smaller maximum. At the $t+1$ alternating extrema
+$x_j=\cos(j\pi/t)$, the polynomial
+$T_t(x)-T_t(a)q(x)$ has the sign of $T_t(x_j)=(-1)^j$. The difference
+polynomial therefore has at least one root between every consecutive pair of
+extrema and also vanishes
+at $x=a$ because $q(a)=1$. A nonzero polynomial of degree at most $t$ cannot
+have these $t+1$ distinct roots.
+\end{proof}
+
+\begin{proposition}[Chebyshev iteration implements the minimax polynomial]
+\label{prop:chebyshev-implementation}
+Put
+\[
+ a=\frac{\beta+\mu}{\beta-\mu},
+ \qquad C_t=T_t(a).
+\]
+Starting from $\theta_0$, set
+\begin{equation}
+ \theta_1
+ =\theta_0-\frac{2}{\beta+\mu}\nabla L(\theta_0).
+ \label{eq:chebyshev-initial-step}
+\end{equation}
+For every $t\ge1$, compute
+\begin{equation}
+ \theta_{t+1}
+ =\theta_t
+  -\frac{4C_t}{(\beta-\mu)C_{t+1}}\nabla L(\theta_t)
+  +\frac{C_{t-1}}{C_{t+1}}(\theta_t-\theta_{t-1}).
+ \label{eq:chebyshev-iteration}
+\end{equation}
+Then
+\begin{equation}
+ e_t=p_t^\star(H)e_0
+ \qquad\text{for every }t\ge0.
+ \label{eq:chebyshev-implementation}
+\end{equation}
+The scalar coefficients can be computed from
+\begin{equation}
+ C_0=1,\qquad C_1=a,\qquad C_{t+1}=2aC_t-C_{t-1}.
+ \label{eq:chebyshev-scalar-recurrence}
+\end{equation}
+Thus each iteration uses one gradient evaluation, the current iterate, the
+preceding iterate, and scalar coefficients determined by $\mu$ and $\beta$.
+\end{proposition}
+
+\begin{proof}
+The recurrence $T_{t+1}(x)=2xT_t(x)-T_{t-1}(x)$ and
+\cref{eq:chebyshev-polynomial} give
+\begin{align*}
+ p_{t+1}^\star(\lambda)
+ &=\frac{2C_t}{C_{t+1}}
+   \left(a-\frac{2\lambda}{\beta-\mu}\right)p_t^\star(\lambda)
+   -\frac{C_{t-1}}{C_{t+1}}p_{t-1}^\star(\lambda).
+\end{align*}
+The scalar recurrence in \cref{eq:chebyshev-scalar-recurrence} implies
+\[
+ \frac{2aC_t}{C_{t+1}}
+ =1+\frac{C_{t-1}}{C_{t+1}}.
+\]
+Substituting $H$ for $\lambda$, applying the resulting polynomial identity to
+$e_0$, and using $\nabla L(\theta_t)=He_t$ gives
+\cref{eq:chebyshev-iteration}. Finally,
+$p_1^\star(\lambda)=1-2\lambda/(\beta+\mu)$ gives
+\cref{eq:chebyshev-initial-step}. Induction proves
+\cref{eq:chebyshev-implementation}.
+\end{proof}
+
+\begin{corollary}[Euclidean-error bound for the minimax polynomial]
+\label{cor:chebyshev-rate}
+The minimax value in \cref{eq:chebyshev-minimax-value} satisfies
+\begin{equation}
+ \max_{\lambda\in[\mu,\beta]}|p_t^\star(\lambda)|
+ \le2\left(\frac{\sqrt\kappa-1}{\sqrt\kappa+1}\right)^t.
+ \label{eq:chebyshev-rate}
+\end{equation}
+\end{corollary}
+
+\begin{proof}
+Put
+\[
+ r=\frac{\sqrt\kappa-1}{\sqrt\kappa+1}.
+\]
+Direct calculation gives
+\[
+ \frac{\beta+\mu}{\beta-\mu}
+ =\frac{\kappa+1}{\kappa-1}
+ =\frac{r+r^{-1}}2.
+\]
+The identity
+$T_t((u+u^{-1})/2)=(u^t+u^{-t})/2$ therefore gives
+\[
+ T_t\left(\frac{\beta+\mu}{\beta-\mu}\right)
+ =\frac{r^t+r^{-t}}2.
+\]
+Taking the reciprocal yields
+\[
+ \frac{2r^t}{1+r^{2t}}\le2r^t,
+\]
+which proves \cref{eq:chebyshev-rate}.
+\end{proof}
+
+\begin{corollary}[Relation between Chebyshev iteration and heavy ball]
+\label{cor:chebyshev-heavy-ball}
+Let
+\[
+ r=\frac{\sqrt\kappa-1}{\sqrt\kappa+1}.
+\]
+The Chebyshev update \cref{eq:chebyshev-iteration} has the heavy-ball form
+\begin{equation}
+ \theta_{t+1}
+ =\theta_t-\eta_t^{\rm Ch}\nabla L(\theta_t)
+  +\gamma_t^{\rm Ch}(\theta_t-\theta_{t-1}),
+ \label{eq:chebyshev-heavy-ball-form}
+\end{equation}
+where
+\begin{equation}
+ \eta_t^{\rm Ch}=\frac{4C_t}{(\beta-\mu)C_{t+1}},
+ \qquad
+ \gamma_t^{\rm Ch}=\frac{C_{t-1}}{C_{t+1}}.
+ \label{eq:chebyshev-heavy-ball-coefficients}
+\end{equation}
+The coefficients satisfy
+\begin{equation}
+ \lim_{t\to\infty}\eta_t^{\rm Ch}
+ =\frac{4}{(\sqrt\beta+\sqrt\mu)^2},
+ \qquad
+ \lim_{t\to\infty}\gamma_t^{\rm Ch}=r^2.
+ \label{eq:chebyshev-heavy-ball-limits}
+\end{equation}
+Thus the limits are the quadratic-optimal Polyak heavy-ball coefficients.
+Chebyshev iteration uses the time-varying coefficients in
+\cref{eq:chebyshev-heavy-ball-coefficients} to attain the finite-degree
+minimax polynomial; fixed-coefficient heavy ball does not attain that
+polynomial in general.
+\end{corollary}
+
+\begin{proof}
+The calculation in the proof of \cref{cor:chebyshev-rate} gives
+\[
+ C_t=\frac{r^t+r^{-t}}2.
+\]
+Taking the two ratios in
+\cref{eq:chebyshev-heavy-ball-coefficients} gives
+\[
+ \frac{C_t}{C_{t+1}}\longrightarrow r,
+ \qquad
+ \frac{C_{t-1}}{C_{t+1}}\longrightarrow r^2.
+\]
+The identity
+\[
+ \frac{4r}{\beta-\mu}
+ =\frac{4}{(\sqrt\beta+\sqrt\mu)^2}
+\]
+proves \cref{eq:chebyshev-heavy-ball-limits}. For comparison, fixed-coefficient
+heavy ball initialized by $\theta_{-1}=\theta_0$ has characteristic
+polynomial $(z+r)^2$ at $\lambda=\beta$ and initial values
+$p_0^{\rm HB}(\beta)=1$ and $p_1^{\rm HB}(\beta)=-r(2+r)$. Hence
+\begin{equation}
+ p_t^{\rm HB}(\beta)=(-r)^t\bigl(1+t(1+r)\bigr).
+ \label{eq:heavy-ball-endpoint-polynomial}
+\end{equation}
+The linear factor in \cref{eq:heavy-ball-endpoint-polynomial} shows directly
+that the fixed-coefficient method is not the finite-degree minimax method.
+\end{proof}
+
+The square root of $\kappa$ comes from uniform polynomial approximation over
+the spectral interval. Proposition~\ref{prop:chebyshev-implementation} shows
+that the minimax polynomial is also an algorithm: its three-term recurrence
+becomes the time-varying heavy-ball update
+\cref{eq:chebyshev-heavy-ball-form}. The implementation does not compute an
+eigendecomposition, although it does require the spectral bounds $\mu$ and
+$\beta$.
+
+Nesterov acceleration generates a third polynomial sequence. On the
+quadratic objective, \cref{eq:accelerated-eigendirection} implies
+\begin{equation}
+ p_{t+1}^{\rm NAG}(\lambda)
+ =\left(1-\frac{\lambda}{\beta}\right)
+  \left((1+\gamma)p_t^{\rm NAG}(\lambda)
+        -\gamma p_{t-1}^{\rm NAG}(\lambda)\right).
+ \label{eq:nag-residual-polynomial}
+\end{equation}
+with
+\begin{equation}
+ p_0^{\rm NAG}(\lambda)=1,
+ \qquad
+ p_1^{\rm NAG}(\lambda)=1-\frac{\lambda}{\beta}.
+ \label{eq:nag-residual-initial-values}
+\end{equation}
+
+\begin{proposition}[Worst-case Nesterov residual on quadratics]
+\label{prop:nag-residual-bound}
+Set $\tau=1/\sqrt\kappa$ and initialize $\theta_{-1}=\theta_0$. The residual
+polynomials defined by \cref{eq:nag-residual-polynomial} satisfy, for every
+$t\ge0$,
+\begin{equation}
+ \max_{\lambda\in[\mu,\beta]}
+ |p_t^{\rm NAG}(\lambda)|
+ =\left(1+\frac{t}{\sqrt\kappa}\right)
+  \left(1-\frac1{\sqrt\kappa}\right)^t.
+ \label{eq:nag-residual-bound}
+\end{equation}
+\end{proposition}
+
+\begin{proof}
+The claim is immediate for $t=0$. For $t\ge1$, put
+\[
+ x=\sqrt{\frac{1-\lambda/\beta}{1-\tau^2}}\in[0,1].
+\]
+Let $U_j$ denote the Chebyshev polynomial of the second kind, characterized by
+$U_j(\cos\phi)=\sin((j+1)\phi)/\sin\phi$ with the endpoint values defined by
+continuity. Substitution in \cref{eq:nag-residual-polynomial}, together with
+$\gamma=(1-\tau)/(1+\tau)$, gives
+\begin{equation}
+ p_t^{\rm NAG}(\lambda)
+ =\bigl((1-\tau)x\bigr)^t
+  \left(T_t(x)+\tau xU_{t-1}(x)\right).
+ \label{eq:nag-chebyshev-representation}
+\end{equation}
+Indeed, after division by $((1-\tau)x)^t$, the recurrence becomes the
+Chebyshev recurrence, and
+$p_1^{\rm NAG}(\lambda)=(1-\tau)(1+\tau)x^2$.
+The representation at $x=0$ follows by continuity.
+For $x\in[-1,1]$,
+\[
+ |T_t(x)|\le1,
+ \qquad
+ |U_{t-1}(x)|\le t.
+\]
+Therefore
+\[
+ |p_t^{\rm NAG}(\lambda)|
+ \le (1-\tau)^t x^t(1+\tau tx)
+ \le (1-\tau)^t(1+\tau t).
+\]
+At $\lambda=\mu$, one has $x=1$, $T_t(1)=1$, and $U_{t-1}(1)=t$.
+The upper bound is therefore attained.
+\end{proof}
+
+Equations~\eqref{eq:chebyshev-rate} and \eqref{eq:nag-residual-bound} both
+give $\sqrt\kappa$ iteration dependence, but they are different finite-time
+statements. Chebyshev semi-iteration generates the minimax polynomial
+\cref{eq:chebyshev-polynomial}; Nesterov acceleration generates
+\cref{eq:nag-chebyshev-representation}. The Euclidean-error comparison in
+this subsection is also distinct from the objective-gap potential guarantee
+in \cref{thm:accelerated-strongly-convex}.
+
+\section{Take-home messages}
+\label{sec:take-home}
+
+\begin{itemize}[leftmargin=*]
+\item Backtracking line search avoids advance knowledge of the smoothness
+constant by testing the finite-step decrease inequality needed in the proof.
+Under the PL inequality and with exact objective values, the number of
+gradient evaluations needed to reach a prescribed objective gap increases by
+at most the search multiplier $\rho$; the additional cost is objective
+evaluations at rejected trial points.
+\item For smooth, strongly convex objectives, acceleration reduces the number
+of gradient evaluations needed for a fixed relative objective-gap reduction
+from order $\kappa$ to order $\sqrt\kappa$. A matching first-order lower bound
+makes the square-root dependence optimal. The stated one-step potential proof
+uses the lower model supplied by strong convexity. The accelerated update can
+be derived by combining the smooth upper step with that lower model and
+choosing the coupling coefficient so that the squared-gradient terms cancel.
+The fixed momentum coefficient uses $\kappa$. For smooth convex objectives
+satisfying the PL inequality, restarting the smooth-convex accelerated method
+also gives square-root condition-number dependence; a geometric search over
+epoch lengths handles an unknown $\kappa$ when $L^\star$ is available.
+\item Preconditioning changes coordinates. The relevant quadratic curvature
+is $P^{1/2}HP^{1/2}$, and a structured approximation trades geometric
+fidelity for near-linear computation and memory.
+\item Scalar online adaptation matches the best constant-stepsize regret
+bound in hindsight within a factor $3/2$. Diagonal AdaGrad is no worse at
+the level of the scalar and diagonal upper bounds and can improve the scalar
+bound when gradient activity is concentrated in a small number of coordinates.
+\item RMSProp replaces cumulative memory by exponential squared-gradient
+memory. Adam adds an exponential average of the gradients and bias correction.
+Both updates remain dependent on a base learning rate and memory parameters.
+Exponential forgetting prevents a general AdaGrad-style guarantee.
+Counterexamples exist in online and
+stochastic convex optimization, and a deterministic batch Adam variant can
+approach a nonoptimal limit cycle. Restricted positive theory identifies
+nonuniform smoothness and favorable coordinate or block geometry as possible
+benefits. On the scalar separable logistic example, exact gradient
+normalization improves loss decay from $\Theta(1/t)$ to
+$\Theta(e^{-\alpha t})$. The conclusion applies to the scalar example;
+comparisons on other objectives require separate analysis.
+\item AdamW applies uniform weight decay outside the adaptive gradient
+scaling. An $\ell_2$ penalty inside the objective receives coordinatewise
+scaling from the adaptive matrix. The two formulas define different updates.
+\item Universal deterministic methods can attain the rate associated with an
+unknown H\"older-smoothness regime. In stochastic convex optimization, methods
+can match tuned SGD up to logarithmic factors on bounded domains. The analogous
+guarantee over an unbounded domain is impossible under the general
+bounded-noise oracle model. Every tuning-free claim must specify the retained
+hints, oracle, domain, reference method, and performance measure.
+\end{itemize}
+
+\printendnotes
+
+\section*{Bibliographical notes}
+
+The sufficient-decrease line search goes back to classical work including
+\citet{armijo1966}. The presentation here uses the quadratic upper-bound test
+that appears in proximal-gradient and accelerated proximal-gradient methods.
+\citet{beck2009} analyze both ordinary and accelerated backtracking and prove
+the $O(1/t)$ and $O(1/t^2)$ convex objective-gap bounds used here.
+
+Polyak's heavy-ball method was introduced by \citet{polyak1964}. Its
+quadratic-optimal parameters give accelerated asymptotic spectral convergence
+on strongly convex quadratics. Nesterov's accelerated method was introduced
+by \citet{nesterov1983}; \citet{nesterov2004} gives a systematic treatment of
+its guarantees over the full smooth convex and smooth strongly convex
+classes, together with the standard first-order lower bounds. The construction
+in \cref{sec:acceleration} is an elementary estimate-sequence argument: it
+combines a smooth upper step with accumulated strongly convex lower models and
+determines the coupling coefficient from the desired potential contraction.
+The smooth-convex construction in
+\cref{sec:convex-acceleration-lyapunov} expresses the estimate-sequence
+mechanism as a time-varying Lyapunov inequality.
+
+Restarting converts the smooth-convex accelerated rate into a linear rate
+under quadratic growth. The implication from PL to quadratic growth, with the
+same constant, is proved by \citet{karimi2016}.
+\citet{odonoghue2015} propose objective- and gradient-based adaptive restart
+rules motivated by oscillation of the
+accelerated iterates. \citet{fercoq2019} give a provable adaptive restart
+scheme under a local quadratic-growth condition; their test uses the norm of
+the gradient mapping and adjusts the restart frequency from observed
+progress. \citet{roulet2020} analyze scheduled and adaptive restarts under
+more general H\"olderian growth conditions. For convex objectives, such growth
+conditions are related to the nonlinear gradient-dominance inequalities in
+Lecture~11 and lead to exponent-dependent restart schedules and rates. The
+main text uses the quadratic-growth case because it gives the clean convex-PL
+result in \cref{eq:accelerated-restart-main-complexity}.
+
+The distinction between quadratic and general objectives is essential for
+heavy ball. \citet{lessard2016} give a smooth, strongly convex nonquadratic
+example on which the quadratic-optimal heavy-ball parameters produce a
+nonconvergent cycle. In dimension at least two, \citet{goujaud2023} prove a
+stronger fixed-parameter non-acceleration result: every fixed heavy-ball
+parameter choice either has a nonaccelerated worst-case rate on strongly
+convex quadratics or fails to converge on some smooth, strongly convex
+objective.
+
+The polynomial construction in \cref{sec:chebyshev} is the classical
+Chebyshev semi-iterative method. \citet{barrett1994} present the three-term
+implementation for linear systems and discuss its dependence on spectral
+bounds. Chebyshev semi-iteration is a nonstationary heavy-ball iteration: its
+coefficients converge to the quadratic-optimal Polyak coefficients, but the
+time-varying coefficients are what generate the finite-degree minimax
+polynomial. Nesterov acceleration generates a different polynomial recurrence.
+All three methods exhibit square-root condition-number dependence in their
+respective quadratic guarantees. The lower bound separating smooth PL
+objectives from strongly convex objectives is proved by \citet{yue2023}: over
+the general smooth PL class, first-order methods require order
+$(\beta/\mu)\log(1/\epsilon)$ oracle calls in the worst case.
+
+The Kronecker-factored calculation in
+\cref{eq:exact-fisher-block,eq:kfac-block} is the structural approximation
+used by K-FAC. \citet{zhang2019ngd} prove global convergence for natural
+gradient and K-FAC under Jacobian rank and stability conditions, including an
+overparameterized two-layer ReLU setting. \citet{karakida2020} analyze deep
+networks in an infinite-width limit and show that several approximate Fisher
+matrices have the same function-space dynamics as exact natural gradient
+under the assumptions of their analysis. The two sets of results justify
+specific structured approximations in restricted regimes; the results do not
+give a general finite-width conditioning theorem for multilayer networks.
+
+The adaptive subgradient framework and data-dependent regret guarantees for
+AdaGrad are due to \citet{duchi2011}. The diagonal theorem in
+\cref{thm:adagrad-regret} is a direct coordinatewise specialization with a
+simple box constraint. \Cref{ex:l12-adagrad-regret} asks you to prove the
+specialization and identify exactly which observed geometry enters.
+
+RMSProp was introduced in Geoffrey Hinton's 2012 neural-network course
+\citep{hinton2012rmsprop}. Its update has several implementation variants,
+including placement of
+$\varepsilon$ and optional correction of the initial second-moment bias.
+\citet{zou2019} give sufficient conditions for convergence of RMSProp and
+Adam in nonconvex stochastic optimization. The conditions involve the base
+stepsizes and the accumulated second-moment quantities. The result supplies a
+conditional convergence guarantee. A tuning-free comparison with SGD requires
+a different theorem.
+
+Adam was introduced by \citet{kingma2015}. The original convergence analysis
+was later shown to contain a problem. \citet{reddi2018} prove separate online
+and stochastic convex nonconvergence results and propose AMSGrad. The
+complete-forgetting example in \cref{ex:adam-forgetting} is an elementary
+limiting case that isolates the online mechanism. \citet{bock2022} construct
+trajectories of a deterministic bias-corrected batch Adam variant that
+approach a nonoptimal period-two limit cycle on a scalar strongly convex
+quadratic. Their denominator uses $\sqrt{v_t+\varepsilon}$, and the result
+rules out global convergence without asserting failure from every
+initialization. \citet{defossez2022}
+give a convergence analysis for Adam and AdaGrad on smooth, possibly
+nonconvex objectives with bounded gradients. Results aimed at explaining an
+advantage beyond basic convergence include the nonuniform-smoothness
+comparison of \citet{wang2024}, the $\ell_\infty$ and blockwise analysis of
+\citet{xie2025}, and the block-heterogeneity analysis and experiments of
+\citet{zhang2024transformers}. The assumptions and conclusions of the three
+analyses differ, so none provides a universal ordering of Adam and SGD.
+
+The original motivation for Adam combines AdaGrad's behavior on sparse
+gradients with RMSProp's responsiveness to nonstationary gradient scales; see
+\citet{kingma2015}. The original paper also reports experiments on
+$\ell_2$-regularized multiclass logistic regression and sparse bag-of-words
+classification. In the logistic experiment, Adam and momentum SGD have
+similar convergence and both improve on AdaGrad under the reported tuning.
+The scalar calculation in
+\cref{ex:logistic-normalization} isolates the flattening mechanism without
+attributing every feature of Adam to that example. For separable logistic
+regression, \citet{soudry2018} prove $1/t$ loss decay and convergence toward
+the Euclidean max-margin direction for gradient descent with an admissible
+constant stepsize.
+\citet{zhang2024adambias} prove that full-batch Adam with a class of
+diminishing learning rates instead approaches an $\ell_\infty$ max-margin
+direction. The latter result concerns implicit bias. Loss-decay rates require
+a separate analysis. \citet{axiotis2023} obtain linear logistic-loss
+convergence with a variable gradient-descent stepsize, showing that the faster
+rate can also arise from gradient descent. Recent nonuniform-smoothness results give sharper
+comparisons for normalized methods and restricted Adam variants; see
+\citet{vaswani2026}.
+
+Decoupled weight decay and AdamW are due to \citet{loshchilov2019}.
+\citet{zhuang2022} interpret AdamW through an approximate proximal update and
+study the scale-freeness of the update. Convergence-rate results for AdamW are
+also available under explicit smoothness and noise assumptions; see, for
+example, \citet{li2025adamw}. The main text retains only the algebraic
+distinction between an adaptively scaled $\ell_2$ penalty and decoupled decay
+because the distinction is needed to understand the update.
+
+Momentum methods have also been used directly in neural-network training.
+\citet{sutskever2013} study classical and Nesterov-style momentum for deep and
+recurrent networks, while the ResNet training recipe of \citet{he2016resnet}
+uses momentum SGD. \citet{loshchilov2017sgdr} introduce cosine annealing with
+warm restarts. A modern large-language-model example is the Llama~2 recipe of
+\citet{touvron2023llama2}, which combines AdamW, learning-rate warmup, and
+cosine decay. These references document successful uses of the methods; they
+do not extend the smooth strongly convex acceleration theorem to neural
+networks or establish a universal ordering of optimizers.
+
+The universal accelerated method of \citet{nesterov2015} is given the target
+accuracy while the H\"older exponent and its constant remain unknown. Its
+complexity gives both endpoint rates in
+\cref{eq:universal-convex-complexity}. \Citet{khaled2024} define a tuning-free
+counterpart of SGD by comparison with optimally tuned SGD under loose
+parameter hints. They identify existing positive results on bounded domains
+and prove the unbounded-domain impossibility summarized in
+\cref{prop:tuning-free-scope}. They also give positive unbounded-domain
+results under stronger noise assumptions and treat a separate nonconvex
+stationarity question. These results ask for simultaneous adaptation to
+smoothness, noise, and distance scales, which is a stronger requirement than
+backtracking with exact objective evaluations.
+
+\section*{Glossary}
+
+\begin{description}[style=nextline,leftmargin=1.5em,labelindent=0pt]
+\item[Acceptable curvature estimate]
+A number $M>0$ for which the proposed point $\theta^+(M)$ satisfies the
+finite-step acceptance test used by a line search.
+\item[Acceleration]
+An improvement in worst-case iteration complexity obtained from state carried
+across iterations. For $\beta$-smooth, $\mu$-strongly convex objectives, the
+gradient complexities are $O(\kappa\log(1/\epsilon))$ for gradient descent and
+$O(\sqrt\kappa\log(1/\epsilon))$ for accelerated gradient descent. For
+$\beta$-smooth convex objectives with no PL or strong-convexity assumption,
+the corresponding objective-gap bounds are $O(\beta R^2/t)$ and
+$O(\beta R^2/t^2)$, where $R=\|\theta_0-\theta^\star\|_2$.
+\item[Adam]
+An adaptive stochastic first-order method that keeps exponential averages
+$m_t$ and $v_t$ of the gradients and squared gradients. The update
+\cref{eq:adam-update} divides the bias-corrected first-moment estimate
+$\widehat m_t$ coordinatewise by $\sqrt{\widehat v_t}+\varepsilon$.
+\item[AdamW and decoupled weight decay]
+An Adam update in which the parameter shrinkage is applied separately from
+the adaptively scaled gradient:
+$\theta_{t+1}=(1-\alpha\lambda)\theta_t-\alpha D_t^{-1}g_t$.
+\item[Backtracking line search]
+A procedure that increases a trial curvature estimate, equivalently decreases
+the trial stepsize, until an evaluated finite-step inequality holds.
+Accelerated backtracking also updates the coupling coefficients that depend on
+the accepted curvature estimate.
+\item[Chebyshev semi-iteration]
+A quadratic-optimization method whose time-varying two-step recurrence
+implements the degree-$t$ polynomial minimizing
+$\max_{\lambda\in[\mu,\beta]}|p_t(\lambda)|$ subject to $p_t(0)=1$.
+\item[Cosine learning-rate decay]
+A fixed-budget schedule that changes the global learning rate according to
+\cref{eq:cosine-learning-rate}, from $\alpha_{\max}$ at the start of the
+decay to $\alpha_{\min}$ at its end.
+\item[Diagonal AdaGrad]
+An online first-order method whose coordinate-$i$ denominator is the square
+root of the cumulative squared gradients observed in that coordinate.
+\item[Exponential memory]
+A moving average in which an observation from $s$ iterations ago receives a
+weight proportional to a power such as $\beta_2^s$.
+\item[First-order oracle]
+An interface that returns an objective value and gradient at a queried
+parameter. In the lower-bound comparison in this lecture, each query may
+depend on all preceding queries and oracle replies.
+\item[Heavy-ball method]
+The two-step update
+$\theta_{t+1}=\theta_t-\eta\nabla L(\theta_t)
++\gamma(\theta_t-\theta_{t-1})$, which evaluates the gradient at the current
+iterate. Quadratic-optimal fixed coefficients need not converge on every
+smooth, strongly convex objective.
+\item[Hindsight-tuned stepsize]
+A constant stepsize chosen after the complete gradient sequence is known to
+minimize a proved upper bound such as \cref{eq:fixed-eta-oco}. The comparison
+concerns the upper bound, not necessarily the realized losses.
+\item[Nesterov accelerated gradient]
+The two-step method
+$y_t=\theta_t+\gamma(\theta_t-\theta_{t-1})$ and
+$\theta_{t+1}=y_t-\nabla L(y_t)/\beta$. For the strongly convex theorem in
+this lecture, $\gamma=(\sqrt\kappa-1)/(\sqrt\kappa+1)$.
+\item[Online convex optimization and regret]
+At round $t$, the learner chooses $x_t$ before observing the convex loss
+$\ell_t$. Its regret relative to a fixed $u$ is
+$\operatorname{Reg}_T(u)=\sum_{t=1}^T(\ell_t(x_t)-\ell_t(u))$.
+\item[Preconditioner]
+A positive-definite matrix $P$ multiplying the gradient. On a quadratic with
+Hessian $H$, the conditioning effect of $P$ is determined by
+$P^{1/2}HP^{1/2}$.
+\item[Quadratic growth]
+For a nonempty minimizer set $\Theta^\star$, the inequality
+$L(\theta)-L^\star\ge
+\mu\operatorname{dist}(\theta,\Theta^\star)^2/2$, where
+$\operatorname{dist}(\theta,\Theta^\star)
+=\inf_{z\in\Theta^\star}\|\theta-z\|_2$. The PL inequality implies quadratic
+growth with the same constant. In the convex setting, this bound converts the
+distance-dependent accelerated rate into a gap-dependent restart guarantee.
+\item[Restart]
+Reinitialization of an accelerated method's memory after a fixed or
+data-dependent epoch while retaining the current parameter. Restarting a
+smooth-convex accelerated method every $\Theta(\sqrt\kappa)$ iterations gives
+linear convergence under convexity and the PL inequality; adaptive restart
+rules search for this epoch length when $\kappa$ is unknown.
+\item[Scalar online adaptation]
+A stepsize rule based on the cumulative Euclidean gradient magnitude. The
+rule in \cref{thm:scalar-adaptation} matches the best constant-stepsize bound
+in hindsight within a factor $3/2$ without knowing the horizon or future
+gradient magnitudes.
+\item[RMSProp]
+An adaptive stochastic first-order method that divides the current gradient
+coordinatewise by the square root of an exponential average of recent squared
+gradients, as in \cref{eq:rmsprop-update}.
+\item[Tuning-free guarantee]
+A theorem comparing an algorithm that lacks specified problem parameters
+with a benchmark that is optimally tuned using those parameters. The omitted
+parameters, allowed hints, oracle, and domain are part of the definition.
+\item[Universal convex method]
+A method that attains the rate associated with the unknown H\"older parameters
+$\nu$ and $H_\nu$ in \cref{eq:holder-first-order-oracle}. The guarantee
+\cref{eq:universal-convex-complexity} includes the nonsmooth and
+smooth-convex endpoint rates.
+\item[Warmup phase]
+An initial part of a learning-rate schedule during which the global learning
+rate increases from a smaller value to its prescribed peak value.
+\end{description}
+
+\section{Exercises}
+\label{sec:exercises}
+
+\exerciseinstructions
+\setcounter{courseexercise}{0}
+\exercisegroup{Unknown smoothness and acceleration}
+\input{../exercises/l12-backtracking-quadratic.tex}
+\input{../exercises/l12-nesterov-equivalence.tex}
+\input{../exercises/l12-accelerated-restart.tex}
+\exercisegroup{Adaptive geometry}
+\input{../exercises/l12-rotated-preconditioner.tex}
+\input{../exercises/l12-adagrad-regret.tex}
+\exercisegroup{Changing gradient scales and weight decay}
+\input{../exercises/l12-adam-forgetting.tex}
+\input{../exercises/l12-adamw-decoupling.tex}
+\exercisegroup{Comparing adaptive and tuned guarantees}
+\input{../exercises/l12-tuned-comparisons.tex}
+
+\clearpage
+\begin{thebibliography}{99}
+
+\bibitem[Armijo(1966)]{armijo1966}
+Larry Armijo.
+\newblock Minimization of functions having Lipschitz continuous first partial
+derivatives.
+\newblock \emph{Pacific Journal of Mathematics}, 16(1):1--3, 1966.
+\newblock \url{https://projecteuclid.org/euclid.pjm/1102995080}.
+
+\bibitem[Axiotis and Sviridenko(2023)]{axiotis2023}
+Kyriakos Axiotis and Maxim Sviridenko.
+\newblock Gradient descent converges linearly for logistic regression on
+separable data.
+\newblock In \emph{Proceedings of the 40th International Conference on
+Machine Learning}, pages 1302--1319, 2023.
+\newblock \url{https://proceedings.mlr.press/v202/axiotis23a.html}.
+
+\bibitem[Barrett et al.(1994)]{barrett1994}
+Richard Barrett, Michael Berry, Tony F. Chan, James Demmel, June Donato,
+Jack Dongarra, Victor Eijkhout, Roldan Pozo, Charles Romine, and Henk van der
+Vorst.
+\newblock \emph{Templates for the Solution of Linear Systems: Building Blocks
+for Iterative Methods}.
+\newblock SIAM, second edition, 1994.
+\newblock \url{https://www.netlib.org/templates/templates.pdf}.
+
+\bibitem[Beck and Teboulle(2009)]{beck2009}
+Amir Beck and Marc Teboulle.
+\newblock A fast iterative shrinkage-thresholding algorithm for linear inverse
+problems.
+\newblock \emph{SIAM Journal on Imaging Sciences}, 2(1):183--202, 2009.
+\newblock \url{https://doi.org/10.1137/080716542}.
+
+\bibitem[Bock and Wei\ss(2022)]{bock2022}
+Sebastian Bock and Martin Georg Wei\ss.
+\newblock Non-convergence and limit cycles in the Adam optimizer.
+\newblock 2022.
+\newblock \url{https://arxiv.org/abs/2210.02070}.
+
+\bibitem[D\'efossez et al.(2022)]{defossez2022}
+Alexandre D\'efossez, L\'eon Bottou, Francis Bach, and Nicolas Usunier.
+\newblock A simple convergence proof of Adam and AdaGrad.
+\newblock \emph{Transactions on Machine Learning Research}, 2022.
+\newblock \url{https://arxiv.org/abs/2003.02395}.
+
+\bibitem[Duchi et al.(2011)]{duchi2011}
+John Duchi, Elad Hazan, and Yoram Singer.
+\newblock Adaptive subgradient methods for online learning and stochastic
+optimization.
+\newblock \emph{Journal of Machine Learning Research}, 12:2121--2159, 2011.
+\newblock \url{https://www.jmlr.org/papers/v12/duchi11a.html}.
+
+\bibitem[Fercoq and Qu(2019)]{fercoq2019}
+Olivier Fercoq and Zheng Qu.
+\newblock Adaptive restart of accelerated gradient methods under local
+quadratic growth condition.
+\newblock \emph{IMA Journal of Numerical Analysis}, 39(4):2069--2095, 2019.
+\newblock \url{https://doi.org/10.1093/imanum/drz007}.
+
+\bibitem[Goujaud et al.(2023)]{goujaud2023}
+Baptiste Goujaud, Adrien B. Taylor, and Aymeric Dieuleveut.
+\newblock Provable non-accelerations of the heavy-ball method.
+\newblock 2023.
+\newblock \url{https://arxiv.org/abs/2307.11291}.
+
+\bibitem[He et al.(2016)]{he2016resnet}
+Kaiming He, Xiangyu Zhang, Shaoqing Ren, and Jian Sun.
+\newblock Deep residual learning for image recognition.
+\newblock In \emph{Proceedings of the IEEE Conference on Computer Vision and
+Pattern Recognition}, pages 770--778, 2016.
+\newblock \url{https://openaccess.thecvf.com/content_cvpr_2016/html/He_Deep_Residual_Learning_CVPR_2016_paper.html}.
+
+\bibitem[Hinton(2012)]{hinton2012rmsprop}
+Geoffrey Hinton.
+\newblock RMSProp: Divide the gradient by a running average of its recent
+magnitude.
+\newblock Lecture 6e, \emph{Neural Networks for Machine Learning}, 2012.
+\newblock \url{https://www.cs.utoronto.ca/~hinton/coursera_lectures.html}.
+
+\bibitem[Karakida and Osawa(2020)]{karakida2020}
+Ryo Karakida and Kazuki Osawa.
+\newblock Understanding approximate Fisher information for fast convergence
+of natural gradient descent in wide neural networks.
+\newblock In \emph{Advances in Neural Information Processing Systems 33},
+2020.
+\newblock \url{https://papers.neurips.cc/paper_files/paper/2020/hash/7b41bfa5085806dfa24b8c9de0ce567f-Abstract.html}.
+
+\bibitem[Karimi et al.(2016)]{karimi2016}
+Hamed Karimi, Julie Nutini, and Mark Schmidt.
+\newblock Linear convergence of gradient and proximal-gradient methods under
+the Polyak--\L{}ojasiewicz condition.
+\newblock In \emph{Machine Learning and Knowledge Discovery in Databases},
+pages 795--811, 2016.
+\newblock \url{https://arxiv.org/abs/1608.04636}.
+
+\bibitem[Khaled and Jin(2024)]{khaled2024}
+Ahmed Khaled and Chi Jin.
+\newblock Tuning-free stochastic optimization.
+\newblock In \emph{Proceedings of the 41st International Conference on
+Machine Learning}, pages 23622--23661, 2024.
+\newblock \url{https://proceedings.mlr.press/v235/khaled24a.html}.
+
+\bibitem[Kingma and Ba(2015)]{kingma2015}
+Diederik P. Kingma and Jimmy Ba.
+\newblock Adam: A method for stochastic optimization.
+\newblock In \emph{International Conference on Learning Representations},
+2015.
+\newblock \url{https://arxiv.org/abs/1412.6980}.
+
+\bibitem[Li et al.(2025)]{li2025adamw}
+Huan Li, Yiming Dong, and Zhouchen Lin.
+\newblock On the $O(\sqrt{d}/K^{1/4})$ convergence rate of AdamW measured by
+$\ell_1$ norm.
+\newblock 2025.
+\newblock \url{https://arxiv.org/abs/2505.11840}.
+
+\bibitem[Lessard et al.(2016)]{lessard2016}
+Laurent Lessard, Benjamin Recht, and Andrew Packard.
+\newblock Analysis and design of optimization algorithms via integral
+quadratic constraints.
+\newblock \emph{SIAM Journal on Optimization}, 26(1):57--95, 2016.
+\newblock \url{https://doi.org/10.1137/15M1009597}.
+
+\bibitem[Loshchilov and Hutter(2017)]{loshchilov2017sgdr}
+Ilya Loshchilov and Frank Hutter.
+\newblock SGDR: Stochastic gradient descent with warm restarts.
+\newblock In \emph{International Conference on Learning Representations},
+2017.
+\newblock \url{https://arxiv.org/abs/1608.03983}.
+
+\bibitem[Loshchilov and Hutter(2019)]{loshchilov2019}
+Ilya Loshchilov and Frank Hutter.
+\newblock Decoupled weight decay regularization.
+\newblock In \emph{International Conference on Learning Representations},
+2019.
+\newblock \url{https://openreview.net/forum?id=Bkg6RiCqY7}.
+
+\bibitem[Nesterov(1983)]{nesterov1983}
+Yurii E. Nesterov.
+\newblock A method for solving the convex programming problem with convergence
+rate $O(1/k^2)$.
+\newblock \emph{Doklady Akademii Nauk SSSR}, 269:543--547, 1983.
+
+\bibitem[Nesterov(2004)]{nesterov2004}
+Yurii Nesterov.
+\newblock \emph{Introductory Lectures on Convex Optimization: A Basic Course}.
+\newblock Kluwer Academic Publishers, 2004.
+\newblock \url{https://doi.org/10.1007/978-1-4419-8853-9}.
+
+\bibitem[Nesterov(2015)]{nesterov2015}
+Yurii Nesterov.
+\newblock Universal gradient methods for convex optimization problems.
+\newblock \emph{Mathematical Programming}, 152:381--404, 2015.
+\newblock \url{https://doi.org/10.1007/s10107-014-0790-0}.
+
+\bibitem[O'Donoghue and Cand\`es(2015)]{odonoghue2015}
+Brendan O'Donoghue and Emmanuel J. Cand\`es.
+\newblock Adaptive restart for accelerated gradient schemes.
+\newblock \emph{Foundations of Computational Mathematics}, 15(3):715--732,
+2015.
+\newblock \url{https://doi.org/10.1007/s10208-013-9150-3}.
+
+\bibitem[Polyak(1964)]{polyak1964}
+Boris T. Polyak.
+\newblock Some methods of speeding up the convergence of iteration methods.
+\newblock \emph{USSR Computational Mathematics and Mathematical Physics},
+4(5):1--17, 1964.
+\newblock \url{https://doi.org/10.1016/0041-5553(64)90137-5}.
+
+\bibitem[Reddi et al.(2018)]{reddi2018}
+Sashank J. Reddi, Satyen Kale, and Sanjiv Kumar.
+\newblock On the convergence of Adam and beyond.
+\newblock In \emph{International Conference on Learning Representations},
+2018.
+\newblock \url{https://openreview.net/forum?id=ryQu7f-RZ}.
+
+\bibitem[Roulet and d'Aspremont(2020)]{roulet2020}
+Vincent Roulet and Alexandre d'Aspremont.
+\newblock Sharpness, restart and acceleration.
+\newblock \emph{SIAM Journal on Optimization}, 30(1):262--289, 2020.
+\newblock \url{https://arxiv.org/abs/1702.03828}.
+
+\bibitem[Soudry et al.(2018)]{soudry2018}
+Daniel Soudry, Elad Hoffer, Mor Shpigel Nacson, Suriya Gunasekar, and Nathan
+Srebro.
+\newblock The implicit bias of gradient descent on separable data.
+\newblock \emph{Journal of Machine Learning Research}, 19(70):1--57, 2018.
+\newblock \url{https://www.jmlr.org/papers/v19/18-188.html}.
+
+\bibitem[Sutskever et al.(2013)]{sutskever2013}
+Ilya Sutskever, James Martens, George Dahl, and Geoffrey Hinton.
+\newblock On the importance of initialization and momentum in deep learning.
+\newblock In \emph{Proceedings of the 30th International Conference on
+Machine Learning}, pages 1139--1147, 2013.
+\newblock \url{https://proceedings.mlr.press/v28/sutskever13.html}.
+
+\bibitem[Touvron et al.(2023)]{touvron2023llama2}
+Hugo Touvron et al.
+\newblock Llama 2: Open foundation and fine-tuned chat models.
+\newblock 2023.
+\newblock \url{https://arxiv.org/abs/2307.09288}.
+
+\bibitem[Vaswani et al.(2026)]{vaswani2026}
+Sharan Vaswani, Yifan Sun, and Reza Babanezhad.
+\newblock Convergence of steepest descent and Adam under non-uniform
+smoothness.
+\newblock 2026.
+\newblock \url{https://arxiv.org/abs/2605.30648}.
+
+\bibitem[Wang et al.(2024)]{wang2024}
+Bohan Wang, Yushun Zhang, Huishuai Zhang, Qi Meng, Ruoyu Sun, Zhi-Ming Ma,
+Tie-Yan Liu, Zhi-Quan Luo, and Wei Chen.
+\newblock Provable adaptivity of Adam under non-uniform smoothness.
+\newblock In \emph{Proceedings of the 30th ACM SIGKDD Conference on Knowledge
+Discovery and Data Mining}, 2024.
+\newblock \url{https://arxiv.org/abs/2208.09900}.
+
+\bibitem[Xie et al.(2025)]{xie2025}
+Shuo Xie, Mohamad Amin Mohamadi, and Zhiyuan Li.
+\newblock Adam exploits $\ell_\infty$ geometry of loss landscape via
+coordinate-wise adaptivity.
+\newblock In \emph{International Conference on Learning Representations},
+2025.
+\newblock \url{https://proceedings.iclr.cc/paper_files/paper/2025/file/1700ad4e6252e8f2955909f96367b34d-Paper-Conference.pdf}.
+
+\bibitem[Yue et al.(2023)]{yue2023}
+Pengyun Yue, Cong Fang, and Zhouchen Lin.
+\newblock On the lower bound of minimizing Polyak--\L{}ojasiewicz functions.
+\newblock 2023.
+\newblock \url{https://arxiv.org/abs/2212.13551}.
+
+\bibitem[Zhang et al.(2019)]{zhang2019ngd}
+Guodong Zhang, James Martens, and Roger B. Grosse.
+\newblock Fast convergence of natural gradient descent for over-parameterized
+neural networks.
+\newblock In \emph{Advances in Neural Information Processing Systems 32},
+2019.
+\newblock \url{https://proceedings.neurips.cc/paper_files/paper/2019/hash/1da546f25222c1ee710cf7e2f7a3ff0c-Abstract.html}.
+
+\bibitem[Zhang et al.(2024a)]{zhang2024adambias}
+Chenyang Zhang, Difan Zou, and Yuan Cao.
+\newblock The implicit bias of Adam on separable data.
+\newblock In \emph{Advances in Neural Information Processing Systems 37},
+2024.
+\newblock \url{https://arxiv.org/abs/2406.10650}.
+
+\bibitem[Zhang et al.(2024b)]{zhang2024transformers}
+Yushun Zhang, Congliang Chen, Tian Ding, Ziniu Li, Ruoyu Sun, and Zhi-Quan Luo.
+\newblock Why transformers need Adam: A Hessian perspective.
+\newblock In \emph{Advances in Neural Information Processing Systems 37},
+2024.
+\newblock \url{https://proceedings.neurips.cc/paper_files/paper/2024/hash/ee0e45ff4de76cbfdf07015a7839f339-Abstract-Conference.html}.
+
+\bibitem[Zhuang et al.(2022)]{zhuang2022}
+Zhenxun Zhuang, Mingrui Liu, Ashok Cutkosky, and Francesco Orabona.
+\newblock Understanding AdamW through proximal methods and scale-freeness.
+\newblock \emph{Transactions on Machine Learning Research}, 2022.
+\newblock \url{https://arxiv.org/abs/2202.00089}.
+
+\bibitem[Zou et al.(2019)]{zou2019}
+Fangyu Zou, Li Shen, Zequn Jie, Weizhong Zhang, and Wei Liu.
+\newblock A sufficient condition for convergences of Adam and RMSProp.
+\newblock In \emph{Proceedings of the IEEE/CVF Conference on Computer Vision
+and Pattern Recognition}, pages 11127--11135, 2019.
+\newblock \url{https://arxiv.org/abs/1811.09358}.
+
+\end{thebibliography}
+
+\end{document}

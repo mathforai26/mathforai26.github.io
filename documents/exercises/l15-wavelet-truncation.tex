@@ -1,0 +1,35 @@
+\begin{exercisechunk}
+\item \textbf{From wavelet coefficient decay to an approximation rate.}\suppmark
+\label[exercise]{ex:l15-wavelet-truncation}
+\exerciseprofile{2}{2}{2}{\exproof\quad\excalculation\quad\exinterpretation}{%
+Convert scale-wise wavelet coefficient bounds into an $m$-term
+approximation rate.}
+Let $(\psi_{j,k})$ be an orthonormal wavelet basis of $L^2([0,1])$.
+Suppose that, at every level $j\geq0$, at most $C_0 2^j$ coefficients are
+nonzero and
+\[
+ |\langle f,\psi_{j,k}\rangle_{L^2}|
+ \leq C_1 2^{-j(r+1/2)},
+ \qquad r>0.
+\]
+Let $f_J$ retain the coarse-scale terms and all wavelet coefficients from
+levels $0,\ldots,J-1$.
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Use orthonormality to prove
+\[
+ \|f-f_J\|_{L^2}^2
+ \leq
+ \frac{C_0C_1^2}{1-2^{-2r}}\,2^{-2rJ}.
+\]
+\item Suppose the number $m_J$ of retained coefficients satisfies
+$m_J\asymp2^J$. Prove that
+\[
+ \|f-f_J\|_{L^2}=O(m_J^{-r}).
+\]
+\item State how \cref{prop:wavelet-coefficient-decay} supplies the hypothesis
+of this exercise when the $r$th derivative is uniformly bounded on the
+intervals appearing in that proposition.
+Identify the step in parts (a)--(b) that converts local smoothness information
+into a global $L^2$ approximation bound.
+\end{enumerate}
+\end{exercisechunk}

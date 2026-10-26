@@ -1,0 +1,60 @@
+\begin{exercisechunk}
+\item \textbf{Eliminating the auxiliary state and proving the accelerated rate.}
+\label[exercise]{ex:l12-nesterov-equivalence}
+\exerciseprofile{2}{2}{2}{\exproof\quad\excalculation}{%
+Eliminate the auxiliary state and use the potential contraction to prove the
+accelerated linear rate.}
+Let $L:\R^d\to\R$ be $\beta$-smooth and $\mu$-strongly convex, let
+$\theta^\star$ be its minimizer, and define
+\[
+ \kappa=\frac\beta\mu,
+ \qquad
+ \tau=\frac1{\sqrt\kappa},
+ \qquad
+ \gamma=\frac{1-\tau}{1+\tau}.
+\]
+Initialize $v_0=\theta_0$ and $\theta_{-1}=\theta_0$.
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Prove that the coupled update
+\begin{align*}
+ y_t&=\frac{\theta_t+\tau v_t}{1+\tau},
+ &\theta_{t+1}&=y_t-\frac1\beta\nabla L(y_t),\\
+ v_{t+1}&=(1-\tau)v_t
+ +\tau\left(y_t-\frac1\mu\nabla L(y_t)\right)
+\end{align*}
+and the two-step update
+\[
+ y_t=\theta_t+\gamma(\theta_t-\theta_{t-1}),
+ \qquad
+ \theta_{t+1}=y_t-\frac1\beta\nabla L(y_t)
+\]
+generate the same sequences $(\theta_t)$ and $(y_t)$.
+\item Suppose the coupled update satisfies
+\[
+ V(\theta_t,v_t)\le(1-\tau)^tV(\theta_0,v_0),
+ \qquad
+ V(\theta,v)=L(\theta)-L^\star
+ +\frac\mu2\|v-\theta^\star\|_2^2.
+\]
+Prove
+\[
+ L(\theta_t)-L^\star
+ \le2\left(1-\frac1{\sqrt\kappa}\right)^t
+       \bigl(L(\theta_0)-L^\star\bigr),
+\]
+and, for $0<\epsilon<2(L(\theta_0)-L^\star)$, show that
+$L(\theta_t)-L^\star\le\epsilon$ whenever
+\[
+ t\ge\sqrt\kappa
+ \log\frac{2(L(\theta_0)-L^\star)}{\epsilon}.
+\]
+\end{enumerate}
+\begin{hints}
+For part (a), use induction with
+\[
+ v_t=\frac{\theta_t-(1-\tau)\theta_{t-1}}{\tau}.
+\]
+For part (b), use strong convexity at $\theta_0$ and
+$1-\tau\le e^{-\tau}$.
+\end{hints}
+\end{exercisechunk}

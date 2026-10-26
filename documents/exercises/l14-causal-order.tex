@@ -1,0 +1,36 @@
+\begin{exercisechunk}
+\item \textbf{Characterize causally orderable self-maps.}\suppmark
+\label[exercise]{ex:l14-causal-order}
+\exerciseprofile{2}{2}{2}{\exproof\quad\exconstruction\quad\exinterpretation}{%
+Characterize exactly when every pointer update can retrieve from an earlier
+record in one causal ordering.}
+The pointer-doubling construction requires an ordering in which every map
+record points backward or to itself. This exercise identifies exactly which
+finite self-maps admit such an ordering.
+
+Let \(p:\cD\to\cD\) be a self-map on a finite set. Its functional directed
+graph has one edge \(u\to p(u)\) from every vertex. A \emph{causal ordering}
+is a bijection \(\operatorname{pos}:\cD\to[|\cD|]\) satisfying
+\[
+ \operatorname{pos}(p(u))\le\operatorname{pos}(u)
+ \qquad(u\in\cD).
+\]
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Prove that if the functional graph contains a directed cycle of length
+greater than one, then no causal ordering exists.
+\item Suppose every directed cycle is a self-loop. Prove that every orbit
+eventually reaches a unique fixed point in its connected component. Define the
+depth of a vertex to be the number of map applications needed to reach that
+fixed point. Construct a causal ordering and prove that it satisfies the
+required inequality.
+\item Conclude that a causal ordering exists if and only if every directed
+cycle is a self-loop.
+\item Prove that a causal ordering also satisfies
+\[
+ \operatorname{pos}(p^k(u))\le\operatorname{pos}(u)
+ \qquad(u\in\cD,\ k\ge0).
+\]
+Explain why this inequality makes every lookup in causal pointer-doubling
+preprocessing available at or before the requesting record.
+\end{enumerate}
+\end{exercisechunk}
