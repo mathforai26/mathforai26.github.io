@@ -18,10 +18,10 @@ Homework materials and submission links are added as assignments are released.
 | Homework 2: sequence objectives, state, and dependence | 10% | Fri, Oct 2, 11:59 p.m. | [PDF]({{ '/documents/assignments/assignment2.pdf' | relative_url }}) · [LaTeX source bundle]({{ '/documents/assignments/assignment2-source.zip' | relative_url }}) · [Submit on Canvas](https://canvas.ualberta.ca/courses/37231/assignments/817841) |
 | Research-question first draft | Part of 10% | Sun, Oct 11, 11:59 p.m. | [Template]({{ '/documents/misc_files/research_question_template.tex' | relative_url }}) · [Submit on Canvas](https://canvas.ualberta.ca/courses/37231/assignments/823020) |
 | Homework 3: distribution shift, learnability, and interpolation | 10% | Fri, Oct 16, 11:59 p.m. | [PDF]({{ '/documents/assignments/assignment3.pdf' | relative_url }}) · [LaTeX source bundle]({{ '/documents/assignments/assignment3-source.zip' | relative_url }}) · [Submit on Canvas](https://canvas.ualberta.ca/courses/37231/assignments/821347) |
-| Homework 4 | 10% | To be announced | To be posted |
-| Homework 5 | 10% | End of Week 11 | To be posted |
+| Homework 4: optimization geometry and shared representations | 10% | Fri, Nov 6, 11:59 p.m. | [PDF]({{ '/documents/assignments/assignment4.pdf' | relative_url }}) · [LaTeX source bundle]({{ '/documents/assignments/assignment4-source.zip' | relative_url }}) · [Submit on Canvas](https://canvas.ualberta.ca/courses/37231/assignments/827641) |
+| Homework 5 | 10% | Fri, Nov 20, 11:59 p.m. | To be posted |
 | Research-question revised note | Part of 10% | Sun, Nov 29, 11:59 p.m. | [Guidelines]({% link _pages/research-question.md %}) · [Submit on Canvas](https://canvas.ualberta.ca/courses/37231/assignments/823021) |
-| Homework 6 | 10% | End of Week 13 | To be posted |
+| Homework 6 | 10% | Fri, Dec 4, 11:59 p.m. | To be posted |
 | Final oral exam | 20% | Final-examination period | Topic list posted at least one week before |
 
 The raw weights shown for the six homeworks are each 10 percentage points. The two-lowest-grade replacement described in the [syllabus]({% link _pages/syllabus.md %}) is applied before the homework component is calculated.
