@@ -1,0 +1,66 @@
+{
+  "desk-missing-entry": {
+    "description": "Return 39 suitable instructions and try to use the forty-entry finishing rule.",
+    "accepted": false,
+    "reason": "instantiated premise differs from referenced claim",
+    "failed_record": 158,
+    "proposed_answer": "Place loose pens in a pen holder.\nStack loose notebooks neatly on the desk.\nPut loose paper clips in a small container.\nPlace erasers together in a drawer.\nReturn scissors to a designated drawer.\nPut sticky notes in a single stack.\nMove empty mugs from the desk to the kitchen.\nPut discarded wrappers in a wastebasket.\nStack unread letters in a designated tray.\nFile receipts in a labeled folder.\nPlace charging cables in a designated drawer.\nPut loose batteries in a storage container.\nPlace keys in a designated dish.\nReturn books to a bookshelf.\nPut rulers together in a drawer.\nWipe dust from the desktop with a dry cloth.\nPlace coasters together near the desk corner.\nPut spare headphones in a storage pouch.\nStack business cards in a card holder.\nPlace loose envelopes in a stationery tray.\nPut binder clips in a small container.\nReturn markers to a marker holder.\nPlace pencils in a pencil cup.\nMove the stapler to a designated desk corner.\nPut spare staples in a drawer.\nArrange folders upright in a file organizer.\nPlace loose photographs in a protective envelope.\nReturn the tape dispenser to its designated spot.\nPut charging adapters together in a storage box.\nPlace unused index cards in a single stack.\nMove empty food containers away from the desk.\nPlace a desk calendar beside the monitor.\nPut the calculator in a designated drawer.\nGather loose rubber bands into a small container.\nPlace the keyboard squarely in front of the monitor.\nPosition the mouse beside the keyboard.\nReturn the hole punch to a designated drawer.\nPut unused labels in a stationery folder.\nPlace external storage drives in a designated case.\n",
+    "accepted_records": 158
+  },
+  "simple-tax-wrong-answer": {
+    "description": "Establish eligibility but return the opposite answer.",
+    "accepted": false,
+    "reason": "final claim is not bound to actual input and answer",
+    "failed_record": null,
+    "proposed_answer": "No, you are ineligible.",
+    "accepted_records": 11
+  },
+  "arithmetic-wrong-answer": {
+    "description": "Establish the value 126 but return 127 using the same finishing rule.",
+    "accepted": false,
+    "reason": "instantiated premise differs from referenced claim",
+    "failed_record": 11,
+    "proposed_answer": "127",
+    "accepted_records": 11
+  },
+  "arithmetic-false-calculation": {
+    "description": "Claim that 42 times 3 is 127, then consistently use 127 in the remaining records.",
+    "accepted": false,
+    "reason": "verifier did not accept",
+    "failed_record": 9,
+    "proposed_answer": "127",
+    "accepted_records": 9
+  },
+  "full-tax-omitted-exclusion": {
+    "description": "Return Yes after certifying only the first two exclusions; the input's third flag is true.",
+    "accepted": false,
+    "reason": "instantiated premise differs from referenced claim",
+    "failed_record": 9,
+    "proposed_answer": "Yes.",
+    "accepted_records": 9
+  },
+  "long-code-omitted-provision": {
+    "description": "Return No using a calculation for 300 deductions when the supplied code contains 301.",
+    "accepted": false,
+    "reason": "instantiated premise differs from referenced claim",
+    "failed_record": 906,
+    "proposed_answer": "No.",
+    "accepted_records": 906
+  },
+  "long-code-reordered-provisions": {
+    "description": "Return Yes using cap-then-deduct calculations for an input that says deduct-then-cap.",
+    "accepted": false,
+    "reason": "instantiated premise differs from referenced claim",
+    "failed_record": 12,
+    "proposed_answer": "Yes.",
+    "accepted_records": 12
+  },
+  "long-code-oversized-query": {
+    "description": "Ask the verifier to approve the correct answer directly with the entire long request quoted.",
+    "accepted": false,
+    "reason": "complete query exceeds bound",
+    "failed_record": 0,
+    "proposed_answer": "Yes.",
+    "accepted_records": 0
+  }
+}

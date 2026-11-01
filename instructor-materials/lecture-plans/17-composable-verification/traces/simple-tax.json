@@ -1,0 +1,1013 @@
+{
+  "input": "An applicant meets the standard qualification exactly when they are resident and have income below the limit.\n\nAn applicant is eligible exactly when both conditions hold: they meet the standard qualification or are a qualifying student; and they have not received benefit B. These are the complete eligibility conditions.\n\nI am resident, my income is below the limit, and I have not received benefit B. I do not know whether I am a qualifying student.\n\nAm I eligible under these rules?",
+  "candidate": {
+    "answer": "Yes, you are eligible.",
+    "steps": [
+      {
+        "rule": {
+          "premises": [],
+          "conclusion": [
+            "join",
+            [
+              "text",
+              "Under the rules and facts in "
+            ],
+            [
+              "quote",
+              [
+                "text",
+                "An applicant meets the standard qualification exactly when they are resident and have income below the limit.\n\nAn applicant is eligible exactly when both conditions hold: they meet the standard qualification or are a qualifying student; and they have not received benefit B. These are the complete eligibility conditions.\n\nI am resident, my income is below the limit, and I have not received benefit B. I do not know whether I am a qualifying student.\n\nAm I eligible under these rules?"
+              ]
+            ],
+            [
+              "text",
+              ", the following Boolean statement is well-defined and true:\n"
+            ],
+            [
+              "quote",
+              [
+                "join",
+                [
+                  "text",
+                  "Both of the following statements hold:\n"
+                ],
+                [
+                  "quote",
+                  [
+                    "join",
+                    [
+                      "text",
+                      "Both of the following statements hold:\n"
+                    ],
+                    [
+                      "quote",
+                      [
+                        "text",
+                        "The applicant is resident."
+                      ]
+                    ],
+                    [
+                      "text",
+                      "\n"
+                    ],
+                    [
+                      "quote",
+                      [
+                        "text",
+                        "The applicant has income below the limit."
+                      ]
+                    ]
+                  ]
+                ],
+                [
+                  "text",
+                  "\n"
+                ],
+                [
+                  "quote",
+                  [
+                    "text",
+                    "The applicant has not received benefit B."
+                  ]
+                ]
+              ]
+            ]
+          ]
+        },
+        "bindings": {},
+        "premises": [],
+        "justification": ""
+      },
+      {
+        "rule": {
+          "premises": [],
+          "conclusion": [
+            "join",
+            [
+              "text",
+              "Under the rules and facts in "
+            ],
+            [
+              "quote",
+              [
+                "text",
+                "An applicant meets the standard qualification exactly when they are resident and have income below the limit.\n\nAn applicant is eligible exactly when both conditions hold: they meet the standard qualification or are a qualifying student; and they have not received benefit B. These are the complete eligibility conditions.\n\nI am resident, my income is below the limit, and I have not received benefit B. I do not know whether I am a qualifying student.\n\nAm I eligible under these rules?"
+              ]
+            ],
+            [
+              "text",
+              ", the following Boolean statement is well-defined and true:\n"
+            ],
+            [
+              "quote",
+              [
+                "join",
+                [
+                  "text",
+                  "The following statements are equivalent:\n"
+                ],
+                [
+                  "quote",
+                  [
+                    "text",
+                    "The applicant meets the standard qualification."
+                  ]
+                ],
+                [
+                  "text",
+                  "\n"
+                ],
+                [
+                  "quote",
+                  [
+                    "join",
+                    [
+                      "text",
+                      "Both of the following statements hold:\n"
+                    ],
+                    [
+                      "quote",
+                      [
+                        "text",
+                        "The applicant is resident."
+                      ]
+                    ],
+                    [
+                      "text",
+                      "\n"
+                    ],
+                    [
+                      "quote",
+                      [
+                        "text",
+                        "The applicant has income below the limit."
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        },
+        "bindings": {},
+        "premises": [],
+        "justification": ""
+      },
+      {
+        "rule": {
+          "premises": [],
+          "conclusion": [
+            "join",
+            [
+              "text",
+              "Under the rules and facts in "
+            ],
+            [
+              "quote",
+              [
+                "text",
+                "An applicant meets the standard qualification exactly when they are resident and have income below the limit.\n\nAn applicant is eligible exactly when both conditions hold: they meet the standard qualification or are a qualifying student; and they have not received benefit B. These are the complete eligibility conditions.\n\nI am resident, my income is below the limit, and I have not received benefit B. I do not know whether I am a qualifying student.\n\nAm I eligible under these rules?"
+              ]
+            ],
+            [
+              "text",
+              ", the following Boolean statement is well-defined and true:\n"
+            ],
+            [
+              "quote",
+              [
+                "join",
+                [
+                  "text",
+                  "The following statements are equivalent:\n"
+                ],
+                [
+                  "quote",
+                  [
+                    "text",
+                    "The applicant is eligible."
+                  ]
+                ],
+                [
+                  "text",
+                  "\n"
+                ],
+                [
+                  "quote",
+                  [
+                    "join",
+                    [
+                      "text",
+                      "Both of the following statements hold:\n"
+                    ],
+                    [
+                      "quote",
+                      [
+                        "join",
+                        [
+                          "text",
+                          "At least one of the following statements holds:\n"
+                        ],
+                        [
+                          "quote",
+                          [
+                            "text",
+                            "The applicant meets the standard qualification."
+                          ]
+                        ],
+                        [
+                          "text",
+                          "\n"
+                        ],
+                        [
+                          "quote",
+                          [
+                            "text",
+                            "The applicant is a qualifying student."
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "text",
+                      "\n"
+                    ],
+                    [
+                      "quote",
+                      [
+                        "text",
+                        "The applicant has not received benefit B."
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        },
+        "bindings": {},
+        "premises": [],
+        "justification": ""
+      },
+      {
+        "rule": {
+          "premises": [],
+          "conclusion": [
+            "join",
+            [
+              "text",
+              "Under the rules and facts in "
+            ],
+            [
+              "quote",
+              [
+                "text",
+                "An applicant meets the standard qualification exactly when they are resident and have income below the limit.\n\nAn applicant is eligible exactly when both conditions hold: they meet the standard qualification or are a qualifying student; and they have not received benefit B. These are the complete eligibility conditions.\n\nI am resident, my income is below the limit, and I have not received benefit B. I do not know whether I am a qualifying student.\n\nAm I eligible under these rules?"
+              ]
+            ],
+            [
+              "text",
+              ", the text "
+            ],
+            [
+              "quote",
+              [
+                "text",
+                "The applicant is a qualifying student."
+              ]
+            ],
+            [
+              "text",
+              " is a well-defined Boolean statement."
+            ]
+          ]
+        },
+        "bindings": {},
+        "premises": [],
+        "justification": ""
+      },
+      {
+        "rule": {
+          "premises": [
+            [
+              "join",
+              [
+                "text",
+                "Under the rules and facts in "
+              ],
+              [
+                "quote",
+                [
+                  "var",
+                  "C"
+                ]
+              ],
+              [
+                "text",
+                ", the following Boolean statement is well-defined and true:\n"
+              ],
+              [
+                "quote",
+                [
+                  "join",
+                  [
+                    "text",
+                    "Both of the following statements hold:\n"
+                  ],
+                  [
+                    "quote",
+                    [
+                      "var",
+                      "P"
+                    ]
+                  ],
+                  [
+                    "text",
+                    "\n"
+                  ],
+                  [
+                    "quote",
+                    [
+                      "var",
+                      "Q"
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ],
+          "conclusion": [
+            "join",
+            [
+              "text",
+              "Under the rules and facts in "
+            ],
+            [
+              "quote",
+              [
+                "var",
+                "C"
+              ]
+            ],
+            [
+              "text",
+              ", the following Boolean statement is well-defined and true:\n"
+            ],
+            [
+              "quote",
+              [
+                "var",
+                "P"
+              ]
+            ]
+          ]
+        },
+        "bindings": {
+          "C": "An applicant meets the standard qualification exactly when they are resident and have income below the limit.\n\nAn applicant is eligible exactly when both conditions hold: they meet the standard qualification or are a qualifying student; and they have not received benefit B. These are the complete eligibility conditions.\n\nI am resident, my income is below the limit, and I have not received benefit B. I do not know whether I am a qualifying student.\n\nAm I eligible under these rules?",
+          "P": "Both of the following statements hold:\n\"The applicant is resident.\"\n\"The applicant has income below the limit.\"",
+          "Q": "The applicant has not received benefit B."
+        },
+        "premises": [
+          0
+        ],
+        "justification": ""
+      },
+      {
+        "rule": {
+          "premises": [
+            [
+              "join",
+              [
+                "text",
+                "Under the rules and facts in "
+              ],
+              [
+                "quote",
+                [
+                  "var",
+                  "C"
+                ]
+              ],
+              [
+                "text",
+                ", the following Boolean statement is well-defined and true:\n"
+              ],
+              [
+                "quote",
+                [
+                  "join",
+                  [
+                    "text",
+                    "Both of the following statements hold:\n"
+                  ],
+                  [
+                    "quote",
+                    [
+                      "var",
+                      "P"
+                    ]
+                  ],
+                  [
+                    "text",
+                    "\n"
+                  ],
+                  [
+                    "quote",
+                    [
+                      "var",
+                      "Q"
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ],
+          "conclusion": [
+            "join",
+            [
+              "text",
+              "Under the rules and facts in "
+            ],
+            [
+              "quote",
+              [
+                "var",
+                "C"
+              ]
+            ],
+            [
+              "text",
+              ", the following Boolean statement is well-defined and true:\n"
+            ],
+            [
+              "quote",
+              [
+                "var",
+                "Q"
+              ]
+            ]
+          ]
+        },
+        "bindings": {
+          "C": "An applicant meets the standard qualification exactly when they are resident and have income below the limit.\n\nAn applicant is eligible exactly when both conditions hold: they meet the standard qualification or are a qualifying student; and they have not received benefit B. These are the complete eligibility conditions.\n\nI am resident, my income is below the limit, and I have not received benefit B. I do not know whether I am a qualifying student.\n\nAm I eligible under these rules?",
+          "P": "Both of the following statements hold:\n\"The applicant is resident.\"\n\"The applicant has income below the limit.\"",
+          "Q": "The applicant has not received benefit B."
+        },
+        "premises": [
+          0
+        ],
+        "justification": ""
+      },
+      {
+        "rule": {
+          "premises": [
+            [
+              "join",
+              [
+                "text",
+                "Under the rules and facts in "
+              ],
+              [
+                "quote",
+                [
+                  "var",
+                  "C"
+                ]
+              ],
+              [
+                "text",
+                ", the following Boolean statement is well-defined and true:\n"
+              ],
+              [
+                "quote",
+                [
+                  "join",
+                  [
+                    "text",
+                    "The following statements are equivalent:\n"
+                  ],
+                  [
+                    "quote",
+                    [
+                      "var",
+                      "P"
+                    ]
+                  ],
+                  [
+                    "text",
+                    "\n"
+                  ],
+                  [
+                    "quote",
+                    [
+                      "var",
+                      "Q"
+                    ]
+                  ]
+                ]
+              ]
+            ],
+            [
+              "join",
+              [
+                "text",
+                "Under the rules and facts in "
+              ],
+              [
+                "quote",
+                [
+                  "var",
+                  "C"
+                ]
+              ],
+              [
+                "text",
+                ", the following Boolean statement is well-defined and true:\n"
+              ],
+              [
+                "quote",
+                [
+                  "var",
+                  "Q"
+                ]
+              ]
+            ]
+          ],
+          "conclusion": [
+            "join",
+            [
+              "text",
+              "Under the rules and facts in "
+            ],
+            [
+              "quote",
+              [
+                "var",
+                "C"
+              ]
+            ],
+            [
+              "text",
+              ", the following Boolean statement is well-defined and true:\n"
+            ],
+            [
+              "quote",
+              [
+                "var",
+                "P"
+              ]
+            ]
+          ]
+        },
+        "bindings": {
+          "C": "An applicant meets the standard qualification exactly when they are resident and have income below the limit.\n\nAn applicant is eligible exactly when both conditions hold: they meet the standard qualification or are a qualifying student; and they have not received benefit B. These are the complete eligibility conditions.\n\nI am resident, my income is below the limit, and I have not received benefit B. I do not know whether I am a qualifying student.\n\nAm I eligible under these rules?",
+          "P": "The applicant meets the standard qualification.",
+          "Q": "Both of the following statements hold:\n\"The applicant is resident.\"\n\"The applicant has income below the limit.\""
+        },
+        "premises": [
+          1,
+          4
+        ],
+        "justification": ""
+      },
+      {
+        "rule": {
+          "premises": [
+            [
+              "join",
+              [
+                "text",
+                "Under the rules and facts in "
+              ],
+              [
+                "quote",
+                [
+                  "var",
+                  "C"
+                ]
+              ],
+              [
+                "text",
+                ", the following Boolean statement is well-defined and true:\n"
+              ],
+              [
+                "quote",
+                [
+                  "var",
+                  "P"
+                ]
+              ]
+            ],
+            [
+              "join",
+              [
+                "text",
+                "Under the rules and facts in "
+              ],
+              [
+                "quote",
+                [
+                  "var",
+                  "C"
+                ]
+              ],
+              [
+                "text",
+                ", the text "
+              ],
+              [
+                "quote",
+                [
+                  "var",
+                  "Q"
+                ]
+              ],
+              [
+                "text",
+                " is a well-defined Boolean statement."
+              ]
+            ]
+          ],
+          "conclusion": [
+            "join",
+            [
+              "text",
+              "Under the rules and facts in "
+            ],
+            [
+              "quote",
+              [
+                "var",
+                "C"
+              ]
+            ],
+            [
+              "text",
+              ", the following Boolean statement is well-defined and true:\n"
+            ],
+            [
+              "quote",
+              [
+                "join",
+                [
+                  "text",
+                  "At least one of the following statements holds:\n"
+                ],
+                [
+                  "quote",
+                  [
+                    "var",
+                    "P"
+                  ]
+                ],
+                [
+                  "text",
+                  "\n"
+                ],
+                [
+                  "quote",
+                  [
+                    "var",
+                    "Q"
+                  ]
+                ]
+              ]
+            ]
+          ]
+        },
+        "bindings": {
+          "C": "An applicant meets the standard qualification exactly when they are resident and have income below the limit.\n\nAn applicant is eligible exactly when both conditions hold: they meet the standard qualification or are a qualifying student; and they have not received benefit B. These are the complete eligibility conditions.\n\nI am resident, my income is below the limit, and I have not received benefit B. I do not know whether I am a qualifying student.\n\nAm I eligible under these rules?",
+          "P": "The applicant meets the standard qualification.",
+          "Q": "The applicant is a qualifying student."
+        },
+        "premises": [
+          6,
+          3
+        ],
+        "justification": ""
+      },
+      {
+        "rule": {
+          "premises": [
+            [
+              "join",
+              [
+                "text",
+                "Under the rules and facts in "
+              ],
+              [
+                "quote",
+                [
+                  "var",
+                  "C"
+                ]
+              ],
+              [
+                "text",
+                ", the following Boolean statement is well-defined and true:\n"
+              ],
+              [
+                "quote",
+                [
+                  "var",
+                  "P"
+                ]
+              ]
+            ],
+            [
+              "join",
+              [
+                "text",
+                "Under the rules and facts in "
+              ],
+              [
+                "quote",
+                [
+                  "var",
+                  "C"
+                ]
+              ],
+              [
+                "text",
+                ", the following Boolean statement is well-defined and true:\n"
+              ],
+              [
+                "quote",
+                [
+                  "var",
+                  "Q"
+                ]
+              ]
+            ]
+          ],
+          "conclusion": [
+            "join",
+            [
+              "text",
+              "Under the rules and facts in "
+            ],
+            [
+              "quote",
+              [
+                "var",
+                "C"
+              ]
+            ],
+            [
+              "text",
+              ", the following Boolean statement is well-defined and true:\n"
+            ],
+            [
+              "quote",
+              [
+                "join",
+                [
+                  "text",
+                  "Both of the following statements hold:\n"
+                ],
+                [
+                  "quote",
+                  [
+                    "var",
+                    "P"
+                  ]
+                ],
+                [
+                  "text",
+                  "\n"
+                ],
+                [
+                  "quote",
+                  [
+                    "var",
+                    "Q"
+                  ]
+                ]
+              ]
+            ]
+          ]
+        },
+        "bindings": {
+          "C": "An applicant meets the standard qualification exactly when they are resident and have income below the limit.\n\nAn applicant is eligible exactly when both conditions hold: they meet the standard qualification or are a qualifying student; and they have not received benefit B. These are the complete eligibility conditions.\n\nI am resident, my income is below the limit, and I have not received benefit B. I do not know whether I am a qualifying student.\n\nAm I eligible under these rules?",
+          "P": "At least one of the following statements holds:\n\"The applicant meets the standard qualification.\"\n\"The applicant is a qualifying student.\"",
+          "Q": "The applicant has not received benefit B."
+        },
+        "premises": [
+          7,
+          5
+        ],
+        "justification": ""
+      },
+      {
+        "rule": {
+          "premises": [
+            [
+              "join",
+              [
+                "text",
+                "Under the rules and facts in "
+              ],
+              [
+                "quote",
+                [
+                  "var",
+                  "C"
+                ]
+              ],
+              [
+                "text",
+                ", the following Boolean statement is well-defined and true:\n"
+              ],
+              [
+                "quote",
+                [
+                  "join",
+                  [
+                    "text",
+                    "The following statements are equivalent:\n"
+                  ],
+                  [
+                    "quote",
+                    [
+                      "var",
+                      "P"
+                    ]
+                  ],
+                  [
+                    "text",
+                    "\n"
+                  ],
+                  [
+                    "quote",
+                    [
+                      "var",
+                      "Q"
+                    ]
+                  ]
+                ]
+              ]
+            ],
+            [
+              "join",
+              [
+                "text",
+                "Under the rules and facts in "
+              ],
+              [
+                "quote",
+                [
+                  "var",
+                  "C"
+                ]
+              ],
+              [
+                "text",
+                ", the following Boolean statement is well-defined and true:\n"
+              ],
+              [
+                "quote",
+                [
+                  "var",
+                  "Q"
+                ]
+              ]
+            ]
+          ],
+          "conclusion": [
+            "join",
+            [
+              "text",
+              "Under the rules and facts in "
+            ],
+            [
+              "quote",
+              [
+                "var",
+                "C"
+              ]
+            ],
+            [
+              "text",
+              ", the following Boolean statement is well-defined and true:\n"
+            ],
+            [
+              "quote",
+              [
+                "var",
+                "P"
+              ]
+            ]
+          ]
+        },
+        "bindings": {
+          "C": "An applicant meets the standard qualification exactly when they are resident and have income below the limit.\n\nAn applicant is eligible exactly when both conditions hold: they meet the standard qualification or are a qualifying student; and they have not received benefit B. These are the complete eligibility conditions.\n\nI am resident, my income is below the limit, and I have not received benefit B. I do not know whether I am a qualifying student.\n\nAm I eligible under these rules?",
+          "P": "The applicant is eligible.",
+          "Q": "Both of the following statements hold:\n\"At least one of the following statements holds:\\n\\\"The applicant meets the standard qualification.\\\"\\n\\\"The applicant is a qualifying student.\\\"\"\n\"The applicant has not received benefit B.\""
+        },
+        "premises": [
+          2,
+          8
+        ],
+        "justification": ""
+      },
+      {
+        "rule": {
+          "premises": [
+            [
+              "join",
+              [
+                "text",
+                "Under the rules and facts in "
+              ],
+              [
+                "quote",
+                [
+                  "text",
+                  "An applicant meets the standard qualification exactly when they are resident and have income below the limit.\n\nAn applicant is eligible exactly when both conditions hold: they meet the standard qualification or are a qualifying student; and they have not received benefit B. These are the complete eligibility conditions.\n\nI am resident, my income is below the limit, and I have not received benefit B. I do not know whether I am a qualifying student.\n\nAm I eligible under these rules?"
+                ]
+              ],
+              [
+                "text",
+                ", the following Boolean statement is well-defined and true:\n"
+              ],
+              [
+                "quote",
+                [
+                  "text",
+                  "The applicant is eligible."
+                ]
+              ]
+            ]
+          ],
+          "conclusion": [
+            "join",
+            [
+              "text",
+              "The response "
+            ],
+            [
+              "quote",
+              [
+                "text",
+                "Yes, you are eligible."
+              ]
+            ],
+            [
+              "text",
+              " correctly answers the request "
+            ],
+            [
+              "quote",
+              [
+                "text",
+                "An applicant meets the standard qualification exactly when they are resident and have income below the limit.\n\nAn applicant is eligible exactly when both conditions hold: they meet the standard qualification or are a qualifying student; and they have not received benefit B. These are the complete eligibility conditions.\n\nI am resident, my income is below the limit, and I have not received benefit B. I do not know whether I am a qualifying student.\n\nAm I eligible under these rules?"
+              ]
+            ],
+            [
+              "text",
+              "."
+            ]
+          ]
+        },
+        "bindings": {},
+        "premises": [
+          9
+        ],
+        "justification": ""
+      }
+    ]
+  },
+  "claims": [
+    "Under the rules and facts in \"An applicant meets the standard qualification exactly when they are resident and have income below the limit.\\n\\nAn applicant is eligible exactly when both conditions hold: they meet the standard qualification or are a qualifying student; and they have not received benefit B. These are the complete eligibility conditions.\\n\\nI am resident, my income is below the limit, and I have not received benefit B. I do not know whether I am a qualifying student.\\n\\nAm I eligible under these rules?\", the following Boolean statement is well-defined and true:\n\"Both of the following statements hold:\\n\\\"Both of the following statements hold:\\\\n\\\\\\\"The applicant is resident.\\\\\\\"\\\\n\\\\\\\"The applicant has income below the limit.\\\\\\\"\\\"\\n\\\"The applicant has not received benefit B.\\\"\"",
+    "Under the rules and facts in \"An applicant meets the standard qualification exactly when they are resident and have income below the limit.\\n\\nAn applicant is eligible exactly when both conditions hold: they meet the standard qualification or are a qualifying student; and they have not received benefit B. These are the complete eligibility conditions.\\n\\nI am resident, my income is below the limit, and I have not received benefit B. I do not know whether I am a qualifying student.\\n\\nAm I eligible under these rules?\", the following Boolean statement is well-defined and true:\n\"The following statements are equivalent:\\n\\\"The applicant meets the standard qualification.\\\"\\n\\\"Both of the following statements hold:\\\\n\\\\\\\"The applicant is resident.\\\\\\\"\\\\n\\\\\\\"The applicant has income below the limit.\\\\\\\"\\\"\"",
+    "Under the rules and facts in \"An applicant meets the standard qualification exactly when they are resident and have income below the limit.\\n\\nAn applicant is eligible exactly when both conditions hold: they meet the standard qualification or are a qualifying student; and they have not received benefit B. These are the complete eligibility conditions.\\n\\nI am resident, my income is below the limit, and I have not received benefit B. I do not know whether I am a qualifying student.\\n\\nAm I eligible under these rules?\", the following Boolean statement is well-defined and true:\n\"The following statements are equivalent:\\n\\\"The applicant is eligible.\\\"\\n\\\"Both of the following statements hold:\\\\n\\\\\\\"At least one of the following statements holds:\\\\\\\\n\\\\\\\\\\\\\\\"The applicant meets the standard qualification.\\\\\\\\\\\\\\\"\\\\\\\\n\\\\\\\\\\\\\\\"The applicant is a qualifying student.\\\\\\\\\\\\\\\"\\\\\\\"\\\\n\\\\\\\"The applicant has not received benefit B.\\\\\\\"\\\"\"",
+    "Under the rules and facts in \"An applicant meets the standard qualification exactly when they are resident and have income below the limit.\\n\\nAn applicant is eligible exactly when both conditions hold: they meet the standard qualification or are a qualifying student; and they have not received benefit B. These are the complete eligibility conditions.\\n\\nI am resident, my income is below the limit, and I have not received benefit B. I do not know whether I am a qualifying student.\\n\\nAm I eligible under these rules?\", the text \"The applicant is a qualifying student.\" is a well-defined Boolean statement.",
+    "Under the rules and facts in \"An applicant meets the standard qualification exactly when they are resident and have income below the limit.\\n\\nAn applicant is eligible exactly when both conditions hold: they meet the standard qualification or are a qualifying student; and they have not received benefit B. These are the complete eligibility conditions.\\n\\nI am resident, my income is below the limit, and I have not received benefit B. I do not know whether I am a qualifying student.\\n\\nAm I eligible under these rules?\", the following Boolean statement is well-defined and true:\n\"Both of the following statements hold:\\n\\\"The applicant is resident.\\\"\\n\\\"The applicant has income below the limit.\\\"\"",
+    "Under the rules and facts in \"An applicant meets the standard qualification exactly when they are resident and have income below the limit.\\n\\nAn applicant is eligible exactly when both conditions hold: they meet the standard qualification or are a qualifying student; and they have not received benefit B. These are the complete eligibility conditions.\\n\\nI am resident, my income is below the limit, and I have not received benefit B. I do not know whether I am a qualifying student.\\n\\nAm I eligible under these rules?\", the following Boolean statement is well-defined and true:\n\"The applicant has not received benefit B.\"",
+    "Under the rules and facts in \"An applicant meets the standard qualification exactly when they are resident and have income below the limit.\\n\\nAn applicant is eligible exactly when both conditions hold: they meet the standard qualification or are a qualifying student; and they have not received benefit B. These are the complete eligibility conditions.\\n\\nI am resident, my income is below the limit, and I have not received benefit B. I do not know whether I am a qualifying student.\\n\\nAm I eligible under these rules?\", the following Boolean statement is well-defined and true:\n\"The applicant meets the standard qualification.\"",
+    "Under the rules and facts in \"An applicant meets the standard qualification exactly when they are resident and have income below the limit.\\n\\nAn applicant is eligible exactly when both conditions hold: they meet the standard qualification or are a qualifying student; and they have not received benefit B. These are the complete eligibility conditions.\\n\\nI am resident, my income is below the limit, and I have not received benefit B. I do not know whether I am a qualifying student.\\n\\nAm I eligible under these rules?\", the following Boolean statement is well-defined and true:\n\"At least one of the following statements holds:\\n\\\"The applicant meets the standard qualification.\\\"\\n\\\"The applicant is a qualifying student.\\\"\"",
+    "Under the rules and facts in \"An applicant meets the standard qualification exactly when they are resident and have income below the limit.\\n\\nAn applicant is eligible exactly when both conditions hold: they meet the standard qualification or are a qualifying student; and they have not received benefit B. These are the complete eligibility conditions.\\n\\nI am resident, my income is below the limit, and I have not received benefit B. I do not know whether I am a qualifying student.\\n\\nAm I eligible under these rules?\", the following Boolean statement is well-defined and true:\n\"Both of the following statements hold:\\n\\\"At least one of the following statements holds:\\\\n\\\\\\\"The applicant meets the standard qualification.\\\\\\\"\\\\n\\\\\\\"The applicant is a qualifying student.\\\\\\\"\\\"\\n\\\"The applicant has not received benefit B.\\\"\"",
+    "Under the rules and facts in \"An applicant meets the standard qualification exactly when they are resident and have income below the limit.\\n\\nAn applicant is eligible exactly when both conditions hold: they meet the standard qualification or are a qualifying student; and they have not received benefit B. These are the complete eligibility conditions.\\n\\nI am resident, my income is below the limit, and I have not received benefit B. I do not know whether I am a qualifying student.\\n\\nAm I eligible under these rules?\", the following Boolean statement is well-defined and true:\n\"The applicant is eligible.\"",
+    "The response \"Yes, you are eligible.\" correctly answers the request \"An applicant meets the standard qualification exactly when they are resident and have income below the limit.\\n\\nAn applicant is eligible exactly when both conditions hold: they meet the standard qualification or are a qualifying student; and they have not received benefit B. These are the complete eligibility conditions.\\n\\nI am resident, my income is below the limit, and I have not received benefit B. I do not know whether I am a qualifying student.\\n\\nAm I eligible under these rules?\"."
+  ],
+  "milestones": {
+    "input_facts": 0,
+    "qualification_definition": 1,
+    "eligibility_definition": 2,
+    "student_statement": 3,
+    "eligibility": 9
+  },
+  "checking_question_ids": [
+    774,
+    776,
+    775,
+    777,
+    27,
+    28,
+    29,
+    31,
+    30,
+    29,
+    26
+  ]
+}

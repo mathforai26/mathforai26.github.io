@@ -1,0 +1,6 @@
+Is the following statement a supported true assertion? Return 1 to certify the statement, or 0 to withhold certification. Ill-defined or unsupported statements are not supported true assertions. Any accompanying justification may be used to assess the statement.
+
+Statement:
+```
+The text “” consists entirely of zero or more clauses 'An applicant with disqualification flag NAME is excluded.' followed by a newline. The text “” consists of the same number of statements 'Disqualification flag NAME is false.' followed by a newline, in corresponding order with identical NAME in each pair. Every NAME is a canonical JSON string literal denoting a string. Consequently none of these exclusions applies to this applicant under these supplied facts.
+```

@@ -1,0 +1,6 @@
+Is the following statement a supported true assertion? Return 1 to certify the statement, or 0 to withhold certification. Ill-defined or unsupported statements are not supported true assertions. Any accompanying justification may be used to assess the statement.
+
+Statement:
+```
+The text “Wipe dust from the desktop with a dry cloth.” describes a concrete action for tidying a desk and is understandable without other instructions.
+```

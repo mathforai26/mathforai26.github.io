@@ -1,0 +1,92 @@
+{
+  "desk": {
+    "input_bytes": 267,
+    "answer_bytes": 1682,
+    "records": 163,
+    "max_query_bytes": 2346
+  },
+  "simple-tax": {
+    "input_bytes": 485,
+    "answer_bytes": 22,
+    "records": 11,
+    "max_query_bytes": 2500
+  },
+  "arithmetic-simple": {
+    "input_bytes": 58,
+    "answer_bytes": 3,
+    "records": 3,
+    "max_query_bytes": 1646
+  },
+  "arithmetic": {
+    "input_bytes": 58,
+    "answer_bytes": 3,
+    "records": 12,
+    "max_query_bytes": 3340
+  },
+  "arithmetic-rephrased": {
+    "input_bytes": 45,
+    "answer_bytes": 3,
+    "records": 14,
+    "max_query_bytes": 3340
+  },
+  "full-tax-yes": {
+    "input_bytes": 1541,
+    "answer_bytes": 4,
+    "records": 42,
+    "max_query_bytes": 4103
+  },
+  "full-tax-no": {
+    "input_bytes": 1541,
+    "answer_bytes": 3,
+    "records": 42,
+    "max_query_bytes": 4103
+  },
+  "full-tax-benefit": {
+    "input_bytes": 1537,
+    "answer_bytes": 3,
+    "records": 42,
+    "max_query_bytes": 4100
+  },
+  "full-tax-income": {
+    "input_bytes": 1541,
+    "answer_bytes": 3,
+    "records": 42,
+    "max_query_bytes": 4103
+  },
+  "long-code-301": {
+    "input_bytes": 18671,
+    "answer_bytes": 4,
+    "records": 934,
+    "max_query_bytes": 4405,
+    "code_bytes": 18107
+  },
+  "long-code-300": {
+    "input_bytes": 18613,
+    "answer_bytes": 3,
+    "records": 929,
+    "max_query_bytes": 4405,
+    "code_bytes": 18049
+  },
+  "cap-then-deduct": {
+    "input_bytes": 1306,
+    "answer_bytes": 4,
+    "records": 36,
+    "max_query_bytes": 4405
+  },
+  "deduct-then-cap": {
+    "input_bytes": 1306,
+    "answer_bytes": 3,
+    "records": 34,
+    "max_query_bytes": 4405
+  },
+  "full-tax-512": {
+    "input_bytes": 55750,
+    "records": 1060,
+    "max_query_bytes": 4103
+  },
+  "full-tax-long-name": {
+    "input_bytes": 18897,
+    "records": 38,
+    "max_query_bytes": 4103
+  }
+}

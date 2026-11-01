@@ -1,0 +1,6 @@
+Is the following statement a supported true assertion? Return 1 to certify the statement, or 0 to withhold certification. Ill-defined or unsupported statements are not supported true assertions. Any accompanying justification may be used to assess the statement.
+
+Statement:
+```
+The text “false” is a well-formed closed expression using canonical decimal numerals for integers, the Boolean constants true and false, and the following operations with their usual typed meanings: addition (+), multiplication (*), subtraction (-), comparison (< and >=), conjunction (and), disjunction (or), and minimum (min). Binary operations are fully parenthesized; minimum is written min(a, b). It evaluates to the value represented by “false”. This result text is a canonical decimal numeral for an integer or a Boolean literal, matching the expression's type.
+```

@@ -1,0 +1,50 @@
+Is the following rule sound? Return 1 to certify soundness, or 0 to withhold certification.
+
+Each placeholder {{name}} ranges over every finite text. Repeated occurrences of a name receive the same text. Substitution is simultaneous: inserted text is never read as further template notation.
+
+Curly quotation marks “…” and ‘…’ mark a quotation operation: substitute inside them, then write the result as a canonical JSON string literal, escaping non-ASCII characters. Nested quotations apply this operation from the inside out. Straight quotation marks are ordinary literal text. A backslash escapes a literal brace, curly quotation mark, or backslash. The escapes \n, \r, \t, \uHHHH and \UHHHHHHHH denote the corresponding characters; H is a hexadecimal digit. All other text and whitespace inside the fenced blocks is literal.
+
+For every assignment to the placeholders, if all premises are supported true assertions, the conclusion must also be a supported true assertion. With no premises, every instance of the conclusion must be supported true. Ill-defined or unsupported statements are not supported true assertions. Use the agreed meanings of the statements without adding task-specific assumptions. Any accompanying justification may be used to assess the rule.
+
+Premise 1:
+```
+The text “{{d}}” is the canonical decimal numeral for a nonnegative integer: either 0 or a digit from 1 through 9 followed by zero or more digits from 0 through 9.
+```
+
+Premise 2:
+```
+The text “{{w}}” is the canonical decimal numeral for a nonnegative integer: either 0 or a digit from 1 through 9 followed by zero or more digits from 0 through 9.
+```
+
+Premise 3:
+```
+The text “{{t}}” is the canonical decimal numeral for a nonnegative integer: either 0 or a digit from 1 through 9 followed by zero or more digits from 0 through 9.
+```
+
+Premise 4:
+```
+The text “{{a}}” is the canonical decimal numeral for a nonnegative integer: either 0 or a digit from 1 through 9 followed by zero or more digits from 0 through 9.
+```
+
+Premise 5:
+```
+The text “{{E}}” consists entirely of zero or more clauses 'An applicant with disqualification flag NAME is excluded.' followed by a newline. The text “{{F}}” consists of the same number of statements 'Disqualification flag NAME is false.' followed by a newline, in corresponding order with identical NAME in each pair. Every NAME is a canonical JSON string literal denoting a string. Consequently none of these exclusions applies to this applicant under these supplied facts.
+```
+
+Conclusion:
+```
+The request “Apply only the complete fictional code supplied below. All case statements describe the same applicant. Quoted flag names denote exact strings. Part E lists all additional exclusions. The applicant is excluded under Part E if any listed clause applies. Every statement in the Case block is supplied as a fact. The Definitions block applies throughout this request.
+Definitions:
+Section 10. The applicant is eligible for credit C exactly when the applicant is resident under section 40, has assessable income under section 112 below 20000, has not received benefit B, and is not excluded under section 950 or Part E.
+Section 40. The applicant is resident exactly when the applicant has at least 183 days of residence.
+Section 112. Assessable income is earnings minus the deduction under section 113.
+Section 113. The deduction is the smaller of approved training expenses and 500.
+Section 950. An applicant younger than 18 is excluded.
+End definitions.
+Part E:
+{{E}}End Part E.
+Case:
+The applicant has {{d}} days of residence, earnings of {{w}}, approved training expenses of {{t}}, and age {{a}}. The applicant has received benefit B.
+{{F}}End case.
+Question: Is the applicant eligible for credit C?” asks a yes/no question equivalent to whether the well-formed closed Boolean expression “(({{d}} >= 183) and ((({{w}} - min({{t}}, 500)) < 20000) and (false and ({{a}} >= 18))))” is true. The answer "Yes." is correct exactly when the expression is true; the answer "No." is correct exactly when the expression is false.
+```

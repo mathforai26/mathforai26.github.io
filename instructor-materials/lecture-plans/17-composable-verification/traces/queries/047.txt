@@ -1,0 +1,6 @@
+Is the following statement a supported true assertion? Return 1 to certify the statement, or 0 to withhold certification. Ill-defined or unsupported statements are not supported true assertions. Any accompanying justification may be used to assess the statement.
+
+Statement:
+```
+The text “20300” is the canonical decimal numeral for a nonnegative integer: either 0 or a digit from 1 through 9 followed by zero or more digits from 0 through 9.
+```

@@ -1,0 +1,25 @@
+\NeedsTeXFormat{LaTeX2e}
+
+\RequirePackage{mdframed}
+
+% Definition bodies are upright, like the surrounding prose.  A pale field and
+% a blue left rule make the extent of each definition visible without giving it
+% the visual weight of a theorem.
+\AtBeginDocument{%
+  \ifcsname definition\endcsname
+    \surroundwithmdframed[
+      linecolor=courseblue,
+      backgroundcolor=courseblue!5,
+      linewidth=1pt,
+      topline=false,
+      rightline=false,
+      bottomline=false,
+      innerleftmargin=9pt,
+      innerrightmargin=7pt,
+      innertopmargin=6pt,
+      innerbottommargin=6pt,
+      skipabove=0.75\baselineskip,
+      skipbelow=0.75\baselineskip
+    ]{definition}%
+  \fi
+}

@@ -1,0 +1,6 @@
+Is the following statement a supported true assertion? Return 1 to certify the statement, or 0 to withhold certification. Ill-defined or unsupported statements are not supported true assertions. Any accompanying justification may be used to assess the statement.
+
+Statement:
+```
+The texts “20256” and “1” are canonical decimal numerals for integers. Applying the usual min operation to the values they denote gives the value represented by “1”, which is a canonical decimal numeral for an integer.
+```

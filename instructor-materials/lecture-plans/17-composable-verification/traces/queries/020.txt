@@ -1,0 +1,17 @@
+Is the following rule sound? Return 1 to certify soundness, or 0 to withhold certification.
+
+Each placeholder {{name}} ranges over every finite text. Repeated occurrences of a name receive the same text. Substitution is simultaneous: inserted text is never read as further template notation.
+
+Curly quotation marks “…” and ‘…’ mark a quotation operation: substitute inside them, then write the result as a canonical JSON string literal, escaping non-ASCII characters. Nested quotations apply this operation from the inside out. Straight quotation marks are ordinary literal text. A backslash escapes a literal brace, curly quotation mark, or backslash. The escapes \n, \r, \t, \uHHHH and \UHHHHHHHH denote the corresponding characters; H is a hexadecimal digit. All other text and whitespace inside the fenced blocks is literal.
+
+For every assignment to the placeholders, if all premises are supported true assertions, the conclusion must also be a supported true assertion. With no premises, every instance of the conclusion must be supported true. Ill-defined or unsupported statements are not supported true assertions. Use the agreed meanings of the statements without adding task-specific assumptions. Any accompanying justification may be used to assess the rule.
+
+Premise 1:
+```
+The text “{{n}}” is the canonical decimal numeral for a nonnegative integer: either 0 or a digit from 1 through 9 followed by zero or more digits from 0 through 9.
+```
+
+Conclusion:
+```
+The text “{{n}}” is a well-formed closed expression using canonical decimal numerals for integers, the Boolean constants true and false, and the following operations with their usual typed meanings: addition (+), multiplication (*), subtraction (-), comparison (< and >=), conjunction (and), disjunction (or), and minimum (min). Binary operations are fully parenthesized; minimum is written min(a, b). It evaluates to the value represented by “{{n}}”. This result text is a canonical decimal numeral for an integer or a Boolean literal, matching the expression's type.
+```

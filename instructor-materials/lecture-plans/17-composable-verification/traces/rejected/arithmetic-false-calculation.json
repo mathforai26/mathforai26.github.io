@@ -1,0 +1,1147 @@
+{
+  "input": "What do you get if you multiply the sum of 17 and 25 by 3?",
+  "candidate": {
+    "answer": "127",
+    "steps": [
+      {
+        "rule": {
+          "premises": [],
+          "conclusion": [
+            "join",
+            [
+              "text",
+              "The text "
+            ],
+            [
+              "quote",
+              [
+                "text",
+                "17"
+              ]
+            ],
+            [
+              "text",
+              " is the canonical decimal numeral for a nonnegative integer: either 0 or a digit from 1 through 9 followed by zero or more digits from 0 through 9."
+            ]
+          ]
+        },
+        "bindings": {},
+        "premises": [],
+        "justification": ""
+      },
+      {
+        "rule": {
+          "premises": [],
+          "conclusion": [
+            "join",
+            [
+              "text",
+              "The text "
+            ],
+            [
+              "quote",
+              [
+                "text",
+                "25"
+              ]
+            ],
+            [
+              "text",
+              " is the canonical decimal numeral for a nonnegative integer: either 0 or a digit from 1 through 9 followed by zero or more digits from 0 through 9."
+            ]
+          ]
+        },
+        "bindings": {},
+        "premises": [],
+        "justification": ""
+      },
+      {
+        "rule": {
+          "premises": [],
+          "conclusion": [
+            "join",
+            [
+              "text",
+              "The text "
+            ],
+            [
+              "quote",
+              [
+                "text",
+                "3"
+              ]
+            ],
+            [
+              "text",
+              " is the canonical decimal numeral for a nonnegative integer: either 0 or a digit from 1 through 9 followed by zero or more digits from 0 through 9."
+            ]
+          ]
+        },
+        "bindings": {},
+        "premises": [],
+        "justification": ""
+      },
+      {
+        "rule": {
+          "premises": [
+            [
+              "join",
+              [
+                "text",
+                "The text "
+              ],
+              [
+                "quote",
+                [
+                  "var",
+                  "a"
+                ]
+              ],
+              [
+                "text",
+                " is the canonical decimal numeral for a nonnegative integer: either 0 or a digit from 1 through 9 followed by zero or more digits from 0 through 9."
+              ]
+            ],
+            [
+              "join",
+              [
+                "text",
+                "The text "
+              ],
+              [
+                "quote",
+                [
+                  "var",
+                  "b"
+                ]
+              ],
+              [
+                "text",
+                " is the canonical decimal numeral for a nonnegative integer: either 0 or a digit from 1 through 9 followed by zero or more digits from 0 through 9."
+              ]
+            ],
+            [
+              "join",
+              [
+                "text",
+                "The text "
+              ],
+              [
+                "quote",
+                [
+                  "var",
+                  "c"
+                ]
+              ],
+              [
+                "text",
+                " is the canonical decimal numeral for a nonnegative integer: either 0 or a digit from 1 through 9 followed by zero or more digits from 0 through 9."
+              ]
+            ]
+          ],
+          "conclusion": [
+            "join",
+            [
+              "text",
+              "The request "
+            ],
+            [
+              "quote",
+              [
+                "join",
+                [
+                  "text",
+                  "What do you get if you multiply the sum of "
+                ],
+                [
+                  "var",
+                  "a"
+                ],
+                [
+                  "text",
+                  " and "
+                ],
+                [
+                  "var",
+                  "b"
+                ],
+                [
+                  "text",
+                  " by "
+                ],
+                [
+                  "var",
+                  "c"
+                ],
+                [
+                  "text",
+                  "?"
+                ]
+              ]
+            ],
+            [
+              "text",
+              " asks a numerical question equivalent to finding the value of the well-formed closed arithmetic expression "
+            ],
+            [
+              "quote",
+              [
+                "join",
+                [
+                  "text",
+                  "("
+                ],
+                [
+                  "join",
+                  [
+                    "text",
+                    "("
+                  ],
+                  [
+                    "var",
+                    "a"
+                  ],
+                  [
+                    "text",
+                    " "
+                  ],
+                  [
+                    "text",
+                    "+"
+                  ],
+                  [
+                    "text",
+                    " "
+                  ],
+                  [
+                    "var",
+                    "b"
+                  ],
+                  [
+                    "text",
+                    ")"
+                  ]
+                ],
+                [
+                  "text",
+                  " "
+                ],
+                [
+                  "text",
+                  "*"
+                ],
+                [
+                  "text",
+                  " "
+                ],
+                [
+                  "var",
+                  "c"
+                ],
+                [
+                  "text",
+                  ")"
+                ]
+              ]
+            ],
+            [
+              "text",
+              ", whose value is a nonnegative integer. For every canonical nonnegative decimal numeral n, n correctly answers the request if and only if it denotes that value."
+            ]
+          ]
+        },
+        "bindings": {
+          "a": {
+            "source": "input",
+            "start": 43,
+            "end": 45
+          },
+          "b": {
+            "source": "input",
+            "start": 50,
+            "end": 52
+          },
+          "c": {
+            "source": "input",
+            "start": 56,
+            "end": 57
+          }
+        },
+        "premises": [
+          0,
+          1,
+          2
+        ],
+        "justification": ""
+      },
+      {
+        "rule": {
+          "premises": [
+            [
+              "join",
+              [
+                "text",
+                "The text "
+              ],
+              [
+                "quote",
+                [
+                  "var",
+                  "n"
+                ]
+              ],
+              [
+                "text",
+                " is the canonical decimal numeral for a nonnegative integer: either 0 or a digit from 1 through 9 followed by zero or more digits from 0 through 9."
+              ]
+            ]
+          ],
+          "conclusion": [
+            "join",
+            [
+              "text",
+              "The text "
+            ],
+            [
+              "quote",
+              [
+                "var",
+                "n"
+              ]
+            ],
+            [
+              "text",
+              " is a well-formed closed expression using canonical decimal numerals for integers, the Boolean constants true and false, and the following operations with their usual typed meanings: addition (+), multiplication (*), subtraction (-), comparison (< and >=), conjunction (and), disjunction (or), and minimum (min). Binary operations are fully parenthesized; minimum is written min(a, b). It evaluates to the value represented by "
+            ],
+            [
+              "quote",
+              [
+                "var",
+                "n"
+              ]
+            ],
+            [
+              "text",
+              ". This result text is a canonical decimal numeral for an integer or a Boolean literal, matching the expression's type."
+            ]
+          ]
+        },
+        "bindings": {
+          "n": "17"
+        },
+        "premises": [
+          0
+        ],
+        "justification": ""
+      },
+      {
+        "rule": {
+          "premises": [
+            [
+              "join",
+              [
+                "text",
+                "The text "
+              ],
+              [
+                "quote",
+                [
+                  "var",
+                  "n"
+                ]
+              ],
+              [
+                "text",
+                " is the canonical decimal numeral for a nonnegative integer: either 0 or a digit from 1 through 9 followed by zero or more digits from 0 through 9."
+              ]
+            ]
+          ],
+          "conclusion": [
+            "join",
+            [
+              "text",
+              "The text "
+            ],
+            [
+              "quote",
+              [
+                "var",
+                "n"
+              ]
+            ],
+            [
+              "text",
+              " is a well-formed closed expression using canonical decimal numerals for integers, the Boolean constants true and false, and the following operations with their usual typed meanings: addition (+), multiplication (*), subtraction (-), comparison (< and >=), conjunction (and), disjunction (or), and minimum (min). Binary operations are fully parenthesized; minimum is written min(a, b). It evaluates to the value represented by "
+            ],
+            [
+              "quote",
+              [
+                "var",
+                "n"
+              ]
+            ],
+            [
+              "text",
+              ". This result text is a canonical decimal numeral for an integer or a Boolean literal, matching the expression's type."
+            ]
+          ]
+        },
+        "bindings": {
+          "n": "25"
+        },
+        "premises": [
+          1
+        ],
+        "justification": ""
+      },
+      {
+        "rule": {
+          "premises": [],
+          "conclusion": [
+            "join",
+            [
+              "text",
+              "The texts "
+            ],
+            [
+              "quote",
+              [
+                "text",
+                "17"
+              ]
+            ],
+            [
+              "text",
+              " and "
+            ],
+            [
+              "quote",
+              [
+                "text",
+                "25"
+              ]
+            ],
+            [
+              "text",
+              " are "
+            ],
+            [
+              "text",
+              "canonical decimal numerals for integers"
+            ],
+            [
+              "text",
+              ". Applying the usual "
+            ],
+            [
+              "text",
+              "+"
+            ],
+            [
+              "text",
+              " operation to the values they denote gives the value represented by "
+            ],
+            [
+              "quote",
+              [
+                "text",
+                "42"
+              ]
+            ],
+            [
+              "text",
+              ", which is "
+            ],
+            [
+              "text",
+              "a canonical decimal numeral for an integer"
+            ],
+            [
+              "text",
+              "."
+            ]
+          ]
+        },
+        "bindings": {},
+        "premises": [],
+        "justification": ""
+      },
+      {
+        "rule": {
+          "premises": [
+            [
+              "join",
+              [
+                "text",
+                "The text "
+              ],
+              [
+                "quote",
+                [
+                  "var",
+                  "A"
+                ]
+              ],
+              [
+                "text",
+                " is a well-formed closed expression using canonical decimal numerals for integers, the Boolean constants true and false, and the following operations with their usual typed meanings: addition (+), multiplication (*), subtraction (-), comparison (< and >=), conjunction (and), disjunction (or), and minimum (min). Binary operations are fully parenthesized; minimum is written min(a, b). It evaluates to the value represented by "
+              ],
+              [
+                "quote",
+                [
+                  "var",
+                  "a"
+                ]
+              ],
+              [
+                "text",
+                ". This result text is a canonical decimal numeral for an integer or a Boolean literal, matching the expression's type."
+              ]
+            ],
+            [
+              "join",
+              [
+                "text",
+                "The text "
+              ],
+              [
+                "quote",
+                [
+                  "var",
+                  "B"
+                ]
+              ],
+              [
+                "text",
+                " is a well-formed closed expression using canonical decimal numerals for integers, the Boolean constants true and false, and the following operations with their usual typed meanings: addition (+), multiplication (*), subtraction (-), comparison (< and >=), conjunction (and), disjunction (or), and minimum (min). Binary operations are fully parenthesized; minimum is written min(a, b). It evaluates to the value represented by "
+              ],
+              [
+                "quote",
+                [
+                  "var",
+                  "b"
+                ]
+              ],
+              [
+                "text",
+                ". This result text is a canonical decimal numeral for an integer or a Boolean literal, matching the expression's type."
+              ]
+            ],
+            [
+              "join",
+              [
+                "text",
+                "The texts "
+              ],
+              [
+                "quote",
+                [
+                  "var",
+                  "a"
+                ]
+              ],
+              [
+                "text",
+                " and "
+              ],
+              [
+                "quote",
+                [
+                  "var",
+                  "b"
+                ]
+              ],
+              [
+                "text",
+                " are "
+              ],
+              [
+                "text",
+                "canonical decimal numerals for integers"
+              ],
+              [
+                "text",
+                ". Applying the usual "
+              ],
+              [
+                "text",
+                "+"
+              ],
+              [
+                "text",
+                " operation to the values they denote gives the value represented by "
+              ],
+              [
+                "quote",
+                [
+                  "var",
+                  "c"
+                ]
+              ],
+              [
+                "text",
+                ", which is "
+              ],
+              [
+                "text",
+                "a canonical decimal numeral for an integer"
+              ],
+              [
+                "text",
+                "."
+              ]
+            ]
+          ],
+          "conclusion": [
+            "join",
+            [
+              "text",
+              "The text "
+            ],
+            [
+              "quote",
+              [
+                "join",
+                [
+                  "text",
+                  "("
+                ],
+                [
+                  "var",
+                  "A"
+                ],
+                [
+                  "text",
+                  " "
+                ],
+                [
+                  "text",
+                  "+"
+                ],
+                [
+                  "text",
+                  " "
+                ],
+                [
+                  "var",
+                  "B"
+                ],
+                [
+                  "text",
+                  ")"
+                ]
+              ]
+            ],
+            [
+              "text",
+              " is a well-formed closed expression using canonical decimal numerals for integers, the Boolean constants true and false, and the following operations with their usual typed meanings: addition (+), multiplication (*), subtraction (-), comparison (< and >=), conjunction (and), disjunction (or), and minimum (min). Binary operations are fully parenthesized; minimum is written min(a, b). It evaluates to the value represented by "
+            ],
+            [
+              "quote",
+              [
+                "var",
+                "c"
+              ]
+            ],
+            [
+              "text",
+              ". This result text is a canonical decimal numeral for an integer or a Boolean literal, matching the expression's type."
+            ]
+          ]
+        },
+        "bindings": {
+          "A": "17",
+          "B": "25",
+          "a": "17",
+          "b": "25",
+          "c": "42"
+        },
+        "premises": [
+          4,
+          5,
+          6
+        ],
+        "justification": ""
+      },
+      {
+        "rule": {
+          "premises": [
+            [
+              "join",
+              [
+                "text",
+                "The text "
+              ],
+              [
+                "quote",
+                [
+                  "var",
+                  "n"
+                ]
+              ],
+              [
+                "text",
+                " is the canonical decimal numeral for a nonnegative integer: either 0 or a digit from 1 through 9 followed by zero or more digits from 0 through 9."
+              ]
+            ]
+          ],
+          "conclusion": [
+            "join",
+            [
+              "text",
+              "The text "
+            ],
+            [
+              "quote",
+              [
+                "var",
+                "n"
+              ]
+            ],
+            [
+              "text",
+              " is a well-formed closed expression using canonical decimal numerals for integers, the Boolean constants true and false, and the following operations with their usual typed meanings: addition (+), multiplication (*), subtraction (-), comparison (< and >=), conjunction (and), disjunction (or), and minimum (min). Binary operations are fully parenthesized; minimum is written min(a, b). It evaluates to the value represented by "
+            ],
+            [
+              "quote",
+              [
+                "var",
+                "n"
+              ]
+            ],
+            [
+              "text",
+              ". This result text is a canonical decimal numeral for an integer or a Boolean literal, matching the expression's type."
+            ]
+          ]
+        },
+        "bindings": {
+          "n": "3"
+        },
+        "premises": [
+          2
+        ],
+        "justification": ""
+      },
+      {
+        "rule": {
+          "premises": [],
+          "conclusion": [
+            "join",
+            [
+              "text",
+              "The texts "
+            ],
+            [
+              "quote",
+              [
+                "text",
+                "42"
+              ]
+            ],
+            [
+              "text",
+              " and "
+            ],
+            [
+              "quote",
+              [
+                "text",
+                "3"
+              ]
+            ],
+            [
+              "text",
+              " are "
+            ],
+            [
+              "text",
+              "canonical decimal numerals for integers"
+            ],
+            [
+              "text",
+              ". Applying the usual "
+            ],
+            [
+              "text",
+              "*"
+            ],
+            [
+              "text",
+              " operation to the values they denote gives the value represented by "
+            ],
+            [
+              "quote",
+              [
+                "text",
+                "127"
+              ]
+            ],
+            [
+              "text",
+              ", which is "
+            ],
+            [
+              "text",
+              "a canonical decimal numeral for an integer"
+            ],
+            [
+              "text",
+              "."
+            ]
+          ]
+        },
+        "bindings": {},
+        "premises": [],
+        "justification": ""
+      },
+      {
+        "rule": {
+          "premises": [
+            [
+              "join",
+              [
+                "text",
+                "The text "
+              ],
+              [
+                "quote",
+                [
+                  "var",
+                  "A"
+                ]
+              ],
+              [
+                "text",
+                " is a well-formed closed expression using canonical decimal numerals for integers, the Boolean constants true and false, and the following operations with their usual typed meanings: addition (+), multiplication (*), subtraction (-), comparison (< and >=), conjunction (and), disjunction (or), and minimum (min). Binary operations are fully parenthesized; minimum is written min(a, b). It evaluates to the value represented by "
+              ],
+              [
+                "quote",
+                [
+                  "var",
+                  "a"
+                ]
+              ],
+              [
+                "text",
+                ". This result text is a canonical decimal numeral for an integer or a Boolean literal, matching the expression's type."
+              ]
+            ],
+            [
+              "join",
+              [
+                "text",
+                "The text "
+              ],
+              [
+                "quote",
+                [
+                  "var",
+                  "B"
+                ]
+              ],
+              [
+                "text",
+                " is a well-formed closed expression using canonical decimal numerals for integers, the Boolean constants true and false, and the following operations with their usual typed meanings: addition (+), multiplication (*), subtraction (-), comparison (< and >=), conjunction (and), disjunction (or), and minimum (min). Binary operations are fully parenthesized; minimum is written min(a, b). It evaluates to the value represented by "
+              ],
+              [
+                "quote",
+                [
+                  "var",
+                  "b"
+                ]
+              ],
+              [
+                "text",
+                ". This result text is a canonical decimal numeral for an integer or a Boolean literal, matching the expression's type."
+              ]
+            ],
+            [
+              "join",
+              [
+                "text",
+                "The texts "
+              ],
+              [
+                "quote",
+                [
+                  "var",
+                  "a"
+                ]
+              ],
+              [
+                "text",
+                " and "
+              ],
+              [
+                "quote",
+                [
+                  "var",
+                  "b"
+                ]
+              ],
+              [
+                "text",
+                " are "
+              ],
+              [
+                "text",
+                "canonical decimal numerals for integers"
+              ],
+              [
+                "text",
+                ". Applying the usual "
+              ],
+              [
+                "text",
+                "*"
+              ],
+              [
+                "text",
+                " operation to the values they denote gives the value represented by "
+              ],
+              [
+                "quote",
+                [
+                  "var",
+                  "c"
+                ]
+              ],
+              [
+                "text",
+                ", which is "
+              ],
+              [
+                "text",
+                "a canonical decimal numeral for an integer"
+              ],
+              [
+                "text",
+                "."
+              ]
+            ]
+          ],
+          "conclusion": [
+            "join",
+            [
+              "text",
+              "The text "
+            ],
+            [
+              "quote",
+              [
+                "join",
+                [
+                  "text",
+                  "("
+                ],
+                [
+                  "var",
+                  "A"
+                ],
+                [
+                  "text",
+                  " "
+                ],
+                [
+                  "text",
+                  "*"
+                ],
+                [
+                  "text",
+                  " "
+                ],
+                [
+                  "var",
+                  "B"
+                ],
+                [
+                  "text",
+                  ")"
+                ]
+              ]
+            ],
+            [
+              "text",
+              " is a well-formed closed expression using canonical decimal numerals for integers, the Boolean constants true and false, and the following operations with their usual typed meanings: addition (+), multiplication (*), subtraction (-), comparison (< and >=), conjunction (and), disjunction (or), and minimum (min). Binary operations are fully parenthesized; minimum is written min(a, b). It evaluates to the value represented by "
+            ],
+            [
+              "quote",
+              [
+                "var",
+                "c"
+              ]
+            ],
+            [
+              "text",
+              ". This result text is a canonical decimal numeral for an integer or a Boolean literal, matching the expression's type."
+            ]
+          ]
+        },
+        "bindings": {
+          "A": "(17 + 25)",
+          "B": "3",
+          "a": "42",
+          "b": "3",
+          "c": "127"
+        },
+        "premises": [
+          7,
+          8,
+          9
+        ],
+        "justification": ""
+      },
+      {
+        "rule": {
+          "premises": [
+            [
+              "join",
+              [
+                "text",
+                "The request "
+              ],
+              [
+                "quote",
+                [
+                  "var",
+                  "x"
+                ]
+              ],
+              [
+                "text",
+                " asks a numerical question equivalent to finding the value of the well-formed closed arithmetic expression "
+              ],
+              [
+                "quote",
+                [
+                  "var",
+                  "e"
+                ]
+              ],
+              [
+                "text",
+                ", whose value is a nonnegative integer. For every canonical nonnegative decimal numeral n, n correctly answers the request if and only if it denotes that value."
+              ]
+            ],
+            [
+              "join",
+              [
+                "text",
+                "The text "
+              ],
+              [
+                "quote",
+                [
+                  "var",
+                  "e"
+                ]
+              ],
+              [
+                "text",
+                " is a well-formed closed expression using canonical decimal numerals for integers, the Boolean constants true and false, and the following operations with their usual typed meanings: addition (+), multiplication (*), subtraction (-), comparison (< and >=), conjunction (and), disjunction (or), and minimum (min). Binary operations are fully parenthesized; minimum is written min(a, b). It evaluates to the value represented by "
+              ],
+              [
+                "quote",
+                [
+                  "var",
+                  "y"
+                ]
+              ],
+              [
+                "text",
+                ". This result text is a canonical decimal numeral for an integer or a Boolean literal, matching the expression's type."
+              ]
+            ]
+          ],
+          "conclusion": [
+            "join",
+            [
+              "text",
+              "The response "
+            ],
+            [
+              "quote",
+              [
+                "var",
+                "y"
+              ]
+            ],
+            [
+              "text",
+              " correctly answers the request "
+            ],
+            [
+              "quote",
+              [
+                "var",
+                "x"
+              ]
+            ],
+            [
+              "text",
+              "."
+            ]
+          ]
+        },
+        "bindings": {
+          "x": {
+            "source": "input",
+            "start": 0,
+            "end": 58
+          },
+          "e": "((17 + 25) * 3)",
+          "y": {
+            "source": "answer",
+            "start": 0,
+            "end": 3
+          }
+        },
+        "premises": [
+          3,
+          10
+        ],
+        "justification": ""
+      }
+    ]
+  },
+  "description": "Claim that 42 times 3 is 127, then consistently use 127 in the remaining records.",
+  "accepted": false,
+  "reason": "verifier did not accept",
+  "failed_record": 9,
+  "accepted_claims": [
+    "The text \"17\" is the canonical decimal numeral for a nonnegative integer: either 0 or a digit from 1 through 9 followed by zero or more digits from 0 through 9.",
+    "The text \"25\" is the canonical decimal numeral for a nonnegative integer: either 0 or a digit from 1 through 9 followed by zero or more digits from 0 through 9.",
+    "The text \"3\" is the canonical decimal numeral for a nonnegative integer: either 0 or a digit from 1 through 9 followed by zero or more digits from 0 through 9.",
+    "The request \"What do you get if you multiply the sum of 17 and 25 by 3?\" asks a numerical question equivalent to finding the value of the well-formed closed arithmetic expression \"((17 + 25) * 3)\", whose value is a nonnegative integer. For every canonical nonnegative decimal numeral n, n correctly answers the request if and only if it denotes that value.",
+    "The text \"17\" is a well-formed closed expression using canonical decimal numerals for integers, the Boolean constants true and false, and the following operations with their usual typed meanings: addition (+), multiplication (*), subtraction (-), comparison (< and >=), conjunction (and), disjunction (or), and minimum (min). Binary operations are fully parenthesized; minimum is written min(a, b). It evaluates to the value represented by \"17\". This result text is a canonical decimal numeral for an integer or a Boolean literal, matching the expression's type.",
+    "The text \"25\" is a well-formed closed expression using canonical decimal numerals for integers, the Boolean constants true and false, and the following operations with their usual typed meanings: addition (+), multiplication (*), subtraction (-), comparison (< and >=), conjunction (and), disjunction (or), and minimum (min). Binary operations are fully parenthesized; minimum is written min(a, b). It evaluates to the value represented by \"25\". This result text is a canonical decimal numeral for an integer or a Boolean literal, matching the expression's type.",
+    "The texts \"17\" and \"25\" are canonical decimal numerals for integers. Applying the usual + operation to the values they denote gives the value represented by \"42\", which is a canonical decimal numeral for an integer.",
+    "The text \"(17 + 25)\" is a well-formed closed expression using canonical decimal numerals for integers, the Boolean constants true and false, and the following operations with their usual typed meanings: addition (+), multiplication (*), subtraction (-), comparison (< and >=), conjunction (and), disjunction (or), and minimum (min). Binary operations are fully parenthesized; minimum is written min(a, b). It evaluates to the value represented by \"42\". This result text is a canonical decimal numeral for an integer or a Boolean literal, matching the expression's type.",
+    "The text \"3\" is a well-formed closed expression using canonical decimal numerals for integers, the Boolean constants true and false, and the following operations with their usual typed meanings: addition (+), multiplication (*), subtraction (-), comparison (< and >=), conjunction (and), disjunction (or), and minimum (min). Binary operations are fully parenthesized; minimum is written min(a, b). It evaluates to the value represented by \"3\". This result text is a canonical decimal numeral for an integer or a Boolean literal, matching the expression's type."
+  ],
+  "checking_questions": [
+    "Is the following statement a supported true assertion? Return 1 to certify the statement, or 0 to withhold certification. Ill-defined or unsupported statements are not supported true assertions. Any accompanying justification may be used to assess the statement.\n\nStatement:\n```\nThe text \u201c17\u201d is the canonical decimal numeral for a nonnegative integer: either 0 or a digit from 1 through 9 followed by zero or more digits from 0 through 9.\n```",
+    "Is the following statement a supported true assertion? Return 1 to certify the statement, or 0 to withhold certification. Ill-defined or unsupported statements are not supported true assertions. Any accompanying justification may be used to assess the statement.\n\nStatement:\n```\nThe text \u201c25\u201d is the canonical decimal numeral for a nonnegative integer: either 0 or a digit from 1 through 9 followed by zero or more digits from 0 through 9.\n```",
+    "Is the following statement a supported true assertion? Return 1 to certify the statement, or 0 to withhold certification. Ill-defined or unsupported statements are not supported true assertions. Any accompanying justification may be used to assess the statement.\n\nStatement:\n```\nThe text \u201c3\u201d is the canonical decimal numeral for a nonnegative integer: either 0 or a digit from 1 through 9 followed by zero or more digits from 0 through 9.\n```",
+    "Is the following rule sound? Return 1 to certify soundness, or 0 to withhold certification.\n\nEach placeholder {{name}} ranges over every finite text. Repeated occurrences of a name receive the same text. Substitution is simultaneous: inserted text is never read as further template notation.\n\nCurly quotation marks \u201c\u2026\u201d and \u2018\u2026\u2019 mark a quotation operation: substitute inside them, then write the result as a canonical JSON string literal, escaping non-ASCII characters. Nested quotations apply this operation from the inside out. Straight quotation marks are ordinary literal text. A backslash escapes a literal brace, curly quotation mark, or backslash. The escapes \\n, \\r, \\t, \\uHHHH and \\UHHHHHHHH denote the corresponding characters; H is a hexadecimal digit. All other text and whitespace inside the fenced blocks is literal.\n\nFor every assignment to the placeholders, if all premises are supported true assertions, the conclusion must also be a supported true assertion. With no premises, every instance of the conclusion must be supported true. Ill-defined or unsupported statements are not supported true assertions. Use the agreed meanings of the statements without adding task-specific assumptions. Any accompanying justification may be used to assess the rule.\n\nPremise 1:\n```\nThe text \u201c{{a}}\u201d is the canonical decimal numeral for a nonnegative integer: either 0 or a digit from 1 through 9 followed by zero or more digits from 0 through 9.\n```\n\nPremise 2:\n```\nThe text \u201c{{b}}\u201d is the canonical decimal numeral for a nonnegative integer: either 0 or a digit from 1 through 9 followed by zero or more digits from 0 through 9.\n```\n\nPremise 3:\n```\nThe text \u201c{{c}}\u201d is the canonical decimal numeral for a nonnegative integer: either 0 or a digit from 1 through 9 followed by zero or more digits from 0 through 9.\n```\n\nConclusion:\n```\nThe request \u201cWhat do you get if you multiply the sum of {{a}} and {{b}} by {{c}}?\u201d asks a numerical question equivalent to finding the value of the well-formed closed arithmetic expression \u201c(({{a}} + {{b}}) * {{c}})\u201d, whose value is a nonnegative integer. For every canonical nonnegative decimal numeral n, n correctly answers the request if and only if it denotes that value.\n```",
+    "Is the following rule sound? Return 1 to certify soundness, or 0 to withhold certification.\n\nEach placeholder {{name}} ranges over every finite text. Repeated occurrences of a name receive the same text. Substitution is simultaneous: inserted text is never read as further template notation.\n\nCurly quotation marks \u201c\u2026\u201d and \u2018\u2026\u2019 mark a quotation operation: substitute inside them, then write the result as a canonical JSON string literal, escaping non-ASCII characters. Nested quotations apply this operation from the inside out. Straight quotation marks are ordinary literal text. A backslash escapes a literal brace, curly quotation mark, or backslash. The escapes \\n, \\r, \\t, \\uHHHH and \\UHHHHHHHH denote the corresponding characters; H is a hexadecimal digit. All other text and whitespace inside the fenced blocks is literal.\n\nFor every assignment to the placeholders, if all premises are supported true assertions, the conclusion must also be a supported true assertion. With no premises, every instance of the conclusion must be supported true. Ill-defined or unsupported statements are not supported true assertions. Use the agreed meanings of the statements without adding task-specific assumptions. Any accompanying justification may be used to assess the rule.\n\nPremise 1:\n```\nThe text \u201c{{n}}\u201d is the canonical decimal numeral for a nonnegative integer: either 0 or a digit from 1 through 9 followed by zero or more digits from 0 through 9.\n```\n\nConclusion:\n```\nThe text \u201c{{n}}\u201d is a well-formed closed expression using canonical decimal numerals for integers, the Boolean constants true and false, and the following operations with their usual typed meanings: addition (+), multiplication (*), subtraction (-), comparison (< and >=), conjunction (and), disjunction (or), and minimum (min). Binary operations are fully parenthesized; minimum is written min(a, b). It evaluates to the value represented by \u201c{{n}}\u201d. This result text is a canonical decimal numeral for an integer or a Boolean literal, matching the expression's type.\n```",
+    "Is the following rule sound? Return 1 to certify soundness, or 0 to withhold certification.\n\nEach placeholder {{name}} ranges over every finite text. Repeated occurrences of a name receive the same text. Substitution is simultaneous: inserted text is never read as further template notation.\n\nCurly quotation marks \u201c\u2026\u201d and \u2018\u2026\u2019 mark a quotation operation: substitute inside them, then write the result as a canonical JSON string literal, escaping non-ASCII characters. Nested quotations apply this operation from the inside out. Straight quotation marks are ordinary literal text. A backslash escapes a literal brace, curly quotation mark, or backslash. The escapes \\n, \\r, \\t, \\uHHHH and \\UHHHHHHHH denote the corresponding characters; H is a hexadecimal digit. All other text and whitespace inside the fenced blocks is literal.\n\nFor every assignment to the placeholders, if all premises are supported true assertions, the conclusion must also be a supported true assertion. With no premises, every instance of the conclusion must be supported true. Ill-defined or unsupported statements are not supported true assertions. Use the agreed meanings of the statements without adding task-specific assumptions. Any accompanying justification may be used to assess the rule.\n\nPremise 1:\n```\nThe text \u201c{{n}}\u201d is the canonical decimal numeral for a nonnegative integer: either 0 or a digit from 1 through 9 followed by zero or more digits from 0 through 9.\n```\n\nConclusion:\n```\nThe text \u201c{{n}}\u201d is a well-formed closed expression using canonical decimal numerals for integers, the Boolean constants true and false, and the following operations with their usual typed meanings: addition (+), multiplication (*), subtraction (-), comparison (< and >=), conjunction (and), disjunction (or), and minimum (min). Binary operations are fully parenthesized; minimum is written min(a, b). It evaluates to the value represented by \u201c{{n}}\u201d. This result text is a canonical decimal numeral for an integer or a Boolean literal, matching the expression's type.\n```",
+    "Is the following statement a supported true assertion? Return 1 to certify the statement, or 0 to withhold certification. Ill-defined or unsupported statements are not supported true assertions. Any accompanying justification may be used to assess the statement.\n\nStatement:\n```\nThe texts \u201c17\u201d and \u201c25\u201d are canonical decimal numerals for integers. Applying the usual + operation to the values they denote gives the value represented by \u201c42\u201d, which is a canonical decimal numeral for an integer.\n```",
+    "Is the following rule sound? Return 1 to certify soundness, or 0 to withhold certification.\n\nEach placeholder {{name}} ranges over every finite text. Repeated occurrences of a name receive the same text. Substitution is simultaneous: inserted text is never read as further template notation.\n\nCurly quotation marks \u201c\u2026\u201d and \u2018\u2026\u2019 mark a quotation operation: substitute inside them, then write the result as a canonical JSON string literal, escaping non-ASCII characters. Nested quotations apply this operation from the inside out. Straight quotation marks are ordinary literal text. A backslash escapes a literal brace, curly quotation mark, or backslash. The escapes \\n, \\r, \\t, \\uHHHH and \\UHHHHHHHH denote the corresponding characters; H is a hexadecimal digit. All other text and whitespace inside the fenced blocks is literal.\n\nFor every assignment to the placeholders, if all premises are supported true assertions, the conclusion must also be a supported true assertion. With no premises, every instance of the conclusion must be supported true. Ill-defined or unsupported statements are not supported true assertions. Use the agreed meanings of the statements without adding task-specific assumptions. Any accompanying justification may be used to assess the rule.\n\nPremise 1:\n```\nThe text \u201c{{A}}\u201d is a well-formed closed expression using canonical decimal numerals for integers, the Boolean constants true and false, and the following operations with their usual typed meanings: addition (+), multiplication (*), subtraction (-), comparison (< and >=), conjunction (and), disjunction (or), and minimum (min). Binary operations are fully parenthesized; minimum is written min(a, b). It evaluates to the value represented by \u201c{{a}}\u201d. This result text is a canonical decimal numeral for an integer or a Boolean literal, matching the expression's type.\n```\n\nPremise 2:\n```\nThe text \u201c{{B}}\u201d is a well-formed closed expression using canonical decimal numerals for integers, the Boolean constants true and false, and the following operations with their usual typed meanings: addition (+), multiplication (*), subtraction (-), comparison (< and >=), conjunction (and), disjunction (or), and minimum (min). Binary operations are fully parenthesized; minimum is written min(a, b). It evaluates to the value represented by \u201c{{b}}\u201d. This result text is a canonical decimal numeral for an integer or a Boolean literal, matching the expression's type.\n```\n\nPremise 3:\n```\nThe texts \u201c{{a}}\u201d and \u201c{{b}}\u201d are canonical decimal numerals for integers. Applying the usual + operation to the values they denote gives the value represented by \u201c{{c}}\u201d, which is a canonical decimal numeral for an integer.\n```\n\nConclusion:\n```\nThe text \u201c({{A}} + {{B}})\u201d is a well-formed closed expression using canonical decimal numerals for integers, the Boolean constants true and false, and the following operations with their usual typed meanings: addition (+), multiplication (*), subtraction (-), comparison (< and >=), conjunction (and), disjunction (or), and minimum (min). Binary operations are fully parenthesized; minimum is written min(a, b). It evaluates to the value represented by \u201c{{c}}\u201d. This result text is a canonical decimal numeral for an integer or a Boolean literal, matching the expression's type.\n```",
+    "Is the following rule sound? Return 1 to certify soundness, or 0 to withhold certification.\n\nEach placeholder {{name}} ranges over every finite text. Repeated occurrences of a name receive the same text. Substitution is simultaneous: inserted text is never read as further template notation.\n\nCurly quotation marks \u201c\u2026\u201d and \u2018\u2026\u2019 mark a quotation operation: substitute inside them, then write the result as a canonical JSON string literal, escaping non-ASCII characters. Nested quotations apply this operation from the inside out. Straight quotation marks are ordinary literal text. A backslash escapes a literal brace, curly quotation mark, or backslash. The escapes \\n, \\r, \\t, \\uHHHH and \\UHHHHHHHH denote the corresponding characters; H is a hexadecimal digit. All other text and whitespace inside the fenced blocks is literal.\n\nFor every assignment to the placeholders, if all premises are supported true assertions, the conclusion must also be a supported true assertion. With no premises, every instance of the conclusion must be supported true. Ill-defined or unsupported statements are not supported true assertions. Use the agreed meanings of the statements without adding task-specific assumptions. Any accompanying justification may be used to assess the rule.\n\nPremise 1:\n```\nThe text \u201c{{n}}\u201d is the canonical decimal numeral for a nonnegative integer: either 0 or a digit from 1 through 9 followed by zero or more digits from 0 through 9.\n```\n\nConclusion:\n```\nThe text \u201c{{n}}\u201d is a well-formed closed expression using canonical decimal numerals for integers, the Boolean constants true and false, and the following operations with their usual typed meanings: addition (+), multiplication (*), subtraction (-), comparison (< and >=), conjunction (and), disjunction (or), and minimum (min). Binary operations are fully parenthesized; minimum is written min(a, b). It evaluates to the value represented by \u201c{{n}}\u201d. This result text is a canonical decimal numeral for an integer or a Boolean literal, matching the expression's type.\n```",
+    "Is the following statement a supported true assertion? Return 1 to certify the statement, or 0 to withhold certification. Ill-defined or unsupported statements are not supported true assertions. Any accompanying justification may be used to assess the statement.\n\nStatement:\n```\nThe texts \u201c42\u201d and \u201c3\u201d are canonical decimal numerals for integers. Applying the usual * operation to the values they denote gives the value represented by \u201c127\u201d, which is a canonical decimal numeral for an integer.\n```"
+  ],
+  "verdicts": [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    0
+  ]
+}

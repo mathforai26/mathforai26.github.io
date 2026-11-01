@@ -1,0 +1,22 @@
+Is the following rule sound? Return 1 to certify soundness, or 0 to withhold certification.
+
+Each placeholder {{name}} ranges over every finite text. Repeated occurrences of a name receive the same text. Substitution is simultaneous: inserted text is never read as further template notation.
+
+Curly quotation marks “…” and ‘…’ mark a quotation operation: substitute inside them, then write the result as a canonical JSON string literal, escaping non-ASCII characters. Nested quotations apply this operation from the inside out. Straight quotation marks are ordinary literal text. A backslash escapes a literal brace, curly quotation mark, or backslash. The escapes \n, \r, \t, \uHHHH and \UHHHHHHHH denote the corresponding characters; H is a hexadecimal digit. All other text and whitespace inside the fenced blocks is literal.
+
+For every assignment to the placeholders, if all premises are supported true assertions, the conclusion must also be a supported true assertion. With no premises, every instance of the conclusion must be supported true. Ill-defined or unsupported statements are not supported true assertions. Use the agreed meanings of the statements without adding task-specific assumptions. Any accompanying justification may be used to assess the rule.
+
+Premise 1:
+```
+The request “{{x}}” asks for the value, written as a canonical decimal numeral, of the arithmetic expression “{{e}}”.
+```
+
+Premise 2:
+```
+The arithmetic expression “{{e}}” has the value represented by the canonical decimal numeral “{{y}}”.
+```
+
+Conclusion:
+```
+The response “{{y}}” correctly answers the request “{{x}}”.
+```

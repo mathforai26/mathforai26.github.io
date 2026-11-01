@@ -1,0 +1,6 @@
+Is the following statement a supported true assertion? Return 1 to certify the statement, or 0 to withhold certification. Ill-defined or unsupported statements are not supported true assertions. Any accompanying justification may be used to assess the statement.
+
+Statement:
+```
+The request “What do you get if you multiply the sum of 17 and 25 by 3?” asks for the value, written as a canonical decimal numeral, of the arithmetic expression “((17 + 25) * 3)”.
+```

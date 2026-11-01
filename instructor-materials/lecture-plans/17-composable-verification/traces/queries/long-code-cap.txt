@@ -1,0 +1,28 @@
+Is the following rule sound? Return 1 to certify soundness, or 0 to withhold certification.
+
+Each placeholder {{name}} ranges over every finite text. Repeated occurrences of a name receive the same text. Substitution is simultaneous: inserted text is never read as further template notation.
+
+Curly quotation marks “…” and ‘…’ mark a quotation operation: substitute inside them, then write the result as a canonical JSON string literal, escaping non-ASCII characters. Nested quotations apply this operation from the inside out. Straight quotation marks are ordinary literal text. A backslash escapes a literal brace, curly quotation mark, or backslash. The escapes \n, \r, \t, \uHHHH and \UHHHHHHHH denote the corresponding characters; H is a hexadecimal digit. All other text and whitespace inside the fenced blocks is literal.
+
+For every assignment to the placeholders, if all premises are supported true assertions, the conclusion must also be a supported true assertion. With no premises, every instance of the conclusion must be supported true. Ill-defined or unsupported statements are not supported true assertions. Use the agreed meanings of the statements without adding task-specific assumptions. Any accompanying justification may be used to assess the rule.
+
+Premise 1:
+```
+The texts “{{w}}” and “{{z}}” are canonical decimal numerals for nonnegative integers. The text “{{A}}” consists entirely of zero or more newline-terminated provisions, each either 'Deduct an allowance of N, capped at the remaining income.' or 'Cap the remaining income at N.', where each N is a canonical nonnegative decimal numeral. Starting with the value represented by “{{w}}” as remaining income, apply every provision once in order. A deduction subtracts the smaller of N and the remaining income. A cap replaces the remaining income by its minimum with N. The final remaining income is the value represented by “{{z}}”.
+```
+
+Premise 2:
+```
+The text “{{n}}” is the canonical decimal numeral for a nonnegative integer: either 0 or a digit from 1 through 9 followed by zero or more digits from 0 through 9.
+```
+
+Premise 3:
+```
+The texts “{{z}}” and “{{n}}” are canonical decimal numerals for integers. Applying the usual min operation to the values they denote gives the value represented by “{{r}}”, which is a canonical decimal numeral for an integer.
+```
+
+Conclusion:
+```
+The texts “{{w}}” and “{{r}}” are canonical decimal numerals for nonnegative integers. The text “{{A}}Cap the remaining income at {{n}}.
+” consists entirely of zero or more newline-terminated provisions, each either 'Deduct an allowance of N, capped at the remaining income.' or 'Cap the remaining income at N.', where each N is a canonical nonnegative decimal numeral. Starting with the value represented by “{{w}}” as remaining income, apply every provision once in order. A deduction subtracts the smaller of N and the remaining income. A cap replaces the remaining income by its minimum with N. The final remaining income is the value represented by “{{r}}”.
+```

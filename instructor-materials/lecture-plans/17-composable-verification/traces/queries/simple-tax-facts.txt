@@ -1,0 +1,17 @@
+Is the following statement a supported true assertion? Return 1 to certify the statement, or 0 to withhold certification. Ill-defined or unsupported statements are not supported true assertions. Any accompanying justification may be used to assess the statement.
+
+Statement:
+```
+Under the rules and facts in “An applicant meets the standard qualification exactly when they are resident and have income below the limit.
+
+An applicant is eligible exactly when both conditions hold: they meet the standard qualification or are a qualifying student; and they have not received benefit B. These are the complete eligibility conditions.
+
+I am resident, my income is below the limit, and I have not received benefit B. I do not know whether I am a qualifying student.
+
+Am I eligible under these rules?”, the following Boolean statement is well-defined and true:
+“Both of the following statements hold:
+‘Both of the following statements hold:
+“The applicant is resident.”
+“The applicant has income below the limit.”’
+‘The applicant has not received benefit B.’”
+```

@@ -1,0 +1,2155 @@
+\documentclass[11pt,twoside]{article}
+\usepackage[T1]{fontenc}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage[inline,shortlabels]{enumitem}
+\usepackage{xcolor,microtype,array,booktabs,needspace,fancyvrb}
+\usepackage{../../../documents/misc_files/course-definition-boxes}
+\usepackage[colorlinks=true,linkcolor=blue!60!black,urlcolor=blue!60!black]{hyperref}
+\usepackage[nameinlink,capitalize]{cleveref}
+\crefname{enumi}{part}{parts}
+\Crefname{enumi}{Part}{Parts}
+\usepackage{enotez}
+\definecolor{courseblue}{HTML}{17365D}
+\DeclareInstance{enotez-list}{lecture}{list}{format=\normalsize,number={#1.}}
+\setenotez{list-name=Endnotes,list-style=lecture,backref=true}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{assumption}[theorem]{Assumption}
+\newcommand{\Stext}{\mathcal S}
+\newcommand{\True}{\mathcal T}
+\newcommand{\Lib}{\mathcal L}
+\newcommand{\Annot}{\mathcal J}
+\newcommand{\Tpl}{\mathsf{Tpl}}
+\newcommand{\Rules}{\mathsf{Rules}}
+\newcommand{\Goal}{\operatorname{Goal}}
+\newcommand{\Inst}{\operatorname{Inst}}
+\newcommand{\Subs}{\operatorname{Sub}}
+\newcommand{\Ask}{\operatorname{Ask}}
+\newcommand{\Account}{\operatorname{Account}}
+\newcommand{\dom}{\operatorname{dom}}
+\newcommand{\range}{\operatorname{range}}
+\newcommand{\cat}{\mathbin{\Vert}}
+\NewDocumentCommand{\quot}{g}{%
+  \operatorname{quote}\IfValueT{#1}{\left(#1\right)}%
+}
+\DefineVerbatimEnvironment{code}{Verbatim}{fontsize=\small,frame=single,framesep=5pt}
+\pagestyle{myheadings}
+\markboth{Lecture 17: Unbounded reliability}{Private technical companion}
+\raggedbottom
+\input{generated/metrics.tex}
+\begin{document}
+\begin{center}
+{\Large\bfseries Unbounded reliability from composable textual verification}\\[4pt]
+{\large A task-independent runtime using bounded model inputs}\\[4pt]
+Private technical companion to Lecture 17 --- 1 November 2026
+\end{center}
+
+\section*{Introduction}
+
+We want AI systems that solve a broad range of well-defined problems,
+including problems expressed in natural language. Learning supplies the
+language and reasoning capabilities, but good performance on many requests
+does not ensure correctness on every request. The goal of this lecture is to
+prevent incorrect returned answers without restricting the system to a narrow
+task family.
+
+By a \emph{runtime} we mean an ordinary software program that controls calls
+to learned models. The runtime receives the user's request, makes model calls,
+stores their outputs, performs prescribed syntactic operations, and decides
+whether to return an answer. No fixed bound is placed on its working memory or
+running time. The runtime does not decide task-specific semantic questions by
+itself. The complete AI system consists of the runtime together with the
+learned models it calls; their combined input--output behavior is the system
+whose reliability and completeness we study.
+
+The construction has two layers. First, a finite \emph{answer certificate}
+derives a claim saying that a proposed answer correctly answers the exact
+request. If every rule used in the certificate preserves truth, the certified
+answer is correct. Second, a software runtime checks such certificates. A
+learned verifier judges the bounded questions needed to authorize their rules,
+while the runtime checks every rule application mechanically. This separation
+isolates the semantic reason for reliability from its implementation with
+learned models.
+
+Certificates and mechanical checking have a long history. Finite rule systems
+can express general computation, while proof systems and proof-carrying code
+separate the production of a solution from mechanical checking of its
+certificate \cite{post,cook-reckhow,necula-pcc}. Recent prover--verifier and
+debate methods apply related ideas to learned systems
+\cite{cobbe-verifiers,irving-debate,brown-cohen-debate,kirchner-legibility}.
+We revisit this separation for general AI systems whose requests, intermediate
+assertions, and rules may remain largely in natural language. The central
+question is when reliable judgments about bounded textual rules, combined by
+a generic runtime, suffice to ensure that every answer returned by the system
+is correct.
+
+Long answers and long requests create additional problems because the relevant
+text may not fit in one bounded model input. Consider first the case of long answers.
+For example, the request may ask for a
+long list of desk-tidying instructions. The runtime can request judgments of
+the short items one by one and of a short general rule that connects those
+judgments to the correctness of the complete output. The runtime
+then applies the rule to the proposed answer by mechanically matching its
+premises against statements established earlier about the request and proposed
+answer. Nothing in the runtime is specific to lists: the model output expresses
+the task-specific reasoning through statements and implications. The same generic
+arrangement can therefore handle a wide variety of complex tasks and long
+responses using model inputs of bounded length.
+
+A long request presents a harder problem because no such bounded model input can
+contain the entire request, yet determining what counts as a correct
+answer may require combining information from all its parts. After proving
+the certificate and runtime theorems, we show how a generator can propose bounded rules
+that organize the input. The runtime uses generic string operations to check
+that the resulting certificate accounts for the exact complete request.
+
+\Cref{sec:problem} defines correctness. \Cref{sec:textual-rules} gives the
+certificate theorem independently of any runtime, and
+\cref{sec:finite-rule-scope} explains the computational scope of finite rule
+libraries. \Crefrange{sec:learned-runtime}{sec:runtime-theorem} then give the
+executable protocol and its guarantee.
+\Cref{sec:short-requests} first applies the runtime to short requests and
+identifies the steps that cease to fit in bounded verifier calls.
+\Cref{sec:compositional-inputs} develops the general long-input method, and
+\cref{sec:long-format-inputs} gives complete arithmetic and tax constructions.
+The implementation and complete traces accompany this note.
+
+\section{The reliability objective and the input model}
+\label{sec:problem}
+
+This section defines requests, correct answers, reliability, and completeness.
+At a high level, the problem is as follows:
+The user enters \emph{requests} and expects \emph{answers}. Fix a finite
+alphabet $\Sigma$ with at least two symbols and let
+$\Stext=\Sigma^*$ be the set of finite strings over $\Sigma$,
+which we also call texts. Requests and answers are elements of $\Stext$. We
+define correctness of answers abstractly, as a binary relation $Q$ on
+$\Stext$:
+\[
+Q \subseteq \Stext \times \Stext\,.
+\]
+Notably, the domain,
+\[
+\dom(Q) = \{ x\in \Stext \,: \exists y\in \Stext \textrm{ s.t. } (x,y)\in Q \}
+\]
+of $Q$ consists of those texts for which a well-defined answer exists.
+Every $y\in\Stext$ has the correct type to serve as an answer; $Q$ determines
+whether $y$ correctly answers a given request.
+Besides postulating the existence of $Q$,
+the semantics of correctness is otherwise left undefined.
+This is a strength: The results do not depend on the exact details of what goes and
+does not go into $Q$ (more about this later).
+In what follows we will call $Q$ the \emph{correctness relation}.
+
+In addition to $Q$, we also need a subset $\True\subseteq \Stext$ of all finite strings,
+which we call the \emph{set of true assertions}.
+Intuitively, for
+the set of true assertions and the correctness relation
+to be consistent with each other,
+assuming as an example that the targeted natural language is English,
+one expects that for any $(x,y)\in \Stext\times\Stext$,
+$y$ is a correct answer to $x$ if and only if the text
+\begin{equation}
+\Goal(x,y)=\text{\ttfamily The response }\cat\quot(y)\cat
+ \text{\ttfamily\ correctly answers the request }\cat\quot(x)\cat\text{\ttfamily .}
+\label{eq:goal}
+\end{equation}
+is a true assertion. In short,
+\begin{align}
+\True \cap \range(\Goal) = \Goal(Q)
+\label{eq:goal-meaning}
+\end{align}
+needs to hold. Here $\range$ is the range of a map and
+$\Goal(Q)=\{\Goal(x,y):(x,y)\in Q\}$.
+
+In \cref{eq:goal}, $\cat$ stands for concatenating the strings on its sides and
+$\quot: \Stext \to \Stext$ is a map that
+``quotes'' its argument in such a way
+that there is a partial decoding map
+$\operatorname{decquote}:\Stext\rightharpoonup\Stext\times\Stext$ for which
+$\operatorname{decquote}(\quot(p)\cat q)=(p,q)$ for all texts
+$p,q\in \Stext$.
+Both $\operatorname{decquote}(\quot(p)\cat q)$ and $\quot(p)$ must be computable in time linear in
+$|p|+|q|$,
+the length of $p \cat q$ (as usual, for $s\in \Stext$, $|s|$ denotes the length of $s$).
+Intuitively, $\quot$ is just an unambiguous way to quote one text inside another. With
+a usual alphabet, $\quot(s) = \mathrm{dec}(|s|) \cat \texttt{:} \cat s$ is suitable.
+(It is not hard to see that a suitable
+quotation scheme always exists for any alphabet with at least two elements).
+We call the pair $(\quot,\operatorname{decquote})$ with the above properties a
+\emph{quotation scheme}.
+The software runtime uses $\quot$ and $\operatorname{decquote}$, so both operations must be
+mechanical and efficient. The quotation scheme is fixed independently of
+$(Q,\True)$. The quotation scheme also makes $\Goal$ injective: the quoted
+answer and request can be recovered in order from $\Goal(x,y)$.
+Consequently, \cref{eq:goal-meaning} is equivalent to
+\begin{equation}
+ \Goal(x,y)\in\True\quad\Longleftrightarrow\quad (x,y)\in Q
+ \qquad\text{for every }x,y\in\Stext.
+ \label{eq:goal-pointwise}
+\end{equation}
+
+With this we are ready to define the \emph{reliability} and \emph{completeness} of a system.
+For these definitions we view systems by the partial maps that their behavior defines.
+Let
+$F:\Stext\rightharpoonup\Stext$ be such a map.
+Reliability is defined relative to $Q$, while
+completeness will be defined relative to a set
+$D\subseteq\dom(Q)$, which contains those strings for which we expect the system
+to give an answer.
+
+Fix an independently specified target family $D\subseteq\dom(Q)$.
+\Needspace{11\baselineskip}
+\begin{definition}
+A system whose behavior is described by a map
+$F:\Stext\rightharpoonup\Stext$ is called \emph{reliable}
+relative to $Q$ if every answer it returns on a request in $\dom(Q)$ is correct:
+\begin{align}
+ \operatorname{graph}\!\left(F|_{\dom(Q)}\right)\subseteq Q\,.
+ \label{eq:reliability}
+\end{align}
+Furthermore, we say that the system is $D$-\emph{complete}
+for some set $D\subseteq \dom(Q)$
+if the domain of $F$ includes $D$:
+\begin{align}
+ D\subseteq\dom(F)\,.
+ \label{eq:complete}
+\end{align}
+\end{definition}
+Reliability constrains the answers returned on requests in $\dom(Q)$; behavior
+outside $\dom(Q)$ is not part of the specification.
+If recognizing all (or some) such inputs
+is itself part of the task,
+choose a superset $U\subseteq \Stext$ of $\dom(Q)$ for which such responses are
+desired,  choose a distinguished answer $\bot\in\Stext$ and
+replace $Q$ by
+\begin{equation}
+ Q^\bot=Q\cup\{(x,\bot):x\in U \setminus \dom(Q)\}\,
+\label{eq:q-totalization}
+\end{equation}
+while enlarging $\True$
+accordingly so that the compatibility condition
+\cref{eq:goal-meaning} still holds. Then $\dom(Q^\bot)=U$,
+and returning $\bot$ on an
+otherwise meaningless request becomes an ordinary correctness requirement.
+
+Reliability alone still permits a system that never answers. Completeness
+requires the system to answer every request in $D$.
+
+The input format affects completeness rather than reliability. A bounded
+request can appear verbatim in an input to the checking model. For a request of
+unbounded length, completeness requires a uniform way to establish assertions
+about the complete request from bounded local checks. The runtime theorem
+states the required coverage property, and
+\Cref{sec:compositional-inputs} gives several ways to establish it using
+generic string operations.
+
+\section{Certificates before runtimes}
+\label{sec:textual-rules}
+
+The first result concerns finite derivations and does not depend on a learned
+model or a runtime. A derivation begins with true assertions and applies rules
+that preserve membership in $\True$. If its final assertion is
+$\Goal(x,y)$, the compatibility condition in \cref{eq:goal-meaning} makes
+$y$ a correct answer to $x$. This section defines the textual rules and
+certificates needed to state that argument precisely.
+
+A rule contains text with named positions at which other texts may be
+inserted. Let $\epsilon$ denote the empty text, and let
+$\mathsf H=\Stext\setminus\{\epsilon\}$ be the set of \emph{hole names}. A
+\emph{template} is a finite expression built from literal texts, named holes,
+concatenation, and quotation. Let $\Tpl$ denote the set of all templates. A
+\emph{substitution} assigns ordinary texts to hole names.
+Evaluating a template under a substitution produces an ordinary text.
+
+Templates are built recursively using the four forms in
+\cref{tab:template-instantiation}.
+In the last two rows, $t,t_1,\ldots,t_k$ are templates already built, so
+\textup{join} and \textup{quote} may be nested to any finite depth.
+\begin{table}[ht]
+\centering
+\caption{Template forms and the recursive definition of $\Inst$}
+\label{tab:template-instantiation}
+\begin{tabular}{ll}
+\toprule
+Template form & Value under a substitution $\sigma$\\
+\midrule
+$\mathrm{text}(s)$, $s\in\Stext$ & $\Inst(\mathrm{text}(s),\sigma)=s$\\
+$\mathrm{var}(a)$, $a$ a hole name & $\Inst(\mathrm{var}(a),\sigma)=\sigma(a)$\\
+$\mathrm{join}(t_1,\ldots,t_k)$, $k\geq 0$
+  & $\Inst(\mathrm{join}(t_1,\ldots,t_k),\sigma)
+     =\Inst(t_1,\sigma)\cat\cdots\cat\Inst(t_k,\sigma)$\\
+$\mathrm{quote}(t)$ & $\Inst(\mathrm{quote}(t),\sigma)=\quot(\Inst(t,\sigma))$\\
+\bottomrule
+\end{tabular}
+\end{table}
+The function
+\[
+ \operatorname{holes}:\Tpl\longrightarrow
+ \{A\subseteq\mathsf H:A\text{ is finite}\}
+\]
+maps a template to the set of its hole names. For a finite list of templates
+$\mathbf t=(t_1,\ldots,t_m)$, define
+\[
+ \operatorname{holes}(\mathbf t)
+ :=\bigcup_{i=1}^m\operatorname{holes}(t_i),
+ \qquad
+ \Subs(\mathbf t)
+ :=\{\sigma:\operatorname{holes}(\mathbf t)\to\Stext\}.
+\]
+Thus every $\sigma\in\Subs(\mathbf t)$ has a finite domain and assigns a text
+to every hole occurring in the list. For each $t_i$ in the list and
+$\sigma\in\Subs(\mathbf t)$, \cref{tab:template-instantiation} defines
+$\Inst(t_i,\sigma)\in\Stext$.
+
+\begin{definition}[Textual rule]
+For $k\in\mathbb N$, a \emph{textual rule} $r=(p_1,\ldots,p_k;c)$ consists of
+premise templates $p_1,\ldots,p_k\in\Tpl$ and one conclusion template
+$c\in\Tpl$. Define
+$\Subs(r):=\Subs((p_1,\ldots,p_k,c))$. The rule is \emph{sound relative to
+$\True$}, or \emph{$\True$-sound}, if
+\begin{equation}
+\forall\sigma\in\Subs(r),\quad
+ \left[\ \forall i\in\{1,\ldots,k\},\ \Inst(p_i,\sigma)\in\True\ \right]
+ \Longrightarrow \Inst(c,\sigma)\in\True.
+\label{eq:rule-sound}
+\end{equation}
+For $k=0$, every instantiated conclusion must belong to $\True$.
+\end{definition}
+When $\True$ is fixed, we use \emph{sound} as shorthand for
+$\True$-sound.
+
+The set of textual rules is therefore
+\[
+ \Rules:=\bigcup_{k\in\mathbb N}(\Tpl^k\times\Tpl).
+\]
+We write an element of $\Tpl^k\times\Tpl$ as
+$(p_1,\ldots,p_k;c)$ to distinguish the premise list from the conclusion.
+
+A rule with no holes and no premises represents one particular assertion,
+such as $1+1=2$. We call such an object a \emph{direct statement}.
+\Needspace{18\baselineskip}
+\begin{definition}[Certificate over a library]
+Let $\Lib\subseteq\Rules$ be a nonempty finite \emph{rule library}. For
+$n\in\mathbb N$, write
+$[n]=\{1,\ldots,n\}$, with $[0]=\varnothing$.
+
+A \emph{certificate over $\Lib$} of length $m\geq 1$ is a sequence
+\[
+ d=\bigl(r_i,\sigma_i,\rho_i\bigr)_{i=1}^m.
+\]
+For every $i\in[m]$, write
+$r_i=(p_{i,1},\ldots,p_{i,k_i};c_i)$. The sequence must satisfy
+\begin{align}
+ &r_i\in\Lib,
+ &&\sigma_i\in\Subs(r_i),
+ &&\rho_i:[k_i]\longrightarrow[i-1],
+ \label{eq:certificate-types}\\
+ &\Inst(p_{i,\ell},\sigma_i)
+   =\Inst(c_{\rho_i(\ell)},\sigma_{\rho_i(\ell)})
+ &&\text{for every }\ell\in[k_i].
+ \label{eq:certificate-match}
+\end{align}
+The \emph{conclusion} of $d$ is
+\begin{equation}
+ \operatorname{concl}(d):=\Inst(c_m,\sigma_m)\in\Stext.
+ \label{eq:certificate-conclusion}
+\end{equation}
+\end{definition}
+
+The matching requirement \cref{eq:certificate-match} says that every instantiated premise must be the conclusion of the earlier
+application selected by $\rho_i$. An \emph{answer certificate} for answer
+$y$ to request $x$ is a certificate $d$ whose conclusion is
+$\Goal(x,y)$.
+
+\begin{theorem}[Sound certificates give correct answers]
+\label{thm:certificate-soundness}
+Let $\Lib\subseteq\Rules$ be a library of $\True$-sound rules. If $d$ is an
+answer certificate over $\Lib$ for answer $y$ to request $x$, then
+$(x,y)\in Q$.
+\end{theorem}
+\begin{proof}
+We prove by induction over the certificate that every instantiated conclusion
+belongs to $\True$. For the current application, every instantiated premise
+is the conclusion of an earlier application and therefore belongs to $\True$
+by the induction hypothesis. The current rule is $\True$-sound, so its
+instantiated conclusion also belongs to $\True$. The argument includes rules
+with no premises. The final conclusion is $\Goal(x,y)$, so
+\cref{eq:goal-pointwise} gives $(x,y)\in Q$.
+\end{proof}
+
+The theorem identifies the entire semantic argument. The certificate may be
+arbitrarily long, and its instantiated claims may be arbitrarily long. Only
+the truth-preservation property of its rules and the exact premise matches
+matter.
+
+\begin{definition}[Finite-rule certifiability]
+\label{def:finite-rule-certifiability}
+Fix $D\subseteq\dom(Q)$. The family $D$ is \emph{finitely
+rule-certifiable} relative to $(\True,\Goal)$ if there is a nonempty finite
+library $\Lib\subseteq\Rules$ such that
+\begin{enumerate}[label=(\roman*),leftmargin=*]
+\item every rule in $\Lib$ is $\True$-sound; and
+\item for every $x\in D$, some $y\in\Stext$ has an answer certificate over
+$\Lib$.
+\end{enumerate}
+The correctness specification is \emph{globally finitely rule-certifiable}
+when $D=\dom(Q)$.
+\end{definition}
+
+Finite-rule certifiability is a coverage property, not an efficiency claim.
+It requires one finite rule library for the entire family, while allowing the
+certificate length and all substituted texts to depend on the request.
+\Cref{thm:certificate-soundness} shows that the resulting answers are
+automatically correct.
+
+\section{The scope of finite textual rules}
+\label{sec:finite-rule-scope}
+
+The certificate theorem is useful only if finite rule libraries can express
+substantial computations. This section relates the framework to classical
+deductive systems and explains the sense in which finite textual rules have
+general computational scope.
+
+A textual rule with several premises is a general finitary inference-rule
+schema. It is not specifically modus ponens. If the assertion language has
+implication, the rule
+\[
+ p_1,\ldots,p_k;c
+\]
+can be encoded by the curried assertion
+$p_1\mathbin{\to}(p_2\mathbin{\to}\cdots(p_k\mathbin{\to}c)\cdots)$ and repeated
+applications of modus ponens.
+The present framework does not require those logical connectives. It directly
+represents the more general operation of deriving one instantiated text from
+finitely many earlier instantiated texts.
+
+Finite systems of such operations are classical. Post canonical systems,
+unrestricted grammars, and finite string-rewriting systems use finitely many
+schemas to generate sets of strings \cite{post,cocke-minsky}. Their computational universality gives
+the following correspondence. The statement permits the assertion language
+to contain tagged descriptions of machine configurations in addition to goal
+claims.
+
+\begin{theorem}[Computational scope of finite rule libraries]
+\label{thm:finite-rule-universality}
+For every recursively enumerable relation
+$Q\subseteq\Stext\times\Stext$ and the fixed computable injective goal map
+$\Goal$, there are a compatible set of true assertions $\True$ and a finite $\True$-sound textual rule
+library whose answer certificates derive exactly the goal claims
+$\Goal(x,y)$ with $(x,y)\in Q$. Conversely, the goal claims derivable from
+any fixed effective finite textual rule library form a recursively enumerable
+set.
+\end{theorem}
+\begin{proof}[Proof idea]
+Choose a Turing machine that enumerates $Q$. Encode its configurations as
+tagged texts. A finite collection of textual rules represents the initial
+configuration, each transition, and the conversion of an accepting
+configuration for $(x,y)$ into $\Goal(x,y)$. A computation history is then a
+finite certificate. Let $\True$ contain exactly the valid configuration and
+goal claims generated by these rules. The tags keep intermediate claims
+outside the range of $\Goal$, so compatibility holds. This is the standard
+simulation of computation by a finite production system.
+
+For the converse, enumerate all finite strings as possible certificates and
+run the mechanical certificate checker on each one. Every derivable goal
+claim eventually appears, and no other goal claim appears.
+\end{proof}
+
+\subsection{Relation to mechanical proof systems}
+
+Once a finite library has been established as $\True$-sound, checking a
+certificate over that library does not require deciding soundness again. The
+checker instantiates templates, compares premises, and reads the final
+conclusion. With an explicit certificate representation, these operations take
+time polynomial in the certificate size and can be implemented in time linear
+in the total amount of materialized text.
+
+This is the setting of an abstract proof system. Cook and Reckhow define a
+propositional proof system as a polynomial-time computable map whose range is
+exactly the propositional tautologies \cite{cook-reckhow}. Equivalently, a
+supplied proof can be checked in polynomial time, while soundness of the
+checker is established mathematically rather than tested by an oracle during
+each proof check. A finite $\True$-sound textual library similarly gives a
+polynomial-time checker for its derivable claims. If every correct goal claim
+has a certificate, it gives a proof system for the language $\Goal(Q)$. Our
+coverage requirement is weaker: finite-rule certifiability of $D$ asks for at
+least one certified correct answer for every request in $D$, not certificates
+for every pair in $Q$.
+
+The learned-verifier construction addresses a different step. Instead of
+placing a task-specific rule library in the trusted runtime, it lets the
+generator propose textual rules and asks a bounded verifier to authorize
+them. A finite authorized library can subsequently be cached or compiled into
+an ordinary mechanical checker.
+
+The theorem gives an exact expressiveness statement after the representation
+of intermediate assertions may be chosen. The theorem does not establish that
+a pre-existing natural-language truth set admits convenient bounded rules.
+For the applications in this lecture, we use the following thesis: whenever
+humans can explain a correctness relation through finitely described local
+steps, those steps can be expressed by a finite library of bounded textual
+rules. The arithmetic and tax constructions test the thesis on concrete
+families. The thesis is comparable in status to a choice of computational
+model: the formal results begin after the finite rule library has been
+specified. The classical results behind the theorem are discussed in the
+bibliographical notes.
+
+\section{Implementing certificate checking with learned models}
+\label{sec:learned-runtime}
+
+The semantic theorem assumes a $\True$-sound rule library. We now describe a
+generic runtime that accepts rules proposed by a generator and uses a learned
+verifier to decide which proposed rules may be used. The runtime itself only
+performs syntactic operations.
+
+A \emph{model call} supplies an input text to a learned model and receives an
+output text. Let $\mathbb N=\{0,1,2,\ldots\}$. A \emph{generator} is a partial
+function
+\[
+ h:\Stext\times\mathbb N\rightharpoonup\Stext.
+\]
+On attempt $n$, the runtime evaluates $h(x,n)$. The returned text is intended
+to encode a \emph{candidate}: a proposed answer and a certificate. A
+\emph{verifier} is a partial function
+\[
+ g:\Stext\rightharpoonup\{0,1\}.
+\]
+Its input is a \emph{checking question}. The generator and verifier may use
+different learned models or the same learned model in different calls.
+
+The complete data flow is as follows.
+\begin{enumerate}[leftmargin=*]
+\item The runtime receives a request $x$ and calls the generator.
+\item The generator proposes an answer $y$ and a finite sequence of rule
+applications.
+\item For each proposed rule, the runtime constructs a checking question and
+calls the verifier. For each application, the runtime instantiates the rule,
+compares every premise verbatim with an earlier conclusion, and stores the new
+conclusion after all checks pass.
+\item The runtime returns $y$ only if the final stored conclusion is exactly
+$\Goal(x,y)$. It may request another candidate after a rejection.
+\end{enumerate}
+
+The generator performs the open-ended search. The verifier judges bounded
+semantic questions about proposed rules. The runtime parses records, resolves
+substitutions, checks references and exact string equality, and controls the
+attempts. Generation and verification may be interleaved; the sequential
+description only makes the checker and its proof easier to state.
+
+For example, for $x=\texttt{What is 1+1?}$ and $y=\texttt{2}$, one candidate
+contains the direct statement $\Goal(x,y)$. If the verifier accepts that
+statement, the runtime stores it, compares it with the mechanically
+constructed $\Goal(x,y)$, and returns $y$.
+
+A proposed rule may be accompanied by a \emph{justification} text
+$j\in\Stext$; $j=\epsilon$ means that none is supplied. Define
+\[
+ \Ask:\Rules\times\Stext\longrightarrow\Stext
+\]
+so that $\Ask(r,j)$ is the complete checking question for rule $r$ and
+justification $j$. If $r$ has a premise or a hole, the question states the
+universal truth-preservation condition in \cref{eq:rule-sound} and displays
+the rule and justification. For a direct statement, the question asks whether
+its conclusion is a supported true assertion. A justification helps the
+verifier assess the rule; the runtime never treats it as an established
+premise. \Cref{app:query-conventions} gives the reversible English rendering.
+
+For the direct statement with conclusion \texttt{1 + 1 = 2} and empty
+justification, $\Ask(r,\epsilon)$ consists of the following instruction and
+statement:
+\begin{quote}
+\input{generated/query-statement-prompt.tex}
+\end{quote}
+\begin{code}
+Statement:
+```
+1 + 1 = 2
+```
+\end{code}
+
+A total \emph{target map} $v:\Stext\to\{0,1\}$ specifies the desired verifier
+judgments. Malformed or semantically undefined questions receive value zero.
+The semantic requirement on $v$ is
+\begin{equation}
+ \forall(r,j)\in\Rules\times\Stext,\quad
+ v(\Ask(r,j))=1\quad\Longrightarrow\quad r\text{ is $\True$-sound}.
+\label{eq:v-sound}
+\end{equation}
+The implication is deliberately one-way: the target may reject some
+$\True$-sound rules. Reliability needs soundness of every accepted rule;
+coverage separately needs acceptance of enough rules.
+
+For a finite rule library $\Lib$, an \emph{annotation} is a map
+$\Annot:\Lib\to\Stext$ assigning a justification to every rule. We say that
+$(\Lib,\Annot)$ is \emph{accepted by $v$} if
+\begin{equation}
+ v(\Ask(r,\Annot(r)))=1
+ \qquad\text{for every }r\in\Lib.
+\label{eq:accepted-library}
+\end{equation}
+Once a finite $\True$-sound library is known, no oracle is needed to recognize
+that particular library. The target map
+\begin{equation}
+ v_{\Lib,\Annot}(w)=
+ \begin{cases}
+ 1,&w=\Ask(r,\Annot(r))\text{ for some }r\in\Lib,\\
+ 0,&\text{otherwise}
+ \end{cases}
+\label{eq:library-target}
+\end{equation}
+is sound and can be implemented in time linear in $|w|$ by exact comparison
+with a fixed finite table. The
+learned verifier is useful because it can authorize rules from their bounded
+textual descriptions instead of requiring every task library to be built into
+the runtime.
+
+\section{The runtime algorithm}
+\label{sec:runtime}
+
+\Cref{sec:textual-rules} defined the mathematical content of a
+certificate. This section gives the exact data supplied to the runtime and the
+algorithm that checks those data.
+
+A candidate has two fields: an answer $y\in\Stext$ and a finite list of
+records. Each record has four fields:
+\begin{center}
+\begin{tabular}{p{.16\linewidth}p{.75\linewidth}}
+\toprule
+Field & Type and purpose\\
+\midrule
+\texttt{rule} & Either a direct statement or the premise and conclusion templates of a rule.\\
+\texttt{bindings} & Exactly one supplied text or interval reference for each hole.\\
+\texttt{premises} & An ordered list of earlier record indices, one per premise.\\
+\texttt{justification} & Optional justification text; the empty string is permitted.\\
+\bottomrule
+\end{tabular}
+\end{center}
+We fix an unambiguous string encoding of this finite data. Encoding, parsing,
+and validating the declared field types are mechanical operations. A string
+that does not encode the required two fields and record fields is malformed
+and is rejected.
+
+A \emph{binding} is either a literal text or an \emph{interval reference}
+$(q,a,z)$. The \emph{source selector} $q$ is the tag
+\texttt{input}, the tag \texttt{answer}, or an earlier record index. For a
+request $x$, proposed answer $y$, and array $A$ of earlier claims, these
+selectors denote $x$, $y$, and the selected entry of $A$, respectively. If
+$u$ is the selected text and $0\le a\le z\le |u|$, then
+$u[a:z]$ is the referenced text. The pseudocode operation \texttt{Resolve}
+replaces every interval reference by this substring and returns the resulting
+substitution. It rejects unavailable sources, invalid endpoints, and binding
+lists that do not supply exactly one value for every hole in the rule.
+
+The checker is parameterized by a \emph{query bound} $b\in\mathbb N$. A
+candidate that requires a checking question longer than $b$ is rejected. The
+procedure \texttt{CHECK} below receives a request $x$, an encoded
+candidate, the verifier $g$, and $b$. It either rejects the
+candidate or accepts its proposed answer. The
+array $A$, initially empty, stores the claims established by accepted records.
+
+\Needspace{18\baselineskip}
+\begin{code}
+CHECK(x, candidate, g, b):
+    parse candidate as (answer y, finite record list records)
+    if the encoding, declared fields, or field types are invalid: reject
+    A := empty array
+    for (r, bindings, refs, j) in records, where r = (p_1,...,p_k; c_r):
+        require refs contains k valid earlier record indices
+        sigma := Resolve(bindings, x, y, A, r)
+        for ell := 1,...,k:
+            require Inst(p_ell, sigma) == A[refs[ell]]
+        w := Ask(r, j)                  # complete checking question
+        require |w| <= b
+        require g(w) == 1
+        append Inst(c_r, sigma) to A
+    require A is nonempty and A[-1] == Goal(x, y)
+    accept y
+\end{code}
+Every failed requirement rejects the candidate. The verifier receives only
+$w$, the complete general rule and optional justification. The bindings,
+request, answer, record indices, and array $A$ remain in runtime memory. This
+separation permits a bounded verifier question even when an instantiated
+claim is long.
+
+The resulting system $R^{g,h}_b$ tries $n=0,1,2,\ldots$ in order,
+runs \texttt{CHECK} on each returned candidate, and returns the first
+accepted answer.
+
+\paragraph{Connecting the certificate to the answer.}
+The last comparison identifies which request and answer the certificate
+addresses. The preceding rule applications must already have established
+the truth of $\Goal(x,y)$.\endnote{Copying costs. The literal representation
+constructs claims containing the complete request and answer. A generator
+can refer to the original input by an interval, but the runtime still copies
+that text when instantiating the claim. Repeated expansion of intermediate
+claims can be expensive. Shared text representations could avoid repeated
+copies while preserving exact matching; such an implementation would need
+to preserve the instantiation and equality operations used in the proof.}
+
+A direct judgment of $\Goal(x,y)$ includes the actual request and answer
+in the verifier query. Replacing the request with a hole changes the
+judgment into a claim about \emph{every} text assigned to that hole.
+For example, a rule asserting without premises that ``Yes'' correctly
+answers an arbitrary request is unsound. A useful general finishing rule
+instead has premises establishing what the request asks and why the answer
+satisfies it. Those premises must themselves be established earlier in the
+certificate. The runtime can manipulate arbitrarily long texts; a successful
+certificate must justify their use through bounded rule queries.
+
+\section{The runtime theorem}
+\label{sec:runtime-theorem}
+
+The certificate theorem gives the semantic guarantee. The runtime theorem
+shows that bounded verifier reliability and mechanical record processing
+enforce its hypotheses. The theorem also turns finite-rule certifiability into
+completeness when the verifier accepts an annotation of the covering library.
+
+\begin{theorem}[Reliability, preservation of certificates, and search]
+\label{thm:runtime}
+Fix $Q$, $\True$, $\Goal$, and the quotation conventions satisfying
+\cref{eq:goal-meaning}, and fix a target $v$ satisfying \cref{eq:v-sound}.
+For an integer $b\ge0$, suppose
+\begin{equation}
+\forall w\in\Stext,\quad |w|\le b
+\ \Longrightarrow\ g(w)\text{ terminates and }g(w)=v(w).
+\label{eq:competence}
+\end{equation}
+Then the runtime has the following properties.
+\begin{enumerate}[label=(\roman*),leftmargin=*]
+\item \label{item:runtime-reliability}\textbf{Reliability for every generator.}
+For every partial generator $h$,
+$\operatorname{graph}(R^{g,h}_b|_{\dom(Q)})\subseteq Q$.
+\item \label{item:runtime-preservation}\textbf{Mechanical preservation.}
+Let $\Lib\subseteq\Rules$ be a nonempty finite library, and let
+$\Annot:\Lib\to\Stext$ be an annotation accepted by $v$. If
+\begin{equation}
+ b\ \ge\ b_{\Lib,\Annot}:=
+ \max_{r\in\Lib}|\Ask(r,\Annot(r))|,
+\label{eq:bound}
+\end{equation}
+there is a mechanical encoder $E_{\Annot}$ that, given $x$, $y$, and any
+answer certificate $d$ over $\Lib$ for $(x,y)$, produces a candidate accepted
+by \texttt{CHECK}. Encoding requires no new semantic inference or proof search.
+\item \label{item:runtime-search}\textbf{Completeness by search.}
+Suppose $D$ is finitely rule-certifiable through $\Lib$, the annotation
+$\Annot$ is accepted by $v$, and $b\ge b_{\Lib,\Annot}$. One computable
+generator $h_{\rm enum}$ then makes
+$R^{g,h_{\rm enum}}_b$ complete on $D$.
+\end{enumerate}
+The bound $b_{\Lib,\Annot}$ depends on the fixed annotated library and complete query format.
+The bound does not depend on the length of the request, answer, substitutions,
+references, or certificate.
+\end{theorem}
+
+\begin{proof}
+For \cref{item:runtime-reliability}, suppose the runtime returns $y$ on
+$x\in\dom(Q)$. Every accepted record has a rule $r$ and justification $j$
+for which $g(\Ask(r,j))=1$. The query bound and \cref{eq:competence} give
+$v(\Ask(r,j))=1$, so \cref{eq:v-sound} makes every used rule
+$\True$-sound. The runtime's exact comparisons make the record sequence a
+certificate, and its final comparison makes the sequence an answer
+certificate for $(x,y)$. \Cref{thm:certificate-soundness} gives
+$(x,y)\in Q$.
+
+For \cref{item:runtime-preservation}, traverse the applications of $d$ in
+their given order. For each
+application copy its rule and $\Annot(r)$ into a record, copy its substitution
+as literal bindings, and copy its premise indices. Serialize the answer and
+records in the fixed candidate format. Every exact premise comparison
+passes by the definition of a certificate. Each query is one of
+the fixed library queries and has length at most $b$. The acceptance
+condition \cref{eq:accepted-library} and \cref{eq:competence} make every model verdict equal
+to one. The last conclusion is $\Goal(x,y)$, as required.
+
+For \cref{item:runtime-search}, fix an order on $\Sigma$ and enumerate
+$\Stext$ by length, breaking ties lexicographically. On attempt $n$,
+$h_{\rm enum}$ returns the $n$th text. Every finite text has a finite position
+in this enumeration. Parsing and all mechanical operations terminate on finite
+candidates; every model call
+made by \texttt{CHECK} terminates by \cref{eq:competence}. For each $x\in D$,
+finite-rule certifiability supplies $y,d$, and
+\cref{item:runtime-preservation} supplies a finite accepted encoding
+$E_{\Annot}(x,y,d)$. The enumeration eventually reaches that
+encoding, unless an earlier accepted answer has already been returned.
+Either event gives termination; \cref{item:runtime-reliability} gives
+correctness.
+\end{proof}
+
+\begin{corollary}[A finite learning target with unbounded uses]
+For a fixed annotated library $(\Lib,\Annot)$, the competence requirement
+concerns only finitely many possible texts of length at most
+$b_{\Lib,\Annot}$. Subject to that
+requirement, the runtime's reliability guarantee covers every accepted
+certificate, with no bound on its length or the lengths of its instances.
+\end{corollary}
+The corollary follows from the finiteness of $\Sigma$ and
+\Cref{thm:runtime}.
+Once the verifier is reliable on the bounded queries, the runtime extends
+that reliability to long certificates by storing and manipulating their
+instances in external memory.
+
+\begin{corollary}[Finite-rule certifiability is sufficient]
+\label{cor:certifiability-suffices}
+If $D$ is finitely rule-certifiable, there are a finite query bound $b$ and a
+sound target map $v$ for which the runtime is reliable for every generator and
+complete on $D$ for one computable generator.
+\end{corollary}
+\begin{proof}
+Let $\Lib$ be a finite $\True$-sound library certifying $D$, choose any
+annotation $\Annot$, and use the finite-table target
+$v_{\Lib,\Annot}$ from \cref{eq:library-target}. Set
+$b=b_{\Lib,\Annot}$. The claims follow from
+\cref{item:runtime-reliability,item:runtime-search}.
+\end{proof}
+This corollary makes the existence of the required bounded verifier explicit.
+The finite-table target is not a practical learning theorem. It shows that the
+semantic coverage assumption leaves only a finite collection of bounded
+judgments to be implemented reliably.
+
+\section{Short requests: meaning, reasoning, and calculation}
+\label{sec:short-requests}
+
+Interpreting a request establishes what an answer must satisfy. Reasoning
+or calculation then establishes that a proposed answer satisfies those
+conditions. In this section, the request wording fits in a checking query.
+The examples will identify the judgments that use this assumption.
+\Cref{sec:compositional-inputs} replaces those judgments when the request is
+too long for one verifier call.
+
+The grade-school example first shows the complete mechanism using two direct
+statements and one implication. The later examples introduce shared logical
+and computational rules when repeated composition makes those rules useful.
+Predicate names abbreviate English assertion templates; the checking questions
+contain their full text. All examples use empty justification and assume
+\cref{eq:competence} with a sufficient query bound for their libraries.
+
+\subsection{A grade-school arithmetic question}
+\label{sec:arithmetic-example}
+
+The request $x$ is ``What do you get if you multiply the sum of 17 and 25 by
+3?'' Because the complete problem fits in one bounded call, the generator
+could propose the answer \texttt{126} and the single direct statement
+$\Goal(x,\texttt{126})$. If the verifier accepts that statement, the runtime's
+final comparison accepts the answer. Such a certificate uses the verifier to
+solve the complete short problem.
+
+A three-record certificate exposes the reasoning without decomposing the
+arithmetic further. The generator proposes the following two direct
+statements:
+\begin{enumerate}[label=\arabic*.,leftmargin=*]
+\item The request ``What do you get if you multiply the sum of 17 and 25 by
+3?'' asks for the value, written as a canonical decimal numeral, of the
+arithmetic expression \texttt{((17 + 25) * 3)}.
+\item The arithmetic expression \texttt{((17 + 25) * 3)} has the value
+represented by the canonical decimal numeral \texttt{126}.
+\end{enumerate}
+The verifier receives each statement exactly as displayed, together with the
+fixed instructions for a direct statement. Both records have empty justification:
+the verifier may recognize the interpretation and calculation without a
+supplied derivation.
+
+The third record must connect the two accepted statements to the returned
+answer. The generator therefore supplies one reusable implication, with text
+holes $x,e,y$:
+\begin{equation}
+ \frac{\begin{array}{c}
+ \text{request $x$ asks for the value of arithmetic expression $e$ as a canonical decimal numeral}\\
+ \text{arithmetic expression $e$ has the value represented by canonical decimal numeral $y$}
+ \end{array}}
+ {\Goal(x,y)}.
+\label{eq:simple-number-finish}
+\end{equation}
+The verifier checks this universally quantified implication as a rule over
+arbitrary texts in the three holes. For the present record, the generator binds $x$ to
+the exact input, $e$ to \texttt{((17 + 25) * 3)}, and $y$ to the exact proposed
+answer \texttt{126}. The runtime instantiates both premises and compares them
+verbatim with records 1 and 2. The runtime then constructs the conclusion and
+compares it with $\Goal(x,\texttt{126})$. Thus the verifier checks the two
+semantic judgments and the general implication; the runtime checks their
+particular use and the connection to the original request and returned answer.
+
+In the runtime's record format, the certificate is:
+\begin{center}
+\begin{tabular}{clll}
+\toprule
+Record & Object sent to verifier & Bindings & Premise records\\
+\midrule
+0 & first direct statement & none & none\\
+1 & second direct statement & none & none\\
+2 & implication in \cref{eq:simple-number-finish} & $x=x_{\rm input}$, $e=\texttt{((17+25)*3)}$, $y=y_{\rm answer}$ & 0, 1\\
+\bottomrule
+\end{tabular}
+\end{center}
+Here $x_{\rm input}$ and $y_{\rm answer}$ are interval references to the
+complete stored request and proposed answer. The verifier receives no
+bindings or record indices. Those objects remain in runtime memory.
+
+The two direct statements and the implication use empty justification. Justification
+would be optional text supplied to help the verifier judge one statement or
+rule; it would not become an additional premise.
+
+Three failures illustrate the division of responsibility. If the first
+statement assigns the wrong expression to the request, the verifier rejects
+that statement. If the second statement gives the wrong value, the verifier
+rejects the calculation. If the generator returns \texttt{127} after
+establishing the value \texttt{126}, the runtime cannot match the second
+premise of \cref{eq:simple-number-finish} with the proposed answer and rejects
+the candidate.
+
+\subsection{Reusable logical rules}
+\label{sec:example-logic}
+
+The generator can separate interpreting the request from reasoning with its
+facts and rules. For context text $C\in\Stext$ and statement text $p\in\Stext$, write
+$H(C,p)$ for the assertion text
+\begin{quote}
+\input{generated/assertion-context.tex}
+\end{quote}
+The placeholders hold the context and statement texts. The assertion says
+that $p$ is meaningful in context $C$ and follows from its rules and facts.
+Write $W(C,p)$ for the assertion that $p$ is a well-defined Boolean statement
+in that context.
+
+We use $p\wedge q$, $p\vee q$, and $p\leftrightarrow q$ for text constructors.
+For example, $p\wedge q$ produces ``Both of the following statements hold:''
+followed by $\quot(p)$ and $\quot(q)$ on separate lines. The other constructors
+say ``at least one'' and ``are equivalent.'' Both constituent statements must be meaningful in the
+same context; the connectives have their usual propositional meanings.
+The following five schemas are therefore sound textual rules:
+\begin{align}
+&\frac{H(C,p)\quad H(C,q)}{H(C,p\wedge q)},\qquad
+ \frac{H(C,p\wedge q)}{H(C,p)},\qquad
+ \frac{H(C,p\wedge q)}{H(C,q)},\label{eq:logic-and}\\[4pt]
+&\frac{H(C,p)\quad W(C,q)}{H(C,p\vee q)},\qquad
+ \frac{H(C,p\leftrightarrow q)\quad H(C,q)}{H(C,p)}.
+ \label{eq:logic-or-iff}
+\end{align}
+Conjunction preserves both established statements; disjunction needs one
+established branch and a meaningful second branch. The last rule substitutes
+an equivalent statement. In every rule, the same context is used throughout.
+
+The verifier checks these general schemas. The generator supplies the actual
+$C,p,q$ as bindings, and the runtime checks the instantiated premises against
+earlier claims. Consequently a long context can occur in every stored claim
+without being repeated in every model query.
+
+For self-contained assertions, conjunction introduction has the form
+\begin{equation}
+\frac{p\quad q}{p\wedge q}.
+\label{eq:plain-and}
+\end{equation}
+We use this version for the desk instructions.
+
+\Needspace{10\baselineskip}
+Here is the actual rule-specific part of the contextual conjunction query.
+Double braces mark text placeholders, and the quotation marks specify how
+the inserted texts are quoted. The common checking instructions appear in
+\Cref{app:query-conventions}.
+\begin{quote}
+\input{generated/query-logic.tex}
+\end{quote}
+
+\subsection{Writing forty desk instructions}
+
+The original request is:
+\begin{quote}
+Give me 40 single-sentence instructions for tidying a desk. Each instruction
+must describe a concrete action, be understandable without the other
+instructions, and contain at most twelve words. Count words by splitting
+on whitespace. Put one instruction on each line.
+\end{quote}
+Call this request $x_{\rm desk}$. The generator first proposes sufficient
+conditions for an answer. For request text $x$, let $\mathrm{Spec}(x)$ denote
+the assertion
+\begin{quote}
+\input{generated/assertion-desk-specification.tex}
+\end{quote}
+The first certificate record asks the verifier to judge
+$\mathrm{Spec}(x_{\rm desk})$ directly. The complete original request is
+quoted in that query. The proposed plan distinguishes conditions on each
+entry from the required count and layout of the whole output.
+
+The generator then proposes forty lines,
+including ``Place loose pens in a pen holder.'' The entry checks separate
+two assertions about each entry $s$:
+\begin{description}[leftmargin=1.3em,style=nextline]
+\item[$\mathrm{Form}(s)$.] The text $\quot(s)$ contains no newline and consists
+of one sentence with at most twelve whitespace-separated words.
+\item[$\mathrm{Content}(s)$.] The text $\quot(s)$ describes a concrete action
+for tidying a desk and is understandable without other instructions.
+\end{description}
+A direct judgment establishes each assertion. Conjunction introduction then
+gives $\mathrm{Good}(s)$, where
+\begin{equation}
+\mathrm{Good}(s)=\mathrm{Form}(s)\wedge\mathrm{Content}(s).
+\end{equation}
+Thus the verifier can judge the format and meaning separately. The runtime
+uses the same entry text in both checks and in their conjunction.
+
+\Needspace{9\baselineskip}
+For the first instruction, the rule-specific part of the format query is:
+\begin{quote}
+\input{generated/query-desk.tex}
+\end{quote}
+
+For list processing, $\mathrm{All}(L,n)$ says that $n$ contains only bars,
+$L$ has exactly $|n|$ newline-terminated entries, and every entry satisfies
+$\mathrm{Good}$. Here $|n|$ counts the bars. The generator uses
+\begin{align}
+&\frac{}{\mathrm{All}(\epsilon,\epsilon)},\qquad
+ \frac{\mathrm{All}(L,n)\quad \mathrm{Good}(s)}
+ {\mathrm{All}(L\cat s\cat\texttt{\textbackslash n},n\cat\texttt{|})},
+ \label{eq:desk-rules}\\[4pt]
+&\frac{\mathrm{Spec}(x)\quad\mathrm{All}(L,\texttt{|}^{40})}{\Goal(x,L)},
+\end{align}
+where $\epsilon$ denotes the emptry string.
+The notation \texttt{\textbackslash n} denotes one newline. Appending one
+entry preserves the line boundaries because $\mathrm{Form}(s)$ excludes
+newlines. The last rule uses the previously checked specification of the
+request. The generator supplies an interval reference to the original
+request for $x$; the runtime checks that the instantiated $\mathrm{Spec}(x)$
+matches the first claim. Its final comparison checks the exact returned list.
+
+\Needspace{12\baselineskip}
+\begin{proposition}[Desk-answer reliability and coverage]
+Assume the soundness and competence hypotheses of \cref{thm:runtime}
+with query bound $b$.
+\begin{enumerate}[label=(\roman*),leftmargin=*]
+\item \label{item:desk-reliability}If $y$ violates any requirement in
+$x_{\rm desk}$, \texttt{CHECK}
+rejects every finite candidate with answer $y$.
+\item \label{item:desk-coverage}Fix a finite nonempty set
+$\mathcal A\subseteq\Stext$ of suitable
+individual instructions. Suppose $v$ accepts the direct judgment of
+$\mathrm{Spec}(x_{\rm desk})$, the ordinary conjunction rule,
+the three displayed list rules, and the direct judgments of $\mathrm{Form}(s)$ and
+$\mathrm{Content}(s)$ for $s\in\mathcal A$, and their complete queries have
+length at most $b$. Every forty-entry sequence from $\mathcal A$ has an
+accepted certificate for $x_{\rm desk}$.
+\end{enumerate}
+\end{proposition}
+\begin{proof}
+For \cref{item:desk-reliability}, the induction in
+\Cref{item:runtime-reliability} puts every
+accepted claim in $\True$. The final comparison would therefore establish
+$\Goal(x_{\rm desk},y)\in\True$, contradicting the violated requirement.
+All checks on a finite candidate terminate under the competence hypothesis,
+so the candidate is rejected.
+
+For \cref{item:desk-coverage}, establish
+$\mathrm{Spec}(x_{\rm desk})$ and apply the empty-list rule. For each entry use two direct
+judgments, conjunction introduction, and the append rule. The finishing rule
+establishes $\Goal(x_{\rm desk},L)$. \Cref{item:runtime-preservation}
+encodes the certificate. There are
+$1+1+4\cdot40+1=163$ records.
+\end{proof}
+The two compositions have different roles: propositional reasoning combines
+requirements on one entry, and list induction extends the guarantee to the
+complete output. For instance, $\mathcal A$ may contain every suitable instruction
+below a fixed byte limit; the implementation uses forty listed instructions.
+
+\paragraph{A rejected candidate.}
+Suppose the generator supplies only the first thirty-nine instructions.
+Every entry passes its checks, and the append rules establish
+$\mathrm{All}(L,\texttt{|}^{39})$. The finishing rule requires
+$\mathrm{All}(L,\texttt{|}^{40})$. The runtime rejects the candidate when
+those texts fail to match; it does not ask the verifier to count the long list.
+
+\subsection{The simple tax request}
+\label{sec:simple-tax}
+
+Here is the complete original input:
+\begin{quote}
+An applicant meets the standard qualification exactly when they are resident
+and have income below the limit.
+
+An applicant is eligible exactly when both conditions hold: they meet the
+standard qualification or are a qualifying student; and they have not
+received benefit B. These are the complete eligibility conditions.
+
+I am resident, my income is below the limit, and I have not received benefit B.
+I do not know whether I am a qualifying student.
+
+Am I eligible under these rules?
+\end{quote}
+Write $x_{\rm tax}$ for this text and $y_{\rm tax}$ for ``Yes, you are
+eligible.'' Set $U(s)=H(x_{\rm tax},s)$. The statement texts used in the
+certificate are complete sentences:
+\begin{center}
+\begin{tabular}{cl}
+\toprule
+Name & Text\\
+\midrule
+$R$ & The applicant is resident.\\
+$L$ & The applicant has income below the limit.\\
+$Q_s$ & The applicant meets the standard qualification.\\
+$S$ & The applicant is a qualifying student.\\
+$N$ & The applicant has not received benefit B.\\
+$E$ & The applicant is eligible.\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The generator supplies four judgments interpreting the input, six logical
+steps, and the final connection to the answer:
+\begin{center}
+\begin{tabular}{cll}
+\toprule
+Record & Conclusion & Justification\\
+\midrule
+0 & $U((R\wedge L)\wedge N)$ & supplied applicant facts\\
+1 & $U(Q_s\leftrightarrow(R\wedge L))$ & first paragraph\\
+2 & $U(E\leftrightarrow((Q_s\vee S)\wedge N))$ & second paragraph\\
+3 & $W(x_{\rm tax},S)$ & meaningful applicant statement\\
+4 & $U(R\wedge L)$ & 0, conjunction elimination\\
+5 & $U(N)$ & 0, conjunction elimination\\
+6 & $U(Q_s)$ & 1 and 4, equivalence\\
+7 & $U(Q_s\vee S)$ & 6 and 3, disjunction\\
+8 & $U((Q_s\vee S)\wedge N)$ & 7 and 5, conjunction\\
+9 & $U(E)$ & 2 and 8, equivalence\\
+10 & $\Goal(x_{\rm tax},y_{\rm tax})$ & 9, answer to the stated question\\
+\bottomrule
+\end{tabular}
+\end{center}
+Records 0--3 are generator-proposed assertions interpreting the supplied
+facts and rules. The verifier judges each assertion with the full short
+request quoted in its query. Records 4--9 use the general schemas from
+\Cref{sec:example-logic}: the model sees a context hole, while the
+runtime substitutes $x_{\rm tax}$. Record 10 uses a rule connecting eligibility
+to this particular question and answer. The unknown student status needs
+no truth judgment because the other branch of the disjunction is established.
+
+\paragraph{A rejected candidate.}
+Keep all eleven records but propose the answer ``No, you are ineligible.''
+The records still establish $\Goal(x_{\rm tax},\texttt{Yes, you are eligible.})$.
+The final comparison rejects the candidate because that claim names a
+different answer. A valid certificate cannot be attached to an arbitrary
+returned response.
+
+\subsection{Where the short-request constructions stop working}
+\label{sec:short-input-limit}
+
+The three constructions use bounded general rules for most of their
+reasoning, but each begins with a semantic judgment about concrete input text.
+The arithmetic certificate asks the verifier to judge what the complete
+question asks. The desk certificate asks it to judge
+$\mathrm{Spec}(x_{\rm desk})$, with the complete request quoted in the query.
+Records 0--3 of the tax certificate ask it to interpret the supplied rules and
+facts with the complete request quoted as their context. These checking
+questions grow when the corresponding source text grows.
+
+The later uses of the interpreted text do not have this problem. The logical
+rules in \cref{sec:example-logic} contain a context hole, so the verifier
+judges a bounded schema while the runtime substitutes the stored context. The
+desk-list rules similarly process an unbounded answer through repeated bounded
+schemas. The runtime's final comparison with $\Goal(x,y)$ is mechanical and
+can involve an arbitrarily long $x$ or $y$.
+
+Consequently the short constructions fail first at the ground semantic
+judgments that interpret the actual request. If one of their complete queries
+exceeds $b$, \texttt{CHECK} rejects the candidate. The next section shows how
+the generator can replace one large interpretation judgment by bounded rules
+whose applications account for the complete input.
+
+\section{Accounting for complete long inputs}
+\label{sec:compositional-inputs}
+
+The runtime theorem applies to a request of any finite length, but its
+completeness conclusion assumes that a certificate of the answer exists.
+This section begins with an arithmetic expression whose complete
+interpretation may exceed the verifier-input bound. The example shows how a
+generator can replace that judgment by bounded rules and a certificate. We
+then define the general property used by the construction. The runtime does
+not contain a parser for each task; it checks the proposed organization through
+exact operations on strings.
+
+\subsection{Arithmetic expressions without a runtime parser}
+\label{sec:long-arithmetic-expression}
+
+An arithmetic expression is presented as an ordinary input string. The
+runtime has no arithmetic parser. The generator may instead propose a parsing
+derivation using finitely many grammar schemas. For example, schemas can say
+that a decimal numeral is an expression and that suitably delimited sums and
+products of expressions are expressions. Each conclusion constructs the
+parent text from the child texts. A derivation whose root is the exact input
+therefore certifies the proposed parse.
+
+The generator can also account for the expression through a reduction
+sequence. Consider the request
+\begin{code}
+What is the value of (3+4)*5?
+\end{code}
+A certificate may establish the following claims:
+\begin{align*}
+ &3+4=7,\\
+ &(3+4)*5\text{ reduces in one value-preserving step to }7*5,\\
+ &7*5=35,\\
+ &7*5\text{ has value }35,\\
+ &(3+4)*5\text{ has value }35,\\
+ &\Goal(\texttt{What is the value of (3+4)*5?},\texttt{35}).
+\end{align*}
+The first and third claims are bounded arithmetic judgments. The other claims
+follow from bounded schemas for reducing a complete subexpression, composing
+reduction with evaluation, and answering the displayed form of question. The
+rule for a reduction step must express when the replaced interval is a
+complete subexpression; this condition may follow from delimiters, from
+earlier syntactic claims, or from a finite collection of valid evaluation
+contexts. The runtime checks only that the bound intervals, surrounding text,
+and reconstructed expressions match exactly.
+
+The same schemas can process an expression of arbitrary length. Expression
+length increases the number of records and the lengths of their instantiated
+claims, but does not increase the lengths of the schemas submitted to the
+verifier. If the individual numerals are also arbitrarily long, their
+arithmetic requires a further certificate. The next construction provides
+one for addition.
+
+\subsection{Coverage rules}
+
+Define the textual constructor $\Account:\Stext\times\Stext\to\Stext$ by
+\begin{equation}
+ \Account(x,m)=
+ \text{\ttfamily The complete text }\cat\quot(x)\cat
+ \text{\ttfamily\ has summary }\cat\quot(m)\cat\text{\ttfamily .}
+ \label{eq:account-text}
+\end{equation}
+The quotation scheme makes the exact source text $x$ and summary text $m$
+recoverable from $\Account(x,m)$. A summary may state a syntactic category, an
+expression value, the state obtained after processing a list of provisions,
+or the dependencies of a section.
+
+\begin{definition}[Compositionally accountable family]
+\label{def:compositionally-accountable}
+A family $D\subseteq\dom(Q)$ is \emph{compositionally accountable relative to
+$\True$} if there is a nonempty finite rule library $\Lib_{\rm account}$ such that
+\begin{enumerate}[label=(\roman*),leftmargin=*]
+\item every rule in $\Lib_{\rm account}$ is $\True$-sound; and
+\item for every $x\in D$, there are $m\in\Stext$ and a certificate $d$ over
+$\Lib_{\rm account}$ satisfying
+$\operatorname{concl}(d)=\Account(x,m)$.
+\end{enumerate}
+\end{definition}
+
+The definition states the exact property needed from the input-handling part
+of a certificate. The property is relative to $\True$ because the
+summaries and composition rules carry semantic content. It does not require a
+particular input syntax. Intervals, record labels, list positions, parse trees,
+and dependency graphs are ways to construct the required certificates rather
+than parts of the definition.
+
+One common rule has the form
+\begin{equation}
+ \frac{\Account(z_1,m_1)\quad\cdots\quad
+       \Account(z_j,m_j)}
+ {\Account(R_c(z_1,\ldots,z_j),
+                   M_c(m_1,\ldots,m_j))}.
+ \label{eq:account-compose}
+\end{equation}
+The display abbreviates an ordinary textual rule: $R_c$ and $M_c$ are
+templates formed from literal text, holes, concatenation, and quotation. The
+conclusion therefore contains the exact text constructed from the child
+texts. The generator may propose a tree of applications of such rules. The
+verifier checks the bounded rule schemas, while the runtime substitutes the
+possibly long child texts and checks every premise and concatenation. A root
+claim $\Account(x,m)$ accounts for the exact request $x$.
+
+The same runtime supports several organizations of a long input.
+\begin{itemize}[leftmargin=*]
+\item \emph{Exact reconstruction} combines intervals or records until their
+concatenation is the complete input.
+\item A \emph{parsing derivation} uses finitely many grammar rules to build a
+root claim about the complete input. The generator supplies the derivation;
+the runtime has no task-specific parser.
+\item A \emph{reduction sequence} starts with the exact input and applies
+approved local replacements until it reaches a form from which the answer is
+immediate.
+\item A \emph{sequential certificate} processes every record in order while
+carrying a summary state. Consecutive indices and the final index certify that
+no record was omitted.
+\item A \emph{dependency certificate} follows labelled references and proves
+that the selected records are closed under the dependency relation supplied
+by the input format.
+\end{itemize}
+These methods use only the runtime's generic operations on strings,
+substitutions, and references. They differ in the rules proposed by the
+generator.
+
+Coverage does not by itself establish semantic relevance. A concatenation
+tree can show that every character occurs without showing that the resulting
+summary is correct. The verifier checks the semantic content of the proposed
+rules, including the rules that say when a summary supports an answer. The
+certificate demonstrates that those rules work together for the particular
+request. The runtime checks their composition and the connection to the exact
+input and proposed answer.
+
+\subsection{A general lifting result}
+
+The next theorem separates the formal coverage condition from any particular
+way of satisfying it.
+
+\begin{theorem}[From input accounting to answers]
+\label{thm:accounted-input}
+Suppose $D$ is compositionally accountable through
+$\Lib_{\rm account}$. Suppose there is a finite library $\Lib_{\rm solve}$
+of $\True$-sound rules such that, for every $x\in D$, at least one witness $(m,d)$ to
+\cref{def:compositionally-accountable} can be extended as follows: there are
+$y\in\Stext$ and a finite sequence of applications of rules in
+$\Lib_{\rm solve}$ in which every premise is either $\Account(x,m)$ or the
+conclusion of an earlier application, and the final conclusion is
+$\Goal(x,y)$.
+Then $D$ is finitely rule-certifiable through
+$\Lib=\Lib_{\rm account}\cup\Lib_{\rm solve}$.
+\end{theorem}
+
+\begin{proof}
+Fix $x\in D$. Choose the witness $(m,d)$ and append its solution sequence to
+$d$, using the established account claim as an available premise. The
+resulting certificate ends with $\Goal(x,y)$ and uses only rules in the finite
+$\True$-sound library $\Lib$. This is finite-rule certifiability.
+\end{proof}
+
+If the target map accepts annotations of both libraries, their union has one
+finite query bound and \cref{thm:runtime} gives runtime completeness on $D$.
+The runtime does not receive the libraries as trusted task definitions: rules
+occur in records proposed by the generator and are submitted to the verifier.
+
+\subsection{The informal generality claim}
+
+The theorem begins after the bounded rules and certificates have been
+specified. The connection to human-understandable organizations of text is an
+informal thesis rather than a mathematical theorem.
+
+\begin{quote}
+\textbf{Compositional verification thesis.}
+If a human can make clear how complete inputs in a family determine answers
+using semantic rules whose complete verifier questions have one fixed length
+bound, together with mechanically checkable bookkeeping that accounts for the
+complete input, then a sufficiently capable generator can express that method
+as rules and certificates for the generic runtime.
+\end{quote}
+
+The verifier checks the proposed bounded rules that collectively describe how
+the parts are processed and when the accumulated information permits an
+answer. A certificate for a particular request uses those rules to produce an
+answer, and the runtime checks every use by string manipulation. The fixed
+length bound also makes the set of possible checking questions finite. The phrase
+``a human can make clear'' has no formal definition, so the thesis cannot be
+proved from the definitions above. The role of the thesis is analogous to the
+role of the informal notion of effective computation in the Church--Turing
+thesis. Once the required bounded rules and certificates are given,
+\cref{thm:accounted-input,thm:runtime} provide the formal reliability and
+completeness conclusions.
+
+\section{Worked constructions for long inputs}
+\label{sec:long-format-inputs}
+
+This section gives complete accounting and solution certificates for two
+families. The first construction adds arbitrarily long decimal integers. The
+second processes tax requests containing an unbounded exclusion list and an
+unbounded ordered list of provisions.
+
+\subsection{Adding integers of arbitrary length}
+\label{sec:long-addition}
+
+Consider requests in the following format:
+\begin{code}
+Add the following two equal-width strings of decimal digits.
+Return exactly one more digit than either input, using an initial 0 if necessary.
+First: DIGITS
+Second: DIGITS
+\end{code}
+The two occurrences of \texttt{DIGITS} have the same positive length. Each
+contains only the characters \texttt{0},\ldots,\texttt{9}. The required leading
+output digit makes the output length fixed by the input format. A mechanical
+preprocessor can convert an ordinary pair of nonnegative decimal numerals to
+this format by padding the shorter numeral with leading zeros; it can remove
+the extra leading zero from the returned answer afterward.
+
+The generator treats each operand as a sequence of digit characters. For digit
+characters $a,b,d\in\{\texttt{0},\ldots,\texttt{9}\}$ and carry characters
+$c,c'\in\{\texttt{0},\texttt{1}\}$, let
+$\mathrm{Digit}(a,b,c;d,c')$ be the assertion
+\begin{equation}
+ \operatorname{value}(a)+\operatorname{value}(b)+\operatorname{value}(c)
+ =\operatorname{value}(d)+10\operatorname{value}(c').
+\label{eq:digit-transition}
+\end{equation}
+There are only $200$ true digit transitions, one for every choice of $a,b,c$.
+Each transition is a bounded direct statement.
+
+For equal-length digit strings $u,v,w$ and $c\in\{\texttt{0},\texttt{1}\}$,
+let $\mathrm{Add}(u,v,w,c)$ assert that right-to-left column addition of $u$
+and $v$, starting with carry zero at the right edge, produces the digit string
+$w$ and carry $c$ at the left edge. The base and composition rules are
+\begin{equation}
+ \frac{}{\mathrm{Add}(\epsilon,\epsilon,\epsilon,\texttt{0})},
+ \qquad
+ \frac{\mathrm{Add}(u,v,w,c)\quad
+       \mathrm{Digit}(a,b,c;d,c')}
+      {\mathrm{Add}(a\cat u,b\cat v,d\cat w,c')}.
+\label{eq:add-columns}
+\end{equation}
+The generator processes the columns from right to left. At each step, the
+runtime checks that the new digits are the characters immediately preceding
+the already processed suffixes, matches the carry to the preceding claim, and
+constructs the longer strings by concatenation. The verifier checks the fixed
+composition rule and the applicable one-digit transition.
+
+Let $X(u,v)$ denote the complete displayed request with operands $u,v$. After
+all columns have been processed, the finishing rule is
+\begin{equation}
+ \frac{\mathrm{Add}(u,v,w,c)}{\Goal(X(u,v),c\cat w)}.
+\label{eq:add-finish}
+\end{equation}
+The conclusion contains the complete reconstructed request and the proposed
+output. The runtime therefore checks that every input digit was used, in the
+correct position, and that the final claim concerns the exact original request
+and returned answer.
+
+\begin{proposition}[Uniform verification of decimal addition]
+There is a finite library of $\True$-sound textual rules through which the
+family of displayed addition requests is finitely rule-certifiable. For
+operands of length $n$, the certificate uses $2n+2$ records. If the target map
+accepts an annotation of the library, one query bound suffices for every
+operand length; under \cref{thm:runtime}, no incorrect sum is returned.
+\end{proposition}
+\begin{proof}
+The library contains the base rule, the composition and finishing rules, and
+the $200$ true instances of \cref{eq:digit-transition}. The library is finite,
+so any accepted annotation gives a finite query bound through
+\cref{eq:bound}.
+
+Start with the base claim. For each of the $n$ columns, use one digit-transition
+record and one application of the composition rule. Induction on the number of
+processed columns proves that the resulting $\mathrm{Add}$ claim contains the
+correct result suffix and outgoing carry. One finishing record gives the goal,
+for $1+2n+1=2n+2$ records. The runtime theorem gives rejection of every
+incorrect returned answer.
+\end{proof}
+
+Other arithmetic operations require different local summaries. Schoolbook
+multiplication, for example, can record partial products and accumulated rows.
+A formal proof system has the same general shape at a higher level: formulas
+have a compositional syntax, a proof is a sequence of formula records, and a
+fixed collection of inference rules determines which record may follow from
+which earlier records. A runtime can check substitutions, references, and
+exact formula construction while a verifier checks the bounded inference-rule
+schemas. This observation indicates how a fixed formal logic can be covered;
+the details depend on the chosen syntax and proof calculus.
+
+\subsection{A structured tax input: exclusions and eligibility}
+\label{sec:full-tax}
+
+This example uses the sequential coverage method from
+\cref{sec:compositional-inputs}. The input marks definitions, additional
+exclusions, case facts, and the question. The generator proposes rules for
+processing these blocks and a certificate for the particular case. The
+runtime checks that the certificate reconstructs and processes the exact
+blocks in the input. The number of exclusion clauses may be arbitrarily
+large. Here is one complete instance, copied from the executable example:
+\begin{quote}
+\input{generated/input-full-tax.tex}
+\end{quote}
+The Definitions block applies throughout the request. Part E collects
+alternative reasons for exclusion: any applicable exclusion is sufficient.
+The Case block supplies all its statements jointly as facts. The closing
+markers delimit the blocks; quoted flag names remain data even if they
+contain words such as ``End Part E.''
+
+The generator proposes a certificate that accounts for every exclusion and
+its corresponding case fact. It then specifies the complete eligibility
+condition and evaluates it. These operations use the same runtime as the
+short examples.
+
+Write $C_{\beta}(d,w,t,a)$ for the case-text constructor, with numeral texts
+for residence days, earnings, training expenses, and age. The index
+$\beta\in\{0,1\}$ selects ``has not received'' or ``has received'' benefit B.
+Let $X_{\beta}(E,F;d,w,t,a)$ construct the complete request using exclusion
+text $E$, matching flag-fact text $F$, and that case paragraph. Its header,
+definition block, opening and closing markers, question, and line breaks are fixed as displayed. The generator proposes intervals for
+$E$ and $F$ in the original request. The runtime copies those intervals
+verbatim; the rules below establish what their contents imply.
+
+For this family, the generator treats the request as fixed definitions, a
+recursive exclusion list, case facts, and a question. The constructors
+$X_\beta$, $e$, and $f$ below build the corresponding exact texts. The block
+markers and quotation convention let the runtime check the proposed
+decomposition by equality and concatenation.
+
+\subsubsection{Accounting for the long part of the input}
+
+For any name text $s\in\Stext$, define
+\begin{align*}
+e(s)&=\text{\ttfamily An applicant with disqualification flag }\cat\quot(s)
+       \cat\text{\ttfamily\ is excluded.\textbackslash n},\\
+f(s)&=\text{\ttfamily Disqualification flag }\cat\quot(s)
+       \cat\text{\ttfamily\ is false.\textbackslash n}.
+\end{align*}
+A name can itself be arbitrarily long. Quotation keeps newlines and other
+characters inside the name. For a finite list $s_1,\ldots,s_m$, put
+\begin{equation}
+ E=e(s_1)\cat\cdots\cat e(s_m),\qquad
+ F=f(s_1)\cat\cdots\cat f(s_m).
+\label{eq:ef}
+\end{equation}
+The assertion $\mathrm{Pair}(u,v)$ says that $u,v$ are exactly one exclusion
+line and its false-flag fact with the same quoted name. The assertion
+$\mathrm{Exclusions}(E,F)$ says that the two texts consist entirely of such
+lines, paired in order. Consequently every exclusion in $E$ is inactive
+under the supplied facts $F$.
+
+This is the list construction already used for desk instructions, applied
+to paired lines:
+\begin{align}
+&\frac{}{\mathrm{Exclusions}(\epsilon,\epsilon)},\qquad
+ \frac{}{\mathrm{Pair}(e(s),f(s))},\label{eq:tax-start}\\[3pt]
+&\frac{\mathrm{Exclusions}(E,F)\quad \mathrm{Pair}(u,v)}
+ {\mathrm{Exclusions}(E\cat u,F\cat v)}.
+\label{eq:tax-append}
+\end{align}
+After $m$ append steps, the stored claim covers the complete two lists.
+The verifier has seen the same three rule schemas regardless of list length
+or name length; the generator supplies the long bindings and the runtime
+checks every concatenation and premise reference.
+In the terminology of \cref{sec:compositional-inputs}, these rules account for
+the two lists by exact reconstruction and sequential processing.
+
+\subsubsection{Deriving and evaluating the eligibility condition}
+
+The tax calculation uses a fixed expression tree whose leaves are short
+numerals and Boolean constants. Let $\mathrm{Num}(a)$ assert that $a$ is a
+canonical decimal numeral, and let $\mathrm{Eval}(e,z)$ assert that the closed
+expression text $e$ has the value represented by $z$. For an operation
+$\circ$, let $\mathrm{Calc}_{\circ}(a,b,c)$ assert that applying $\circ$ to
+the values represented by $a,b$ gives the value represented by $c$. If
+$\mathrm{op}_{\circ}(A,B)$ constructs the corresponding expression text, the
+reusable evaluation rule is
+\begin{equation}
+ \frac{\mathrm{Eval}(A,a)\quad \mathrm{Eval}(B,b)\quad
+       \mathrm{Calc}_{\circ}(a,b,c)}
+      {\mathrm{Eval}(\mathrm{op}_{\circ}(A,B),c)}.
+\label{eq:eval-compose}
+\end{equation}
+A numeral is evaluated by
+$\mathrm{Num}(a)\Rightarrow\mathrm{Eval}(a,a)$. Each scalar calculation in
+this example fits in one bounded direct statement.
+
+Define $\mathrm{BoolQ}(x,e)$ to assert that $e$ is a well-formed closed Boolean
+expression and the correct answers to $x$ are related to its value by
+\begin{equation}
+ (x,\texttt{Yes.})\in Q\ \Longleftrightarrow\ e\text{ evaluates to true},
+ \qquad
+ (x,\texttt{No.})\in Q\ \Longleftrightarrow\ e\text{ evaluates to false}.
+\end{equation}
+Following the code's references yields the expression constructor
+\begin{equation}
+ B_{\beta}(d,w,t,a)=
+ (d\ge183)\wedge
+ \bigl((w-\min(t,500)<20000)\wedge
+       (\neg\beta\wedge(a\ge18))\bigr).
+\label{eq:tax-condition}
+\end{equation}
+The display describes expression text: $d,w,t,a$ occupy numeral positions,
+and $\neg\beta$ is written as the literal \texttt{true} or \texttt{false}.
+The generator proposes the following rule specifying the answer condition
+for each $\beta$:
+\begin{equation}
+ \frac{\mathrm{Num}(d),\ \mathrm{Num}(w),\ \mathrm{Num}(t),\
+ \mathrm{Num}(a),\ \mathrm{Exclusions}(E,F)}
+ {\mathrm{BoolQ}(X_{\beta}(E,F;d,w,t,a),B_{\beta}(d,w,t,a))}.
+\label{eq:tax-specification}
+\end{equation}
+The fixed sections appear literally in this rule's request template.
+The rule follows section 40 to the residence test, sections 112 and 113 to
+the income expression, and section 950 to the age test. Its last premise
+accounts for every additional exclusion. The verifier checks that these
+conditions are equivalent to eligibility under the complete supplied code.
+The rule leaves the numerical tests and conjunction to be evaluated.
+
+For the displayed case, the generator now supplies the following calculations:
+\begin{center}
+\begin{tabular}{ll}
+\toprule
+Calculation & Result\\
+\midrule
+$190\ge183$ & true\\
+$\min(700,500)$ & 500\\
+$20300-500$ & 19800\\
+$19800<20000$ & true\\
+$23\ge18$ & true\\
+\bottomrule
+\end{tabular}
+\end{center}
+Each scalar calculation is a short direct judgment. The evaluator in
+\cref{eq:eval-compose} combines them into the value of the complete
+expression. Conjunction uses the four rows of its usual Boolean truth table.
+Here all four eligibility conditions are true, so the result is true.
+Replacing age 23 by 17 makes the age comparison false; replacing earnings
+20300 by 20500 makes the income comparison false. Receiving benefit B
+makes the corresponding Boolean constant false. The same evaluation rules
+then produce false and the answer ``No.''
+
+The two finishing rules are
+\begin{equation}
+ \frac{\mathrm{BoolQ}(x,e)\quad \mathrm{Eval}(e,\texttt{true})}
+ {\Goal(x,\texttt{Yes.})},\qquad
+ \frac{\mathrm{BoolQ}(x,e)\quad \mathrm{Eval}(e,\texttt{false})}
+ {\Goal(x,\texttt{No.})}.
+\end{equation}
+The runtime first matches the complete exclusion and flag texts to the
+established $\mathrm{Exclusions}$ claim. It later matches the evaluated
+expression to the answer-condition claim, then
+compares the final claim with the original request and returned answer.
+If the generator certifies fewer exclusions than the input contains,
+using the full input block fails the premise match; using the shorter
+certified block describes a different request and fails the final match.
+Changing a definition, a block marker, or a case fact also invalidates the
+old certificate through these exact matches.
+
+\paragraph{A rejected candidate with an omitted exception.}
+Change the last case fact to ``Disqualification flag \texttt{"late-filing"}
+is true.'' The applicant is now excluded. Suppose the generator returns
+``Yes.'' after certifying only the first two exclusion--fact pairs. Its
+answer-condition record proposes intervals for the complete three-clause
+Part E and all three flag facts. The required
+$\mathrm{Exclusions}(E,F)$ premise differs from the established two-pair
+claim, so the runtime rejects that record. No verifier call needs to
+contain the complete exclusion list.
+
+\subsubsection{Coverage of the family}
+
+Fix an integer $K\ge0$. Let $D_K$ consist of the requests
+$X_{\beta}(E,F;d,w,t,a)$ with the following data:
+\begin{itemize}[leftmargin=*]
+\item $d,w,t,a$ are canonical decimal numerals for integers in $\{0,\ldots,K\}$;
+\item $\beta\in\{0,1\}$;
+\item $(E,F)$ is constructed by \cref{eq:ef} from any finite list of name texts.
+\end{itemize}
+The number of exclusions and the lengths of their names are unbounded.
+
+\begin{proposition}[Variable cases and unbounded source text]
+For every fixed $K$, there is a finite library $\Lib_K$ of sound rules such
+that every request in $D_K$ has a certificate for its correct
+answer using at most $2m+36$ rule applications, where $m$ is the number of
+additional exclusions. Thus $D_K$ is finitely rule-certifiable. If the target
+map accepts an annotation of $\Lib_K$, one query bound works for every request
+in $D_K$.
+\end{proposition}
+\begin{proof}
+Include the three list rules, the two answer-condition rules, the required
+instances of the evaluation schema, numeral evaluation, and the two finishing
+rules. Include direct judgments for input numerals from $0$ through $K$,
+the fixed constants $18,183,500,20000$, the Boolean constants, and every scalar calculation
+arising from these inputs. There are finitely many such calculations: the
+case tuple ranges over a finite set, and the expression has fixed size.
+Subtraction judgments include negative assessable incomes. All primitive judgments can be checked by integer arithmetic and Boolean
+truth tables.
+
+The pair and append rules preserve the exact line pairing. The answer-condition
+rules follow by substituting the definitions in the fixed code and observing
+that each additional exclusion has a false flag. The evaluation rule
+preserves expression values under each typed operation. The finishing rules
+follow from the definition of $\mathrm{BoolQ}$. Thus every included rule is
+sound.
+
+For a request in $D_K$, construct its exclusion summary in $2m+1$ steps.
+Use at most four input-numeral judgments and one step establishing the answer condition. The expression
+has at most eight distinct numeral leaves, of which at most four still
+need numeral judgments; evaluating the leaves and the one Boolean constant
+therefore takes at most thirteen further steps. Its eight binary operations
+take two steps each: a scalar calculation judgment and an application of
+\cref{eq:eval-compose}. One finishing step gives the goal. The total is
+at most $2m+1+4+1+13+16+1=2m+36$.
+
+For any annotation $\Annot_K$ of $\Lib_K$ accepted by $v$,
+\Cref{thm:runtime} supplies the encoding and the bound
+$b_{\Lib_K,\Annot_K}$.
+The library is fixed once $K$ is fixed; increasing the source's list or name
+lengths changes only the runtime's bindings and number of records.
+\end{proof}
+A generator can recover the parameters from the displayed input syntax, or
+enumerate their possible values until the constructed text matches the
+request. It then builds the certificate of the answer condition and its
+evaluation just described.
+
+\subsubsection{When the tax code itself is long}
+\label{sec:long-core}
+
+The preceding construction allows an unbounded exclusion list, but its fixed
+definitions still fit in one verifier query. A long rule block needs its own
+compositional format. Consider a Part A consisting of an ordered list of two
+kinds of provisions:
+\begin{quote}
+Deduct an allowance of $n$, capped at the remaining income.
+
+Cap the remaining income at $n$.
+\end{quote}
+Here $n$ is a decimal numeral. The surrounding code says to start from the
+applicant's earnings and apply every provision once, in source order. The
+generator proposes a sequential treatment of Part A as provision records. The
+runtime checks that each extension appends the exact next provision text. The
+generator must account for every record because the answer-condition rule
+later uses the complete Part A interval copied from the input.
+
+For Part A text $A$ and numeral texts $w,z$, let $\mathrm{Run}(A,w,z)$ assert
+that executing exactly the provisions in $A$, starting from income $w$, leaves
+income $z$. The empty sequence and the two possible extensions use
+\begin{align}
+&\frac{\mathrm{Num}(w)}{\mathrm{Run}(\epsilon,w,w)},
+\label{eq:run-base}\\[3pt]
+&\frac{\begin{gathered}
+   \mathrm{Run}(A,w,z)\quad \mathrm{Num}(n)\\
+   \mathrm{Calc}_{\min}(z,n,h)\quad \mathrm{Calc}_{-}(z,h,r)
+ \end{gathered}}
+ {\mathrm{Run}(A\cat\mathrm{clause}(n),w,r)},
+ \qquad
+ \frac{\mathrm{Run}(A,w,z)\quad \mathrm{Num}(n)\quad
+       \mathrm{Calc}_{\min}(z,n,r)}
+ {\mathrm{Run}(A\cat\mathrm{cap}(n),w,r)}.
+\label{eq:allowance-compose}
+\end{align}
+The verifier checks these fixed rules. The runtime matches the prefix claim
+and scalar calculations, appends the exact next provision text, and stores the
+new prefix claim. Induction therefore gives one claim covering the complete
+ordered block.
+
+The order is semantically relevant. Starting from $20300$, a cap at $20000$
+followed by a deduction of $1$ leaves $19999$, while the reverse order leaves
+$20000$. The two inputs therefore have different correct eligibility answers.
+One certificate cannot certify the other order because its final
+$\mathrm{Run}$ claim contains different source text.
+
+Let $X^*_{\beta}(A,E,F;d,w,a)$ construct the complete request with Part A text
+$A$, exclusion text $E$, matching flag facts $F$, case numerals $d,w,a$, and
+benefit status $\beta$. If $z$ is the final income established by
+$\mathrm{Run}(A,w,z)$, define
+\begin{equation}
+ B^*_{\beta}(d,z,a)
+   =(d\ge183)\wedge\bigl((z<20000)\wedge(\neg\beta\wedge(a\ge18))\bigr).
+\end{equation}
+The answer-condition rule is
+\begin{equation}
+ \frac{\mathrm{Run}(A,w,z)\quad \mathrm{Exclusions}(E,F)\quad
+       \mathrm{Num}(d)\quad \mathrm{Num}(a)}
+ {\mathrm{BoolQ}(X^*_{\beta}(A,E,F;d,w,a),B^*_{\beta}(d,z,a))}.
+ \label{eq:allowance-specification}
+\end{equation}
+The same $A$ occurs in the premise and the reconstructed request, and the same
+$w$ occurs in the execution claim and the case paragraph. Consequently the
+runtime verifies that the calculation starts from the supplied earnings and
+covers the complete supplied provision block. The existing Boolean evaluation
+and finishing rules then establish the answer.
+
+For example, 301 deductions of $1$ from earnings of $20300$ leave $19999$;
+300 such deductions leave $20000$. The two requests have opposite answers.
+A certificate covering only 300 provisions cannot answer the 301-provision
+request because its $\mathrm{Run}$ claim fails the premise comparison in
+\cref{eq:allowance-specification}. Asking the verifier to judge the complete
+301-provision request directly also fails when that query exceeds the bound.
+
+\begin{proposition}[Bounded checking of an unbounded tax code]
+\label{prop:long-code}
+Fix $K\ge0$. Let $D^*_K$ contain the requests above in which every case figure
+and provision amount belongs to $\{0,\ldots,K\}$, Part A is any finite ordered
+list of the two permitted provision forms, and the paired exclusion list is
+arbitrary. There is a finite sound rule library $\Lib^*_K$ that covers every
+request in $D^*_K$. A request with $m$ provisions and $\ell$ exclusions has a
+certificate with at most $4m+2\ell+32$ records. One query bound works for every
+$m,\ell$ and every permitted request in the family.
+\end{proposition}
+\begin{proof}
+Every provision maps a balance in $\{0,\ldots,K\}$ to another balance in that
+set. The numeral and scalar-calculation statements needed by the two extension
+rules therefore form a finite set. Add those statements, the rules
+\crefrange{eq:run-base}{eq:allowance-compose}, the exclusion rules, the
+answer-condition rules, and the Boolean evaluation and finishing rules. The
+resulting library is finite.
+
+The base claim starts the execution certificate. Each provision needs at most
+one numeral statement, two scalar calculations, and one extension step. The
+exclusion list uses $2\ell+1$ records. The remaining case, Boolean-evaluation,
+and finishing records fit within the stated constant. Induction over Part A
+proves the complete $\mathrm{Run}$ claim; the earlier exclusion induction
+covers Part E. \Cref{thm:runtime} supplies the uniform query bound and
+rejection of every incorrect returned answer.
+\end{proof}
+
+A general tax code may use named sections with references rather than one
+ordered list. A suitable long format can expose a labelled dependency graph:
+each section is a bounded record, and each reference names another record. A
+certificate must then account for every section on which the answer depends
+and justify the summary passed across each dependency edge. The sequence
+construction above is the special case in which the dependency graph is a
+path. The appropriate summary assertion depends on the rule language, so we
+do not develop a universal tax-law semantics here.
+
+\section{Implementation and further development}
+
+\texttt{runtime.py} contains the generic checker, certificate encoder, search
+loop, and exhaustive generator. The untrusted constructors in
+\texttt{examples.py} share the templates in \texttt{example\_rules.py}.
+For reproducible tests, the verifier is a lookup table accepting \VerifierQuestionCount{}
+designated complete questions. Exact traces contain the original inputs,
+candidates, accepted claims, and question identifiers linked to the full
+question catalogue.
+
+\input{generated/example-statistics.tex}
+The full-tax traces include the eligible case and negative answers caused
+by age, income, or benefit status. The allowance-code traces include both
+301 and 300 provisions, giving opposite answers, and the two orders of a
+cap and deduction. Trace milestones identify the claims about complete
+input blocks, answer conditions, and calculated results. The long-name case has one name of
+\LongNameLength{} characters. The scale examples use exactly the same verifier table
+and bound as the short examples. Tests cover the source-to-answer
+connections, shared logic, typed evaluation, and protocol rejection cases,
+including omitted premises, wrong answers, changed source text, omitted
+exclusions, invalid bindings, and malformed records. Additional tests check
+that query rendering preserves the rules and that generated TeX excerpts
+and saved query files match the executable templates.
+
+The next coverage result should identify a substantial fragment of ordinary
+mathematical text, give a finite sound rule library, and construct certificates
+of the answers in that fragment. First-order derivability offers a concrete
+benchmark.
+
+Search efficiency is the next algorithmic problem. Enumeration can be
+extremely expensive.
+Better generation, reuse of accepted judgments, and interleaving search
+with verification can reduce these costs.
+
+\section{Take-home messages}
+\begin{itemize}[leftmargin=*]
+\item Every answer certificate built from $\True$-sound rules certifies a
+correct answer. This semantic fact is independent of any runtime or learned
+model.
+\item A runtime can enforce the certificate conditions by using a bounded
+verifier to authorize textual rules and checking their applications
+mechanically.
+\item A generator can propose bounded rules that organize a long request. The
+runtime uses exact string operations to check that their applications account
+for the complete request.
+\item A finite $\True$-sound library can express any recursively enumerable
+correctness relation after suitable intermediate assertions are chosen. An
+accepted annotation of the library gives a uniform model-input bound and
+completeness by exhaustive certificate search.
+\end{itemize}
+
+\printendnotes
+\section*{Bibliographical notes}
+The semantic certificate layer is classical. Post's canonical systems use a
+finite set of production schemas over strings \cite{post}; even restricted
+tag systems can simulate Turing machines \cite{cocke-minsky}. Cook and
+Reckhow's abstract definition identifies a proof system with a
+polynomial-time map whose range is exactly the target language
+\cite{cook-reckhow}. These results support
+\cref{thm:finite-rule-universality} and the interpretation of a trusted finite
+library as a mechanical proof system.
+
+Proof-carrying code has the same producer--certificate--checker separation:
+an untrusted producer supplies code and a safety proof, and the consumer runs
+a small checker \cite{necula-pcc}. Necula and Schneck subsequently allowed
+the producer to supply untrusted high-level proof rules together with evidence
+that the rules enforce the trusted safety policy \cite{necula-schneck}.
+Foundational proof certificates seek a common checker for evidence produced
+by different proof systems \cite{miller-fpc}. These systems use formal safety
+policies or logics. The learned-verifier layer in this note instead asks a
+bounded model call to judge whether a textual rule preserves membership in
+the intended natural-language truth set.
+
+Lamport's account of structured proofs emphasizes named steps and explicit
+dependencies \cite{lamport}. Machine checking of formal mathematical texts
+was a goal of de Bruijn's Automath project \cite{debruijn-automath}. Metamath
+provides a concrete reference for checking substitutions against previously
+established statements \cite{metamath}. The present runtime applies the same
+mechanical operation to textual rule schemas.
+
+The long-input constructions draw on two treatments of structured text.
+SBVR separates shared vocabulary from rules, interprets separately stated
+rules jointly, and requires exceptions to be accommodated explicitly
+\cite[Sections~13, 16.3--16.4]{sbvr}. Naproche distinguishes sentence syntax
+from the structure of definitions, assumptions, proofs, and other blocks;
+block boundaries control scope \cite[Section~7.2]{cramer}. We use these ideas
+for explicit scopes, references, and exceptions while allowing the generator
+to propose the rules that organize a particular input. Neither source
+supplies the runtime theorem or uniform query bound here.
+
+Modern AI work supplies the closest motivation for the learned-verifier
+layer. Cobbe et al. generate many mathematical solutions and train a verifier
+to rank them \cite{cobbe-verifiers}. Irving, Christiano, and Amodei propose
+debate so that agents reduce a difficult judgment to short statements a human
+can assess \cite{irving-debate}. Brown-Cohen, Irving, and Piliouras prove that
+doubly efficient debate can verify polynomial-time computations with a
+constant number of human-judgment queries, including a setting in which a
+model supplies a solution and a natural-language justification
+\cite{brown-cohen-debate}. Kirchner et al. train provers to produce solutions
+that small learned verifiers and time-limited humans can assess more reliably
+\cite{kirchner-legibility}. These methods study empirical verifier accuracy or
+interactive protocols. The construction here is noninteractive: a generator
+supplies a finite certificate, a bounded verifier authorizes its textual
+rules, and a deterministic runtime checks every application and the final
+request--answer claim.
+
+\section*{Glossary}
+\begin{description}[leftmargin=1.5em,style=nextline]
+\item[Correctness relation $Q$.] The externally specified relation between
+requests and acceptable answers.
+\item[Supported true assertion, $\True$.] A text whose agreed, context-explicit
+meaning is supported true, independently of a particular certificate.
+\item[Template.] An element of $\Tpl$: a finite expression for literal text, a
+hole, concatenation, or quotation. Its instances are ordinary texts of
+unrestricted length.
+\item[$\True$-sound textual rule.] A universally quantified implication preserving
+membership in $\True$ for every string assignment to its holes.
+\item[Direct statement.] A textual rule with no premises and no holes, presented
+to the verifier as one particular assertion.
+\item[Certificate.] An ordered list of rule applications with
+specified substitutions and earlier-premise references.
+\item[Verifier.] The system component that returns a binary judgment on a
+complete checking question. Its input--output map is $g$; its calls may use
+the same learned model as the generator.
+\item[Rule library $\Lib$.] A fixed finite set of textual rules.
+\item[Annotation $\Annot$.] A map assigning a justification text to every
+rule in a library. The target map accepts an annotation when it accepts every
+resulting checking question.
+\item[Finite-rule certifiability.] Existence of one finite $\True$-sound
+library that supplies an answer certificate for every request in the target
+family.
+\item[Answer-condition assertion $\mathrm{BoolQ}(x,e)$.]
+Equivalence between answering a yes--no request $x$ and evaluating Boolean expression $e$.
+\item[Evaluation assertion $\mathrm{Eval}(e,z)$.] Expression $e$ has the value
+represented by text $z$.
+\item[Prefix execution assertion $\mathrm{Run}(A,w,z)$.] Applying every deduction or cap
+provision in text $A$, starting from the amount represented by $w$, leaves
+the amount represented by $z$.
+\item[Completeness on $D$.] Eventual return of a correct answer on every
+request in the independently specified family $D$.
+\item[Compositionally accountable family.] A request family for which one
+finite $\True$-sound library can derive an $\Account(x,m)$ claim for every request
+$x$ in the family.
+\item[Compositional verification thesis.] The informal claim that a
+human-clear method based on uniformly bounded semantic rules and mechanical
+coverage can be expressed as rules and certificates for the generic runtime.
+\end{description}
+
+\appendix
+\section{Exact certificate and query conventions}
+\label{app:query-conventions}
+
+The executable implementation represents text as Unicode, encodes verifier
+queries in UTF-8, and measures their length in bytes. JSON string literals
+provide the concrete quotation scheme. These choices instantiate the abstract
+finite-string and quotation operations used in the main text.
+
+The JSON constructors are the four arrays
+\begin{center}
+\texttt{["text",s]}\quad \texttt{["var",name]}\quad
+\texttt{["join",t1,...,tk]}\quad \texttt{["quote",t]}.
+\end{center}
+A rule is an object
+with exactly the keys \texttt{premises} and \texttt{conclusion}. A candidate
+has exactly \texttt{answer} and \texttt{steps}. A record has exactly
+\texttt{rule}, \texttt{bindings}, \texttt{premises}, and \texttt{justification}.
+An interval binding has exactly \texttt{source}, \texttt{start}, and
+\texttt{end}. Sources are \texttt{"input"}, \texttt{"answer"}, or a nonnegative
+earlier claim index. Extra keys, duplicate JSON keys, invalid indices,
+incorrect binding domains, unsupported constructors, and invalid text
+encodings are rejected.
+
+\subsection{Constructing an English checking question}
+
+For an English-language verifier, the runtime constructs $\Ask(r,j)$
+mechanically. It renders the premise and conclusion templates as English text
+with explicit placeholders, appends the optional justification, and prepends fixed
+English instructions. The runtime does not interpret the rule. For a rule
+with a premise or a hole, the implementation uses
+\begin{equation}
+ \Ask(r,j)=\texttt{PROMPT}\cat\texttt{"\textbackslash n\textbackslash n"}
+ \cat\operatorname{QueryBody}(r,j).
+\end{equation}
+The fixed instructions are generated from \texttt{query\_text.py}:
+\begin{quote}
+\input{generated/query-prompt.tex}
+\end{quote}
+
+For a direct statement, the runtime recognizes that the premise list and hole
+set are empty. It labels the conclusion as a statement and uses the shorter
+fixed instruction:
+\begin{quote}
+\input{generated/query-statement-prompt.tex}
+\end{quote}
+
+The following excerpt is the executable implementation. The function
+\texttt{render\_template}, defined earlier in the same file, performs the
+reversible template rendering described below.
+\VerbatimInput[fontsize=\scriptsize,frame=single,framesep=4pt,
+  firstline=140,lastline=166]{query_text.py}
+
+In general, the rule body contains labeled premise and conclusion blocks and
+an optional justification block. A block is delimited by a line of backticks. The renderer
+chooses a delimiter longer than every backtick run in the displayed rule and
+justification, so literal content cannot close a block.
+
+The renderer concatenates literal text, writes a hole named $a$ as
+\texttt{\{\{a\}\}}, and shows a quotation operation with matched curly
+quotation marks. Successive nesting levels alternate double and single marks.
+Literal braces, curly quotation marks, and backslashes are escaped; control
+characters use the character escapes specified above. Ordinary newlines are
+preserved. These conventions distinguish a placeholder from literal text
+that happens to contain braces.
+
+\begin{proposition}[The displayed rule preserves its meaning]
+Let $\mathrm{Render}:\Tpl\to\Stext$ map a template to its displayed text, and
+let $\mathrm{Read}:\Stext\rightharpoonup\Tpl$ decode displays that obey the
+conventions above. For every template $t\in\Tpl$ and assignment $\sigma$ to
+its holes,
+\begin{equation}
+\Inst(\mathrm{Read}(\mathrm{Render}(t)),\sigma)=\Inst(t,\sigma).
+\end{equation}
+Consequently displaying a rule preserves the assertion that the verifier
+is asked to judge.
+\end{proposition}
+\begin{proof}
+Character escaping preserves literal texts and hole names. Concatenation
+preserves their order; merging adjacent literal nodes or reassociating joins
+leaves instantiation unchanged. Matched quotation marks identify each
+quotation operation and its child. Induction on the template therefore gives
+the equation, including nested quotations. The fenced blocks preserve the
+premise order, conclusion, and justification separately.
+\end{proof}
+The runtime includes every byte of the common instructions, displayed rule,
+and justification in the query bound. Bindings and global references stay in
+runtime memory. Canonical quotation in stored claims still uses
+\texttt{json.dumps} with \texttt{ensure\_ascii=True}; the readable display is
+a representation of the same template operations.
+
+\section{Reproducing and inspecting the examples}
+In this directory, run
+\begin{code}
+python3 examples.py
+python3 -m unittest -v test_runtime.py
+latexmk -pdf -interaction=nonstopmode -halt-on-error note.tex
+\end{code}
+The generator writes \texttt{traces/checking-questions.json}, a catalogue of
+the \VerifierQuestionCount{} questions accepted by the verifier fixture. Individual
+queries are also saved as ordinary text files in \texttt{traces/queries/}. Each example trace records its
+input, proposed answer and records, accepted claims, and the corresponding
+question identifiers. The files are:
+\begin{itemize}[leftmargin=*]
+\item \texttt{desk.json}: the checked plan, forty-instruction answer, and 163 records;
+\item \texttt{simple-tax.json}: the four-paragraph request and eleven-record derivation;
+\item \texttt{arithmetic-simple.json}: the two direct statements and one
+reusable implication described in \cref{sec:arithmetic-example};
+\item \texttt{arithmetic.json}: twelve records, including exact source intervals;
+\item \texttt{arithmetic-rephrased.json}: fourteen records with a two-step reformulation;
+\item \texttt{full-tax-yes.json}, \texttt{full-tax-no.json},
+\texttt{full-tax-benefit.json}, and \texttt{full-tax-income.json}: complete codes,
+case facts, and forty-two-record certificates for the four cases;
+\item \texttt{long-code-301.json} and \texttt{long-code-300.json}: opposite
+answers for codes that differ by one allowance provision;
+\item \texttt{cap-then-deduct.json} and \texttt{deduct-then-cap.json}: opposite
+answers caused by exchanging the order of two provisions;
+\item \texttt{statistics.json}: the measured sizes, including the long-input cases.
+\end{itemize}
+
+The directory \texttt{traces/rejected/} contains eight unsuccessful candidates:
+the missing desk entry, the opposite simple-tax answer, the two arithmetic
+errors, the omitted active exclusion, the omitted allowance, the reordered
+provisions, and the oversized direct query. Its \texttt{index.json} gives
+the rejection reason and failed record for each case. Each full trace
+includes the actual candidate, claims accepted before rejection, model
+queries and verdicts, and the exact unequal texts when a comparison fails.
+The oversized-query trace records the query that was not sent. These cases
+use the same checker, verifier fixture, and bound as the successful examples.
+
+The files in \texttt{generated/} contain the exact query excerpts and
+measurement table included by this document. They are regenerated by the
+same command as the traces. A test compares every generated excerpt with
+its current code-derived content.
+
+\enlargethispage{-\baselineskip}
+For example, the complete rule-specific part of the arithmetic answer-condition
+query is:
+\begin{quote}
+\input{generated/query-arithmetic.tex}
+\end{quote}
+\Needspace{10\baselineskip}
+The scalar addition judgment used later in that certificate is:
+\begin{quote}
+\input{generated/query-calculation.tex}
+\end{quote}
+The corresponding complete questions, including the common instructions,
+are \path{traces/queries/arithmetic-specification.txt} and
+\path{traces/queries/arithmetic-calculation.txt}.
+The three-record version uses the following complete questions:
+\begin{itemize}[leftmargin=*]
+\item \path{traces/queries/arithmetic-simple-interpretation.txt};
+\item \path{traces/queries/arithmetic-simple-calculation.txt};
+\item \path{traces/queries/arithmetic-simple-composition.txt}.
+\end{itemize}
+
+\begin{thebibliography}{99}
+\bibitem{post}
+Emil L. Post. ``Formal Reductions of the General Combinatorial Decision
+Problem.'' \emph{American Journal of Mathematics}, 65(2):197--215, 1943.
+\url{https://doi.org/10.2307/2371809}.
+\bibitem{cocke-minsky}
+John Cocke and Marvin Minsky. ``Universality of Tag Systems with $P=2$.''
+\emph{Journal of the ACM}, 11(1):15--20, 1964.
+\url{https://doi.org/10.1145/321203.321206}.
+\bibitem{cook-reckhow}
+Stephen A. Cook and Robert A. Reckhow. ``The Relative Efficiency of
+Propositional Proof Systems.'' \emph{Journal of Symbolic Logic}, 44(1):36--50,
+1979. \url{https://www.cs.toronto.edu/~sacook/homepage/cook_reckhow.pdf}.
+\bibitem{necula-pcc}
+George C. Necula. ``Proof-Carrying Code.'' In \emph{Proceedings of POPL},
+pages 106--119, 1997.
+\url{https://courses.grainger.illinois.edu/cs421/fa2010/papers/necula-pcc.pdf}.
+\bibitem{necula-schneck}
+George C. Necula and Robert R. Schneck. ``Proof-Carrying Code with Untrusted
+Proof Rules.'' In \emph{Proceedings of the International Software Security
+Symposium}, 2002.
+\url{https://people.eecs.berkeley.edu/~necula/ISSS02/isss02.pdf}.
+\bibitem{miller-fpc}
+Dale Miller. \emph{Foundational Proof Certificates: Making Proof Universal
+and Permanent}. LFMTP invited talk, 2013.
+\url{https://www.lix.polytechnique.fr/Labo/Dale.Miller/papers/lfmtp13.pdf}.
+\bibitem{cobbe-verifiers}
+Karl Cobbe et al. ``Training Verifiers to Solve Math Word Problems.'' 2021.
+\url{https://arxiv.org/abs/2110.14168}.
+\bibitem{irving-debate}
+Geoffrey Irving, Paul Christiano, and Dario Amodei. ``AI Safety via Debate.''
+2018. \url{https://arxiv.org/abs/1805.00899}.
+\bibitem{brown-cohen-debate}
+Jonah Brown-Cohen, Geoffrey Irving, and Georgios Piliouras. ``Scalable AI
+Safety via Doubly-Efficient Debate.'' 2023.
+\url{https://arxiv.org/abs/2311.14125}.
+\bibitem{kirchner-legibility}
+Jan Hendrik Kirchner, Yining Chen, Harri Edwards, Jan Leike, Nat McAleese, and
+Yuri Burda. ``Prover-Verifier Games Improve Legibility of LLM Outputs.'' 2024.
+\url{https://arxiv.org/abs/2407.13692}.
+\bibitem{lamport}
+Leslie Lamport. \emph{How to Write a 21st Century Proof}. 2011, revised 2012.
+\url{https://lamport.azurewebsites.net/pubs/proof.pdf}.
+\bibitem{debruijn-automath}
+N. G. de Bruijn. \emph{Automath: A Language for Mathematics}.
+T.H.-Report 68-WSK-05, Technological University Eindhoven, 1968.
+\url{https://pure.tue.nl/ws/portalfiles/portal/2039924/256169.pdf}.
+\bibitem{metamath}
+Metamath contributors. \emph{Metamath Proof Explorer}, especially
+``How Metamath Proofs Work.''
+\url{https://us.metamath.org/mpeuni/mmset.html}. Accessed 30 October 2026.
+\bibitem{sbvr}
+Object Management Group. \emph{Semantics of Business Vocabulary and Business
+Rules}, version 1.5. October 2019.
+\url{https://www.omg.org/spec/SBVR/1.5/PDF}.
+\bibitem{cramer}
+Marcos Cramer. \emph{Proof-checking mathematical texts in controlled natural
+language}. PhD thesis, University of Bonn, 2013.
+\url{https://naproche-net.github.io/downloads/2013-doktor.pdf}.
+\end{thebibliography}
+\end{document}

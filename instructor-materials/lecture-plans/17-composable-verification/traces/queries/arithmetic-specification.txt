@@ -1,0 +1,27 @@
+Is the following rule sound? Return 1 to certify soundness, or 0 to withhold certification.
+
+Each placeholder {{name}} ranges over every finite text. Repeated occurrences of a name receive the same text. Substitution is simultaneous: inserted text is never read as further template notation.
+
+Curly quotation marks “…” and ‘…’ mark a quotation operation: substitute inside them, then write the result as a canonical JSON string literal, escaping non-ASCII characters. Nested quotations apply this operation from the inside out. Straight quotation marks are ordinary literal text. A backslash escapes a literal brace, curly quotation mark, or backslash. The escapes \n, \r, \t, \uHHHH and \UHHHHHHHH denote the corresponding characters; H is a hexadecimal digit. All other text and whitespace inside the fenced blocks is literal.
+
+For every assignment to the placeholders, if all premises are supported true assertions, the conclusion must also be a supported true assertion. With no premises, every instance of the conclusion must be supported true. Ill-defined or unsupported statements are not supported true assertions. Use the agreed meanings of the statements without adding task-specific assumptions. Any accompanying justification may be used to assess the rule.
+
+Premise 1:
+```
+The text “{{a}}” is the canonical decimal numeral for a nonnegative integer: either 0 or a digit from 1 through 9 followed by zero or more digits from 0 through 9.
+```
+
+Premise 2:
+```
+The text “{{b}}” is the canonical decimal numeral for a nonnegative integer: either 0 or a digit from 1 through 9 followed by zero or more digits from 0 through 9.
+```
+
+Premise 3:
+```
+The text “{{c}}” is the canonical decimal numeral for a nonnegative integer: either 0 or a digit from 1 through 9 followed by zero or more digits from 0 through 9.
+```
+
+Conclusion:
+```
+The request “What do you get if you multiply the sum of {{a}} and {{b}} by {{c}}?” asks a numerical question equivalent to finding the value of the well-formed closed arithmetic expression “(({{a}} + {{b}}) * {{c}})”, whose value is a nonnegative integer. For every canonical nonnegative decimal numeral n, n correctly answers the request if and only if it denotes that value.
+```
