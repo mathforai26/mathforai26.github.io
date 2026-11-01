@@ -1,6 +1,26 @@
 # Validation: composable textual verification
 
-Date: 2026-11-01. Private technical companion; no publication.
+Date: 2026-11-01. Research note; no publication.
+
+## Research-note opening and bounded learning target — 2026-11-01
+
+The document now identifies itself as a research note. The opening first
+motivates learned components through the goal of accepting natural-language
+requests and distinguishes statistical performance from correctness on every
+request. It then states bounded verifier reliability as a second requirement,
+separates reliability from coverage, previews the computably enumerable
+coverage result, and explains the generator--verifier--runtime mechanism.
+
+The implementation discussion now returns to the bounded-reliability
+assumption. It states that finiteness does not provide a practical learning or
+certification theorem and identifies the actual benefit: the runtime extends
+correctness on bounded verifier inputs to accepted answers supported by
+requests and certificates of unbounded length.
+
+A forced build produces a 34-page PDF with no warnings, unresolved references,
+or overfull/underfull boxes. The opening page and the new end-of-note discussion
+were rendered at full size and visually inspected. No publication was
+performed.
 
 ## Semantic certificate layer, runtime corollary, and universality — 2026-11-01
 

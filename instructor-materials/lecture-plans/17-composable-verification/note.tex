@@ -38,42 +38,53 @@
 }
 \DefineVerbatimEnvironment{code}{Verbatim}{fontsize=\small,frame=single,framesep=5pt}
 \pagestyle{myheadings}
-\markboth{Lecture 17: Unbounded reliability}{Private technical companion}
+\markboth{Unbounded reliability}{Research note}
 \raggedbottom
 \input{generated/metrics.tex}
 \begin{document}
 \begin{center}
 {\Large\bfseries Unbounded reliability from composable textual verification}\\[4pt]
 {\large A task-independent runtime using bounded model inputs}\\[4pt]
-Private technical companion to Lecture 17 --- 1 November 2026
+Research note accompanying Lecture 17 --- 1 November 2026
 \end{center}
 
 \section*{Introduction}
 
-We want AI systems that solve a broad range of well-defined problems,
-including problems expressed in natural language. Learning supplies the
-language and reasoning capabilities, but good performance on many requests
-does not ensure correctness on every request. The goal of this lecture is to
-prevent incorrect returned answers without restricting the system to a narrow
-task family.
+This research note studies reliable AI systems for well-defined problems whose
+requests are expressed in natural language. Learning is crucial because
+learned models are currently the only general tool available for processing
+such requests and producing answers across broad domains. Learning systems,
+however, are normally trained and evaluated through statistical criteria such
+as average loss or benchmark accuracy. Excellent statistical performance can
+coexist with incorrect answers on individual requests. We therefore require
+the system to retain learned components and their natural-language capabilities
+while eliminating incorrect returned answers.
 
-By a \emph{runtime} we mean an ordinary software program that controls calls
-to learned models. The runtime receives the user's request, makes model calls,
-stores their outputs, performs prescribed syntactic operations, and decides
-whether to return an answer. No fixed bound is placed on its working memory or
-running time. The runtime does not decide task-specific semantic questions by
-itself. The complete AI system consists of the runtime together with the
-learned models it calls; their combined input--output behavior is the system
-whose reliability and completeness we study.
+As a second requirement, we pursue a less ambitious learning target than
+correctness on unrestricted problems. We assume that one learned component can
+answer every well-formed verification question whose textual representation
+has length at most a fixed bound. Achieving such bounded reliability remains
+highly nontrivial, but for a fixed finite alphabet the target concerns a finite
+set of inputs and is strictly weaker than unrestricted reliability. We
+construct a task-independent \emph{runtime}, an ordinary software program with
+no natural-language understanding capabilities of its own, that uses these
+bounded judgments to check answers to problems of unbounded size. Assuming the
+bounded judgments are correct, the runtime is reliable for every generator.
+Because reliability is trivial for a system that never answers, we also study
+coverage. With an appropriate generator, the construction covers every request
+whose correct answer has a finite certificate over a finite sound rule library.
+In particular, every computably enumerable correctness relation admits such a
+representation.
 
-The construction has two layers. First, a finite \emph{answer certificate}
-derives a claim saying that a proposed answer correctly answers the exact
-request. If every rule used in the certificate preserves truth, the certified
-answer is correct. Second, a software runtime checks such certificates. A
-learned verifier judges the bounded questions needed to authorize their rules,
-while the runtime checks every rule application mechanically. This separation
-isolates the semantic reason for reliability from its implementation with
-learned models.
+The core idea of the construction is as follows. We require a generator to
+propose an answer together with a finite \emph{answer certificate} explaining
+why the answer is correct. A learned verifier judges the bounded textual rules
+used in the certificate. The runtime checks each application of those rules
+through exact references, substitutions, and string comparisons. The runtime
+returns the proposed answer only if the mechanically constructed final claim
+says verbatim that the proposed answer correctly answers the exact original
+request. If every rule accepted by the verifier preserves truth, every answer
+returned by the runtime is correct.
 
 Certificates and mechanical checking have a long history. Finite rule systems
 can express general computation, while proof systems and proof-carrying code
@@ -81,11 +92,9 @@ separate the production of a solution from mechanical checking of its
 certificate \cite{post,cook-reckhow,necula-pcc}. Recent prover--verifier and
 debate methods apply related ideas to learned systems
 \cite{cobbe-verifiers,irving-debate,brown-cohen-debate,kirchner-legibility}.
-We revisit this separation for general AI systems whose requests, intermediate
-assertions, and rules may remain largely in natural language. The central
-question is when reliable judgments about bounded textual rules, combined by
-a generic runtime, suffice to ensure that every answer returned by the system
-is correct.
+We combine these lines of work in a setting where requests, intermediate
+assertions, and rules may remain largely in natural language and the learned
+verifier is required to be reliable only on bounded textual inputs.
 
 Long answers and long requests create additional problems because the relevant
 text may not fit in one bounded model input. Consider first the case of long answers.
@@ -1811,6 +1820,16 @@ including omitted premises, wrong answers, changed source text, omitted
 exclusions, invalid bindings, and malformed records. Additional tests check
 that query rendering preserves the rules and that generated TeX excerpts
 and saved query files match the executable templates.
+
+The bounded-reliability assumption identifies a learning target rather than a
+practical learning theorem. For a fixed finite alphabet and bound, the set of
+possible verifier inputs is finite but may be astronomically large, and we may
+have no feasible procedure for establishing that a trained verifier is correct
+on every one of them. The target is nevertheless strictly weaker than requiring
+a learned system to answer every unrestricted problem correctly. The runtime
+supplies the length generalization: correctness on bounded verifier inputs
+implies correctness of every accepted answer, even when the request, answer,
+certificate, and computation have unbounded length.
 
 The next coverage result should identify a substantial fragment of ordinary
 mathematical text, give a finite sound rule library, and construct certificates
