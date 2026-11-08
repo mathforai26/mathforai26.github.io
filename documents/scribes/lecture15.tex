@@ -11,7 +11,7 @@
 \usepackage{../exercises/course-exercises}
 
 % Revision date: maintained by scripts/build_lecture_notes.py. Keep this command.
-\newcommand{\lecturerevised}{2026-10-25 23:41 UTC-06:00}
+\newcommand{\lecturerevised}{2026-11-08 23:43 UTC+01:00}
 \usepackage{eso-pic}
 \AddToShipoutPictureBG{%
   \AtPageLowerLeft{%
@@ -683,23 +683,23 @@ unit ball:
 \(f=\|f\|_{\cG}(f/\|f\|_{\cG})\). Thus the unit ball represents every
 direction in the function space; the norm records the required scale.
 
-The fixed-kernel representation requires \(d\mu=p\,d\tau\) with
-\(p\in L^2(\tau)\). Since \(\tau\) is a probability measure,
-Cauchy--Schwarz gives
+The fixed-kernel and variation norms satisfy
 \begin{equation}
  \|f\|_{\cF_1}
- \leq\int_\Theta|p|\,d\tau
- \leq\|p\|_{L^2(\tau)}.
+ \leq\|f\|_{\cF_{2,\tau}}
+ \qquad(f\in\cF_{2,\tau}).
  \label{eq:F2-F1-norm-inclusion}
 \end{equation}
-Taking the infimum over all coefficient functions representing \(f\) yields
-\(\|f\|_{\cF_1}\leq\|f\|_{\cF_{2,\tau}}\), and hence
+Consequently,
 \begin{equation}
  \cF_{2,\tau}\subseteq\cF_1,
  \qquad B_{\cF_{2,\tau}}\subseteq B_{\cF_1}.
  \label{eq:F2-F1-ball-inclusion}
 \end{equation}
 Either inclusion can be strict, depending on the dictionary and feature law.
+In Exercise~\ref{ex:l15-fixed-feature-strictness}, you will prove the norm
+inequality for a discrete dictionary and show that both inclusions are strict
+for that dictionary and a specified feature law.
 The mathematical distinction is that a variation-space representation may
 concentrate mass on features chosen for the target, while an RKHS
 representation must have an \(L^2(\tau)\) density relative to the fixed law
