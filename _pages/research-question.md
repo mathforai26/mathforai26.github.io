@@ -33,32 +33,51 @@ The question should identify a substantive uncertainty that is not already an im
 
 ## Grading rubric for the revised note
 
+Each criterion receives one of the six fixed scores shown below. Scores between these anchors are not used. The final grade is the sum of the six criterion scores.
+
+| Level | Motivation | Novelty | Related work | Soundness | Writing | Revision |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Exceptional | 15 | 15 | 20 | 30 | 10 | 10 |
+| Strong | 13 | 13 | 18 | 27 | 9 | 9 |
+| Satisfactory | 11 | 11 | 15 | 24 | 8 | 8 |
+| Developing | 8 | 8 | 11 | 18 | 6 | 6 |
+| Weak | 4 | 4 | 6 | 10 | 3 | 3 |
+| Missing or unassessable | 0 | 0 | 0 | 0 | 0 | 0 |
+
+A satisfactory score in every category gives a total of 77. A strong score in every category gives a total of 89.
+
 ### Motivation and significance: 15 points
 
 The note explains why the question is worth asking, what larger issue in modern AI it concerns, and what different answers would teach us. Stating that the broad topic is important is not enough; the motivation must apply to the proposed question.
 
-- **13--15:** The note gives a specific and convincing account of why the question matters and what would be learned from different possible answers.
-- **10--12:** The relevance is clear, but some consequences of answering the question remain general or implicit.
-- **6--9:** The note motivates the broad area but gives little question-specific justification.
-- **0--5:** The motivation is absent, materially overstated, or disconnected from the question.
+- **15 — Exceptional:** The note gives a specific and convincing account of why the question matters and what would be learned from different possible answers.
+- **13 — Strong:** The motivation is clear and specific, with only a limited part of the broader connection or consequences left underdeveloped.
+- **11 — Satisfactory:** The reader can understand why the question matters, but some consequences of answering it remain general or implicit.
+- **8 — Developing:** The note motivates the broad area but gives little question-specific justification.
+- **4 — Weak:** The motivation is largely generic, overstated, or disconnected from the stated question.
+- **0 — Missing or unassessable:** The note provides no meaningful motivation for the question.
 
 ### Novelty and substance: 15 points
 
 The note identifies a substantive uncertainty that is not already an immediate consequence of known results. Novelty may lie in the question itself, a comparison, an assumption, a regime, a proposed mechanism, or an empirical distinction. The note should explain why the question is more than a routine corollary, minor variation, or repetition of an existing result.
 
-- **13--15:** The note clearly identifies a nontrivial uncertainty and explains what is new about the proposed question relative to known results.
-- **10--12:** The question appears substantive, but its novelty or the distinction from the closest known result needs some clarification.
-- **6--9:** The note suggests a potentially useful direction but does not establish that the stated question goes beyond routine consequences or familiar variants.
-- **0--5:** The question is already answered by the cited work, follows immediately from known results, or has no identifiable substantive content.
+- **15 — Exceptional:** The note clearly identifies a nontrivial uncertainty and explains what is new about the proposed question relative to known results.
+- **13 — Strong:** The question is substantive and its novelty is mostly clear, with only a limited comparison to known results left underdeveloped.
+- **11 — Satisfactory:** The question appears substantive, but its novelty or its distinction from the closest known result needs clarification.
+- **8 — Developing:** The note suggests a potentially useful direction but does not establish that the question goes beyond routine consequences or familiar variants.
+- **4 — Weak:** The question appears largely answered by known work or follows from known results, although some potentially substantive uncertainty remains.
+- **0 — Missing or unassessable:** The question is already answered, follows immediately from known results, or has no identifiable substantive content.
 
 ### Related work and positioning: 20 points
 
 The note identifies the closest relevant theoretical or empirical work, describes what that work establishes, and states the assumptions needed to compare it with the proposed question. Citations must support the claims attributed to them. The goal is a focused account of the literature needed to locate the question, not an exhaustive survey.
 
-- **18--20:** The related work is accurate, well selected, and technically specific, and the relation to the proposed question is explicit.
-- **14--17:** The central literature is relevant and mostly accurate, but an important assumption, conclusion, or comparison needs clarification.
-- **8--13:** The note names related work but summarizes it too broadly, relies on unsupported claims, or leaves its relation to the question unclear.
-- **0--7:** The necessary related work is largely absent or materially misrepresented.
+- **20 — Exceptional:** The related work is accurate, well selected, and technically specific, and the relation to the proposed question is explicit.
+- **18 — Strong:** The central literature is accurate and well connected to the question, with only a limited omission or imprecision.
+- **15 — Satisfactory:** The important literature is covered, but a significant assumption, conclusion, or comparison needs further explanation.
+- **11 — Developing:** The note names relevant work but summarizes it too broadly, omits an important connection, or leaves its relation to the question unclear.
+- **6 — Weak:** Major relevant work is missing, important claims are unsupported, or the literature is materially misrepresented.
+- **0 — Missing or unassessable:** The note provides no usable account of the related work.
 
 ### Soundness and feasibility: 30 points
 
@@ -66,38 +85,34 @@ The question must be defined well enough that its possible answers can be distin
 
 The attack plan does not have to guarantee success. Theoretical research is inherently uncertain; feasibility means that the note gives a reasoned way to begin and a plausible route to informative partial progress. An analogy with an existing proof technique can be enough when the note explains why the technique may apply. For an empirical question, listing experiments is not enough unless the note explains how their possible outcomes would distinguish the competing answers.
 
-- **27--30:** The question and setup are precise and internally consistent. The proposed approach is technically grounded, addresses the question, and could produce informative partial progress.
-- **21--26:** The main question is sound and the initial approach is plausible, but one consequential definition, assumption, methodological step, or interpretation remains unclear.
-- **13--20:** The topic is identifiable, but important parts of the question or setup remain underspecified, or the note lists methods without explaining how their outcomes would answer the question.
-- **0--12:** The question cannot be interpreted reliably, the reasoning contains serious inconsistencies, or the note gives no meaningful way to begin investigating it.
+- **30 — Exceptional:** The question and setup are precise and internally consistent. The proposed approach is well grounded, its connection to the question is clear, and the possible forms of partial progress are explained. No material weakness remains.
+- **27 — Strong:** The question and approach are sound and credible. One limited weakness remains, but it does not undermine the proposed investigation.
+- **24 — Satisfactory:** The question is sound and the approach is plausible, but one material part of the setup, methodology, or interpretation remains underdeveloped.
+- **18 — Developing:** The question may be worthwhile, but substantial parts of the setup or attack plan remain unclear, or the proposed outcomes are not adequately connected to the question.
+- **10 — Weak:** The setup or reasoning has major technical problems, or the note gives no credible connection between the proposed method and the question.
+- **0 — Missing or unassessable:** The question cannot be interpreted reliably or the note gives no meaningful way to begin investigating it.
 
 ### Writing and presentation: 10 points
 
 The note is self-contained, coherent, and direct. The motivation, formal setup, related work, proposed question, and initial approach concern the same issue. Notation and terminology are consistent, claims have clear status, and citations allow the reader to identify the sources.
 
-- **9--10:** The note is clear, coherent, and technically careful throughout.
-- **7--8:** Minor writing, organization, notation, or citation problems do not impede the argument.
-- **4--6:** Recurrent presentation problems make parts of the question or reasoning difficult to follow.
-- **0--3:** Presentation problems prevent reliable assessment of substantial parts of the note.
+- **10 — Exceptional:** The note is self-contained, coherent, direct, and technically careful throughout.
+- **9 — Strong:** The note is clear and coherent, with only minor presentation problems.
+- **8 — Satisfactory:** The note is readable and logically organized, but some passages, notation, or claim-status distinctions require extra effort to interpret.
+- **6 — Developing:** Recurrent writing, organization, notation, or citation problems make parts of the argument difficult to follow.
+- **3 — Weak:** Serious presentation problems obscure the question or the reasoning.
+- **0 — Missing or unassessable:** Presentation problems prevent reliable assessment of the note.
 
 ### Response to feedback: 10 points
 
 The revision note identifies substantive changes from the first draft and explains how those changes sharpened, narrowed, corrected, or otherwise improved the question. The final note should address the important issues raised in the feedback. A suggestion may be declined when the revision note gives a technically sound reason.
 
-- **9--10:** The final note responds thoughtfully to the main feedback and makes the warranted substantive changes. A strong first draft can receive full credit with few changes when the revision note gives sound reasons for retaining the original choices.
-- **7--8:** The revision addresses most important feedback, with one significant issue only partly resolved.
-- **4--6:** The revision makes some relevant changes but leaves central feedback unaddressed or explains the changes only generally.
-- **0--3:** The revision does not engage substantively with the feedback or omits the required revision note.
-
-| Criterion | Points |
-| --- | ---: |
-| Motivation and significance | 15 |
-| Novelty and substance | 15 |
-| Related work and positioning | 20 |
-| Soundness and feasibility | 30 |
-| Writing and presentation | 10 |
-| Response to feedback | 10 |
-| **Total** | **100** |
+- **10 — Exceptional:** The final note responds thoughtfully to all important feedback and makes the warranted substantive changes. A strong first draft can receive full credit with few changes when the revision note gives sound reasons for retaining the original choices.
+- **9 — Strong:** The revision responds well to the main feedback, with only a limited issue left unresolved.
+- **8 — Satisfactory:** The revision addresses the main feedback, but one significant issue is only partly resolved or explained.
+- **6 — Developing:** The revision makes some relevant changes but leaves central feedback unaddressed or explains the changes only generally.
+- **3 — Weak:** The revision engages only superficially with the feedback.
+- **0 — Missing or unassessable:** The revision does not engage substantively with the feedback or omits the required revision note.
 
 ## Promising forms of question
 
