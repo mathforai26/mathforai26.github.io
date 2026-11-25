@@ -5,11 +5,12 @@
 \usepackage[inline,shortlabels]{enumitem}
 \usepackage{booktabs}
 \usepackage{xcolor}
+\usepackage{../misc_files/course-definition-boxes}
 \usepackage{microtype}
 \usepackage{needspace}
 
 % Revision date: maintained by scripts/build_lecture_notes.py. Keep this command.
-\newcommand{\lecturerevised}{2026-10-09 23:51 UTC-07:00}
+\newcommand{\lecturerevised}{2026-11-07 09:32 UTC+00:00}
 \usepackage{eso-pic}
 \AddToShipoutPictureBG{%
   \AtPageLowerLeft{%
@@ -94,40 +95,24 @@ October 1, 2026
 \end{minipage}}
 \end{center}
 
-\noindent\textbf{Covered in class.}
-The lecture opened with a brief discussion of the random-label experiments
-of Zhang et al., which motivated the interpolation question. The main
-development followed roughly \crefrange{sec:question}{sec:series}, up to
-the statement of \cref{thm:weighted-legendre}; there was no time to prove
-the theorem. The result for smooth functions in
-\cref{cor:s-smooth-consistency} was also mentioned, and we discussed the
-problem with expected risk and the use of clipping. The theorem's proof,
-the kernel results, and the extended discussion of generalization theory
-are supplementary material in these notes.
+When can interpolation of noisy observations coexist with consistent
+prediction? These notes use minimum-norm linear interpolation to study how
+the choice of interpolant affects generalization. A polynomial construction
+gives a positive guarantee, while comparisons with other interpolation rules
+show why exact empirical fitting alone does not determine prediction quality.
 
-\medskip
-\noindent\textbf{Reading guide.}
-Motivated by exact fitting in large neural networks, these notes ask when
-interpolation of noisy observations can coexist with consistent prediction.
-We first determine how large the benign set can be by a point-correction
-argument. We then use minimum-norm linear interpolation as a tractable proxy
-for gradient training and analyze one polynomial procedure: Legendre
-polynomials represent the low-degree signal, and bounded Chebyshev polynomials
-provide the additional interpolation directions. Both are functions of the
-same one-dimensional input. The main text derives the approximation and estimation bound;
-\cref{app:legendre-proof} verifies its matrix assumptions.
-\Cref{sec:minnorm,sec:interpretation} extend the discussion: they compare positive and
-negative results for kernel interpolation and ask what they justify about
-model size and training time. \Cref{sec:minnorm} first introduces kernels and
-reproducing kernel Hilbert spaces through linear function approximation.
-The optional discussion in \cref{sec:rethinking-generalization} examines
-what the random-label experiments establish about generalization theory.
-\Cref{app:expected-risk} explains why the polynomial guarantee in probability
-does not control expected risk and how clipping repairs this failure.
-The prerequisites are least squares, orthogonal projections, elementary
-matrix algebra, and convergence in probability.
-\Cref{app:l2-background} reviews the function-space terminology, and the
-exercises ask you to supply the linear algebra used in the main proof.
+\noindent\textbf{Scope and reading guide.}
+The class ran through the statement of \cref{thm:weighted-legendre}, with
+the smooth-function corollary, the expected-risk difficulty, and clipping
+also discussed. The theorem's proof, its supporting matrix bounds in
+\cref{app:legendre-proof}, the kernel discussion in
+\cref{sec:minnorm,sec:interpretation}, and the generalization
+discussion in \cref{sec:rethinking-generalization} are supplementary.
+\Cref{app:expected-risk} explains why the guarantee in probability does not
+control expected risk and how clipping helps. The prerequisites are least
+squares, orthogonal projections, elementary matrix algebra, and convergence
+in probability. \Cref{app:l2-background} reviews function-space terminology;
+the exercises develop the linear algebra used in the main proof.
 
 \section{The question raised by interpolation}
 \label{sec:question}
@@ -1891,7 +1876,12 @@ transformations of the basis functions can matter. For the weighted
 polynomial rule, performance depends on tuning, how well the first feature
 block approximates the target, the number of features in that block, the
 amount of noise, and the population cost of fitting the residual with the
-second block.
+second block.\endnote{Random parameter sampling gives another specified selection rule: draw a
+network uniformly from a bounded parameter box, conditional on fitting every
+observation within a positive tolerance. The bibliographical discussion
+below connects that rule to small approximating networks and to the
+point-correction mechanism in \cref{sec:point-corrections}.}
+\label{en:random-neural-interpolation}
 
 The natural next question is how to carry out such an analysis for supplied
 features, rather than just the particular polynomials chosen here.
@@ -2028,6 +2018,27 @@ for minimum-norm kernel interpolation when input dimension grows with
 sample size, a different asymptotic regime from this lecture's
 fixed-dimensional polynomial example. \citet{belkin2021} surveys the
 interpolation literature and its relation to older statistical ideas.
+
+\paragraph{Randomly selected neural interpolators.}
+\citet{buzaglo2024} show how uniform parameter sampling can induce a
+nonuniform preference among represented functions. \citet{madhowwang2026}
+extend this approach to deep ReLU networks with continuous bounded
+parameters. Writing $g_\theta$ for the predictor realized by parameters
+$\theta$, their regression learner samples uniformly conditional on
+$\max_i|g_\theta(X_i)-Y_i|\leq\tau$ for a positive tolerance $\tau$.
+A small, stable approximating network certifies enough parameter volume
+to obtain a generalization bound for the sampled predictor; the learner
+is not supplied with that small network. Their label-corruption proof adds
+localized corrections to a witness, which connects to
+\cref{sec:point-corrections}; the sampled predictor need not explicitly
+use those corrections. The selection rule depends on the architecture,
+parameterization, and parameter distribution. Sampling has no efficient
+runtime guarantee, and the results do not analyze ordinary SGD. Their
+Corollary 7 gives a finite-sample bound at a fixed positive corruption
+fraction, not asymptotic consistency. See
+\href{lecture15.pdf\#sec:deep-lifts}{Lecture 15, ``From stable
+approximation to random interpolation,''} for the approximation argument
+and a noiseless ReLU variation-space example.
 
 \paragraph{Interpolation, regularization, and early stopping.}
 There is direct evidence for the preference for regularization discussed
@@ -2788,7 +2799,7 @@ This removes the fixed-sample infinite expectation. Choosing $\lambda_n$ to
 obtain consistency or an optimal rate is a further statistical question;
 positivity alone does not establish either.
 
-\setlength{\bibsep}{4pt}
+\setlength{\bibsep}{3pt}
 \begin{thebibliography}{99}
 
 \bibitem[Anthony and Bartlett(1999)]{anthony1999}
@@ -2837,6 +2848,16 @@ Simon Buchholz.
 dimensions.
 \newblock Proceedings of the 35th Conference on Learning Theory, 2022.
 \newblock \url{https://proceedings.mlr.press/v178/buchholz22a.html}.
+
+\bibitem[Buzaglo et al.(2024)]{buzaglo2024}
+Gon Buzaglo, Itamar Harel, Mor Shpigel Nacson, Alon Brutzkus, Nathan Srebro,
+and Daniel Soudry.
+\newblock How uniform random weights induce non-uniform bias: Typical
+interpolating neural networks generalize with narrow teachers.
+\newblock In Proceedings of the 41st International Conference on Machine
+Learning, volume 235 of Proceedings of Machine Learning Research,
+pages 5035--5081, 2024.
+\newblock \url{https://proceedings.mlr.press/v235/buzaglo24a.html}.
 
 \bibitem[Cohen et al.(2013)]{cohen2013}
 Albert Cohen, Mark A. Davenport, and Dany Leviatan.
@@ -2895,6 +2916,13 @@ Tengyuan Liang, Alexander Rakhlin, and Xiyu Zhai.
 lower isometry of kernels.
 \newblock Proceedings of the 33rd Conference on Learning Theory, 2020.
 \newblock \url{https://proceedings.mlr.press/v125/liang20a.html}.
+
+\bibitem[Madhow and Wang(2026)]{madhowwang2026}
+Sunil Madhow and Yu-Xiang Wang.
+\newblock ``Deep lifts'': Neural networks can generalize even with the
+dumbest optimizer.
+\newblock arXiv:2610.23009v2, October 29, 2026.
+\newblock \url{https://arxiv.org/abs/2610.23009v2}.
 
 \bibitem[Mallinar et al.(2022)]{mallinar2022}
 Neil Mallinar, James B. Simon, Amirhesam Abedsoltan, Parthe Pandit,

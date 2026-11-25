@@ -1,0 +1,34 @@
+\begin{exercisechunk}
+\item \textbf{A lock without observable progress.}
+\label[exercise]{ex:l18-hidden-progress}
+\exerciseprofile{3}{1}{2}{\exproof\quad\exinterpretation}{%
+Identify the feedback assumption that makes stage-by-stage exploration
+efficient.}
+Fix integers $H\ge1$ and $n\ge0$. A hidden string $B$ is uniform on
+$\{0,1\}^H$, and the learner has a random seed $U$ independent of $B$.
+In query $i\in[n]$, the learner chooses a complete string
+$X^i\in\{0,1\}^H$ and observes only
+$Y_i=\I\{X^i=B\}$. The learner observes no intermediate states or
+progress signals. Each $X^i$ may depend on all preceding strings and
+responses and on $U$. After $n$ queries, the learner returns a string
+$\widehat B$ determined by the query transcript and $U$.
+\begin{enumerate}[(a)]
+\item Prove that every such learner satisfies
+\[
+ \P(\widehat B=B)\le\min\left\{1,\frac{n+1}{2^H}\right\}.
+\]
+\item Deduce that $\P(\widehat B=B)\ge3/4$ requires
+\[
+ n\ge\left\lceil\frac34\,2^H\right\rceil-1.
+\]
+For comparison, suppose a query $X^i$ also returned the prefix indicators
+$\I\{X^i_{1:k}=B_{1:k}\}$ for $k=1,\ldots,H$.
+Explain how these indicators identify the first differing position in a
+failed query and why the single terminal response $Y_i=0$ does not, in
+general, supply that position.
+\end{enumerate}
+\begin{hints}
+First consider a deterministic learner and the hypothetical transcript
+in which every answer is zero.
+\end{hints}
+\end{exercisechunk}

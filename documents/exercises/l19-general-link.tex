@@ -1,0 +1,30 @@
+\begin{exercisechunk}
+\item \textbf{Identification with a known comparison link.}\suppmark
+\label[exercise]{ex:l19-general-link}
+\exerciseprofile{2}{2}{2}{\exproof\quad\exinterpretation}{%
+Determine how knowledge of the comparison link affects score identification.}
+Let $G=(\cY,E)$ be a finite undirected graph, and let
+$F:\R\to(0,1)$ be a known strictly increasing bijection satisfying
+$F(-t)=1-F(t)$. Assign a probability $p(y,y')\in(0,1)$ to each oriented
+edge, with $p(y',y)=1-p(y,y')$. Consider score functions
+$r:\cY\to\R$ and predictions $p_r^F(y,y')=F(r(y)-r(y'))$.
+\begin{enumerate}[(a)]
+\item Show that $p_r^F=p_s^F$ on all edges if and only if $r-s$ is
+constant on each connected component of $G$.
+\item Show that a score function satisfying $p=p_r^F$ on all edges exists
+if and only if every oriented cycle $y_0,\ldots,y_m=y_0$ satisfies
+\[
+ \sum_{j=0}^{m-1}F^{-1}(p(y_j,y_{j+1}))=0.
+\]
+\item Now allow the link to be unknown. For $a>0$, define
+$F_a(t)=F(t/a)$ and $r_a(y)=ar(y)$. Show that $(F_a,r_a)$ gives the same
+comparison probabilities as $(F,r)$. For a nonconstant $r$, a strictly
+positive reference policy $\pi_{\rm ref}$, and a fixed $\beta>0$, show
+that the Gibbs policies $\pi_{r_a}^\star$ and $\pi_r^\star$ differ when
+$a\ne1$. Explain why identifying comparison probabilities then fails to
+identify the Gibbs policy at that fixed $\beta$.
+\end{enumerate}
+\begin{hints}
+For (b), adapt the construction in \cref{app:cycles}.
+\end{hints}
+\end{exercisechunk}

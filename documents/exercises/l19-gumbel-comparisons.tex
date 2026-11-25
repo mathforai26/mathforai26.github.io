@@ -1,0 +1,20 @@
+\begin{exercisechunk}
+\item \textbf{Gumbel utilities and Bradley--Terry probabilities.}
+\label[exercise]{ex:l19-gumbel-comparisons}
+\exerciseprofile{2}{1}{2}{\excalculation}{%
+Derive a comparison link from an additive utility model.}
+Let $\cY$ be a finite response set and fix $r:\cY\to\R$.
+Let $(\varepsilon_y)_{y\in\cY}$ be mutually independent random variables
+with distribution function $G:\R\to(0,1)$,
+$G(t)=\exp(-e^{-t})$. Set $U_y=r(y)+\varepsilon_y$.
+Show that, for distinct $y,y'\in\cY$,
+\[
+ \P(U_y>U_{y'})
+ =\frac{e^{r(y)}}{e^{r(y)}+e^{r(y')}}
+ =\sigma(r(y)-r(y')),
+ \qquad \sigma(z)=\frac{1}{1+e^{-z}}.
+\]
+\begin{hints}
+Condition on one of the two perturbations.
+\end{hints}
+\end{exercisechunk}

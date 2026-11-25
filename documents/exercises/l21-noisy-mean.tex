@@ -1,0 +1,49 @@
+\begin{exercisechunk}
+\item \textbf{Recovery and retention when estimating a noisy mean.}
+\label[exercise]{ex:l21-noisy-mean}
+\exerciseprofile{2}{2}{3}{\exproof\quad\excalculation\quad\exinterpretation}{%
+Distinguish recovery from inherited bias from the persistent cost of noisy updates.}
+Let $Y_1,Y_2,\ldots$ be i.i.d.\ in $[0,1]$, with mean $\mu$ and variance
+$\sigma^2$. Use $\ell(x,y)=\tfrac12(x-y)^2$, whose best fixed predictor
+is $\mu$. Let $\cP$ contain all laws on $[0,1]$.
+\begin{enumerate}[(a)]
+\item From a deterministic inherited value $x_0\in[0,1]$, set $X_0=x_0$ and use
+$X_{k+1}=(1-\eta)X_k+\eta Y_{k+1}$ with $0<\eta\le1$.
+Show that
+\[
+ \E[(X_k-\mu)^2]
+ =(1-\eta)^{2k}(x_0-\mu)^2+
+ \frac{\eta\sigma^2}{2-\eta}\bigl[1-(1-\eta)^{2k}\bigr].
+\]
+\item Let $\cA_\eta$ run this update continuously from a fixed initial
+value in $[0,1]$. Prove
+\[
+ \operatorname{Cont}_{\cP}^{\cA_\eta}(T)
+ \le\frac{1}{2\eta(2-\eta)}+\frac{T\eta}{8(2-\eta)},
+ \qquad
+ \operatorname{Ret}_P^{\cA_\eta,\infty}(K)=
+ \frac{K\eta\sigma^2}{2(2-\eta)}.
+\]
+Deduce continuation of order $\sqrt T$ with $\eta=T^{-1/2}$.
+\item Consider instead the running sample mean after at least one
+observation; before the first observation, predict any fixed value in $[0,1]$.
+Show that an inherited history with $n\ge1$ zero observations, followed by
+constant target one, gives next-$T$-round regret
+\[
+ \frac12\sum_{k=0}^{T-1}\left(\frac{n}{n+k}\right)^2.
+\]
+Deduce $\operatorname{Cont}_{\cP}^{\rm mean}(T)=T/2$ and show that
+$\operatorname{Ret}_P^{{\rm mean},\infty}(K)=0$ for every $P\in\cP$ and fixed $K$.
+\item Compare the two methods using the criteria in (b)--(c).
+Identify which term measures inherited bias and which term persists
+because of observation noise. Explain why these calculations alone do
+not prove a lower bound on the retention of every algorithm with
+order-$\sqrt T$ continuation.
+\end{enumerate}
+\begin{hints}
+For (a), center the recursion at $\mu$ and use the independence of
+$Y_{k+1}$ from the preceding observations. For (b), the population
+excess loss at $x$ is $\tfrac12(x-\mu)^2$ and
+$\sigma^2\le1/4$.
+\end{hints}
+\end{exercisechunk}

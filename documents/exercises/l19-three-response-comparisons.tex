@@ -1,0 +1,33 @@
+\begin{exercisechunk}
+\item \textbf{Three responses: compatibility and policy identification.}
+\label[exercise]{ex:l19-three-response-comparisons}
+\exerciseprofile{2}{2}{2}{\exproof\quad\excalculation\quad\exinterpretation}{%
+Distinguish checking a preference model from identifying a policy within it.}
+Let $\cY=\{a,b,c\}$.  In the Bradley--Terry model, a score function
+$r:\cY\to\R$ predicts
+\[
+ p_r(y,y')=\sigma(r(y)-r(y')),
+ \qquad \sigma(z)=\frac{1}{1+e^{-z}}.
+\]
+\begin{enumerate}[(a)]
+\item Set $p(a,b)=p(b,c)=p(a,c)=3/4$, with reverse probabilities $1/4$.
+Show that these probabilities admit the majority ordering $a\succ b\succ c$
+but have no Bradley--Terry representation. In particular, show that
+$p_r(a,b)=p_r(b,c)=3/4$ and $r(b)=0$ force
+\[
+ (r(a),r(b),r(c))=(\log3,0,-\log3),\qquad p_r(a,c)=9/10.
+\]
+\item Now suppose the comparison design has support
+$\{(a,b),(b,c)\}$ and $p(a,b)=p(b,c)=3/4$. Assume the preference target
+satisfies Bradley--Terry; no probability for $(a,c)$ is supplied separately.
+For a uniform reference policy and $\beta=1$, the Gibbs policy is
+$\pi_r^\star(y)=e^{r(y)}/\sum_{z\in\cY}e^{r(z)}$.
+Show that the uniquely identified Gibbs policy is
+\[
+ (\pi_r^\star(a),\pi_r^\star(b),\pi_r^\star(c))=(9,3,1)/13.
+\]
+Explain why observing $(a,c)$ is unnecessary for this identification,
+and why the two observed probabilities alone cannot test the triangle
+compatibility condition.
+\end{enumerate}
+\end{exercisechunk}

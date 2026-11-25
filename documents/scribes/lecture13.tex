@@ -5,11 +5,12 @@
 \usepackage{array}
 \usepackage[inline,shortlabels]{enumitem}
 \usepackage{xcolor}
+\usepackage{../misc_files/course-definition-boxes}
 \usepackage{microtype}
 \usepackage{../exercises/course-exercises}
 
 % Revision date: maintained by scripts/build_lecture_notes.py. Keep this command.
-\newcommand{\lecturerevised}{2026-10-25 21:25 UTC-06:00}
+\newcommand{\lecturerevised}{2026-11-07 09:52 UTC+00:00}
 \usepackage{eso-pic}
 \AddToShipoutPictureBG{%
   \AtPageLowerLeft{%
@@ -171,16 +172,6 @@ of this lecture we stick to a simpler view that ignores this multi-representatio
 learning aspect, focusing on just a one-way decomposition of the target
 function.
 
-% TODO: This is at a bad spot; at one point we want to write about
-% how within a single task we often have multiple ``implicit'' tasks.
-% For example, in a language model, the input sequences may come from
-% different languages, natural or artificial. Here, learning each
-% language can be considered its own task. But what can go even deeper
-% and argue that in language modeling you need to learn grammar,
-% and semantics, which are different tasks. It is is not entirely
-% clear though how this maps to our simple definition of representation
-% learning.
-%
 % Shared features also occur within a single prediction problem. In a
 % multiclass classifier, class scores $s_c=g_c(h(x))$ use a common
 % representation. Softmax cross-entropy couples the scores through the loss
@@ -203,6 +194,14 @@ is evaluated on those tasks.
 We extend the learner's output to one
 representation and $T$ heads. The shared-map, separate-head structure makes
 it easy to articulate  the potential benefits of learning a shared representation.
+
+Related components of a single prediction problem may also use common
+features. For example, translating a sentence involves recognizing grammatical
+relations, resolving word meanings, and producing a sentence in the target
+language. A representation of the source sentence could support several of
+these operations. Treating these components as tasks is an informal
+interpretation of translation; the model below makes each task and its
+labeled training sample explicit.
 
 \subsection{The learning problem}
 \label{sec:setup}
@@ -254,23 +253,24 @@ No statistical model over the tasks is assumed.
 
 Let $\ell:\cY\times\cY\to[0,1]$ be a loss. Write
 \begin{equation}
- R_t(f)=\int\ell(f(x),y)\,P_t(dx,dy),
+ L_t(f)=\int\ell(f(x),y)\,P_t(dx,dy),
  \qquad
- R_{S_t}(f)=\frac1n\sum_{j=1}^n\ell(f(X_{tj}),Y_{tj}).
+ L_{t,n}(f)=\frac1n\sum_{j=1}^n\ell(f(X_{tj}),Y_{tj}).
  \label{eq:task-risks}
 \end{equation}
-A sample in the subscript marks an empirical risk: $R_t$ is computed from the
-law $P_t$, while $R_{S_t}$ is computed from the sample $S_t$. Write
+The first subscript identifies the task; the additional subscript $n$
+marks empirical averaging over its $n$ examples. Thus $L_t$ is population
+risk and $L_{t,n}$ is empirical risk. Write
 $S=(S_1,\ldots,S_T)$ for the entire source sample.
 For an output $(h,\boldsymbol g)\in\cH\times\cG^T$, with
 $\boldsymbol g=(g_1,\ldots,g_T)$, the task-$t$ predictor is $g_t\circ h$.
 We evaluate the output by its average population risk and use the
 corresponding empirical risk for training:
 \begin{equation}
- \overline R(h,\boldsymbol g)=\frac1T\sum_{t=1}^T R_t(g_t\circ h),
+ \overline L(h,\boldsymbol g)=\frac1T\sum_{t=1}^T L_t(g_t\circ h),
  \qquad
- \overline R_S(h,\boldsymbol g)
- =\frac1T\sum_{t=1}^T R_{S_t}(g_t\circ h).
+ \overline L_n(h,\boldsymbol g)
+ =\frac1T\sum_{t=1}^T L_{t,n}(g_t\circ h).
  \label{eq:average-risks}
 \end{equation}
 A bar marks an average over the $T$ source tasks, and a hat marks a quantity
@@ -280,7 +280,7 @@ Joint empirical risk minimization chooses one representation and all the heads:
 \begin{equation}
  (\widehat h,\widehat{\boldsymbol g})
  \in\mathop{\rm argmin}_{h\in\cH,\ \boldsymbol g\in\cG^T}
-       \overline R_S(h,\boldsymbol g).
+       \overline L_n(h,\boldsymbol g).
  \label{eq:joint-erm}
 \end{equation}
 Independent learning instead chooses a separate $(h_t,g_t)$ for every task.
@@ -314,18 +314,20 @@ Let $\cF$ be a finite nonempty class of predictors from $\cU$ to $\cY$.
 Let $(U_1,V_1),\ldots,(U_m,V_m)$ be independent, not necessarily identically
 distributed, and let $\ell:\cY\times\cY\to[0,1]$. For $f\in\cF$, define
 \[
- R_i(f)=\E[\ell(f(U_i),V_i)],
+ L^{(i)}(f)=\E[\ell(f(U_i),V_i)],
  \qquad
- \overline R_m(f)=\frac1m\sum_{i=1}^m R_i(f).
+ \overline L^{(m)}(f)=\frac1m\sum_{i=1}^m L^{(i)}(f).
 \]
-Suppose some $f^\star\in\cF$ satisfies $R_i(f^\star)=0$ for every $i\in[m]$.
+Here the superscripts index the observation laws and their population
+average; neither quantity is an empirical average.
+Suppose some $f^\star\in\cF$ satisfies $L^{(i)}(f^\star)=0$ for every $i\in[m]$.
 On the same experiment, let $\widehat f$ be an $\cF$-valued random predictor
 with
 \[
  \ell(\widehat f(U_i),V_i)=0
  \qquad\text{for every }i\in[m]
 \]
-almost surely. Such a predictor exists because $R_i(f^\star)=0$ and the loss
+almost surely. Such a predictor exists because $L^{(i)}(f^\star)=0$ and the loss
 is nonnegative.
 
 \begin{proposition}[Finite-class zero-loss bound]
@@ -333,13 +335,13 @@ is nonnegative.
 For every $\delta\in(0,1)$,
 \[
  \P\left\{
- \overline R_m(\widehat f)
+ \overline L^{(m)}(\widehat f)
  \le \frac{\ln|\cF|+\ln(1/\delta)}{m}
  \right\}\ge1-\delta.
 \]
 Moreover,
 \[
- \E[\overline R_m(\widehat f)]
+ \E[\overline L^{(m)}(\widehat f)]
  \le \frac{\ln|\cF|+1}{m}.
 \]
 \end{proposition}
@@ -347,7 +349,7 @@ Moreover,
 \Cref{ex:l13-bounded-loss-consistency} asks you to prove the proposition. The
 key inequality is
 \[
- \P\bigl(\ell(f(U_i),V_i)=0\bigr)\le 1-R_i(f),
+ \P\bigl(\ell(f(U_i),V_i)=0\bigr)\le 1-L^{(i)}(f),
 \]
 which follows from $0\le\ell\le1$. For $0$--$1$ loss, the inequality is an
 equality and the proposition reduces to the usual consistency bound.
@@ -360,9 +362,12 @@ consider the class
        h\in\cH,\ (g_1,\ldots,g_T)\in\cG^T\}.
 \]
 The class has cardinality at most $|\cH||\cG|^T$. For the $nT$ augmented
-observations $((t,X_{tj}),Y_{tj})$, the quantity $\overline R_{nT}$ in
-\cref{prop:independent-finite-class-consistency} equals
-$\overline R(h,\boldsymbol g)$.
+observations $((t,X_{tj}),Y_{tj})$, the population average in
+\cref{prop:independent-finite-class-consistency} satisfies
+\[
+ \overline L^{(nT)}\bigl((t,x)\mapsto g_t(h(x))\bigr)
+ =\overline L(h,\boldsymbol g).
+\]
 The subscripts $\mathrm{src}$ and $\mathrm{trg}$ used below abbreviate source
 and target.
 For $\delta\in(0,1)$, put
@@ -378,14 +383,14 @@ $(\widehat h,\widehat{\boldsymbol g})$ be any predictor tuple with zero loss
 on every source example. For $0<\delta<1$,
 \begin{equation}
  \P\left\{
- \overline R(\widehat h,\widehat{\boldsymbol g})
+ \overline L(\widehat h,\widehat{\boldsymbol g})
  \le a_{\rm src}(\delta)
  \right\}\ge1-\delta.
  \label{eq:consistent-multitask}
 \end{equation}
 The expected average risk also satisfies
 \begin{equation}
- \E[\overline R(\widehat h,\widehat{\boldsymbol g})]
+ \E[\overline L(\widehat h,\widehat{\boldsymbol g})]
  \le \frac{\ln|\cH|+T\ln|\cG|+1}{nT}.
  \label{eq:expected-multitask}
 \end{equation}
@@ -405,22 +410,22 @@ The bound separates the two statistical costs:
 \]
 For the comparison below, write
 \[
- \overline R_{\rm shared}
- :=\overline R(\widehat h,\widehat{\boldsymbol g})
+ \overline L_{\rm shared}
+ :=\overline L(\widehat h,\widehat{\boldsymbol g})
 \]
 for the risk of the shared learner's output. Independent learning returns a
 separate pair $(\widehat h_t^{\rm ind},\widehat g_t^{\rm ind})\in
 \cH\times\cG$ for each task $t$; define its average risk by
 \[
- \overline R_{\rm independent}
+ \overline L_{\rm independent}
  :=\frac1T\sum_{t=1}^T
- R_t(\widehat g_t^{\rm ind}\circ\widehat h_t^{\rm ind}).
+ L_t(\widehat g_t^{\rm ind}\circ\widehat h_t^{\rm ind}).
 \]
 The class of independent predictor tuples has size at most
 $(|\cH||\cG|)^T$. The same finite-class result gives the sufficient bound
 \begin{equation}
  \P\left\{
- \overline R_{\rm independent}
+ \overline L_{\rm independent}
  \le \frac{\ln|\cH|+\ln|\cG|}{n}
        +\frac{\ln(1/\delta)}{nT}
  \right\}\ge1-\delta.
@@ -454,7 +459,7 @@ $g_b(z)=z\oplus b$ as $\cG$.
 \label{prop:boxes-sharing}
 Joint ERM in this model has
 \begin{equation}
- \E[\overline R_{\rm shared}]
+ \E[\overline L_{\rm shared}]
  \le \frac{(d+T)\ln2+1}{nT}.
  \label{eq:boxes-shared-upper}
 \end{equation}
@@ -462,7 +467,7 @@ For any collection of learners whose task-$t$ predictor uses only $S_t$
 and independent randomization, there is a fixed choice of
 $(h^\star,b_1,\ldots,b_T)$ for which
 \begin{equation}
- \E[\overline R_{\rm independent}]
+ \E[\overline L_{\rm independent}]
  \ge \frac12\left(1-\frac1d\right)^n.
  \label{eq:boxes-independent-lower}
 \end{equation}
@@ -487,7 +492,7 @@ that
  \left\lceil\frac{(d+T)\ln2+1}{\varepsilon T}\right\rceil
 \]
 examples per task suffice to make
-$\E[\overline R_{\rm shared}]\le\varepsilon$. Thus
+$\E[\overline L_{\rm shared}]\le\varepsilon$. Thus
 $O(1+d/T)$ examples per task suffice for any fixed tolerance. In contrast,
 independent learning needs $n=\Omega(d)$ to guarantee a fixed small tolerance
 uniformly over this family.
@@ -501,13 +506,13 @@ be computationally efficient.
 
 We now allow arbitrary task laws and any loss in $[0,1]$. Define
 \begin{equation}
- R_t^\star=\min_{h\in\cH,\ g\in\cG}R_t(g\circ h),
+ L_t^\star=\min_{h\in\cH,\ g\in\cG}L_t(g\circ h),
  \qquad
- A_t(h)=\min_{g\in\cG}R_t(g\circ h)-R_t^\star.
+ A_t(h)=\min_{g\in\cG}L_t(g\circ h)-L_t^\star.
  \label{eq:representation-error}
 \end{equation}
 The quantity $A_t(h)\ge0$ is the extra risk imposed by using representation
-$h$, even with its best head. The benchmark $R_t^\star$ allows task $t$ its
+$h$, even with its best head. The benchmark $L_t^\star$ allows task $t$ its
 own representation. It need not equal Bayes risk: the composite class itself
 may be misspecified.
 
@@ -521,16 +526,16 @@ Write
 The number $\Delta_{\rm share}$ is the approximation cost of requiring one
 representation. Because the heads can be chosen separately,
 \begin{equation}
- \min_{h,\boldsymbol g}\overline R(h,\boldsymbol g)
- =\frac1T\sum_{t=1}^T R_t^\star+\Delta_{\rm share}.
+ \min_{h,\boldsymbol g}\overline L(h,\boldsymbol g)
+ =\frac1T\sum_{t=1}^T L_t^\star+\Delta_{\rm share}.
  \label{eq:sharing-benchmark}
 \end{equation}
 Exact sharing means $\Delta_{\rm share}=0$, not necessarily zero label noise.
 
 Allow the source learner an optimization error $\eta_{\rm src}\ge0$:
 \begin{equation}
- \overline R_S(\widehat h,\widehat{\boldsymbol g})
- \le\min_{h,\boldsymbol g}\overline R_S(h,\boldsymbol g)
+ \overline L_n(\widehat h,\widehat{\boldsymbol g})
+ \le\min_{h,\boldsymbol g}\overline L_n(h,\boldsymbol g)
        +\eta_{\rm src}.
  \label{eq:approximate-joint-erm}
 \end{equation}
@@ -544,8 +549,8 @@ Under \cref{sec:setup} and \cref{eq:approximate-joint-erm}, define
 \]
 With probability at least $1-\delta$,
 \begin{align}
- \overline R(\widehat h,\widehat{\boldsymbol g})
-   -\frac1T\sum_{t=1}^T R_t^\star
+ \overline L(\widehat h,\widehat{\boldsymbol g})
+   -\frac1T\sum_{t=1}^T L_t^\star
  &\le \Delta_{\rm share}+\eta_{\rm src}+b_{\rm src}(\delta),
  \label{eq:agnostic-joint}\\
  \overline A(\widehat h)
@@ -560,24 +565,24 @@ bounded losses, although their laws differ across tasks. A union bound
 over at most $K=|\cH||\cG|^T$ tuples gives
 \[
  \sup_{h,\boldsymbol g}
- |\overline R_S(h,\boldsymbol g)-\overline R(h,\boldsymbol g)|
+ |\overline L_n(h,\boldsymbol g)-\overline L(h,\boldsymbol g)|
  \le e_{\rm src}:=\sqrt{\frac{\ln(2K/\delta)}{2nT}}
 \]
 with probability at least $1-\delta$. On this event, for a population
 minimizer $(h^\circ,\boldsymbol g^\circ)$,
 \begin{align*}
- \overline R(\widehat h,\widehat{\boldsymbol g})
- &\le\overline R_S(\widehat h,\widehat{\boldsymbol g})+e_{\rm src}\\
- &\le\overline R_S(h^\circ,\boldsymbol g^\circ)
+ \overline L(\widehat h,\widehat{\boldsymbol g})
+ &\le\overline L_n(\widehat h,\widehat{\boldsymbol g})+e_{\rm src}\\
+ &\le\overline L_n(h^\circ,\boldsymbol g^\circ)
        +\eta_{\rm src}+e_{\rm src}\\
- &\le\overline R(h^\circ,\boldsymbol g^\circ)
+ &\le\overline L(h^\circ,\boldsymbol g^\circ)
        +\eta_{\rm src}+2e_{\rm src}.
 \end{align*}
 Use \cref{eq:sharing-benchmark} and
 $2e_{\rm src}=b_{\rm src}(\delta)$ for the first
 claim. For the second, minimize each population head risk at $\widehat h$:
 $\overline A(\widehat h)\le
-\overline R(\widehat h,\widehat{\boldsymbol g})-T^{-1}\sum_tR_t^\star$.
+\overline L(\widehat h,\widehat{\boldsymbol g})-T^{-1}\sum_tL_t^\star$.
 \end{proof}
 
 The estimation term has order
@@ -602,14 +607,14 @@ $\widehat h$ and fit a head using examples from a new target task. Learning
 how to fit new tasks from experience on source tasks is also called
 \emph{learning-to-learn} or \emph{meta-learning}.
 
-Fix a target law $P_0$ and define $R_0$, $R_0^\star$, and $A_0(h)$ as in
+Fix a target law $P_0$ and define $L_0$, $L_0^\star$, and $A_0(h)$ as in
 \cref{eq:task-risks,eq:representation-error}. After estimating $\widehat h$,
 the learner receives
 $S_0=((X_{01},Y_{01}),\ldots,(X_{0m},Y_{0m}))\sim P_0^{\otimes m}$,
 independently of all source data and source-learner randomization.
 The output $(\widehat h,\widehat g_0)$ predicts by
 $\widehat f_0=\widehat g_0\circ\widehat h$. The objective is small target
-excess risk $R_0(\widehat f_0)-R_0^\star$.
+excess risk $L_0(\widehat f_0)-L_0^\star$.
 
 \subsection{Finite-class analysis}
 
@@ -679,11 +684,11 @@ comparing the errors induced by every candidate representation.
 With $\widehat h$ frozen, target training searches only over the head class.
 Choose a head with
 \begin{equation}
- R_{S_0}(\widehat g_0\circ\widehat h)
- \le\min_{g\in\cG}R_{S_0}(g\circ\widehat h)+\eta_{\rm trg},
+ L_{0,m}(\widehat g_0\circ\widehat h)
+ \le\min_{g\in\cG}L_{0,m}(g\circ\widehat h)+\eta_{\rm trg},
  \label{eq:target-erm}
 \end{equation}
-where $\eta_{\rm trg}\ge0$ and $R_{S_0}$ uses the $m$ target examples.
+where $\eta_{\rm trg}\ge0$ and $L_{0,m}$ uses the $m$ target examples.
 
 \begin{theorem}[Transfer from source representation error]
 \label{thm:calibrated-transfer}
@@ -701,14 +706,14 @@ Put
 \]
 With probability at least $1-\delta_{\rm src}-\delta_{\rm trg}$,
 \begin{equation}
- R_0(\widehat g_0\circ\widehat h)-R_0^\star
+ L_0(\widehat g_0\circ\widehat h)-L_0^\star
  \le\Psi(\varepsilon_{\rm src})
      +\eta_{\rm trg}+b_{\rm trg}(\delta_{\rm trg}).
  \label{eq:general-transfer}
 \end{equation}
 In particular, agnostic joint ERM gives
 \begin{equation}
- R_0(\widehat g_0\circ\widehat h)-R_0^\star
+ L_0(\widehat g_0\circ\widehat h)-L_0^\star
  \le
  \Psi\!\left(
    \Delta_{\rm share}+\eta_{\rm src}
@@ -728,15 +733,15 @@ sample still has law $P_0^{\otimes m}$. Apply the Hoeffding--union-bound
 argument to the $|\cG|$ predictors $g\circ\widehat h$. With conditional
 probability at least $1-\delta_{\rm trg}$,
 \[
- R_0(\widehat g_0\circ\widehat h)
- -\min_{g\in\cG}R_0(g\circ\widehat h)
+ L_0(\widehat g_0\circ\widehat h)
+ -\min_{g\in\cG}L_0(g\circ\widehat h)
  \le\eta_{\rm trg}+b_{\rm trg}(\delta_{\rm trg}).
 \]
 The conditional failure probability is at most $\delta_{\rm trg}$ for every source
 realization, so the unconditional failure probability is also at most
 $\delta_{\rm trg}$. On the intersection with the source event,
 \[
- \min_gR_0(g\circ\widehat h)-R_0^\star
+ \min_gL_0(g\circ\widehat h)-L_0^\star
  =A_0(\widehat h)
  \le\Psi(\overline A(\widehat h))
  \le\Psi(\varepsilon_{\rm src}).
@@ -746,13 +751,13 @@ Use \cref{thm:agnostic-multitask} or
 \cref{thm:consistent-multitask} for the respective choices of
 $\varepsilon_{\rm src}$. In the realizable case,
 $\overline A(\widehat h)\le
-\overline R(\widehat h,\widehat{\boldsymbol g})$.
+\overline L(\widehat h,\widehat{\boldsymbol g})$.
 \end{proof}
 
 The target fitting cost contains $\ln|\cG|$, not $\ln|\cH|$.
 Learning the target from scratch has the finite-class ERM bound
 \[
- R_0(\widehat f_{\rm scratch})-R_0^\star
+ L_0(\widehat f_{\rm scratch})-L_0^\star
  \le \sqrt{
  \frac{2\{\ln|\cH|+\ln|\cG|+\ln(2/\delta_{\rm trg})\}}m}
 \]
@@ -796,22 +801,22 @@ Recall that $\cG=\{g_0,g_1\}$ with $g_b(z)=z\oplus b$ for $b\in\{0,1\}$.
 For each task $t\in[T]$, the target predictor is $g_{b_t}\circ h^\star$.
 Since each $g_b$ is a bijection on $\{0,1\}$,
 \[
- R_t(g_{b_t}\circ h)
+ L_t(g_{b_t}\circ h)
  =\mu\bigl(\{x:g_{b_t}(h(x))\ne g_{b_t}(h^\star(x))\}\bigr)
  =q(h),
  \qquad
- R_t(g_{1-b_t}\circ h)=1-q(h).
+ L_t(g_{1-b_t}\circ h)=1-q(h).
 \]
-Since $R_t^* = 0$,
+Since $L_t^* = 0$,
 \begin{equation}
- A_t(h)=\min_{g\in \cG} R_t(g \circ h) =
+ A_t(h)=\min_{g\in \cG} L_t(g \circ h) =
  \min\{q(h),1-q(h)\}=A_0(h)=\overline A(h)\,.
  \label{eq:boxes-calibration}
 \end{equation}
 Thus $\Psi(u)\le u$, independently of $T$. The transfer theorem (\cref{thm:calibrated-transfer})) gives, for
 exact source and target ERM,
 \begin{equation}
- R_0(\widehat g_0\circ\widehat h)
+ L_0(\widehat g_0\circ\widehat h)
  \le
  \frac{(d+T)\ln2+\ln(1/\delta_{\rm src})}{nT}
  +\sqrt{\frac{2\ln(4/\delta_{\rm trg})}m}.
@@ -848,14 +853,14 @@ $(X,Y)=((U,V),U)$, whereas a target observation is
 $(X,Y)=((U,V),V)$. Thus the source and target input laws are the same and
 uniform on $\{0,1\}^2$, while the label functions differ. The full
 representation has zero risk on every source task using $\pi_1$ and zero
-target risk using $\pi_2$, so $R_t^\star=R_0^\star=0$. For the dropped
+target risk using $\pi_2$, so $L_t^\star=L_0^\star=0$. For the dropped
 representation,
 \[
- R_t(\pi_1\circ h_{\rm drop})=0
+ L_t(\pi_1\circ h_{\rm drop})=0
  \quad(t\in[T]),
  \qquad
- R_0(\pi_1\circ h_{\rm drop})
- =R_0(\pi_2\circ h_{\rm drop})=\frac12.
+ L_0(\pi_1\circ h_{\rm drop})
+ =L_0(\pi_2\circ h_{\rm drop})=\frac12.
 \]
 Consequently,
 \[
@@ -941,16 +946,16 @@ orthonormal basis for it. Because $\cG$ contains every linear head, a change
 of basis changes the head coordinates but not the available composite
 predictors. The normalization also makes $CC^\top$ the orthogonal projector
 onto the candidate subspace, as used below.
-Use $R_t$, $R_t^\star$, and $A_t$ for these classes and squared loss.
+Use $L_t$, $L_t^\star$, and $A_t$ for these classes and squared loss.
 The learner estimates $\widehat B$ from the source samples alone and fits
 $\widehat a_0$ on $S_0$, returning $(h_{\widehat B},g_{\widehat a_0})$.
 The predictor is $\widehat f_0(x)=x^\top\widehat\theta$, where
 $\widehat\theta=\widehat B\widehat a_0$. The objective is small expected
 target excess risk, which in this model is
 \begin{equation}
- \E[R_0(\widehat f_0)-R_0^\star]
+ \E[L_0(\widehat f_0)-L_0^\star]
  =\E[\|\widehat\theta-Ba_0\|_2^2],
- \qquad R_0^\star=\sigma_0^2.
+ \qquad L_0^\star=\sigma_0^2.
  \label{eq:linear-target-objective}
 \end{equation}
 
@@ -1030,12 +1035,12 @@ assumptions imply
 where the second identity uses the independence of $\varepsilon$ and $X$.
 Consequently,
 \[
- R_t(g_b\circ h_C)
+ L_t(g_b\circ h_C)
  =\E[(X^\top u-\varepsilon)^2]
  =u^\top\E[XX^\top]u-2u^\top\E[\varepsilon X]+\E[\varepsilon^2]
  =\|Cb-Ba_t\|_2^2+\E[\varepsilon^2].
 \]
-Since $C=B$ is allowed, $R_t^\star=\E[\varepsilon^2]$.
+Since $C=B$ is allowed, $L_t^\star=\E[\varepsilon^2]$.
 Minimizing over $b$ gives
 \begin{equation}
  A_t(C)=\|(I_d-CC^\top)Ba_t\|_2^2.
@@ -1071,6 +1076,11 @@ $D^{-1}\preceq\lambda_{\min}(D)^{-1}I_k$.
 \end{proof}
 
 The factor depends on the target direction as well as the source tasks.
+Writing $D=\sum_{j=1}^k\lambda_jv_jv_j^\top$ with orthonormal eigenvectors
+$v_j$ and $\lambda_j>0$ gives
+\[
+ \kappa_0=\sum_{j=1}^k\frac{(v_j^\top a_0)^2}{\lambda_j}.
+\]
 A target aligned with a well-covered direction can have a small factor even
 when other directions are poorly covered.\endnote{Positive definiteness of
 $D$ is sufficient for all targets. For a fixed target with
@@ -1336,7 +1346,7 @@ $\widehat B$ be the spectral estimate and fit the target head by
 With $\lambda$ and $V$ as in that theorem, the expected target excess risk is
 bounded by
 \begin{equation}
- \E[R_0(\widehat f_0)-R_0^\star]
+ \E[L_0(\widehat f_0)-L_0^\star]
  \le
  \left(1+\frac{k}{m-k-1}\right)
  \frac{\|a_0\|_2^2V}{N\lambda^2}
@@ -1487,9 +1497,9 @@ The optional intrinsic-dimension comparison in
 
 \begin{description}[style=unboxed,leftmargin=1.5em,labelindent=0pt]
 \item[Risk notation]
-A sample in the subscript marks an empirical risk, so $R_t$ uses the law
-$P_t$ and $R_{S_t}$ uses the sample $S_t$. A bar averages over the $T$ source
-tasks, giving $\overline R$ and $\overline R_S$. A hat marks a quantity
+For task $t$, $L_t$ is population risk under $P_t$ and $L_{t,n}$ is
+empirical risk on its $n$ examples. A bar averages over the $T$ source
+tasks, giving $\overline L$ and $\overline L_n$. A hat marks a quantity
 returned by a learner, such as $\widehat h$ or $\widehat B$. The subscripts
 $\mathrm{src}$ and $\mathrm{trg}$ distinguish source- and target-side
 quantities.

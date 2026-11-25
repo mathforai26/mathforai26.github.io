@@ -1,0 +1,35 @@
+\begin{exercisechunk}
+\item \textbf{Learning from a binary verifier with a baseline.}
+\label[exercise]{ex:l20-binary-baseline}
+\exerciseprofile{2}{2}{2}{\exproof\quad\excalculation}{%
+Extend a convergence proof by checking which progress estimates survive a baseline.}
+Use the binary logit difference and reward $r_a=a$ from \cref{sec:binary}.
+Start from finite deterministic $u_0$, fix $\eta>0$ and a constant baseline
+$b\in\R$, and write $p_t=\sigma(u_t)$ and $q_t=1-p_t$.
+Given the history before update $t$, draw
+$A_t\sim\operatorname{Bernoulli}(p_t)$ and use
+\[
+ u_{t+1}=u_t+2\eta(A_t-b)(A_t-p_t).
+\]
+\begin{enumerate}[(a)]
+\item Show that $p_{t+1}\ge p_t$ for every possible action and every finite
+$u_t$ if and only if $b\in[0,1]$.
+\item Assume $b\in[0,1]$. Show that the conclusions of \cref{thm:binary}
+still hold with the same constant $c_0=2\eta e^{-2\eta}p_0^2$:
+\[
+ \E[q_t]\le\frac{1}{q_0^{-1}+c_0t},\qquad
+ p_t\longrightarrow1\quad\text{almost surely}.
+\]
+\end{enumerate}
+\begin{hints}
+For (b), you may use the finite-step inequality
+\[
+ e^{-2\eta}\sigma(u)(1-\sigma(u))\delta
+ \le\sigma(u+\delta)-\sigma(u)
+ \qquad(0\le\delta\le2\eta).
+\]
+Apply the inequality to the random logit increment, then take conditional
+expectations. Once you obtain \cref{eq:binary-drift}, the remaining argument
+from \cref{thm:binary} applies.
+\end{hints}
+\end{exercisechunk}

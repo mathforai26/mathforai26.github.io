@@ -8,9 +8,9 @@ loss and selects the lower-cost generator.}
 Use the losses in \cref{eq:multistep-loss}.
 \begin{enumerate}[(a),beginpenalty=10000]
 \item For \(Q_-,Q_+\) from \cref{sec:endpoint-generators}, with
-\(T\ge2\) and \(\kappa>0\), compute \(\cL_1\) and \(\cL_2\)
+\(T\ge2\) and \(\kappa>0\), compute \(\ell_1\) and \(\ell_2\)
 on \(0^T\).
-\item Which model minimizes \(\cL_1+\lambda\cL_2\) over this pair
+\item Which model minimizes \(\ell_1+\lambda\ell_2\) over this pair
 when \(\lambda>0\), and by how much is its loss smaller?
 Compare the models' expected terminal costs \(\E_Q[c_{\mathrm{fin}}]\).
 \end{enumerate}

@@ -1,0 +1,89 @@
+\begin{exercisechunk}
+\item \textbf{The variation norm of a univariate ReLU network.}
+\label[exercise]{ex:l15-relu-spline-variation}
+\exerciseprofile{3}{3}{3}{\exproof\quad\excalculation\quad\exinterpretation}{%
+Derive the function-space regularizer induced by squared parameter-norm
+control and relate its atomic measures to the knots of a linear spline.}
+Consider finite two-layer ReLU networks
+\[
+ h_\theta(x)=c+\sum_{j=1}^m a_j[w_jx+b_j]_+,
+ \qquad
+ C(\theta)=\frac12\sum_{j=1}^m(a_j^2+w_j^2),
+\]
+where the biases are unregularized. For a continuous function \(f:\R\to\R\),
+define its unbounded-width representation cost by
+\begin{align*}
+ \cR(f)=\inf\biggl\{
+ &\|\mu_+\|_{\TV}+\|\mu_-\|_{\TV}:\\
+ &f(x)=c+\int_\R[x-b]_+\,d\mu_+(b)
+          +\int_\R[b-x]_+\,d\mu_-(b)
+ \text{ for some }c\in\R\biggr\}.
+\end{align*}
+Assume below that \(D^2f\) is a compactly supported finite signed measure and
+that the limiting slopes \(f'(-\infty)\) and \(f'(+\infty)\) exist. You may use
+\(D^2[x-b]_+=D^2[b-x]_+=\delta_b\) in the sense of distributions.
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Fix one nonconstant unit \(a[wx+b]_+\). Show that its function is
+unchanged when \((a,w,b)\) is replaced by
+\((a/r,rw,rb)\) for \(r>0\). Prove
+\[
+ \inf_{r>0}\frac12\left(\frac{a^2}{r^2}+r^2w^2\right)
+ =|aw|.
+\]
+Explain why the sign of \(w\) then produces one of the two normalized atoms
+\([x-t]_+\) and \([t-x]_+\).
+
+\item For any measure representation in the definition of \(\cR(f)\), prove
+\[
+ D^2f=\mu_++\mu_-,
+ \qquad
+ f'(-\infty)+f'(+\infty)
+ =\mu_+(\R)-\mu_-(\R).
+\]
+Set \(B=\|D^2f\|_{\TV}\) and
+\(t=f'(-\infty)+f'(+\infty)\). Use the two identities and the triangle
+inequality to prove
+\[
+ \cR(f)\geq\max\{B,|t|\}.
+\]
+
+\item Prove the matching upper bound and conclude that
+\[
+ \cR(f)=\max\left\{
+ \|D^2f\|_{\TV},
+ \left|f'(-\infty)+f'(+\infty)\right|
+ \right\}.
+\]
+Your construction must also cover the case \(B=0\).
+
+\item Let \(s:\R\to\R\) be a linear spline with ordered knots
+\(x_1<\cdots<x_N\). Let its slopes on the successive intervals be
+\(\ell_0,\ell_1,\ldots,\ell_N\). Prove
+\[
+ D^2s=\sum_{i=1}^N(\ell_i-\ell_{i-1})\delta_{x_i}
+\]
+and hence
+\[
+ \cR(s)=\max\left\{
+   \sum_{i=1}^N|\ell_i-\ell_{i-1}|,
+   |\ell_0+\ell_N|
+ \right\}.
+\]
+If the knots are ordered sample locations and \(s(x_i)=y_i\), identify the
+interior slopes \(\ell_1,\ldots,\ell_{N-1}\) and write the remaining
+minimization over the two exterior slopes explicitly.
+
+\item The result cited in the bibliographical notes proves that a
+minimum-cost interpolant over the full function class can be chosen from the
+linear splines in part (d). Explain what parts (a)--(d) establish about the
+relation between neural parameter regularization and splines. Explain why
+the existence of a linear-spline minimizer does not imply that every
+minimum-cost interpolant is that spline.
+\end{enumerate}
+\begin{hints}
+For part (c), first suppose \(B>0\). Write
+\(D^2f=q\,|D^2f|\), where \(|q|=1\) almost everywhere, and introduce a
+signed measure \(\eta=(t/B)|D^2f|\). Seek \(\mu_+\) and \(\mu_-\) whose sum
+is \(D^2f\) and whose difference is \(\eta\). Treat \(B=0\) separately.
+\end{hints}
+\end{exercisechunk}

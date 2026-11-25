@@ -1,0 +1,39 @@
+\begin{exercisechunk}
+\item \textbf{Unanimous comparisons and nonattainment.}
+\label[exercise]{ex:l19-unanimous-comparisons}
+\exerciseprofile{2}{2}{2}{\exproof\quad\excalculation\quad\exinterpretation}{%
+Distinguish connected population comparisons from existence of an
+interior empirical preference-likelihood optimum.}
+There are two responses $a,b$, a uniform reference policy, and a fixed
+$\beta>0$. Write $\pi_q(a)=q$ and $\pi_q(b)=1-q$ for $q\in(0,1)$.
+Every comparison presents $(a,b)$. Its DPO probability of selecting $a$ is
+\[
+ g_\beta(q)=\sigma\!\left(\beta\log\frac{q}{1-q}\right).
+\]
+Among $n\ge1$ observed labels, $k$ select $a$. The empirical loss is
+\[
+ L_n(q)=-\frac{k}{n}\log g_\beta(q)
+              -\left(1-\frac{k}{n}\right)\log(1-g_\beta(q)).
+\]
+\begin{enumerate}[(a)]
+\item For $0<k<n$, show that the unique minimizer $\widehat q$ satisfies
+\[
+ \frac{\widehat q}{1-\widehat q}
+ =\left(\frac{k}{n-k}\right)^{1/\beta},\qquad
+ \widehat q=\frac{1}{1+((n-k)/k)^{1/\beta}}.
+\]
+\item For each of $k=0$ and $k=n$, show that the infimum of
+$L_n$ is zero and is not attained on $(0,1)$. Specify the limit
+of $q$ along which the infimum is approached.
+\item Now suppose the labels $C_1,\ldots,C_n$ are independent Bernoulli
+variables with probability $p\in(0,1)$ of selecting $a$, and put
+$K=\sum_{i=1}^n C_i$. Show that
+$\P(K\in\{0,n\})=(1-p)^n+p^n$. Explain why connected comparison
+support and a finite true Bradley--Terry score difference do not ensure
+an interior empirical minimizer for every finite sample.
+\end{enumerate}
+\begin{hints}
+First regard $g_\beta(q)$ as the fitted Bernoulli probability, and check
+which probabilities are reached as $q$ varies over $(0,1)$.
+\end{hints}
+\end{exercisechunk}

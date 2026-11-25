@@ -1,0 +1,39 @@
+\begin{exercisechunk}
+\item \textbf{Policy ratios and the DPO loss.}
+\label[exercise]{ex:l19-dpo-algebra}
+\exerciseprofile{1}{2}{2}{\exproof\quad\excalculation}{%
+Verify the reward--policy correspondence and the preference-likelihood rewrite.}
+Fix finite $\cY$, a strictly positive $\pi_{\rm ref}\in\Delta_{\cY}$,
+and $\beta>0$. Use the Gibbs policy and normalizer from
+\cref{eq:gibbs-policy}, and the comparison predictions $q_\pi$ defined
+in \cref{sec:dpo}, including their extension to policies with zeros.
+\begin{enumerate}[(a)]
+\item For strictly positive $\pi$, define
+$r_\pi(y)=\beta\log(\pi(y)/\pi_{\rm ref}(y))$.
+Show that $Z_{r_\pi}=1$ and $\pi_{r_\pi}^\star=\pi$.
+For a score function $r:\cY\to\R$, also show that
+\[
+ r_{\pi_r^\star}(y)=r(y)-\beta\log Z_r,
+ \qquad q_{\pi_r^\star}(y,y')=p_r(y,y').
+\]
+\item For arbitrary $\pi\in\Delta_{\cY}$ and a pair with
+$\pi(y),\pi(y')>0$, show that
+\[
+ q_\pi(y,y')=
+ \sigma\!\left(\beta\log\frac{\pi(y)}{\pi_{\rm ref}(y)}
+              -\beta\log\frac{\pi(y')}{\pi_{\rm ref}(y')}\right).
+\]
+Show also that $q_\pi(y',y)=1-q_\pi(y,y')$ for every distinct pair,
+including pairs with zero policy probabilities.
+\item Let $\pi$ be strictly positive and consider the observed triples
+$(Y_i,Y_i',C_i)$ from \cref{eq:experiment}. Put
+$(Y_i^+,Y_i^-)=(Y_i,Y_i')$ when $C_i=1$, and
+$(Y_i^+,Y_i^-)=(Y_i',Y_i)$ when $C_i=0$.
+Show, for either label, that
+\[
+ -C_i\log q_\pi(Y_i,Y_i')-(1-C_i)\log(1-q_\pi(Y_i,Y_i'))
+ =-\log q_\pi(Y_i^+,Y_i^-).
+\]
+Deduce the equality of \cref{eq:empirical-dpo,eq:winner-dpo}.
+\end{enumerate}
+\end{exercisechunk}

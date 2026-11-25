@@ -1,0 +1,31 @@
+\begin{exercisechunk}
+\item \textbf{Unobserved responses and probability transfer.}
+\label[exercise]{ex:l19-unobserved-responses}
+\exerciseprofile{2}{2}{2}{\exproof\quad\excalculation\quad\exinterpretation}{%
+Determine which policy probabilities a single comparison leaves unconstrained.}
+Let $\cY=\{a,b,c\}$, use a uniform reference and $\beta=1$, and suppose
+$\nu(a,b)=1$ and $p(a,b)=3/4$. All policy vectors below list coordinates
+in the order $(a,b,c)$.
+\begin{enumerate}[(a)]
+\item For $t>0$, define $\pi_t=(3,1,t)/(4+t)$. Show that
+$q_{\pi_t}(a,b)=3/4$ for every $t$ and that every $\pi_t$ minimizes
+the population DPO loss over $\Delta_{\cY}$. Show that
+$\pi_t(c)=t/(4+t)$ ranges over $(0,1)$ and explain why the observed
+preference probability therefore does not identify the probability of $c$.
+\item Let $\pi^{\rm old}=(0.6,0.3,0.1)$ and
+$\pi^{\rm new}=(0.3,0.1,0.6)$. Show that
+$q_{\pi^{\rm old}}(a,b)=2/3$, $q_{\pi^{\rm new}}(a,b)=3/4$, and
+\[
+ L_{\rm DPO}(\pi^{\rm old})-L_{\rm DPO}(\pi^{\rm new})
+ =\mathrm{kl}(3/4,2/3)>0,
+\]
+where $\mathrm{kl}$ is binary KL divergence.
+Explain how the comparison fit improves while the probabilities of both
+$a$ and $b$ decrease, identifying the changed probability ratio and the
+response that receives the transferred probability mass.
+\end{enumerate}
+\begin{hints}
+Apply the binary log-loss identity from \cref{prop:population-recovery}
+to the single observed pair; no assumption on unobserved preferences is needed.
+\end{hints}
+\end{exercisechunk}

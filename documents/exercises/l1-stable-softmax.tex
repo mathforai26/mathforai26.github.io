@@ -1,0 +1,123 @@
+% Shared exercise chunk: l1-stable-softmax
+\begin{exercisechunk}
+\item \textbf{Stable softmax and cross-entropy from logits.}\suppmark
+\label[exercise]{ex:l1-stable-softmax}
+\exerciseprofile{3}{3}{3}{\exproof\quad\excalculation\quad\exinterpretation}{%
+Derive logit-based softmax and cross-entropy calculations that preserve small
+losses and gradients and avoid subtracting nearly equal probabilities.}
+Let \(K\ge 2\), let \(z\in\R^K\), and define
+\[
+ q_k=\operatorname{softmax}(z)_k=\frac{e^{z_k}}{\sum_{i=1}^K e^{z_i}}.
+\]
+Write
+\[
+ \operatorname{LSE}(a_1,\ldots,a_m)
+ =\log\!\left(\sum_{i=1}^m e^{a_i}\right),
+ \qquad
+ \operatorname{softplus}(a)=\log(1+e^a).
+\]
+Derive all identities first in exact real arithmetic. In floating-point
+calculations, assume that \(\operatorname{LSE}\), \(\operatorname{softplus}\),
+\(\operatorname{log1p}(x)=\log(1+x)\), and
+\(\operatorname{expm1}(x)=e^x-1\) are evaluated by stable library routines.
+
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Prove that
+\(\operatorname{softmax}(z-c\mathbf 1)=\operatorname{softmax}(z)\) for every
+\(c\in\R\). For \(c=\max_i z_i\), derive
+\[
+ q_k=\frac{e^{z_k-c}}{\sum_{i=1}^K e^{z_i-c}},
+ \qquad
+ \log q_k=(z_k-c)-\operatorname{LSE}(z_1-c,\ldots,z_K-c).
+\]
+Explain why the shift prevents overflow in the exponentials and why one
+should compute log probabilities from the second formula instead of taking
+the logarithm of a rounded probability.
+
+\item Fix a hard target \(t\in[K]\), let \(e_t\in\R^K\) be the \(t\)-th
+standard basis vector, and define
+\[
+ a=\log\!\left(\sum_{j\ne t}e^{z_j-z_t}\right)
+ =\operatorname{LSE}\bigl((z_j-z_t)_{j\ne t}\bigr).
+\]
+Show that the hard-target cross-entropy and its logit gradient can be written
+as
+\[
+ L(z,t)=-\log q_t=\operatorname{softplus}(a),
+\]
+and
+\[
+ g_j=\frac{\partial L}{\partial z_j}
+ =e^{z_j-z_t-L(z,t)}\quad(j\ne t),
+ \qquad
+ g_t=-\sum_{j\ne t}g_j.
+\]
+Conclude that \(\sum_{k=1}^K g_k=0\). Explain how stable
+\(\operatorname{LSE}\) and \(\operatorname{softplus}\) routines evaluate the
+loss without forming a large exponential, and why the displayed formula for
+\(g_t\) avoids subtracting a probability close to \(1\) from \(1\).
+
+\item Consider \(z=(9,-9,-9)\) and \(t=1\) in float32 arithmetic. Put
+\(r=e^{-18}\approx1.523\times10^{-8}\). Assume that \(r\) remains nonzero
+but round-to-nearest gives
+\[
+ \operatorname{fl}(1+2r)=1.
+\]
+The usual maximum shift has already been applied. Compute the loss, gradient,
+and sum of the gradient coordinates when an implementation forms \(q\) and
+then uses \(L=-\log q_t\) and \(g=q-e_t\). Compute the corresponding
+quantities from part~(b), to first order in \(r\). Identify the numerical
+invariant that the usual calculation violates.
+
+\item Now let \(z_{\rm S},z_{\rm T}\in\R^K\) be student and teacher logits,
+and put
+\[
+ q=\operatorname{softmax}(z_{\rm S}),
+ \qquad p=\operatorname{softmax}(z_{\rm T}),
+ \qquad \delta=z_{\rm S}-z_{\rm T}.
+\]
+The exact soft-target cross-entropy gradient with respect to \(z_{\rm S}\)
+is \(q-p\). First prove
+\[
+ \log\frac{q_k}{p_k}
+ =\delta_k-\log\!\left(\sum_{i=1}^Kp_i e^{\delta_i}\right).
+\]
+\par\noindent
+Define
+\[
+ \bar\delta=\sum_{i=1}^Kp_i\delta_i,
+ \qquad d_k=\delta_k-\bar\delta,
+\]
+\[
+ s_k=d_k-
+ \operatorname{log1p}\!\left(
+   \sum_{i=1}^Kp_i\operatorname{expm1}(d_i)
+ \right),
+ \qquad
+ u_k=p_k\operatorname{expm1}(s_k).
+\]
+Show that
+\(\sum_i p_i\operatorname{expm1}(d_i)\ge0\), so the displayed
+\(\operatorname{log1p}\) has a nonnegative argument.
+Prove that \(s_k=\log(q_k/p_k)\) and \(u_k=q_k-p_k\). Verify directly
+that \(u=0\) when \(z_{\rm S}=z_{\rm T}\), and explain why this calculation
+avoids subtracting two nearly equal rounded probabilities. State why an
+implementation needs the teacher logits, rather than only the rounded teacher
+probabilities, to use this calculation.
+
+\item \emph{Optional extension.} A floating-point evaluation of \(u\) may
+have a small nonzero sum. Define
+\[
+ \widehat g_k=u_k-q_k\sum_{i=1}^K u_i.
+\]
+Show that \(\sum_k\widehat g_k=0\) whenever \(\sum_kq_k=1\). Explain why
+the correction leaves the exact real-arithmetic gradient unchanged.
+\end{enumerate}
+
+\begin{hints}
+For (b), factor \(e^{z_t}\) from the softmax denominator and differentiate
+through the differences \(z_j-z_t\). For (d), write the student normalizer in
+terms of the teacher normalizer and use
+\(\sum_i p_i e^{d_i}=1+\sum_i p_i\operatorname{expm1}(d_i)\).
+\end{hints}
+\end{exercisechunk}

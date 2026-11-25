@@ -1,0 +1,35 @@
+\begin{exercisechunk}
+\item \textbf{Improving the worst context.}\suppmark
+\label[exercise]{ex:l20-worst-context}
+\exerciseprofile{3}{2}{3}{\exproof\quad\excalculation\quad\exconstruction\quad\exinterpretation}{%
+Choose a direction that improves every tied worst context and obtain a convergence rate.}
+Consider the finite binary population from \cref{sec:context-weighting},
+with signed features $z_j$, unit separator $w$, and margin $\gamma>0$.
+Put $p_j(\theta)=\sigma(z_j^\top\theta)$,
+$Q(\theta)=\min_jp_j(\theta)$, and
+$\cA(\theta)=\{j:p_j(\theta)=Q(\theta)\}$.
+Let $C(\theta)$ be the convex hull of
+$\{\nabla p_j(\theta):j\in\cA(\theta)\}$, and let $g(\theta)$ be its
+minimum-norm point. Consider an absolutely continuous solution of
+$\dot\theta=g(\theta)$ almost everywhere; existence may be assumed.
+You may use the finite-minimum chain rule: along this flow,
+$\frac{d}{dt}Q(\theta(t))=\min_{j\in\cA(\theta(t))}
+\nabla p_j(\theta(t))^\top g(\theta(t))$ almost everywhere.
+\begin{enumerate}[(a)]
+\item Prove that $u^\top g\ge\|g\|_2^2$ for every $u\in C(\theta)$,
+and that equality holds for at least one active gradient.
+\item Writing $q(t)=Q(\theta(t))$, show that
+$\dot q(t)=\|g(\theta(t))\|_2^2$ almost everywhere and
+$\gamma q(t)(1-q(t))\le\|g(\theta(t))\|_2$.
+\item Prove the rate in \cref{prop:worst-context}.
+Give two equally likely, linearly separable contexts and a parameter
+at which an arbitrary choice of one active gradient decreases the other
+active probability to first order. Explain why the minimum-norm choice
+avoids that problem.
+\end{enumerate}
+\begin{hints}
+For (a), compare $\|g+\lambda(u-g)\|_2^2$ with $\|g\|_2^2$ for
+$0\le\lambda\le1$. For (c), use the two signed features from the
+lecture's PG failure example at zero initialization.
+\end{hints}
+\end{exercisechunk}

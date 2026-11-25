@@ -1,0 +1,28 @@
+\begin{exercisechunk}
+\item \textbf{Other unbiased gradient estimators}
+\label[exercise]{ex:l20-unbiased-estimators}
+\exerciseprofile{2}{1}{2}{\exproof\quad\exconstruction}{%
+Identify the freedom left by requiring unbiasedness for every reward function.}
+Fix a prompt $x$ and a parameter $\theta\in\R^d$.
+On a finite response set $\cY$, let
+$p_y=\pi_\theta(y\mid x)>0$ and
+$g_y=\nabla\pi_\theta(y\mid x)\in\R^d$ for a differentiable policy.
+The values $(p_y,g_y)_{y\in\cY}$ are known.
+\begin{enumerate}[(a)]
+\item Let $r:\cY\to\R$ be an unknown reward function. Sample
+$Y\sim\pi_\theta(\cdot\mid x)$ and observe $R=r(Y)$.
+Find a function $f:\cY\times\R\to\R^d$ such that
+\[
+ \E[f(Y,R)]=\sum_{y\in\cY}g_y r(y)
+ =\nabla J_x(\theta)
+ \qquad\text{for every }r:\cY\to\R,
+\]
+where $J_x(\theta)=\sum_y\pi_\theta(y\mid x)r(y)$.
+The function $f$ may depend on the known policy probabilities and derivatives,
+but must be chosen independently of $r$. Characterize all such functions,
+proving both necessity and sufficiency.
+\item Show that every function found in part (a) remains unbiased when
+$R$ is a random reward satisfying $\E[|R|]<\infty$ and
+$\E[R\mid Y=y]=r(y)$, with conditional reward laws independent of $\theta$.
+\end{enumerate}
+\end{exercisechunk}

@@ -1,0 +1,31 @@
+\begin{exercisechunk}
+\item \textbf{Opposite KL directions select different policies.}
+\label[exercise]{ex:l19-restricted-policies}
+\exerciseprofile{2}{2}{2}{\excalculation\quad\exinterpretation}{%
+Use objective-gap identities to compare preference fitting and reward optimization.}
+Let $\cY=\{a,b\}$, take a uniform reference and $\beta=1$, and set
+$r(a)=\log3$, $r(b)=0$, and $p=p_r$. Write
+$\pi_q(a)=q$, $\pi_q(b)=1-q$ for $q\in(0,1)$.
+Restrict the policy class to $\Pi=\{\pi_{11/20},\pi_{9/10}\}$.
+The binary KL divergence is
+$\mathrm{kl}(v,w)=v\log(v/w)+(1-v)\log((1-v)/(1-w))$.
+\begin{enumerate}[(a)]
+\item Derive the exact differences
+\[
+ \mathrm{kl}(3/4,11/20)-\mathrm{kl}(3/4,9/10)
+ =\frac14\log\frac{1296}{1331}<0,
+\]
+\[
+ \mathrm{kl}(11/20,3/4)-\mathrm{kl}(9/10,3/4)
+ =\frac1{20}\log\frac{11^{11}}{2^{20}3^{11}}>0.
+\]
+\item Prove that $L_{\rm DPO}$ is uniquely minimized over $\Pi$ by
+$\pi_{11/20}$, whereas $F_r$ is uniquely maximized over $\Pi$ by
+$\pi_{9/10}$. Identify the assumption of \cref{thm:dpo} that fails
+for this class, and explain why these selections are consistent with both
+objectives having the same unrestricted optimizer.
+\end{enumerate}
+\begin{hints}
+For (b), use the two objective gaps in \cref{eq:opposite-kl}.
+\end{hints}
+\end{exercisechunk}

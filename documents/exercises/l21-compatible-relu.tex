@@ -1,0 +1,27 @@
+\begin{exercisechunk}
+\item \textbf{Loss of plasticity with compatible examples.}
+\label[exercise]{ex:l21-compatible-relu}
+\exerciseprofile{2}{2}{2}{\exproof\quad\excalculation\quad\exinterpretation}{%
+Separate the existence of a common predictor from the ability of gradient updates to reach it.}
+Consider $f_{a,b}(x)=\max\{ax+b,0\}$ and the loss
+$\tfrac12(f_{a,b}(x)-y)^2$. Initialize $(a,b)=(0,1)$ and apply gradient
+descent to each presented example with stepsize $\eta=2/5$.
+\begin{enumerate}[(a)]
+\item Show that one update on $(x,y)=(1,0)$ gives
+$(a,b)=(-2/5,3/5)$. Show that subsequent training only on $(2,1)$ leaves
+these parameters unchanged, with loss $1/2$ on every round.
+\item Exhibit parameters that fit both $(1,0)$ and $(2,1)$ exactly.
+Explain why part (a) is a failure of the update dynamics rather than
+incompatibility of the two examples. Also compare the future loss with
+that of the prescribed initialization on $(2,1)$.
+\item Suppose the same two examples are instead drawn independently
+forever, with $\P((X,Y)=(1,0))=q$ and
+$\P((X,Y)=(2,1))=1-q$, where $0<q<1$.
+Prove that the expected one-round loss converges to $(1-q)/2$,
+although a predictor with zero population loss exists.
+\end{enumerate}
+\begin{hints}
+For (c), examine the first occurrence of $(1,0)$ and then track
+$a+b$ and $2a+b$. Each example occurs infinitely often almost surely.
+\end{hints}
+\end{exercisechunk}

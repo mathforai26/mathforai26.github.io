@@ -1,27 +1,29 @@
 {
   "lecture01": {
     "inputs": {
-      "documents/exercises/course-exercises.sty": "8b55005e025860aad67dba6a85a880872d8bdad5e23d7c65630067d32cf5f859",
+      "documents/exercises/course-exercises.sty": "a8a0b728893460abd0b1708b689a22d88c39b491955d3d1841fec0c29e07a159",
       "documents/exercises/l1-bounded-attention.tex": "a1aaf41512610de85c5cd1622d0ecc257b95e258f4f258cfd575381dd661d440",
       "documents/exercises/l1-greedy-decoding.tex": "9f4f2fc5dfffc99b545c00b1901417b5c82f9103a4d4ccef1d11d5fea1956521",
       "documents/exercises/l1-rope-collisions.tex": "6c4df203cac77c2777c2afe25ad105f7c17b627672413c7ca773babced0c3ebd",
       "documents/exercises/l1-rope-retrieval.tex": "ee3771f95a12ab96befbea39f435bc45aed5c24b58b0ff38f667d4c4d7c167b9",
       "documents/exercises/l1-rope-width.tex": "77b9b33a659ca38789aa0076b496502fbae7d8b0c0000c81687fe698815cd584",
       "documents/exercises/l1-rope.tex": "310f8fe9ace504feeb5ebb98998678cb2bfd3d689b17cab36357849e9f8f8331",
-      "documents/scribes/lecture01.tex": "c6a787b3121a69dd2f246bc2c8f4c16a62280470e32e3691589d7bfe203a5085"
+      "documents/scribes/lecture01.tex": "ece575ebbbcf516cf00343eb8a8a3ada4b30365b3bae5ecf596455b83c7183c5",
+      "documents/exercises/l1-stable-softmax.tex": "8fa2fcf936922194d30dbce4ddba1458d1f6fde6a271e36bc44da8e18f263f3d",
+      "documents/misc_files/course-definition-boxes.sty": "9cc500ec813bff5b359f7223d5847b115fef50ba0e9da24d0ab08a0e4f001fa9"
     },
-    "revised": "2026-10-09 23:50 UTC-07:00"
+    "revised": "2026-11-07 09:30 UTC+00:00"
   },
   "lecture02": {
     "inputs": {
-      "documents/exercises/course-exercises.sty": "8b55005e025860aad67dba6a85a880872d8bdad5e23d7c65630067d32cf5f859",
+      "documents/exercises/course-exercises.sty": "a8a0b728893460abd0b1708b689a22d88c39b491955d3d1841fec0c29e07a159",
       "documents/exercises/l2-bayes-not-minimax.tex": "2e10f56cf1d7bd6814cc466d77b82566e3c0abac3950d14489cf292fad4f1d18",
       "documents/exercises/l2-coin-flip-map.tex": "c8dbbcf1d495dce25dc39710fde15e717fb7f831e3961e35579d876b975b0a1b",
       "documents/exercises/l2-complete-boxes-lower.tex": "0fd01d33c19413d2648a3969bb2580f4914ca63ac8e94c5edf0c3316311d36f2",
       "documents/exercises/l2-complete-boxes-proof.tex": "153aa1027e8e7ecb8b8280e1dd25e456e709da53c1b8a4e3d2345d6a1822ec4c",
       "documents/exercises/l2-data-coverage.tex": "fc1d27c73a4622041b3246655be67fbf27086f5698ccd6bbada9591bcd709415",
       "documents/exercises/l2-deterministic-minimax.tex": "8d6c69ef912375b5b1946c7efb048c44b88d997c375ebe970607dc19a333e889",
-      "documents/exercises/l2-finite-class-consistency.tex": "6c3660c314abc1e7c365a2f7e76a915efd4876625562530bc42693b5211065ba",
+      "documents/exercises/l2-finite-class-consistency.tex": "c3cc56d3ee225fdb40070ad16f1c95ad9408ef693480b97883e95d5c3abeb3a6",
       "documents/exercises/l2-minimax-regret-q.tex": "d5ea904040d461d4771c367bd846f34a4ae27d7851d15f4ec2ce2905f0bbb2b8",
       "documents/exercises/l2-one-bit-decisions.tex": "facff26b83a56586e7bd6804512f85fc48ce669267e65a9a3eac350c397f527e",
       "documents/exercises/l2-one-bit-worst-case.tex": "cb9f9c735fb4f5d231db560911032b5301b7200e7e250492a09f73132110dc4c",
@@ -44,29 +46,31 @@
       "documents/exercises/l2-transductive-test-set.tex": "714d541c1cf1febae48091e9a27ba62ae1c56b6a7ea4ba64369be0eb7b80aeeb",
       "documents/exercises/l2-unknown-sampling-law.tex": "753c90d14a00ef47054a959ac6a46125bbd854a06a349243d137e3449052f1e9",
       "documents/exercises/l2-unseen-probability.tex": "12b574f50fd591ecd25a659633eb883d3b8e74ce35d0f4df6ea58b28368665ee",
-      "documents/scribes/lecture02.tex": "55389ffdb7dfdde5da4f2f50be10e445d2906a22cc15b200a2223b87baf874e2"
+      "documents/scribes/lecture02.tex": "ed548aad2b1ba6c8545c916bcc6234eb2698d47494202051fde075dc8dcd3ef1",
+      "documents/misc_files/course-definition-boxes.sty": "9cc500ec813bff5b359f7223d5847b115fef50ba0e9da24d0ab08a0e4f001fa9"
     },
-    "revised": "2026-10-09 23:50 UTC-07:00"
+    "revised": "2026-11-07 09:52 UTC+00:00"
   },
   "lecture03": {
     "inputs": {
-      "documents/exercises/course-exercises.sty": "8b55005e025860aad67dba6a85a880872d8bdad5e23d7c65630067d32cf5f859",
-      "documents/exercises/l3-fresh-test-evaluation.tex": "a08cd9f4f7dd6e09877646695ae1a6d9b86e4aaccf701f53cc9c26b21a689772",
-      "documents/exercises/l3-probabilistic-classification.tex": "d35a28ed900214315e91f657087b7ef8c2e502c7c57c6c1a8b00cd147ef0b857",
-      "documents/scribes/lecture03.tex": "c08a56b34b400bb2e4a4e499a7f7730d208d2c060d740f1515377cf13e1247a0"
+      "documents/exercises/course-exercises.sty": "a8a0b728893460abd0b1708b689a22d88c39b491955d3d1841fec0c29e07a159",
+      "documents/exercises/l3-fresh-test-evaluation.tex": "853986b29a0b4629d85e2f3dc151b4eb3ef22a06ed4c2288d18a344b648d1cbf",
+      "documents/exercises/l3-probabilistic-classification.tex": "9cd5e6bdd91540933b2033dc6f13dafc6d838198dca940324d960bd3eba8815e",
+      "documents/scribes/lecture03.tex": "b6ccad3af130060a994de532cb0a7fb6e6332a6a42c023ef2d51a4d7b89fb601",
+      "documents/misc_files/course-definition-boxes.sty": "9cc500ec813bff5b359f7223d5847b115fef50ba0e9da24d0ab08a0e4f001fa9"
     },
-    "revised": "2026-10-09 23:51 UTC-07:00"
+    "revised": "2026-11-07 09:59 UTC+00:00"
   },
   "lecture04": {
     "inputs": {
-      "documents/exercises/course-exercises.sty": "8b55005e025860aad67dba6a85a880872d8bdad5e23d7c65630067d32cf5f859",
+      "documents/exercises/course-exercises.sty": "a8a0b728893460abd0b1708b689a22d88c39b491955d3d1841fec0c29e07a159",
       "documents/exercises/l2-bayes-not-minimax.tex": "2e10f56cf1d7bd6814cc466d77b82566e3c0abac3950d14489cf292fad4f1d18",
       "documents/exercises/l2-coin-flip-map.tex": "c8dbbcf1d495dce25dc39710fde15e717fb7f831e3961e35579d876b975b0a1b",
       "documents/exercises/l2-complete-boxes-lower.tex": "0fd01d33c19413d2648a3969bb2580f4914ca63ac8e94c5edf0c3316311d36f2",
       "documents/exercises/l2-complete-boxes-proof.tex": "153aa1027e8e7ecb8b8280e1dd25e456e709da53c1b8a4e3d2345d6a1822ec4c",
       "documents/exercises/l2-data-coverage.tex": "fc1d27c73a4622041b3246655be67fbf27086f5698ccd6bbada9591bcd709415",
       "documents/exercises/l2-deterministic-minimax.tex": "8d6c69ef912375b5b1946c7efb048c44b88d997c375ebe970607dc19a333e889",
-      "documents/exercises/l2-finite-class-consistency.tex": "6c3660c314abc1e7c365a2f7e76a915efd4876625562530bc42693b5211065ba",
+      "documents/exercises/l2-finite-class-consistency.tex": "c3cc56d3ee225fdb40070ad16f1c95ad9408ef693480b97883e95d5c3abeb3a6",
       "documents/exercises/l2-minimax-regret-q.tex": "d5ea904040d461d4771c367bd846f34a4ae27d7851d15f4ec2ce2905f0bbb2b8",
       "documents/exercises/l2-one-bit-decisions.tex": "facff26b83a56586e7bd6804512f85fc48ce669267e65a9a3eac350c397f527e",
       "documents/exercises/l2-one-bit-worst-case.tex": "cb9f9c735fb4f5d231db560911032b5301b7200e7e250492a09f73132110dc4c",
@@ -89,18 +93,18 @@
       "documents/exercises/l2-transductive-test-set.tex": "714d541c1cf1febae48091e9a27ba62ae1c56b6a7ea4ba64369be0eb7b80aeeb",
       "documents/exercises/l2-unknown-sampling-law.tex": "753c90d14a00ef47054a959ac6a46125bbd854a06a349243d137e3449052f1e9",
       "documents/exercises/l2-unseen-probability.tex": "12b574f50fd591ecd25a659633eb883d3b8e74ce35d0f4df6ea58b28368665ee",
-      "documents/exercises/l3-fresh-test-evaluation.tex": "a08cd9f4f7dd6e09877646695ae1a6d9b86e4aaccf701f53cc9c26b21a689772",
-      "documents/exercises/l3-probabilistic-classification.tex": "d35a28ed900214315e91f657087b7ef8c2e502c7c57c6c1a8b00cd147ef0b857",
+      "documents/exercises/l3-fresh-test-evaluation.tex": "853986b29a0b4629d85e2f3dc151b4eb3ef22a06ed4c2288d18a344b648d1cbf",
+      "documents/exercises/l3-probabilistic-classification.tex": "9cd5e6bdd91540933b2033dc6f13dafc6d838198dca940324d960bd3eba8815e",
       "documents/exercises/l4-bernoulli-identification.tex": "4d8147386066025ce381a5b1ea6e4fb47167dff00145673d29558d4939e75362",
       "documents/exercises/l4-binary-count-accumulation.tex": "e590e18d5a9dd494ddf2519ad3d1cfe9a9b6094b30ba33da8e22fe5aef4b8cd0",
       "documents/exercises/l4-binary-count-terminal.tex": "3197934ca736fb3aa1a78ba7ee363e4ca9fb89aa3ae42d7bdce2837f0a17b788",
       "documents/exercises/l4-binary-count-tv.tex": "9257cb4667fd7431e6ca2e806228ce4f98a0f75ec89d8f81ec59aff43bedd2cf",
       "documents/exercises/l4-binary-count.tex": "29dbdbc84b04b1a4056de60762977a74fe991bf6522178f4e2320e797d1752bf",
       "documents/exercises/l4-chosen-prompts.tex": "b3b2c6f60e4c32898bf42cbd03677abdbcaeacee7db61747a8e43364074a1a87",
-      "documents/exercises/l4-copying-context.tex": "1e9357316f177fb587252df15122b01a315d59a594beb2020e123207c4e52d7f",
+      "documents/exercises/l4-copying-context.tex": "d6eb5883e731f4d191f11477a13019fb079517a3a93994afaf27372a08f0a3f9",
       "documents/exercises/l4-copying-memory.tex": "407b15eadd471e724f66a3824d343e42b8cf48af895a48ff101b00c1448959a8",
       "documents/exercises/l4-cumulative-recovery.tex": "2082df0ced326167b7f124e9c45960838086ea5cc82b8f670c7976b38a0b16ff",
-      "documents/exercises/l4-direct-cost-gradient.tex": "62a0e152ff1b04dc0fa23c7d6910c2535ec3fd8d331f8ebb2198732429767153",
+      "documents/exercises/l4-direct-cost-gradient.tex": "42980d17bffd3eb5de0b2584a15ce605cf4ace4999d4dc01b1a7c03d4f7ea2de",
       "documents/exercises/l4-discrepancy-comparison.tex": "41c4968446a31532fa30fc941f873f71ad813a67b01ae3976c2476bda683268c",
       "documents/exercises/l4-discrepancy-forward.tex": "7f9b2f5099da720638974a4910a09a9f2b2a2aa82e8c32f9cf128c76fd6c921d",
       "documents/exercises/l4-discrepancy-normalization.tex": "c64c613c18c6b4f32ca93a7dea889c69076625c125ad4c114b03d208455c829a",
@@ -112,13 +116,13 @@
       "documents/exercises/l4-kl-directions-failures.tex": "f1dfb2b82f4979947dac5193d1cca611446c9ebb786e2947373647a1b46eb1aa",
       "documents/exercises/l4-kl-directions-omission.tex": "ef9b0e3af812ce50bea5d8716ae72ed6dc90ff91aa2a51e51b1b4be55387fa3e",
       "documents/exercises/l4-kl-directions.tex": "dd52b32e66370cba5fe883c947ab170720d8ac9f8d6f574a85b3ec847689523a",
-      "documents/exercises/l4-multistep-benefit.tex": "b9460300a9779ddfbda43d118dff1848d4cc97207dd343bd7fff59a72ce66279",
+      "documents/exercises/l4-multistep-benefit.tex": "9ca875f8416f257caafef9276b85b1a75626ec475c6ed8975807abe90efaa8a5",
       "documents/exercises/l4-multistep-heads.tex": "3db012224fdf9e60307336e60f23439eec0ceea1ea9b3334d56f4f1e0aefe2f1",
       "documents/exercises/l4-multistep.tex": "4667a9542c9f8a1cafc447dc4ece9c5a2ed6223e92482603e249ca6d9607af6a",
-      "documents/exercises/l4-optimization-certificate.tex": "a6628f931edff523173c57c4f4f20856e30ee5038562506ed7bc44d5f6495884",
+      "documents/exercises/l4-optimization-certificate.tex": "261da83434e4e930f667ddc341d5e3d659da45d3aed0f2c0a477f2989b0ee832",
       "documents/exercises/l4-persistent-memory.tex": "a0923f24f0f85dca5a62438ef8ccb0ad4d843483bf97c48f7d818cc3bf6c3197",
       "documents/exercises/l4-positionwise-budget.tex": "9befb9fcd7a8b2dea25c056eea44baec2e2ea66c8e05dbbd4d66c2e6619c3bca",
-      "documents/exercises/l4-positionwise-fitting.tex": "f903e0340a5acc6b98f5fff4b0d44f293a37156f4ac9c518d0e91728fcb89007",
+      "documents/exercises/l4-positionwise-fitting.tex": "54d596254ddf6d5072e9fff97302435645846f4029dfaf04d99debf3caefe6ee",
       "documents/exercises/l4-positionwise-kl.tex": "807b1a595db91bd002de0fddf2e18b0e8fd82e4904120d2da182f9e3b8b70d9a",
       "documents/exercises/l4-positionwise-loss.tex": "34e75b08c5dc0feb1ed57b7b2631e1ad49e6f8cb77f84ccce7ee2e615ec5b083",
       "documents/exercises/l4-positionwise-stability.tex": "369a957bfd711cd35c5274a628b1a93102536a1c041faf2cedf7f54176b268b8",
@@ -134,15 +138,16 @@
       "documents/exercises/l4-sharing.tex": "db24eb867aa18a4827abe868b34338cbb36584fdc8c639b5d1a0367f2976812d",
       "documents/exercises/l4-single-error-recovery.tex": "9e72bc4221cbcf17174171f875a9b0ee3f24afbcbb79cb8beeceb38ce6fba647",
       "documents/exercises/l4-stability.tex": "21501960da34effc7591699363f14e9033f96e60b780e9da1fa3bed415606c3c",
-      "documents/scribes/lecture02.tex": "55389ffdb7dfdde5da4f2f50be10e445d2906a22cc15b200a2223b87baf874e2",
-      "documents/scribes/lecture03.tex": "c08a56b34b400bb2e4a4e499a7f7730d208d2c060d740f1515377cf13e1247a0",
-      "documents/scribes/lecture04.tex": "f15d84219ebd9cb49ec1c02e56defd4ce926387df34e70b4c17c388e13ccb1fb"
+      "documents/scribes/lecture02.tex": "ed548aad2b1ba6c8545c916bcc6234eb2698d47494202051fde075dc8dcd3ef1",
+      "documents/scribes/lecture03.tex": "b6ccad3af130060a994de532cb0a7fb6e6332a6a42c023ef2d51a4d7b89fb601",
+      "documents/scribes/lecture04.tex": "6f3a8fbb207a5edf7954aae5f8f13a5fabb810b583d7b7072f40606b107552f0",
+      "documents/misc_files/course-definition-boxes.sty": "9cc500ec813bff5b359f7223d5847b115fef50ba0e9da24d0ab08a0e4f001fa9"
     },
-    "revised": "2026-10-09 23:51 UTC-07:00"
+    "revised": "2026-11-07 09:59 UTC+00:00"
   },
   "lecture05": {
     "inputs": {
-      "documents/exercises/course-exercises.sty": "8b55005e025860aad67dba6a85a880872d8bdad5e23d7c65630067d32cf5f859",
+      "documents/exercises/course-exercises.sty": "a8a0b728893460abd0b1708b689a22d88c39b491955d3d1841fec0c29e07a159",
       "documents/exercises/l4-latent-likelihood.tex": "aa1e09fa34b14eb5f705178db88c240a9cc4e47eff27e59f82c9ad1c235c0cbe",
       "documents/exercises/l4-lds-generation.tex": "746b8504f5db10e89b1e93299d40723a7bc1b2da9121b13f2e631523753ddd0a",
       "documents/exercises/l4-lds-realization.tex": "a91765a2d6b597625196c9aa7118fd153f9f4158f398bf5671809976e779994d",
@@ -164,54 +169,58 @@
       "documents/figures/lecture05-completion-memory.tex": "0043ffcd2a93f8d8fd37094e424ac2cc55b3bd0a0988a7d6a1a1a184224b07c6",
       "documents/figures/lecture05-synthetic-plots.tex": "c0c9e94ea6a3482b03c7e3748f1f5263268a392dec4cec65565579dbb669107b",
       "documents/figures/lecture05-synthetic-results.tex": "08d0e4bba30e9dfd7bec58ac38030e483f8b8c6e56cf1958df188782568313a4",
-      "documents/scribes/lecture05.tex": "148bbb736952da4248120abad1187f282798a1f2060c1c4a59e493003ac0e71e"
+      "documents/scribes/lecture05.tex": "7ab0188d6823ea79818291bbcc95b64c559c95ba335fb9f6abc30e453e57dfeb",
+      "documents/misc_files/course-definition-boxes.sty": "9cc500ec813bff5b359f7223d5847b115fef50ba0e9da24d0ab08a0e4f001fa9"
     },
-    "revised": "2026-10-09 23:51 UTC-07:00"
+    "revised": "2026-11-18 11:06 UTC-06:00"
   },
   "lecture06": {
     "inputs": {
-      "documents/exercises/course-exercises.sty": "8b55005e025860aad67dba6a85a880872d8bdad5e23d7c65630067d32cf5f859",
-      "documents/exercises/l6-duplication.tex": "ef2d35ed1252ddbbf73fa3710cd665f6389f160b65d920083b56a5f00c8f25df",
+      "documents/exercises/course-exercises.sty": "a8a0b728893460abd0b1708b689a22d88c39b491955d3d1841fec0c29e07a159",
+      "documents/exercises/l6-duplication.tex": "909418c79c7def007e8e2eb01c6e848ff9022af934deb64030543e1062b9ab15",
       "documents/exercises/l6-hoeffding-clt.tex": "c02e1b64163eab501cf0af23aa0d8dbffbfd827b943786806cc5d644418d0b17",
       "documents/exercises/l6-overlapping-windows.tex": "c66b8389cbff41a77d34969bf7cbed85b54441cb6ec06efee7e7a211ad6e162e",
       "documents/exercises/l6-polynomial-mixing.tex": "54bfc562d29c1f62c79d20001d7ed1621ef9e9a2f778fcd09469fc74d4d31394",
       "documents/exercises/l6-resampling-dependence.tex": "ee930e1abd27fa5e68a9bbc4ca62e66a0dea8b5fdd270c26a0b4e38fcfd85d49",
       "documents/exercises/l6-resampling.tex": "6feb8175deb855093c80adebdfe6dbd694e3dd3ee581736618640afb76538363",
       "documents/exercises/l6-threshold-information.tex": "598826d1c820c440101f839a323c220108eb8da3dab4b4bb72647fe5cd30c935",
-      "documents/scribes/lecture06.tex": "3c93f104b424586e21203eef272f651a289836ec8c9f75a46a98498222d10df8"
+      "documents/scribes/lecture06.tex": "7c5d9cb5cf75b4fc4e8f2d44df54df8bd403cccb8197aeea00124d8fe6cbbc37",
+      "documents/misc_files/course-definition-boxes.sty": "9cc500ec813bff5b359f7223d5847b115fef50ba0e9da24d0ab08a0e4f001fa9"
     },
-    "revised": "2026-10-09 23:50 UTC-07:00"
+    "revised": "2026-11-07 09:48 UTC+00:00"
   },
   "lecture07": {
     "inputs": {
-      "documents/exercises/course-exercises.sty": "8b55005e025860aad67dba6a85a880872d8bdad5e23d7c65630067d32cf5f859",
-      "documents/exercises/l7-correlation-loss.tex": "66605123dcfb91e4b536356d0584bbed16c8046582752d095ae19259cf6ceb0b",
+      "documents/exercises/course-exercises.sty": "a8a0b728893460abd0b1708b689a22d88c39b491955d3d1841fec0c29e07a159",
+      "documents/exercises/l7-correlation-loss.tex": "cd66078e947f24f5f7930f2b4376b894d932d0badc69a3a44dfc2bb60863eadc",
       "documents/exercises/l7-covariate-coverage.tex": "76c852995998c4561e5afd969c145c6ff45fc67db703249c841bfc82853d6b1e",
       "documents/exercises/l7-mixture-compromise.tex": "e0e0dd169da0f8959e08a4a4452549a0c210e11d8d39e8ba2914147dbfb38d17",
       "documents/exercises/l7-parity-identification.tex": "fda2b52efd21dfdd47cdc1190812b5804a1f09b017939f6186efd097d11d3496",
       "documents/exercises/l7-parity-representation.tex": "758f1bdc06863d5bef624a70b74931743d6db5646ae9b62a73a9aaa03389fab6",
-      "documents/scribes/lecture07.tex": "52b555f7113aa7aa292b95a0d02b0c0cf7d80936f74c7384285aa1cae12e6383"
+      "documents/scribes/lecture07.tex": "4150a7d1eec985a04f31402b501f84e43f1e7c5ac813e99c5bb47e01b6106318",
+      "documents/misc_files/course-definition-boxes.sty": "9cc500ec813bff5b359f7223d5847b115fef50ba0e9da24d0ab08a0e4f001fa9"
     },
-    "revised": "2026-10-09 23:46 UTC-07:00"
+    "revised": "2026-11-07 09:46 UTC+00:00"
   },
   "lecture08": {
     "inputs": {
-      "documents/exercises/course-exercises.sty": "8b55005e025860aad67dba6a85a880872d8bdad5e23d7c65630067d32cf5f859",
+      "documents/exercises/course-exercises.sty": "a8a0b728893460abd0b1708b689a22d88c39b491955d3d1841fec0c29e07a159",
       "documents/exercises/l7-path-comparison.tex": "8e1ef1e7ea4d7cf8c5f371c5b2f9b72f1816af21d15b955a526b5cd9a8af2380",
       "documents/exercises/l8-activation-generalization.tex": "01f823ef778d1188cc7d7e9488dc08d37fe78c46211cea8fb258d770002b0d5d",
       "documents/exercises/l8-gradient-features.tex": "d4df11e897700b1ea58cd0c457b5d976f247fb82c6b8f9dba6caebe8cf66bbf3",
       "documents/exercises/l8-learning-xor.tex": "ae801fdd9330966a7c32e53280bdf1a17a732fb5a766192e9abcb36632fba64d",
-      "documents/exercises/l8-parameter-sign-symmetry.tex": "b441a80ae7e8753100685c372466fb5436c1283664eb4ad24556953f02a54ef6",
+      "documents/exercises/l8-parameter-sign-symmetry.tex": "c9610d9d09064660dc173dd3b68eff71d11c3ce2aad5fab1457b29636bbef8ed",
       "documents/exercises/l8-parity-memory.tex": "31624729752192a021f96c4a6137d43ecbd02db03d5bd973e8a3909bb26f9375",
       "documents/exercises/l8-parity-orthogonality.tex": "550787331b245a97e863e8268b2817189d9ef2aa9b3e5794f6d45a63fc6208ff",
       "documents/exercises/l8-squared-loss-gap.tex": "f06e0574cabf6e6ab418a73718bb1db0375752e6b3fa04fcadaeeda5e48f1e03",
-      "documents/scribes/lecture08.tex": "6984deea8394f5f77f5c31f76ab7a063e6aa873fd893b4786d478827a9bd37a0"
+      "documents/scribes/lecture08.tex": "c5a2d24d3f5715ed906e7c178173a2bff37fe128ecfde2051c96ddb3acfd182d",
+      "documents/misc_files/course-definition-boxes.sty": "9cc500ec813bff5b359f7223d5847b115fef50ba0e9da24d0ab08a0e4f001fa9"
     },
-    "revised": "2026-10-09 23:46 UTC-07:00"
+    "revised": "2026-11-18 09:44 UTC-06:00"
   },
   "lecture09": {
     "inputs": {
-      "documents/exercises/course-exercises.sty": "8b55005e025860aad67dba6a85a880872d8bdad5e23d7c65630067d32cf5f859",
+      "documents/exercises/course-exercises.sty": "a8a0b728893460abd0b1708b689a22d88c39b491955d3d1841fec0c29e07a159",
       "documents/exercises/l9-equal-penalty.tex": "ea906c275bf067efbaaf8038ee9b1b9de06d15e97bba548d3c318c2051543915",
       "documents/exercises/l9-excess-risk-identity.tex": "bf811278a929f7b22f3fb13406d86a82f7983d8b1d19c6e3ea5bf4f668875b44",
       "documents/exercises/l9-finite-variance.tex": "9342123d689d92846a7aed545f2d9db38b04e0ceeecb86750acbfb579290d2b3",
@@ -226,29 +235,31 @@
       "documents/exercises/l9-weighted-norm.tex": "eac3b24eef7ac8e14c7135cf0c7c79c014354f88722963cc005525f6a245a4b6",
       "documents/figures/lecture09-polynomial-interpolants-plot.pdf": "e61e6137226efc8f9aac1315142b491b70173e1f5bbfd3a6c87ad37683dd1aff",
       "documents/figures/lecture09-polynomial-interpolants.tex": "5d099d5c806f8bec20b7f1356554d1bedd6f9abced604167aa7c9b40ee4f2bce",
-      "documents/scribes/lecture09.tex": "a4594727bf8b4d0595ed1c8f1f3f7c68431b424f124de67d86ed28f6e6765760"
+      "documents/scribes/lecture09.tex": "0881e753ddbbe9a4767295949041bf8f18b33901bcf8a8ebae108ec415d96a03",
+      "documents/misc_files/course-definition-boxes.sty": "9cc500ec813bff5b359f7223d5847b115fef50ba0e9da24d0ab08a0e4f001fa9"
     },
-    "revised": "2026-10-09 23:51 UTC-07:00"
+    "revised": "2026-11-07 09:32 UTC+00:00"
   },
   "lecture10": {
     "inputs": {
-      "documents/exercises/course-exercises.sty": "8b55005e025860aad67dba6a85a880872d8bdad5e23d7c65630067d32cf5f859",
+      "documents/exercises/course-exercises.sty": "a8a0b728893460abd0b1708b689a22d88c39b491955d3d1841fec0c29e07a159",
       "documents/exercises/l10-discrete-steepest.tex": "f557a2c9083acb04fb1a6e85eaf7068a8f32277d0b7f2aceb97d70ec2d49250f",
-      "documents/exercises/l10-equal-margin-ray.tex": "ac11fc3af1099d9064dc4adb9a0cb285be0e0885fc6d0c980597071abd934a53",
+      "documents/exercises/l10-equal-margin-ray.tex": "c45a05b9ed3b95744f9dd3aadeb2c52e1e20e7300e3f366d75e511bba9b9688d",
       "documents/exercises/l10-flow-escape.tex": "ff6f6745a9addb86b1e29c33b6b60fa30a97e7d40a0b423d3cf3e81ae65e0439",
       "documents/exercises/l10-flow-proof-details.tex": "5a2d10250432cbcbc3f57c7b8f2a684bd8a741eb414c2808a6719861537e648b",
-      "documents/exercises/l10-least-squares-selection.tex": "0260ee207ddc6d55655a5c43e50f58ae6395e2916883d911c2bdf016ad959856",
+      "documents/exercises/l10-least-squares-selection.tex": "c7302c040d592a4c389bcf0d520f6d132532c2d30b2d5e802faef55d78f9ff7c",
       "documents/exercises/l10-logistic-log-loss.tex": "30e1d774eb15bfd7fae403e7d7228c5d6eb39efb648f29e927c02aec42efd997",
       "documents/exercises/l10-private-features.tex": "6f1b51677be7bba923e85bc0bb3ca0b540170a28a33e1524efd41a2c7b6cc748",
       "documents/exercises/l10-spectral-filter.tex": "8c26e72bd927ec2262a9c7477913503f790af4fa72a4037429ca120f095437e0",
-      "documents/exercises/l10-two-point-reversal.tex": "997f0ee470eff8c1e6c78713f46bc2a9aa56deecafa025ed25ab4538a6e97e22",
-      "documents/scribes/lecture10.tex": "08ce6b1576488615cfc1c4fbeac1049f130d5cc252ac170a0baa3522d7f513a2"
+      "documents/exercises/l10-two-point-reversal.tex": "f68e223fab413b4020df7594318ba2165dd805c90e679a7e7b87d2f4fec4807e",
+      "documents/scribes/lecture10.tex": "977b78287131366684a7054e8921380ada121366ece5b31783c0e85eac796cf2",
+      "documents/misc_files/course-definition-boxes.sty": "9cc500ec813bff5b359f7223d5847b115fef50ba0e9da24d0ab08a0e4f001fa9"
     },
-    "revised": "2026-10-09 23:37 UTC-07:00"
+    "revised": "2026-11-07 09:59 UTC+00:00"
   },
   "lecture11": {
     "inputs": {
-      "documents/exercises/course-exercises.sty": "8b55005e025860aad67dba6a85a880872d8bdad5e23d7c65630067d32cf5f859",
+      "documents/exercises/course-exercises.sty": "a8a0b728893460abd0b1708b689a22d88c39b491955d3d1841fec0c29e07a159",
       "documents/exercises/l11-aligned-update.tex": "637b041498af91edaec3366af5098fe0be9ece4900b7962116544e9494c8e7e2",
       "documents/exercises/l11-decreasing-stepsize.tex": "b1026c6746e9523f7c0135bbeebf08d16cae031891f2e55bf7a148c36b317059",
       "documents/exercises/l11-fixed-point.tex": "c0296151f13a7c1944497a40296cc000a7061ed6a785a739a0c22ef56866a7f9",
@@ -268,9 +279,10 @@
       "documents/exercises/l11-strong-convex-pl.tex": "9630330753824564c4d0b1af4d1a86971e354b7f969c95e4b9cba71fce659a8a",
       "documents/exercises/l11-td-lyapunov.tex": "3c9766dc14dbea0675844f08672df0ec9ca77226156a2cc2cf9e459f525f6ef6",
       "documents/exercises/l11-wide-relu.tex": "dc588f153e9b6057a231a66a6aa81087d2a25a2c95776c121ac9e1749b4a9857",
-      "documents/scribes/lecture11.tex": "24ae49bbd85c2cd9df3a6b1a41507247203d12130e820c0a9d66d741e616a82a"
+      "documents/scribes/lecture11.tex": "2047998fd1dc1d71cb5af888233fbcea14f17cc90c16773c28e2cc0e159e0921",
+      "documents/misc_files/course-definition-boxes.sty": "9cc500ec813bff5b359f7223d5847b115fef50ba0e9da24d0ab08a0e4f001fa9"
     },
-    "revised": "2026-10-12 22:27 UTC-07:00"
+    "revised": "2026-11-07 09:48 UTC+00:00"
   },
   "lecture12": {
     "inputs": {
@@ -283,18 +295,19 @@
       "documents/exercises/l12-nesterov-equivalence.tex": "2fc447aa50974a789be81953397ba4f8dd4fd54d8171e127f25c03277de486ee",
       "documents/exercises/l12-rotated-preconditioner.tex": "5520f4a8ffebafffb5c1719feccccfd2976ac23fd1321435e5c9e38b551051cd",
       "documents/exercises/l12-tuned-comparisons.tex": "9006ca7d08724e597e6c553d632d5ae15ae38051dd5aa8aeec06eb84e2a47c3d",
-      "documents/scribes/lecture12.tex": "ca43a809d01155e29272f11a59af07c88e9dd9d52edf9105b2e75f4100f59b2c"
+      "documents/scribes/lecture12.tex": "00bf824a403b7407e52731f9b752ea53152d21921e067bc8a8529325248085a6",
+      "documents/misc_files/course-definition-boxes.sty": "9cc500ec813bff5b359f7223d5847b115fef50ba0e9da24d0ab08a0e4f001fa9"
     },
-    "revised": "2026-10-25 21:25 UTC-06:00"
+    "revised": "2026-11-07 09:48 UTC+00:00"
   },
   "lecture13": {
     "inputs": {
       "documents/exercises/course-exercises.sty": "a8a0b728893460abd0b1708b689a22d88c39b491955d3d1841fec0c29e07a159",
-      "documents/exercises/l13-bounded-loss-consistency.tex": "121c4f72546f67375b4a8c7477d7f73e4a957e178901dfa13e3c20b916e9613e",
+      "documents/exercises/l13-bounded-loss-consistency.tex": "5fd1781ee392cf1a029b0f8f282cc1ab79caf1fe73eaa9bad838c1825eab31cb",
       "documents/exercises/l13-label-reversal.tex": "992a61021bec1dfd3835c04be2ac3d2287190f57456ccbffa6201d217bf4955b",
       "documents/exercises/l13-moment-eigenspace.tex": "d39a7098260c971c5e54eefd3e3481e0785c114d96abcb4a22ce2fa0ac7612fa",
       "documents/exercises/l13-negative-transfer.tex": "4b6e0d5a903fdcd81e4001d8a035d9eae30598ab1958301d7d61f776ded5a447",
-      "documents/exercises/l13-sharing-cost.tex": "8fb1230509d6998718a99025e1f3052a16335380c40aa48fb0bfa120754901a6",
+      "documents/exercises/l13-sharing-cost.tex": "d7835d60a6c48f63281b2b99a71eed5431c8eb62e2e637713c2377acba88c181",
       "documents/exercises/l13-task-diversity.tex": "cbb41d3404c8faf7b3c293bfeccb6d44a9f8addf4c8cb0e34051f20bccd03902",
       "documents/exercises/l13-transfer-coverage.tex": "1e529faa1ca39453792cd9eca8f557d9635272c9e2be2154636e0fed9b69cd55",
       "documents/exercises/l13-transfer-envelope.tex": "aaf720db0210c8713d581d08213003c84781d2675bbc6ec92c02db5d85fd8d0a",
@@ -305,7 +318,7 @@
       "documents/exercises/l2-complete-boxes-proof.tex": "153aa1027e8e7ecb8b8280e1dd25e456e709da53c1b8a4e3d2345d6a1822ec4c",
       "documents/exercises/l2-data-coverage.tex": "fc1d27c73a4622041b3246655be67fbf27086f5698ccd6bbada9591bcd709415",
       "documents/exercises/l2-deterministic-minimax.tex": "8d6c69ef912375b5b1946c7efb048c44b88d997c375ebe970607dc19a333e889",
-      "documents/exercises/l2-finite-class-consistency.tex": "6c3660c314abc1e7c365a2f7e76a915efd4876625562530bc42693b5211065ba",
+      "documents/exercises/l2-finite-class-consistency.tex": "c3cc56d3ee225fdb40070ad16f1c95ad9408ef693480b97883e95d5c3abeb3a6",
       "documents/exercises/l2-minimax-regret-q.tex": "d5ea904040d461d4771c367bd846f34a4ae27d7851d15f4ec2ce2905f0bbb2b8",
       "documents/exercises/l2-one-bit-decisions.tex": "facff26b83a56586e7bd6804512f85fc48ce669267e65a9a3eac350c397f527e",
       "documents/exercises/l2-one-bit-worst-case.tex": "cb9f9c735fb4f5d231db560911032b5301b7200e7e250492a09f73132110dc4c",
@@ -328,10 +341,11 @@
       "documents/exercises/l2-transductive-test-set.tex": "714d541c1cf1febae48091e9a27ba62ae1c56b6a7ea4ba64369be0eb7b80aeeb",
       "documents/exercises/l2-unknown-sampling-law.tex": "753c90d14a00ef47054a959ac6a46125bbd854a06a349243d137e3449052f1e9",
       "documents/exercises/l2-unseen-probability.tex": "12b574f50fd591ecd25a659633eb883d3b8e74ce35d0f4df6ea58b28368665ee",
-      "documents/scribes/lecture02.tex": "55389ffdb7dfdde5da4f2f50be10e445d2906a22cc15b200a2223b87baf874e2",
-      "documents/scribes/lecture13.tex": "8a979947de0de760b85d10f3410d9e784d7e490b0b9c281accf207f82fd15bcf"
+      "documents/scribes/lecture02.tex": "ed548aad2b1ba6c8545c916bcc6234eb2698d47494202051fde075dc8dcd3ef1",
+      "documents/scribes/lecture13.tex": "1ec76a73f15a7f5f1b0af9dd4641495a727e6e07399fd38e7b7c37ebeb489795",
+      "documents/misc_files/course-definition-boxes.sty": "9cc500ec813bff5b359f7223d5847b115fef50ba0e9da24d0ab08a0e4f001fa9"
     },
-    "revised": "2026-10-25 21:25 UTC-06:00"
+    "revised": "2026-11-07 09:52 UTC+00:00"
   },
   "lecture14": {
     "inputs": {
@@ -341,20 +355,21 @@
       "documents/exercises/l14-causal-lookup.tex": "60ec1f001542172ed368b9d114c1b04d3c5b4c3564e4ee7874a96182cc8bf8e2",
       "documents/exercises/l14-causal-order.tex": "11a2a4a9f455a6626b76ad011ef7e673a0b34c8396165daa7f457ef3abe7d880",
       "documents/exercises/l14-circuit-counting.tex": "fd4c25af6e588d92ff580403de381fabcaee371a84ed2eb65f6f9b55a644020b",
-      "documents/exercises/l14-finite-precision.tex": "6163b849c21ee5eb5ae5265fee964a88c0e624662d4608dc826b428814ae954f",
+      "documents/exercises/l14-finite-precision.tex": "3ee6da6c607e7670cd1f17311bd4f2e25c3072e871ca33223251a7a0a3bf0681",
       "documents/exercises/l14-hopfield-attention.tex": "1e1b4c1826b3f031a7ad8c09d300bbd044e8ad811c0a1dcb678ac3317b447deb",
       "documents/exercises/l14-induction-head.tex": "0879b00474b6594781ee152dc9d029e956c541d3129eb153e3a64f3fd837efbc",
       "documents/exercises/l14-or-single-relu.tex": "6af75dbe822b81e88619ba449b039182e218c0d2941025f4a4111a33a48f50dc",
       "documents/exercises/l14-parity-dnf.tex": "5ad724574242616edfdf290f7745ab88f53f758986835fe25af261194cfb8457",
-      "documents/exercises/l14-pointer-doubling.tex": "3696e30e2bf48959f4704825f7924b6a4b08029620dd000c2c746757a8f28e6f",
+      "documents/exercises/l14-pointer-doubling.tex": "bb10228bdbce08336327cfab3d8bf0d17fb3b10ab26ebcb2765fb01f84c02042",
       "documents/exercises/l14-recurrent-dfa.tex": "6c44e0b4301a25e9673d9832df937c12c1715ec8b336b995d58d66ee62923446",
       "documents/exercises/l14-symbol-renaming.tex": "fe654600bf88e6e10c6757f4b4624dda53afb2aa932cbebf406489090a93b442",
       "documents/exercises/l14-tent-composition.tex": "c1fd8f0c15477fb36893d2ac938bd350759f5cb6a01cc0396decd4051388c346",
       "documents/exercises/l14-tent-robust-separation.tex": "fc052b04b69056aecff338fdee80fbfa473c7297d7445c27cd3aafa4b5daeec3",
       "documents/exercises/l14-tent-symbolic-dynamics.tex": "a2f57ff765247f977e94f43b6e245f6caabd73d242419d10f9f712f67891ca78",
-      "documents/scribes/lecture14.tex": "ff17cb89ed74f12b3de366379ed674fde598e34e5ff43eaacc20caef11e12152"
+      "documents/scribes/lecture14.tex": "6069a54c3062f7d7156c4e4ef9b8289dfab715c77166e7ca8452bf25650423bf",
+      "documents/misc_files/course-definition-boxes.sty": "9cc500ec813bff5b359f7223d5847b115fef50ba0e9da24d0ab08a0e4f001fa9"
     },
-    "revised": "2026-10-25 23:07 UTC-06:00"
+    "revised": "2026-11-18 11:08 UTC-06:00"
   },
   "lecture15": {
     "inputs": {
@@ -364,15 +379,103 @@
       "documents/exercises/l15-bach-rate-balance.tex": "49eac996507da634c16a2606499681f26bb973a7e021bff93c58ee623e2fa290",
       "documents/exercises/l15-barron-linear-comparison.tex": "c79e0f1512d88ce107845062d4c420ed08aeca42b8f194464cc95f61fde8f603",
       "documents/exercises/l15-density-versus-rate.tex": "636145d639936932310981113166fa6b7e15ace772397adfe8954eb6cd324263",
-      "documents/exercises/l15-fixed-feature-strictness.tex": "56a891efc4564f844bbb63e517afcc67a29e0099cc909cf7c725e13e494541b3",
+      "documents/exercises/l15-fixed-feature-strictness.tex": "5ee33e577f2f2313d704b967d3be8027638ea330c327d4b5d31e3f80db3b9fd5",
       "documents/exercises/l15-holder-bias-variance.tex": "dbcab0c57bf671f963cd0444f0565ff859f5c55cda97d3bf60c35e7e422bfd6c",
       "documents/exercises/l15-monte-carlo-sparsification.tex": "83446480a0a339c63b6ae2c71926e1377cb20ee89fa9571239c231232f0cf9d9",
       "documents/exercises/l15-noisy-finite-differences.tex": "4bb98ce28d2b53ed0991da7675bf66aef3f72dd0b946e668ba3e7273a1b63080",
       "documents/exercises/l15-subspace-contraction.tex": "99a20c01f9f02e27fce83fbb7a0b5272e022a7c78c65b38ab98bd9a694d6091b",
       "documents/exercises/l15-wavelet-truncation.tex": "12bb921ad05db43c41564cfc690bfbbb0e35ae83ac86c8b507a2c7c80871b92e",
       "documents/exercises/l15-yang-entropy.tex": "6811c268f22ba21f07bd8aa9f4c58fca85ffb176b34f3ca0c1cc6caf9700393a",
-      "documents/scribes/lecture15.tex": "e92ab82d80c0204b50c8eba299b670354d7305446800a313935bf8b2bb1f633f"
+      "documents/scribes/lecture15.tex": "a0924aad27a74fd0dbf84278434cdf81b760e338da59957dcc1c2b9b49b2ba95",
+      "documents/exercises/l15-relu-spline-variation.tex": "4bc0604ac5497b562906585f2d9b2e02318c7f63a9f9a227d13589ebcb1f9229",
+      "documents/misc_files/course-definition-boxes.sty": "9cc500ec813bff5b359f7223d5847b115fef50ba0e9da24d0ab08a0e4f001fa9"
     },
     "revised": "2026-11-08 23:43 UTC+01:00"
+  },
+  "lecture16": {
+    "inputs": {
+      "documents/exercises/course-exercises.sty": "a8a0b728893460abd0b1708b689a22d88c39b491955d3d1841fec0c29e07a159",
+      "documents/exercises/l16-autoregressive-representation.tex": "9c8b9653910764b2c04cdcd7233365493b18c91a73595eab95e9952752796bac",
+      "documents/misc_files/course-definition-boxes.sty": "9cc500ec813bff5b359f7223d5847b115fef50ba0e9da24d0ab08a0e4f001fa9",
+      "documents/scribes/lecture16.tex": "c00e9b25d54583fd0e7d7ee348d1355b92100e257bd955841987c49691eee0ef"
+    },
+    "revised": "2026-11-18 11:06 UTC-06:00"
+  },
+  "lecture18": {
+    "inputs": {
+      "documents/exercises/course-exercises.sty": "a8a0b728893460abd0b1708b689a22d88c39b491955d3d1841fec0c29e07a159",
+      "documents/exercises/l18-hidden-progress.tex": "baae897c3cfd9167a5dc8c0cccc71299d010ddd4d444de8ec9728d54de24ced0",
+      "documents/exercises/l18-imperfect-teacher.tex": "0a52996701001bb057646726d73ba96526bf14974bc373f2d7bf9b79c5ca88b4",
+      "documents/exercises/l18-information-budget.tex": "6b153a8c09dc3f039cda908c4d5d269de8cf8313f275168dbcd925f54ed7e43f",
+      "documents/exercises/l18-likelihood-support.tex": "f966a96f82aaac8086af4ad9817c00d7de2c9be7660f0f20d04bf3d2f38f59ea",
+      "documents/exercises/l18-stochastic-scoring.tex": "6287abfe1538df66020c63ba511306b63139948d24fbc501b4a81823a1b2e7c2",
+      "documents/misc_files/course-definition-boxes.sty": "9cc500ec813bff5b359f7223d5847b115fef50ba0e9da24d0ab08a0e4f001fa9",
+      "documents/scribes/lecture18.tex": "c032699125f7bb81f84742fd8f14757f9a4d7dae14fd48767ee7f53331b62068"
+    },
+    "revised": "2026-11-08 15:30 UTC+01:00"
+  },
+  "lecture19": {
+    "inputs": {
+      "documents/exercises/course-exercises.sty": "a8a0b728893460abd0b1708b689a22d88c39b491955d3d1841fec0c29e07a159",
+      "documents/exercises/l19-design-reversal.tex": "f11c21ee5188a2fc162fc9e4e0dc94ed1d403a00482f114382e23f1da7342902",
+      "documents/exercises/l19-dpo-algebra.tex": "f0fe5547aab10b69884da966d5adbc4d9e357800a6fc54abc2066ceb13a1054e",
+      "documents/exercises/l19-general-link.tex": "e40a233d926eaea5b65aa30d26c185ecf532a1e49d54d5c3a56679f59288b222",
+      "documents/exercises/l19-gumbel-comparisons.tex": "4f44626def481bba6841b5c447b55b0abb119422de8fe0f4f45d944f34389b76",
+      "documents/exercises/l19-pooled-evaluators.tex": "be39c0d54945d5771cf70275a753b75decd9f2d87bfc51f2db2aa7e3e311297a",
+      "documents/exercises/l19-random-utility-cycles.tex": "c87c7bebfbeab24eb57b77bf04f48d3090af9beebd872eaa0d898a3fd01947c8",
+      "documents/exercises/l19-rare-comparisons.tex": "c6faeca14925b28a09350682e55a36b9c1cd460fbb27ac5b1e7e4589110afce9",
+      "documents/exercises/l19-restricted-policies.tex": "9491579719e4e6871b15123320477727382654e2a2b954c6d834bba2733cbd37",
+      "documents/exercises/l19-three-response-comparisons.tex": "b30e557a995d0cc4514931e3cfc888178b143e0f08a56dcd737325ce55b9fdfa",
+      "documents/exercises/l19-unanimous-comparisons.tex": "b0758d0757a0737b6f73f1f2f52d1474fdfd484d8238dc0b383412c9ad26dbe7",
+      "documents/exercises/l19-unobserved-responses.tex": "a5311ca38406407f43104a0fb29bf6b6af87336941c59025ae8c6ddbf267d049",
+      "documents/misc_files/course-definition-boxes.sty": "9cc500ec813bff5b359f7223d5847b115fef50ba0e9da24d0ab08a0e4f001fa9",
+      "documents/scribes/lecture19.tex": "b1ff8e5b98606df5a47b2242fb3b427b80087061d89f7fe3b5127f37d4a763fd"
+    },
+    "revised": "2026-11-24 22:19 UTC-06:00"
+  },
+  "lecture20": {
+    "inputs": {
+      "documents/exercises/course-exercises.sty": "a8a0b728893460abd0b1708b689a22d88c39b491955d3d1841fec0c29e07a159",
+      "documents/exercises/l20-binary-baseline.tex": "fecd4731fb67aab15717aafca7610a6bb8144dc2cc0d4ed2c71f02c9bef179ab",
+      "documents/exercises/l20-binary-update.tex": "fe50f7ccc1b35e1a97784ed78a28dd3d73c126a03381ad1be598624af5ac7412",
+      "documents/exercises/l20-capped-pg.tex": "791bb7bc9fc81f5fddddbbd9bdb71672ec2e8a97eb67cca3915c853e695d03d6",
+      "documents/exercises/l20-first-success.tex": "11ddd97b4184679e5286093bf61ca18da2941a8db31c0904312c11fe3d86ba50",
+      "documents/exercises/l20-missing-contexts.tex": "e03b0d2975e9c4e0f2d177b5ad7fdc13100cf8f7cc7014f18fba5a4484fdb075",
+      "documents/exercises/l20-offline-error.tex": "1df27a73ed6bb792638c61e5e76bcc5a4a1d870754e2b90dc415630161c951c2",
+      "documents/exercises/l20-offpolicy-context.tex": "545af4016f1d904c207602be951a79830fbc622d578e32411fa6875f7b7a6139",
+      "documents/exercises/l20-standardization.tex": "0295689e2bb07718456499e55b3dd7e87823eaf1e72c69327835e6a2a17cb950",
+      "documents/exercises/l20-sublinear-regret.tex": "7e0d3f52b0423d40ebce2a9fe6b44e6ee6215d4c66680a2b1d7450aad38fea6d",
+      "documents/exercises/l20-successful-fitting.tex": "92c88bbb91a15d3179439079d727fef5ffc2936a0e5f28976bc87733e91c98bd",
+      "documents/exercises/l20-unbiased-estimators.tex": "507984ac2b7936e8488b7e752f25105ede3e41873dea33b7c0280c77d399239e",
+      "documents/exercises/l20-variance-baseline.tex": "2e66db916e6e93a71f864ee79d9a3ace0b8fc886e3c9ab31a397016e979d9329",
+      "documents/exercises/l20-worst-context.tex": "581f9d45b6eaaea167dfc2cbcc3dadf3c945e91e125e5d16f9105d0016e5f3ba",
+      "documents/misc_files/course-definition-boxes.sty": "9cc500ec813bff5b359f7223d5847b115fef50ba0e9da24d0ab08a0e4f001fa9",
+      "documents/scribes/lecture20.tex": "93bfad7c4cb2d634256b07a442844bde5bcf0c4778c3c170aec7e5c49ddcfdc9"
+    },
+    "revised": "2026-11-19 09:09 UTC-06:00"
+  },
+  "lecture21": {
+    "inputs": {
+      "documents/exercises/course-exercises.sty": "a8a0b728893460abd0b1708b689a22d88c39b491955d3d1841fec0c29e07a159",
+      "documents/exercises/l21-compatible-relu.tex": "181be942ce1f133a4e418e0797ac85887191e2a2585e9ff5f371fba5be598ca2",
+      "documents/exercises/l21-noisy-mean.tex": "1dcd7444a28d569493a5e6a78756f0b08d2663bf1ceab34c0ca0a9f306fd390b",
+      "documents/exercises/l21-probability-floor.tex": "08a20f68881ce1e18bd975e4626fa7247dd4c8201df5f92ba035e09d5c0cffe0",
+      "documents/figures/lecture21-recovery.pdf": "fb1bd6c68872553bb9eae257a3180d81fd343e7f9d86ff32e3eb91c61248d68a",
+      "documents/misc_files/course-definition-boxes.sty": "9cc500ec813bff5b359f7223d5847b115fef50ba0e9da24d0ab08a0e4f001fa9",
+      "documents/scribes/lecture21.tex": "36b053ed0d6256a50704b65e69e13b297a21d51abae931a9e30c8123c4c0769a"
+    },
+    "revised": "2026-11-19 19:56 UTC-06:00"
+  },
+  "lecture22": {
+    "inputs": {
+      "documents/exercises/course-exercises.sty": "a8a0b728893460abd0b1708b689a22d88c39b491955d3d1841fec0c29e07a159",
+      "documents/exercises/l22-comparison-symmetry.tex": "20f80fe7c743c02277651ca1614827105312e33e7a2c48d72ed5f67d1a671065",
+      "documents/exercises/l22-gradient-symmetry.tex": "76986a333d18d73721fda275dd2c5766107d18d536eb6a76a8862cb0cdd1a171",
+      "documents/exercises/l22-max-margin-teaching.tex": "1c624ca0e5816c3cfa1ffe791ca3dc54bff01fa37bb51a04fa1461ae9a16fb8d",
+      "documents/exercises/l22-reverse-kl-exactness.tex": "6f579decc151a6d40928a59e03b15cd2df090bc17356f16b5bd7ec0ad224c4ea",
+      "documents/misc_files/course-definition-boxes.sty": "9cc500ec813bff5b359f7223d5847b115fef50ba0e9da24d0ab08a0e4f001fa9",
+      "documents/scribes/lecture22.tex": "f9be511c395a25db9588a4b7b946ec74b4be01939ad18af47e72df8d2028b687"
+    },
+    "revised": "2026-11-24 22:19 UTC-06:00"
   }
 }

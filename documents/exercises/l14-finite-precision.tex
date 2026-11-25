@@ -1,33 +1,41 @@
 \begin{exercisechunk}
-\item \textbf{Finite precision produces an eventually periodic state.}\suppmark
+\item \textbf{Finite precision produces an eventually periodic output.}\suppmark
 \label[exercise]{ex:l14-finite-precision}
 \exerciseprofile{2}{1}{2}{\exproof\quad\exinterpretation}{%
 Identify the finite-state limitation created by fixed memory and fixed
 precision.}
-Turing-completeness claims depend on the available memory or numerical
-precision. This exercise proves a limitation that follows from fixed finite
-precision without using any architecture-specific lower bound.
-
-Consider a deterministic recurrent system with \(d\) state coordinates, each
-stored with exactly \(b\) bits. The system reads the unary input
-\(a^t=a\cdots a\) one symbol at a time and produces one output bit after each
-update. The state-update rule and output rule are fixed for all input lengths.
-\begin{enumerate}[(a),beginpenalty=10000]
-\item Prove that the recurrent system has at most \(2^{bd}\) internal states.
-Deduce that its state sequence on the infinite unary stream
-\(a,a,a,\ldots\) is eventually periodic, with both the preperiod and period
-bounded by \(2^{bd}\).
-\item Deduce that the output sequence is eventually periodic.
-\item Let
+Fix positive integers \(d,b\). Let \(\cS\) be a set of vectors with \(d\)
+coordinates, each stored in a fixed \(b\)-bit format. A \emph{deterministic
+recurrent system} consists of fixed maps
 \[
- \cL_{\mathrm{pow2}}=\{a^{2^k}:k\ge0\}.
+ f:\cS\times\{a\}\to\cS,
+ \qquad g:\cS\to\{0,1\},
 \]
-Prove that the indicator sequence
-\(y_t=\I(a^t\in\cL_{\mathrm{pow2}})\) is not eventually periodic. Conclude
-that no recurrent system satisfying the stated fixed-precision assumptions
-recognizes \(\cL_{\mathrm{pow2}}\) correctly at every input length.
-\item Explain which step of the proof fails when the system has an external
-unbounded tape or a state coordinate whose available precision can grow with
-the execution length.
+a fixed initial state \(s_0\in\cS\), and the recursion
+\[
+ s_{t+1}=f(s_t,x_{t+1}),
+ \qquad y_{t+1}=g(s_{t+1}),
+ \qquad t=0,1,\ldots.
+\]
+The state \(s_t\) contains all information retained between updates.
+Consider the input stream \(x_t=a\) for every \(t\ge1\), so \(y_t\)
+is the output after reading the length-\(t\) string \(a^t\).
+A sequence \((y_t)_{t\ge1}\) is \emph{eventually periodic} with period
+\(p\ge1\) if there exists \(t_0\ge1\) such that
+\(y_{t+p}=y_t\) for every \(t\ge t_0\).
+\begin{enumerate}[(a),beginpenalty=10000]
+\item Prove that \((y_t)_{t\ge1}\) is eventually periodic with a period
+\(p\le2^{bd}\).
+\item Prove that no such recurrent system recognizes
+\[
+ \cL_{\mathrm{pow2}}=\{a^{2^k}:k\in\mathbb N_0\}.
+\]
+Recognition means that \(y_t=1\) if and only if \(t\) is a power of two,
+for every \(t\ge1\).
+\item Suppose the system is given either an external unbounded tape as
+additional retained state or a state coordinate whose available precision
+can grow with the execution length. In each case, identify the step in your
+proof of part~(a) that no longer applies, and explain why part~(a) can no
+longer be used to deduce the impossibility in part~(b).
 \end{enumerate}
 \end{exercisechunk}

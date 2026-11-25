@@ -15,7 +15,7 @@ Show that equality holds when $Z$ takes values in $\{0,1\}$.
 \item For a fixed $f\in\cF$, use independence and part (a) to prove
 \[
  \P\bigl(\ell(f(U_i),V_i)=0\text{ for every }i\in[m]\bigr)
- \le e^{-m\overline R_m(f)}.
+ \le e^{-m\overline L^{(m)}(f)}.
 \]
 \item Use a union bound to prove the probability statement in
 \cref{prop:independent-finite-class-consistency}. Your argument must apply to
@@ -23,6 +23,6 @@ every choice among zero-training-loss members of $\cF$, including a randomized
 choice.
 \item Integrate the resulting tail bound to prove the expected-risk statement.
 Explain where the assumption that some $f^\star\in\cF$ has
-$R_i(f^\star)=0$ for every $i$ is used.
+$L^{(i)}(f^\star)=0$ for every $i$ is used.
 \end{enumerate}
 \end{exercisechunk}

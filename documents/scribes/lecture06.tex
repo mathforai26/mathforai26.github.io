@@ -5,10 +5,11 @@
 \usepackage[inline,shortlabels]{enumitem}
 \usepackage{booktabs}
 \usepackage{xcolor}
+\usepackage{../misc_files/course-definition-boxes}
 \usepackage{microtype}
 
 % Revision date: maintained by scripts/build_lecture_notes.py. Keep this command.
-\newcommand{\lecturerevised}{2026-10-09 23:50 UTC-07:00}
+\newcommand{\lecturerevised}{2026-11-07 09:48 UTC+00:00}
 \usepackage{eso-pic}
 \AddToShipoutPictureBG{%
   \AtPageLowerLeft{%
@@ -242,17 +243,19 @@ not the definition of learnability.
 \section{The iid calculation}
 \label{sec:iid}
 
-Let \(X_1,\ldots,X_n\) be iid with law \(P\). For a fixed parameter
-\(\theta\), define the \emph{population loss} and \emph{empirical loss} by
+Let \(X\) have law \(P\), and let \(X_1,\ldots,X_n\) be iid with the same
+law. For a fixed parameter
+\(\theta\), define the \emph{population loss} (population risk) and
+\emph{empirical loss} (empirical risk) by
 \begin{equation}
  L(\theta)=\E[\ell(\theta;X)],
  \qquad
- \widehat L_n(\theta)=\frac1n\sum_{i=1}^n\ell(\theta;X_i).
+ L_n(\theta)=\frac1n\sum_{i=1}^n\ell(\theta;X_i).
  \label{eq:risks}
 \end{equation}
 If \(0\leq\ell(\theta;X)\leq1\), Hoeffding's inequality gives
 \begin{equation}
- \P\!\left(\left|\widehat L_n(\theta)-L(\theta)\right|>\epsilon\right)
+ \P\!\left(\left|L_n(\theta)-L(\theta)\right|>\epsilon\right)
  \leq 2e^{-2n\epsilon^2}.
  \label{eq:hoeffding}
 \end{equation}
@@ -263,17 +266,17 @@ measure concentration.
 The variance explains the first-order scale. Writing
 \(\sigma_\theta^2=\operatorname{Var}(\ell(\theta;X))\), independence gives
 \begin{equation}
- \operatorname{Var}(\widehat L_n(\theta))
+ \operatorname{Var}(L_n(\theta))
  =\frac{\sigma_\theta^2}{n}.
  \label{eq:iid-variance}
 \end{equation}
 When \(0<\sigma_\theta^2<\infty\), the central limit theorem further gives
 \[
- \sqrt n\bigl(\widehat L_n(\theta)-L(\theta)\bigr)
+ \sqrt n\bigl(L_n(\theta)-L(\theta)\bigr)
  \ \Longrightarrow\ \mathcal N(0,\sigma_\theta^2).
 \]
 Equivalently, for large \(n\), the deviation
-\(\widehat L_n(\theta)-L(\theta)\) is approximately
+\(L_n(\theta)-L(\theta)\) is approximately
 \(\mathcal N(0,\sigma_\theta^2/n)\).
 These statements concern a fixed \(\theta\). Applying them to a parameter
 chosen from the same data requires a uniform, stability, information, or other
@@ -295,13 +298,13 @@ Let \(X_1,\ldots,X_m\) be independent source units with common loss variance
 \(\sigma_\theta^2\). Suppose unit \(i\) occurs \(c_i\geq1\) times in the
 stored corpus, and let \(N=\sum_{i=1}^m c_i\). The stored-data average is
 \begin{equation}
- \widehat L_{\rm copy}(\theta)
+ L_{{\rm copy},N}(\theta)
  =\frac1N\sum_{i=1}^m c_i\ell(\theta;X_i).
  \label{eq:copy-average}
 \end{equation}
 Independence of the \(m\) source units gives
 \begin{equation}
- \operatorname{Var}(\widehat L_{\rm copy}(\theta))
+ \operatorname{Var}(L_{{\rm copy},N}(\theta))
  =\sigma_\theta^2\frac{\sum_{i=1}^m c_i^2}{N^2}
  =\frac{\sigma_\theta^2}{n_{\rm eff}},
  \qquad
@@ -320,7 +323,7 @@ source dominates, \(n_{\rm eff}\) can be close to one.
 Deduplicating to one copy of every source gives variance
 \(\sigma_\theta^2/m\). Hence
 \[
- \frac{\operatorname{Var}(\widehat L_{\rm copy})}
+ \frac{\operatorname{Var}(L_{{\rm copy},N})}
       {\sigma_\theta^2/m}
  =m\frac{\sum_i c_i^2}{N^2}
  =1+\operatorname{CV}(c_1,\ldots,c_m)^2,
@@ -421,11 +424,12 @@ marginal law \(P\). The independent-points comparison proved in
 \begin{theorem}[Finite-class consistency under beta-mixing]
 \label{thm:mixing-finite-class}
 Let \(\cF\) be finite, let the target \(f\in\cF\), and, for \(X\sim P\),
-define \(L_P(g,f)=P(g(X)\neq f(X))\). If a learner returns a function
+define \(L(g,f)=\P(g(X)\neq f(X))\), with the marginal law \(P\)
+suppressed. If a learner returns a function
 \(\widehat f\in\cF\) consistent with all labeled observations
 \((X_i,f(X_i))\), \(i\in[n]\), then
 \begin{equation}
- \P\bigl(L_P(\widehat f,f)>\epsilon\bigr)
+ \P\bigl(L(\widehat f,f)>\epsilon\bigr)
  \leq |\cF|(1-\epsilon)^q+(q-1)\beta(a).
  \label{eq:mixing-bound}
 \end{equation}
@@ -433,7 +437,7 @@ define \(L_P(g,f)=P(g(X)\neq f(X))\). If a learner returns a function
 
 \begin{proof}
 Let \(E\) be the event that some \(g\in\cF\) with
-\(L_P(g,f)>\epsilon\) is consistent at every selected position. Full-sample
+\(L(g,f)>\epsilon\) is consistent at every selected position. Full-sample
 consistency implies the failure event is contained in \(E\). By
 \cref{eq:independent-points} and the iid finite-class argument from Lecture 2,
 \[

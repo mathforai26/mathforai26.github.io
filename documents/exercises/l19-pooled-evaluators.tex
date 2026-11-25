@@ -1,0 +1,30 @@
+\begin{exercisechunk}
+\item \textbf{Pooling Bradley--Terry evaluators.}
+\label[exercise]{ex:l19-pooled-evaluators}
+\exerciseprofile{2}{1}{1}{\excalculation\quad\exinterpretation}{%
+Show that pooling correctly specified Bradley--Terry evaluators can produce
+preferences that no Bradley--Terry model represents.}
+Fix a prompt with responses $a,b,c$. For each comparison, draw an evaluator
+type $T$ uniformly from $\{1,2,3\}$, independently of the presented pair.
+The three types have score vectors
+\[
+ \begin{pmatrix}r_1(a)&r_1(b)&r_1(c)\\
+                 r_2(a)&r_2(b)&r_2(c)\\
+                 r_3(a)&r_3(b)&r_3(c)\end{pmatrix}
+ =\begin{pmatrix}\log9&\log3&0\\
+                 0&\log9&\log3\\
+                 \log3&0&\log9\end{pmatrix}.
+\]
+Conditional on type $T=t$ and the ordered pair $(y,y')$, the evaluator
+selects $y$ with probability $\sigma(r_t(y)-r_t(y'))$, where
+$\sigma(z)=(1+e^{-z})^{-1}$. The pooled probability averages over the
+unobserved evaluator type:
+$p(y,y')=\tfrac13\sum_{t=1}^3\sigma(r_t(y)-r_t(y'))$.
+\begin{enumerate}[(a)]
+\item Show that $p(a,b)=p(b,c)=p(c,a)=8/15$.
+\item Show that no scalar Bradley--Terry score function on $\{a,b,c\}$
+represents these pooled probabilities. Identify the violated cycle
+restriction and explain why correct specification for each evaluator
+type does not imply correct specification after the type is omitted.
+\end{enumerate}
+\end{exercisechunk}

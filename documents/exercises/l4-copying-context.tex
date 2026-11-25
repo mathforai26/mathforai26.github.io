@@ -9,7 +9,9 @@ Let \(P\) generate \(B_1B_1B_2B_2\cdots\), where the blocks
 \(B_m\) are independent and uniform on \(\{0,1\}^m\).
 For an integer \(w\ge0\), let \(\mathcal Q_w\) be all
 infinite-sequence models whose next-token distribution can depend
-on the position and the last \(w\) tokens only.
+on the position and the last \(w\) tokens only. The models have no additional
+recurrent or cached state: two prefixes of the same length with the same last
+\(w\) tokens receive the same next-token distribution.
 \begin{enumerate}[(a),beginpenalty=10000]
 \item In a copied block of length \(m>w\), show that the required
 bit is fair given the available context, although the full prefix

@@ -5,11 +5,12 @@
 \usepackage[inline,shortlabels]{enumitem}
 \usepackage{booktabs,array}
 \usepackage{xcolor}
+\usepackage{../misc_files/course-definition-boxes}
 \usepackage{microtype}
 \usepackage{needspace}
 
 % Revision date: maintained by scripts/build_lecture_notes.py. Keep this command.
-\newcommand{\lecturerevised}{2026-10-12 22:27 UTC-07:00}
+\newcommand{\lecturerevised}{2026-11-07 09:48 UTC+00:00}
 \usepackage{eso-pic}
 \AddToShipoutPictureBG{%
   \AtPageLowerLeft{%
@@ -94,33 +95,21 @@ October 8, 2026
 \end{minipage}}
 \end{center}
 
-\noindent\textbf{Reading guide.}
-Lectures~8--10 separated three questions about learning by gradient methods.
-Lecture~8 asked whether the available gradients contain information about the
-target. Lecture~9 studied what exact empirical fitting can imply for
-prediction. Lecture~10 asked which solution an optimization method selects
-when many parameters fit the training data. Even the max-margin analysis in
-Lecture~10 first needed to know that logistic loss tends to zero. That fact was
-a supporting step there; it is the central question here. We ask when an
-update computed from the gradient at the current parameter drives the
-training loss toward its best possible value.
+When does a gradient update drive training loss toward its global infimum?
+Lecture~10 needed this convergence before studying which solution the
+optimizer selects. Here objective-value convergence is the main question.
+Softmax log loss provides contrasting cases: bounded parameters and uniformly
+positive fitted probabilities can give a linear rate, while strict
+separation gives convergence even though no finite minimizer exists.
+Stochastic gradients and Lyapunov functions extend the analysis to noisy
+updates and to updates that need not be gradients.
 
-The principal example is the same unregularized softmax log loss used for
-language-model outputs in Lectures~1 and~3 and for separable logistic
-classification in Lecture~10. Depending on the data, it admits a general
-convex comparison bound, a linear rate when the relevant parameters remain
-bounded and all fitted class probabilities stay uniformly away from zero, or
-an $O(1/t)$ rate
-under strict separation even though no finite minimizer exists.
-We then analyze stochastic gradient descent and define a Lyapunov function,
-which extends the proof pattern to root-finding and fixed-point updates that
-need not be gradients of an objective. Material
-marked with $\suppmark$ may be skipped on a first reading. It develops
-nonlinear gradient dominance, nonsmooth convex optimization, nonlinear least
-squares, overparameterized ReLU networks, softmax policy gradient, and
-temporal-difference learning. The prerequisites are multivariable calculus,
-eigenvalues of symmetric matrices, Hoeffding's inequality, and conditional
-expectation.
+\noindent\textbf{Reading guide.}
+Material marked with $\suppmark$ may be skipped on a first reading. It
+extends the main convergence arguments to further objectives and update
+rules, including neural-network and reinforcement-learning examples.
+The prerequisites are multivariable calculus, eigenvalues of symmetric
+matrices, Hoeffding's inequality, and conditional expectation.
 
 \section{The local-to-global question}
 \label{sec:local-global-question}
@@ -148,7 +137,9 @@ When does local first-order information certify convergence of the objective
 value to its global infimum?
 \end{quote}
 
-Let $L:\R^d\to\R$ be differentiable and bounded below, and define
+Throughout the optimization analysis, $L$ denotes the fixed objective;
+any sample-size dependence is suppressed. Let $L:\R^d\to\R$ be
+differentiable and bounded below, and define
 \begin{equation}
  L^\star=\inf_{\theta\in\R^d}L(\theta).
  \label{eq:global-target}
@@ -786,7 +777,7 @@ Lecture~10 is needed.\\
 \end{tabular}
 \end{center}
 
-For the least-squares row, $L_n(w)=\|\mathbf Xw-y\|_2^2/2$ and the displayed
+For the least-squares row, $F_n(w)=\|\mathbf Xw-y\|_2^2/2$ and the displayed
 constant assumes the full-row-rank interpolation setting of Lecture~10.
 Parameter convergence and objective convergence answer different questions:
 PL controls the residual, whereas initialization controls the component in

@@ -1,0 +1,19 @@
+\begin{exercisechunk}
+\item \textbf{A rare comparison connecting two response groups.}
+\label[exercise]{ex:l19-rare-comparisons}
+\exerciseprofile{2}{1}{1}{\exproof\quad\excalculation\quad\exinterpretation}{%
+Distinguish connected population support from comparison coverage in a sample.}
+Let $G_\nu$ be connected, and let $e$ be an edge whose removal disconnects
+$G_\nu$. Draw $n\ge1$ independent comparisons with pair law $\nu$.
+Set $\delta=\P(\{Y,Y'\}=e)>0$ and
+$B_i=\{\{Y_i,Y_i'\}=e\}$.
+Show that
+\[
+ \P\!\left(\bigcap_{i=1}^n B_i^c\right)=(1-\delta)^n.
+\]
+On this event, show that independently shifting the scores on the two
+components of $G_\nu\setminus\{e\}$ leaves all sampled Bradley--Terry
+predictions and the empirical log loss unchanged. Deduce that, for fixed
+$n$, the probability that the sample fails to identify relative score
+offsets between those groups tends to one as $\delta\downarrow0$.
+\end{exercisechunk}

@@ -4,10 +4,11 @@
 \usepackage{amsmath,amssymb,amsthm,mathtools}
 \usepackage[inline,shortlabels]{enumitem}
 \usepackage{xcolor}
+\usepackage{../misc_files/course-definition-boxes}
 \usepackage{microtype}
 
 % Revision date: maintained by scripts/build_lecture_notes.py. Keep this command.
-\newcommand{\lecturerevised}{2026-10-09 23:51 UTC-07:00}
+\newcommand{\lecturerevised}{2026-11-07 09:59 UTC+00:00}
 \usepackage{eso-pic}
 \AddToShipoutPictureBG{%
   \AtPageLowerLeft{%
@@ -88,36 +89,23 @@ September 8, 2026
 \end{minipage}}
 \end{center}
 
-\noindent\textbf{About these lecture notes.}
-These notes return to the problem introduced in Lecture~1: building a machine
-that generates natural language. Lecture~2 studied deterministic labels. Here
-we allow the same context to have different continuations and ask what a
-probability model should learn from their frequencies. This leads to proper
-losses, log loss, statistical efficiency, total variation, betting, and
-compression.
+What should a probability model learn when the same context admits different
+continuations? Building on the language-generation problem from Lecture~1
+and the deterministic-label setting of Lecture~2, these notes study losses
+that recover outcome probabilities. Log loss connects probability estimation
+to likelihood, betting, and compression; its excess population loss measures
+KL divergence from the data distribution.
 
-\medskip
-\noindent\textbf{Scope relative to class.}
-The lecture developed the categorical model, empirical frequencies, proper
+\noindent\textbf{Scope and reading guide.}
+The class developed the categorical model, empirical frequencies, proper
 losses, the log-loss and squared-loss regret identities, the statistical
-efficiency claim, Pinsker's inequality, and the betting and compression
-interpretations of log loss. The meeting ended during the compression
-discussion. The class left the regret identities, the properties of KL,
-Pinsker's inequality, and the Bregman construction as exercises; see
-\cref{ex:proper-regrets,ex:pinsker,ex:bregman-proper-loss}. These notes make
-the notation precise and complete the compression accounting. The
-appendices state regularity conditions behind the efficiency result, give a
-worked example, and discuss its relevance to logistic regression and large
-language models. They are reference material rather than additional claims
-about what was covered at the board.
-
-\medskip
-\noindent\textbf{Reading guide.}
-Read through \cref{sec:take-home}. The exercises develop the calculations that
-were left open in class. The appendices in
-\cref{app:bregman,app:efficiency} are optional technical references. The
-endnotes follow the take-home messages. Bibliographical notes, the glossary,
-the exercises, the appendices, and references follow in that order.
+efficiency claim, Pinsker's inequality, and betting, ending during the
+compression discussion. The notes complete the compression accounting.
+Read through \cref{sec:take-home}. The regret identities, KL properties,
+Pinsker's inequality, and Bregman construction were left as exercises; see
+\cref{ex:proper-regrets,ex:pinsker,ex:bregman-proper-loss}.
+\Cref{app:bregman,app:efficiency} are optional technical references, including
+the assumptions, worked example, and applications of the efficiency result.
 
 \section{From deterministic labels to probability distributions}
 \label{sec:from-labels}

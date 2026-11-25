@@ -16,6 +16,8 @@ $\phi_j=e_j$. Define
                 \sum_{j\geq1}\tau_jp_j^2<\infty\right\},
 \end{align*}
 with the norms defined by the corresponding coefficient costs.
+For either space $\cG$, write
+$B_{\cG}=\{f\in\cG:\|f\|_{\cG}\le1\}$ for its unit ball.
 \begin{enumerate}[(a),beginpenalty=10000]
 \item Use uniqueness of coordinates in the orthonormal basis to prove
 \[
@@ -34,8 +36,9 @@ $B_{\cF_{2,\tau}}\subseteq B_{\cF_1}$.
 \item Define $f_j=2^{-j/2}/\sqrt j$. Prove that
 $f\in\cF_1$ but $f\notin\cF_{2,\tau}$. Set
 $g=f/\|f\|_{\cF_1}$ and prove that
-$g\in B_{\cF_1}\setminus B_{\cF_{2,\tau}}$. Conclude that both inclusions
-in \cref{eq:F2-F1-ball-inclusion} can be strict.
+$g\in B_{\cF_1}\setminus B_{\cF_{2,\tau}}$. Conclude that
+$\cF_{2,\tau}\subsetneq\cF_1$ and
+$B_{\cF_{2,\tau}}\subsetneq B_{\cF_1}$.
 \item For the function in part (c), identify the signed-measure coefficients
 $\mu_j$ and the density coefficients $p_j$. Explain why their summability
 properties exhibit the restriction imposed by the fixed feature law $\tau$.

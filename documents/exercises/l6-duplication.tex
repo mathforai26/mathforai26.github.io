@@ -8,9 +8,9 @@ Let \(X_1,\ldots,X_m\) be independent, and suppose
 \(Z_i=\ell(\theta;X_i)\) has variance \(\sigma_\theta^2>0\) for every
 \(i\). Unit \(i\) is stored \(c_i\geq1\) times. Set
 \(N=\sum_{i=1}^m c_i\) and
-\(\widehat L=N^{-1}\sum_{i=1}^m c_iZ_i\).
+\(L_{{\rm copy},N}=N^{-1}\sum_{i=1}^m c_iZ_i\).
 \begin{enumerate}[(a),beginpenalty=10000]
-\item Derive \(\operatorname{Var}(\widehat L)\) and the effective sample size
+\item Derive \(\operatorname{Var}(L_{{\rm copy},N})\) and the effective sample size
 \(n_{\rm eff}\) in \cref{eq:copy-neff}.
 \item Prove \(1\leq n_{\rm eff}\leq m\). State exactly when the upper bound
 is attained.
@@ -20,7 +20,7 @@ is attained.
 \item Let \(\bar c=N/m\) and
 \(\operatorname{CV}^2=m^{-1}\sum_i(c_i-\bar c)^2/\bar c^2\). Prove
 \[
- \frac{\operatorname{Var}(\widehat L)}{\sigma_\theta^2/m}
+ \frac{\operatorname{Var}(L_{{\rm copy},N})}{\sigma_\theta^2/m}
  =1+\operatorname{CV}^2.
 \]
 Explain what this ratio does and does not establish about deduplication.

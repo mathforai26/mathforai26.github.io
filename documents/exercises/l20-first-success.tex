@@ -1,0 +1,24 @@
+\begin{exercisechunk}
+\item \textbf{The cost of the first successful response.}
+\label[exercise]{ex:l20-first-success}
+\exerciseprofile{2}{2}{2}{\exproof\quad\excalculation\quad\exinterpretation}{%
+Separate a necessary sampling cost from a sufficient convergence bound.}
+Consider the binary-verifier update in \cref{eq:binary-update}, with
+$0<p_0<1$, $q_0=1-p_0$, and $c_0=2\eta e^{-2\eta}p_0^2$.
+Let $N=\inf\{t+1:A_t=1\}$ count evaluations up to the first success.
+\begin{enumerate}[(a)]
+\item Show that $\P(N>t)=q_0^t$ for every integer $t\ge0$ and that
+$\E[N]=1/p_0$. Deduce the lower bound
+$\E[q_t]\ge q_0^{t+1}$.
+\item For $0<\varepsilon<q_0$, show that $\E[q_t]\le\varepsilon$
+requires
+\[
+ t\ge\frac{\log(q_0/\varepsilon)}{-\log q_0},
+\]
+whereas \cref{thm:binary} guarantees $\E[q_t]\le\varepsilon$ whenever
+$t\ge(\varepsilon^{-1}-q_0^{-1})/c_0$.
+For a fixed $0<\varepsilon<1$, compare the orders of these two thresholds
+as $p_0\downarrow0$ with $\eta$ fixed. State whether these bounds determine
+the exact order of the required number of evaluations.
+\end{enumerate}
+\end{exercisechunk}

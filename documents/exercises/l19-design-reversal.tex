@@ -1,0 +1,46 @@
+\begin{exercisechunk}
+\item \textbf{Comparison frequencies and a reversed preference.}
+\label[exercise]{ex:l19-design-reversal}
+\exerciseprofile{2}{2}{2}{\exproof\quad\excalculation}{%
+Use convexity to identify the global population fit under misspecification.}
+For $v\in(0,1)$ and $z\in\R$, let
+$\ell_v(z)=\log(1+e^z)-vz$ as in \cref{eq:logistic-loss}.
+On $\cY=\{a,b,c\}$, set $p(a,b)=p(b,c)=p(c,a)=3/4$ and use
+the reversal rule for the other orientations. For $0<\varepsilon\le1/3$,
+let $\nu_\varepsilon(a,b)=\nu_\varepsilon(b,c)=(1-\varepsilon)/2$
+and $\nu_\varepsilon(c,a)=\varepsilon$, with zero mass elsewhere.
+\begin{enumerate}[(a)]
+\item Derive
+\[
+ \ell_v'(z)=\sigma(z)-v,\qquad
+ \ell_v''(z)=\sigma(z)(1-\sigma(z))>0.
+\]
+Show that $\ell_v(z)\to\infty$ as $|z|\to\infty$ and that its unique
+minimizer is $\operatorname{logit}(v)$.
+\item Fix $r(b)=0$. Show that minimizing $L_{\nu_\varepsilon,p}(r)$
+over score functions is equivalent to minimizing
+\[
+ f_\varepsilon(d)=(1-\varepsilon)\ell_{3/4}(d)
+                  +\varepsilon\ell_{3/4}(-2d),\qquad d\in\R.
+\]
+Prove that a unique minimizer exists and that the minimizing score vector
+has the form $(r(a),r(b),r(c))=(d_\varepsilon,0,-d_\varepsilon)$.
+\item Show that
+\[
+ f_\varepsilon'(0)=\frac{3\varepsilon-1}{4},\qquad
+ f_\varepsilon'(\log3)=\frac{13\varepsilon}{10}.
+\]
+Deduce $d_{1/3}=0$ and, for $0<\varepsilon<1/3$,
+$0<d_\varepsilon<\log3$ and
+$p_{r_\varepsilon}(c,a)=\sigma(-2d_\varepsilon)<1/2$.
+\item \emph{Optional.} Show that $d_\varepsilon\to\log3$ and
+$p_{r_\varepsilon}(c,a)\to1/10$ as $\varepsilon\downarrow0$.
+For $\varepsilon=1/5$, numerically find the fitted probability to three
+decimal places.
+\end{enumerate}
+\begin{hints}
+For (b), write $v=r(a)-r(b)$ and $w=r(b)-r(c)$. Hold $v+w$ fixed
+and compare the loss at $(v,w)$ with its value at
+$((v+w)/2,(v+w)/2)$.
+\end{hints}
+\end{exercisechunk}

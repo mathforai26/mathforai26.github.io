@@ -11,12 +11,12 @@ Under the fixed-parity law $P_S$, recall
 \begin{enumerate}[(a),beginpenalty=10000]
 \item Let $h:\{-1,1\}^d\to\{-1,1\}$. Prove
 \[
-\cC(h)=2R_{01}(h)-1,
+\cC(h)=2L_{01}(h)-1,
 \qquad
-R_{01}(h)=P_S(h(X)\ne Y).
+L_{01}(h)=P_S(h(X)\ne Y).
 \]
 \item For $\varepsilon>0$, set $f_\varepsilon=\varepsilon\chi_S$. Compute
-$\cC(f_\varepsilon)$ and $R_{01}(\operatorname{sign}(f_\varepsilon))$.
+$\cC(f_\varepsilon)$ and $L_{01}(\operatorname{sign}(f_\varepsilon))$.
 Explain why a correlation value close to zero does not determine the
 classification risk of the sign of a real-valued score.
 \item For any score $f:\{-1,1\}^d\to\R$, derive
@@ -27,7 +27,7 @@ classification risk of the sign of a real-valued score.
 Deduce that $|\cC(f)|\le\varepsilon$ implies squared loss at least
 $1-2\varepsilon$. Prove
 \[
-R_{01}(\operatorname{sign}(f))
+L_{01}(\operatorname{sign}(f))
 \le\E_{P_S}[(f(X)-Y)^2],
 \qquad \operatorname{sign}(0)=1.
 \]

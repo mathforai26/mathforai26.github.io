@@ -11,10 +11,10 @@ $y\in\{-1,1\}^n$, and define
 \]
 Assume $\mathbf Xs=cy$ for some $c>0$.
 \begin{enumerate}[(a),beginpenalty=10000]
-\item For a differentiable margin loss
-$L(w)=\sum_{i=1}^n\ell(y_i\langle w,x_i\rangle)$, prove that
+\item For a differentiable margin loss $\ell$, define the total objective
+$F_n(w)=\sum_{i=1}^n\ell(y_i\langle w,x_i\rangle)$ and prove that
 \[
- \nabla L(\alpha s)=\ell'(c\alpha)\mathbf X^\top y.
+ \nabla F_n(\alpha s)=\ell'(c\alpha)\mathbf X^\top y.
 \]
 When $\ell'<0$, prove by induction that signed gradient descent initialized
 at zero remains on the ray $\{\alpha s:\alpha\ge0\}$.

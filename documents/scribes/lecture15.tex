@@ -5,6 +5,7 @@
 \usepackage{array,booktabs}
 \usepackage[inline,shortlabels]{enumitem}
 \usepackage{xcolor}
+\usepackage{../misc_files/course-definition-boxes}
 \usepackage{microtype}
 \usepackage{tikz}
 \usetikzlibrary{arrows.meta,positioning,calc,fit}
@@ -92,65 +93,23 @@ October 22, 2026
 \end{minipage}}
 \end{center}
 
-\noindent\textbf{Reading guide.}
-\href{lecture14.pdf}{Lecture 14} studied representation questions for maps with discrete inputs and
-outputs. Lecture 15 changes both the domain and the target: the input belongs
-to a subset of $\R^d$, the target is real-valued, and the statistical problem
-is regression. Continuous regression makes three questions distinct. An
-approximation result asks whether a good member of a function family exists.
-A constructive approximation result asks whether an algorithm can produce one
-from specified information about the target. A learning result asks what can
-be estimated from noisy data.
+When does choosing features for the target improve neural-network
+approximation, and when can an algorithm find those features from data?
+This lecture studies approximation advantages from target-dependent features
+and the additional requirements for constructive approximation and learning.
+The statistical guarantees include results that assume global empirical-risk
+minimization; the explicit learning theorem concerns a restricted
+single-index model. Efficient learning for the general Barron class remains
+open.
 
-The material presented in class runs through \cref{sec:mousavi}. The
-development begins with the progression from approximation to constructive
-approximation to learning.
-Shallow ridge and radial-basis-function networks make the questions concrete.
-The minimax limit for ordinary smooth regression supplies an
-information-theoretic benchmark. The central Hilbert-space lemma then
-shows that a function with a bounded integral representation has an accurate
-finite approximation. The lemma's proof uses random sampling, although the
-lemma's conclusion is deterministic. The two density corollaries answer the
-minimum approximation question: radial-basis-function and ridge networks can
-make the approximation error arbitrarily small in the stated \(L^2\) spaces.
-Quantitative approximation results for H\"older balls describe how the error
-decreases with the number of terms, and suitable neural-network constructions
-give corresponding rates. The integral representation also identifies
-functions that are easy to approximate by \(m\)-term networks. Barron's
-theorem shows that the same class has the following property: for every fixed
-\(m\)-dimensional linear space, some function in the class is poorly
-approximated by that space, even though target-dependent ridge atoms attain an
-\(m^{-1/2}\) approximation rate.
-
-The Barron comparison makes target-dependent dictionary selection the central
-issue. Fixing the dictionary distribution in advance gives a kernel method.
-Allowing the dictionary elements to depend on the target creates a
-feature-selection problem: can a constructive or statistical method find the
-useful elements? Projection pursuit gives a greedy constructive approach
-conditional on a difficult oracle. The general learning question remains
-open, so the final two main sections restrict the target to a multi-index
-model. Under a rank condition, target gradients and a singular-value
-decomposition identify a predictive subspace. A special two-stage
-stochastic-gradient procedure then gives a learning result under restrictive
-assumptions.
-
-The optional-reading section contains the entropy result that was not
-presented in class, additional classical and neural comparators, and results
-about depth.
-The appendices contain the wavelet, Fourier, active-query, RKHS, and
-staged-SGD details used to support the main development.
+\noindent\textbf{Scope and reading guide.}
+The material covered in class runs through \cref{sec:multilayer-erm}.
+The optional-reading section gives further comparisons and extensions,
+including entropy limits and the later addition on random approximate
+interpolation. The appendices provide supporting technical details.
 \href{lecture09.pdf}{Lecture 9},
-\href{lecture09.pdf\#nameddest=appendix.A}{Appendix~9.A}, reviews $L^2(P_X)$,
-inner products, Hilbert spaces, orthogonality, and projections.
-
-The lecture's central question is:
-\begin{center}
-\emph{Neural networks can choose features for the target. Can a constructive
-or statistical algorithm find the useful features from the information
-available to the algorithm?}
-\end{center}
-The lecture gives a general representation theorem and a restricted learning
-theorem. A general efficient learning theorem remains open.
+\href{lecture09.pdf\#nameddest=appendix.A}{Appendix~9.A}, supplies the
+Hilbert-space background.
 
 \section{From approximation to regression learning}
 \label{sec:questions}
@@ -266,9 +225,13 @@ The case $\beta=1$ is Lipschitz continuity. When $0<\beta<1$, small distances
 satisfy $r^\beta\geq r$ for $0\leq r\leq1$, so the same constant permits
 larger local changes than a Lipschitz condition.
 
-Write $\alpha=k+\beta$ with $k\in\mathbb N_0$ and $0<\beta\leq1$. The
-H\"older ball $\cH_d^\alpha(L)$ contains functions whose partial derivatives
-through order $k$ are bounded by $L$ and whose derivatives of order $k$ are
+Write $\alpha=k+\beta$ with $k\in\mathbb N_0$ and $0<\beta\leq1$. For
+noninteger $\alpha$, this convention gives $k=\lfloor\alpha\rfloor$. For an
+integer $\alpha=r\geq1$, take $k=r-1$ and $\beta=1$; taking
+$k=\lfloor\alpha\rfloor=r$ would instead give $\beta=0$, which is not a
+H\"older exponent under the convention used here. The H\"older ball
+$\cH_d^\alpha(L)$ contains functions whose partial derivatives through order
+$k$ are bounded by $L$ and whose derivatives of order $k$ are
 $\beta$-H\"older with constant $L$. The minimax mean integrated squared error
 over \(\cH_d^\alpha(L)\)
 satisfies
@@ -284,11 +247,17 @@ pairs; the notation does not impose a computational model. Thus
 claim about an efficiently implementable algorithm. The exponent deteriorates
 with the ambient dimension. A faster rate requires a smaller target class, a
 different observation model, or a different loss. The bound sets the
-regression benchmark. A complementary entropy result was not developed in
-class and appears in the optional reading.
+regression benchmark. A complementary entropy result, not developed in
+class, appears in the optional reading.
 
 \section{Integral representations and density}
 \label{sec:sampling}
+Begin with the minimum approximation question: can one-hidden-layer networks
+make the approximation error arbitrarily small? The argument has two parts.
+First, an integral representation describes a continuous collection of hidden
+units, and the central lemma approximates such a representation by a finite
+sum. Second, density arguments show that the relevant integral
+representations cover a dense subclass of the target space.
 
 The finite network formulas in
 \cref{eq:ridge-network-class,eq:scale-location-network-class} both start from
@@ -298,17 +267,27 @@ a \emph{dictionary}: a parameterized family
 \(\phi_\theta(x)=\sigma(a^\top x+b)\). For a scale--location network,
 \(\theta=(s,u)\) and \(\phi_\theta(x)=\psi(s(x-u))\). A finite network
 selects finitely many dictionary elements. Replacing the finite sum by an
-integral permits a continuous collection and gives a useful sufficient
-condition for accurate finite approximation.
+integral permits a continuous collection of dictionary elements. The central
+lemma below shows that every bounded integral representation has an accurate
+finite approximation.
 
 \begin{definition}[Finite signed measure and integral representation]
 \label{def:signed-integral-representation}
 Let \(\Theta\) be a measurable parameter space. A
-\emph{finite signed measure} will mean a measure of the form
+\emph{finite signed measure}
+\endnote{The usual definition of signed measures
+starts from a countably additive \emph{real-valued}
+set function. The Jordan decomposition theorem writes every such measure as
+\(\mu=\mu^+-\mu^-\) for mutually singular positive measures. Consequently,
+\(|\mu|=\mu^++\mu^-\) and
+\(d\mu=s\,d|\mu|\) for a measurable sign function
+\(s\in\{-1,1\}\), up to a \(|\mu|\)-null set. Thus the sign-times-positive-
+measure definition loses no finite signed measures.}
+will mean a measure of the form
 \[
  d\mu(\theta)=s(\theta)\,d\nu(\theta),
 \]
-where \(\nu\) is a finite positive measure and
+where \(\nu\) is a finite positive measure on $\Theta$ and
 \(s:\Theta\to\{-1,1\}\) is measurable. The positive measure
 \(|\mu|:=\nu\) is the \emph{total variation measure} of \(\mu\), and
 \[
@@ -321,16 +300,19 @@ is its \emph{total variation norm}. For a dictionary
  f=\int_\Theta \phi_\theta\,d\mu(\theta).
  \label{eq:integral-representation}
 \end{equation}
+The integral in \cref{eq:integral-representation} is the Bochner integral of
+\(s(\theta)\phi_\theta\) with respect to \(|\mu|\).%
+\endnote{A Hilbert-space-valued integral requires a definition because its
+integrand is a vector, not a scalar. A strongly measurable map
+\(\theta\mapsto\phi_\theta\in\cH\) is Bochner integrable with respect to
+\(|\mu|\) when
+\(\int\|\phi_\theta\|_{\cH}\,d|\mu|(\theta)<\infty\). The integral is the
+norm limit of integrals of simple \(\cH\)-valued functions. Under the bounded-
+dictionary and finite-measure assumptions below, the required integrability is
+automatic. When \(\cH=L^2(P_X)\) and the dictionary has jointly measurable
+representatives, the Bochner integral agrees, as an element of \(L^2(P_X)\),
+with the pointwise integral for \(P_X\)-almost every input.}
 \end{definition}
-The definition through a sign function is equivalent to the usual definition
-of a finite real-valued signed measure.%
-\endnote{The usual definition starts from a countably additive real-valued
-set function. The Jordan decomposition theorem writes every such measure as
-\(\mu=\mu^+-\mu^-\) for mutually singular positive measures. Consequently,
-\(|\mu|=\mu^++\mu^-\) and
-\(d\mu=s\,d|\mu|\) for a measurable sign function
-\(s\in\{-1,1\}\), up to a \(|\mu|\)-null set. Thus the sign-times-positive-
-measure definition loses no finite signed measures.}
 
 A finite sum is a special integral. If
 \(f=\sum_{j=1}^m c_j\phi_{\theta_j}\), take
@@ -339,16 +321,17 @@ A finite sum is a special integral. If
 combined. Integral representations can also describe functions that require
 a limit of finite sums.
 
-The same formula is used in mean-field descriptions of two-layer networks. If
-\(\rho\) is a probability measure on neuron parameters, then
+The same formula gives a \emph{mean-field representation} of a two-layer
+network. If \(\rho\) is a probability measure on neuron parameters, then
 \begin{equation}
  f_\rho(x)=\int a\,\sigma(w^\top x+b)\,d\rho(a,w,b).
  \label{eq:mean-field-representation}
 \end{equation}
 Absorbing the output weight \(a\) into a signed measure on \((w,b)\) gives
-the representation in \cref{eq:integral-representation}. Mean-field training
-adds an evolution equation for \(\rho\); the static integral formula alone is
-a representation statement.
+the representation in \cref{eq:integral-representation}. The bibliographical
+notes explain the infinite-width scaling in which empirical neuron measures
+can converge to a non-atomic limit \(\rho\), and how parameter updates can
+converge to an evolution equation for that limiting measure.
 
 The integral form is useful because every function with a representing
 measure of bounded total variation has an accurate finite-sum approximation.
@@ -358,7 +341,7 @@ requires only Hilbert-space geometry.
 \begin{lemma}[Finite approximation of an integral representation]
 \label{lem:mc-sparsification}
 Let \(\cH\) be a real Hilbert space, let
-\(\theta\mapsto\phi_\theta\in\cH\) be measurable, and suppose that
+\(\theta\mapsto\phi_\theta\in\cH\) be strongly measurable, and suppose that
 \(\|\phi_\theta\|_{\cH}\leq1\) for every \(\theta\). If
 \(f=\int\phi_\theta\,d\mu(\theta)\) and
 \(B=\|\mu\|_{\TV}<\infty\), then, for every \(m\geq1\), there are
@@ -451,7 +434,7 @@ Let \(Q=[0,1]^d\), and let \(\sigma:\R\to[0,1]\) be measurable with
  \lim_{t\to+\infty}\sigma(t)=1.
  \label{eq:sigmoidal-activation}
 \end{equation}
-For
+Define
 \begin{equation}
  \cN_\sigma(Q)
  =\left\{\left.
@@ -488,13 +471,42 @@ the same question. Under the input-distribution assumptions used in
  \|f-g\|_{L^2(P_X)}\lesssim m^{-\alpha/d}.
  \label{eq:holder-approximation-rate}
 \end{equation}
-Suitable neural-network architectures can implement the same local
-approximations. For example, ReLU networks with \(O(m\log m)\) parameters can
-attain uniform, and hence \(L^2(P_X)\), error of order
-\(m^{-\alpha/d}\) by implementing local Taylor approximations and a partition
-of unity. The parameter count and logarithmic factors depend on the activation
-and architecture. For a classical \(m\)-dimensional series estimator, the
-squared approximation error is of order \(m^{-2\alpha/d}\) by
+Two neural constructions relate the classical rate to the network families
+used above, but the two constructions give different guarantees. First, let
+\(s\) be a positive integer with \(s>d/2\), and let
+\(W^{s,1}(\R^d)\) denote the Sobolev space of functions whose weak derivatives
+through order \(s\) are integrable. For an admissible radial synthesis wavelet
+\(\psi\), every \(f\in W^{s,1}(\R^d)\) has an \(m\)-term scale--location
+approximation \(g_m\in\cR_m^\psi\) satisfying
+\begin{equation}
+ \|f-g_m\|_{L^2(\R^d)}
+ \leq C_{\psi,s,d}\|f\|_{W^{s,1}(\R^d)}m^{-1/2}.
+ \label{eq:delyon-wavelet-rate}
+\end{equation}
+The corresponding constructive procedure samples dilation--translation pairs
+from a density determined by the target's continuous wavelet coefficients.
+Thus the procedure is constructive relative to an oracle that supplies those
+coefficients and permits sampling from the resulting density. The
+\(m^{-1/2}\) exponent agrees with the Hilbert-space sampling lemma and
+saturates once the assumed smoothness exceeds \(d/2\).
+After a bounded extension from the cube to \(\R^d\), the result applies in
+particular to H\"older targets whose integer-order smoothness exceeds \(d/2\).
+The wavelet guarantee remains an \(m^{-1/2}\) rate; it does not recover the
+full exponent \(\alpha/d\) in \cref{eq:holder-approximation-rate} when
+\(\alpha/d>1/2\).
+
+Second, ReLU networks can implement local Taylor approximations and a
+partition of unity. A network with \(O(m\log m)\) nonzero parameters can attain
+uniform, and hence \(L^2(P_X)\), error of order \(m^{-\alpha/d}\) over
+\(\cH_d^\alpha(L)\). The ReLU construction retains the full H\"older exponent,
+including noninteger \(\alpha\), while the depth and logarithmic parameter
+overhead depend on the precise architecture. The wavelet result is closer to
+the scale--location representation developed in this section; the ReLU result
+matches the classical H\"older exponent in
+\cref{eq:holder-approximation-rate}.
+
+For a classical \(m\)-dimensional series estimator, the squared approximation
+error is of order \(m^{-2\alpha/d}\) by
 \cref{eq:holder-approximation-rate}, and the estimation error is of order
 \(m/n\). Balancing the two terms gives the regression rate
 \(n^{-2\alpha/(2\alpha+d)}\) in \cref{eq:generic-smooth-rate}. The bias--
@@ -512,39 +524,114 @@ therefore gives accurate \(m\)-term approximations for those functions. Now fix
 any \(m\) basis functions in advance, whether they come from a classical
 approximation method or from any other proposed basis. Barron's theorem says
 that some function from the same class is nevertheless poorly approximated by
-their span. To state the theorem, first define the target class by fixing the
-Fourier normalization
+their span.
+
+The distinction between \emph{linear} and \emph{nonlinear} approximation
+describes how the approximant depends on the target. Projection onto a fixed
+subspace is linear as a map from the target function to its approximation.
+Choosing the terms after inspecting the target is generally nonlinear, even
+when the final approximant is a linear combination of basis functions. An
+orthonormal basis gives the simplest example.
+
+\begin{proposition}[Best \(m\)-term orthogonal-series approximation]
+\label{prop:best-m-term-orthogonal}
+Let \((e_j)_{j\geq1}\) be an orthonormal basis of a separable Hilbert space
+\(\cH\), and write \(a_j=\langle f,e_j\rangle_{\cH}\). Let
+\(\Lambda_m(f)\) contain indices of the \(m\) largest values of \(|a_j|\),
+with ties resolved by a fixed rule, and define
 \begin{equation}
- \widehat f(\omega)=\int_{\R^d}e^{-i\omega^\top x}f(x)\,dx.
+ G_mf=\sum_{j\in\Lambda_m(f)}a_je_j.
+ \label{eq:orthogonal-thresholding}
+\end{equation}
+Then
+\begin{equation}
+ \|f-G_mf\|_{\cH}^2
+ =\sum_{j\notin\Lambda_m(f)}|a_j|^2
+ =\inf_{\substack{\Lambda\subseteq\mathbb N\\|\Lambda|\leq m}}
+   \inf_{(c_j)_{j\in\Lambda}}
+   \left\|f-\sum_{j\in\Lambda}c_je_j\right\|_{\cH}^2.
+ \label{eq:best-m-term-orthogonal}
+\end{equation}
+\end{proposition}
+
+\begin{proof}
+For a fixed index set \(\Lambda\), orthogonality makes the best coefficients
+equal to \(c_j=a_j\), and the squared residual is
+\(\sum_{j\notin\Lambda}|a_j|^2\). The residual is minimized by retaining the
+\(m\) largest squared coefficients.
+\end{proof}
+
+The proposition converts coefficient decay directly into an approximation
+rate. Let \((a_n^*)_{n\geq1}\) be the nonincreasing rearrangement of
+\((|a_j|)_{j\geq1}\). If, for some \(r>0\),
+\(a_n^*\leq Cn^{-r-1/2}\), then
+\[
+ \|f-G_mf\|_{\cH}^2
+ =\sum_{n>m}(a_n^*)^2
+ \leq C^2\sum_{n>m}n^{-2r-1}
+ \leq\frac{C^2}{2r}m^{-2r}.
+\]
+
+Wavelet bases make this observation particularly useful. At a finite
+resolution, a fast wavelet transform computes the coefficient array, and
+thresholding implements \(G_m\). The transform is linear; selecting the
+largest coefficients is the nonlinear step. For an infinite expansion, a
+smoothness assumption controls the omitted fine-scale tail and determines a
+sufficient finite resolution. Because wavelets record both scale and location,
+thresholding can refine only near localized irregularities and attain rates
+under weaker global regularity conditions than a fixed-resolution linear
+wavelet space requires for the same rate.
+
+The coefficient evaluations
+\(f\mapsto\langle f,e_j\rangle_{\cH}\) are linear-information oracles.
+Finite-resolution wavelet thresholding is therefore a constructive
+approximation method. For a general infinite orthonormal basis, the
+proposition by itself need not give a finite algorithm.%
+\endnote{An oracle that returns one requested coefficient does not identify
+the globally largest coefficients in an arbitrary infinite sequence. A
+prescribed truncation, a tail certificate such as the wavelet smoothness bound
+described above, or a stronger coefficient oracle supplies a stopping rule.
+The same information-model issue arises for searches over continuous
+dictionaries.}
+The map \(G_m\) is nonlinear because \(\Lambda_m(f)\) depends on \(f\). By
+contrast, the orthogonal projector \(P_V\) onto a fixed \(m\)-dimensional
+subspace satisfies
+\(P_V(af+bg)=aP_Vf+bP_Vg\).
+
+Barron's theorem applies the same distinction to a continuous ridge
+dictionary. The upper bound chooses ridge atoms for the target; the lower bound
+applies to every subspace fixed before the target is known. To state the
+theorem, fix the Fourier normalization for \(g\in L^1(\R^d)\):
+\begin{equation}
+ \widehat g(\omega)=\int_{\R^d}e^{-i\omega^\top x}g(x)\,dx.
  \label{eq:fourier-transform}
 \end{equation}
 
-\begin{definition}[Anchored spectral Barron norm]
+\Needspace{19\baselineskip}
+\begin{definition}[Spectral Barron norm]
 \label{def:spectral-barron-norm}
 Let \(\cB(\R^d)\) be the class of real-valued functions
-\(f:\R^d\to\R\) that admit a representation
+\(f:\R^d\to\R\) of the form \(f=c+g\), where \(c\in\R\),
+\(g\in L^1(\R^d)\), \(\widehat g\in L^1(\R^d;\mathbb C)\), and
 \begin{equation}
- f(x)=c+\frac1{(2\pi)^d}\int_{\R^d}
- (e^{i\omega^\top x}-1)F(\omega)\,d\omega,
+ \int_{\R^d}\|\omega\|_1|\widehat g(\omega)|\,d\omega<\infty.
+ \label{eq:barron-fourier-moment}
+\end{equation}
+The decomposition \(f=c+g\) is unique, and Fourier inversion supplies the
+continuous representative
+\begin{equation}
+ f(x)=f(0)+\frac1{(2\pi)^d}\int_{\R^d}
+ (e^{i\omega^\top x}-1)\widehat g(\omega)\,d\omega.
  \label{eq:barron-density-representation}
 \end{equation}
-where \(c\in\R\), \(F\in L^1(\R^d;\mathbb C)\), the integral is real for
-every \(x\), and
-\(\int_{\R^d}\|\omega\|_1|F(\omega)|\,d\omega<\infty\). Setting \(x=0\) in
-\cref{eq:barron-density-representation} gives \(c=f(0)\). The weighted spectral
-term assigns value zero to every constant function by taking \(F=0\). Using
-only the weighted spectral term would therefore give a seminorm. Adding
-\(|c|\) records the constant component. Define
+Define
 \begin{equation}
  \|f\|_{\cB(\R^d)}
- =\inf_{c,F}\left\{
- |c|+\frac1{(2\pi)^d}\int_{\R^d}
- \|\omega\|_1|F(\omega)|\,d\omega\right\},
+ =|f(0)|+\frac1{(2\pi)^d}\int_{\R^d}
+ \|\omega\|_1|\widehat g(\omega)|\,d\omega.
  \label{eq:barron-norm}
 \end{equation}
-where the infimum ranges over all representations in
-\cref{eq:barron-density-representation}. The ambient Barron ball and its
-restriction to \(Q=[0,1]^d\) are
+The ambient Barron ball and its restriction to \(Q=[0,1]^d\) are
 \begin{equation}
  \cB_C(\R^d)=\{f\in\cB(\R^d):\|f\|_{\cB(\R^d)}\leq C\},
  \qquad
@@ -553,12 +640,20 @@ restriction to \(Q=[0,1]^d\) are
 \end{equation}
 \end{definition}
 Each restriction in \(\cB_C(Q)\) is identified with its equivalence class in
-\(L^2(Q)\). The quantity in \cref{eq:barron-norm} is a norm on the represented
-functions on \(\R^d\).%
-\endnote{One may instead use the spectral moment as a norm modulo constants.
-The network represents \(c\) exactly through its output bias, so the
-approximation rate depends only on the spectral moment. Different Fourier
-normalizations change constants but not the approximation exponents.}
+\(L^2(Q)\). The quantity in \cref{eq:barron-norm} is a norm on
+\(\cB(\R^d)\). We use the ordinary Fourier transform of \(g=f-c\) because it
+gives a familiar ambient function class that can then be restricted to the
+cube. Barron's larger measure-valued formulation gives a shorter lower-bound
+proof: pure cosine modes correspond directly to point masses in frequency.
+Pure cosines do not belong to the ordinary-transform class on \(\R^d\), so the
+lower-bound proof below replaces them by functions with smooth Fourier
+transforms. Thus the smaller class simplifies the definition but adds one
+approximation step to the proof. The measure-valued formulation appears in
+\appendixref{app:fourier-measure-extension}.%
+\endnote{The network represents the anchored constant \(f(0)\) exactly through
+its output bias, so the approximation error depends only on the weighted
+spectral moment. Different Fourier normalizations change constants but not the
+approximation exponents.}
 
 \begin{theorem}[Barron's adaptive upper bound and fixed-space lower bound]
 \label{thm:barron}
@@ -566,11 +661,10 @@ Let \(P_X\) be uniform on \(Q=[0,1]^d\), and let \(\sigma\) satisfy
 \cref{eq:sigmoidal-activation}. There is a universal constant
 \(\kappa>0\) such that the following statements hold.
 \begin{enumerate}[label=(\roman*),leftmargin=*]
-\item For every \(h\in\cB_C(Q)\), every \(m\geq1\), and every
-\(\eta>0\), there is
+\item For every \(h\in\cB_C(Q)\) and every \(m\geq1\), there is
 \(f_m\in\cN_m^\sigma\) satisfying
 \begin{equation}
- \|h-f_m\|_{L^2(P_X)}\leq\frac{2(C+\eta)}{\sqrt m}.
+ \|h-f_m\|_{L^2(P_X)}\leq\frac{2C}{\sqrt m}.
  \label{eq:barron-upper}
 \end{equation}
 \item For every fixed collection \(h_1,\ldots,h_m\in L^2(P_X)\),
@@ -585,20 +679,19 @@ Let \(P_X\) be uniform on \(Q=[0,1]^d\), and let \(\sigma\) satisfy
 \end{theorem}
 
 \paragraph{Upper-bound idea.}
-Choose \(f\in\cB_C(\R^d)\) satisfying \(f|_Q=h\), and choose a representation
-of \(f\) whose cost is at most \(C+\eta\). The
-Fourier-to-threshold calculation used for
-\cref{cor:ridge-density} represents \(f-c\) by a signed measure
+Choose \(f\in\cB_C(\R^d)\) satisfying \(f|_Q=h\). The Fourier-to-threshold
+calculation used for
+\cref{cor:ridge-density} represents \(f-f(0)\) by a signed measure
 over ridge atoms whose total variation is at most twice the spectral moment.
-Lemma~\ref{lem:mc-sparsification} then selects \(m\) atoms. The constant
-\(c\) is represented exactly. The selected ridge directions and biases depend
-on the target.
+Lemma~\ref{lem:mc-sparsification} then selects \(m\) atoms. The anchored
+constant \(f(0)\) is represented exactly. The selected ridge directions and
+biases depend on the target.
 
 \paragraph{Lower-bound idea.}
 Choose \(2m\) distinct integer frequencies of size
-\(O(dm^{1/d})\). The associated cosine functions are orthonormal in
-\(L^2(Q)\), and their Barron norms have the same order as their frequencies.
-For any subspace \(V\) of dimension at most \(m\), Bessel's inequality gives
+\(O(dm^{1/d})\). The associated cosine functions \(e_j\) are orthonormal in
+\(L^2(Q)\). For any subspace \(V\) of dimension at most \(m\), Bessel's
+inequality gives
 \[
  \sum_{j=1}^{2m}\|P_Ve_j\|_{L^2(Q)}^2\leq m.
 \]
@@ -607,9 +700,12 @@ At least one normalized cosine \(e_j\) therefore has
  \inf_{v\in V}\|e_j-v\|_{L^2(Q)}^2
  =1-\|P_Ve_j\|_{L^2(Q)}^2\geq\frac12.
 \]
-Scaling that cosine into \(\cB_C(Q)\) gives
-\cref{eq:barron-lower}. \appendixref{app:fourier-basics} handles the harmless
-smoothing needed to use an integrable spectral density.
+Replace the selected cosine by a smooth function \(u_j\) whose ordinary
+Fourier transform is concentrated near the two corresponding frequencies.
+The construction in \appendixref{app:fourier-basics} makes
+\(\|u_j-e_j\|_{L^2(Q)}\) arbitrarily small and gives
+\(\|u_j\|_{\cB(\R^d)}=O(dm^{1/d})\). Scaling \(u_j\) into
+\(\cB_C(Q)\) gives \cref{eq:barron-lower}.
 
 The lower bound is a statement about the \emph{Kolmogorov \(m\)-width}
 \begin{equation}
@@ -658,6 +754,26 @@ coefficient functions can represent the same function. Conversely, every
 separable reproducing-kernel Hilbert space admits a feature representation of
 the form in \cref{eq:F2}; \appendixref{app:rkhs-features} gives a direct construction.
 
+The \emph{neural tangent kernel} gives another fixed-feature construction.
+For a differentiable network \(f_\vartheta\) initialized at \(\vartheta_0\),
+the tangent features and their kernel are
+\begin{equation}
+ \Phi_{\vartheta_0}(x)=\nabla_\vartheta f_{\vartheta_0}(x),
+ \qquad
+ K_{\vartheta_0}(x,x')
+ =\langle\Phi_{\vartheta_0}(x),\Phi_{\vartheta_0}(x')\rangle.
+ \label{eq:main-ntk}
+\end{equation}
+In the neural-tangent infinite-width limit, gradient training is described by
+kernel gradient descent with the kernel fixed at initialization. The limit is
+mathematically useful because it makes the training dynamics explicit. For
+the question developed in this lecture, however, the neural-tangent limit
+removes the proposed source of neural advantage: the features do not adapt to
+the target. The limit is therefore a fixed-feature baseline, rather than an
+explanation of an advantage caused by feature learning.
+\appendixref{app:ntk} derives the kernel dynamics and states the scope of the
+infinite-width approximation.
+
 The integral representation in \cref{eq:integral-representation} allows any
 finite signed measure. Define the corresponding variation space and norm by
 \begin{align}
@@ -670,6 +786,45 @@ finite signed measure. Define the corresponding variation space and norm by
        f(x)=\int_\Theta\phi_\theta(x)\,d\mu(\theta)\right\}.
  \label{eq:F1}
 \end{align}
+
+\begin{remark}[Univariate ReLU variation norms and linear splines]
+\label{rem:relu-spline-variation}
+The abstract variation norm has an exact form for a one-dimensional
+two-layer ReLU network. Consider
+\[
+ h_\theta(x)=c+\sum_{j=1}^m a_j[w_jx+b_j]_+
+\]
+with unregularized hidden-unit and output biases, and assign the non-bias
+weights the cost
+\[
+ C(\theta)=\frac12\sum_{j=1}^m(a_j^2+w_j^2).
+\]
+Positive homogeneity permits each nonconstant unit to be rescaled so that
+\(|w_j|=1\). In the unbounded-width closure, the resulting function-space
+cost is
+\begin{equation}
+ \cR(f)
+ =\max\left\{
+   \|D^2f\|_{\TV},
+   \left|f'(-\infty)+f'(+\infty)\right|
+  \right\},
+ \label{eq:relu-spline-variation-cost}
+\end{equation}
+whenever the distributional second derivative \(D^2f\) is a finite signed
+measure and the two limiting slopes exist. The cost is infinite outside the
+corresponding function class.
+
+A \emph{linear spline} is a continuous function that is affine on each
+interval determined by a finite ordered set of knots. For ordered sample
+locations \(x_1<\cdots<x_n\), a minimum-cost interpolant can be chosen as a
+linear spline with knots among the sample locations. The minimum-cost
+interpolant need not be unique. Thus Euclidean parameter regularization in
+this neural parameterization induces total-variation regularization of the
+derivative and recovers a classical spline estimator. Exercise
+\ref{ex:l15-relu-spline-variation} derives \cref{eq:relu-spline-variation-cost}
+and computes the cost of a linear spline.
+\end{remark}
+
 The two unit balls are
 \begin{equation}
  B_{\cF_1}=\{f:\|f\|_{\cF_1}\leq1\},
@@ -742,9 +897,66 @@ Projection pursuit therefore gives a constructive approximation method only
 when a strong atom-selection oracle is available. Learning requires an
 efficient algorithm that finds useful features from noisy data, without
 access to the target or to such an oracle. An efficient learning algorithm for
-the general Barron class remains open. The next positive result restricts the
-target to a multi-index model, where the features form one low-dimensional
-linear subspace.
+the general Barron class remains open.
+
+\section{The versatility question and oracle statistical guarantees}
+\label{sec:versatility}
+
+The broader promise of neural networks is versatility across target
+structures. A single-index target depends on one learned direction; a
+multi-index target depends on one learned subspace; projection pursuit uses
+several learned ridge directions; an additive model uses several coordinate
+profiles; and a hierarchical composition can be represented by successive
+network layers. Classical statistics develops specialized procedures for
+these cases, including projection pursuit, average derivative estimation,
+structure-adaptive smoothing, and estimators for hierarchical interactions.
+The neural-network hope is stronger: one architecture and training procedure
+would adapt to whichever of these structures the target possesses, without
+requiring the statistician to select a different method in advance.
+
+Approximation theory and idealized statistical estimation establish parts of
+that hope. In particular, neural-network classes can attain the ordinary
+smoothness benchmark from \cref{eq:generic-smooth-rate}. The next statement is
+an \emph{oracle statistical result}: the estimator is defined through a
+global empirical-risk minimization, without a claim that the nonconvex
+optimization can be performed efficiently.
+
+\begin{theorem}[Smooth regression by network ERM, informal form]
+\label{thm:holder-network-erm}
+Under the bounded-design and Gaussian-noise setting used for
+\cref{eq:generic-smooth-rate}, for every \(\alpha,L>0\) there are suitably
+sparse ReLU network classes \(\cG_n\) and a clipped global empirical-risk
+minimizer \(\widehat f_n^{\rm ERM}\) over \(\cG_n\) such that, for constants
+\(C,c>0\) independent of \(n\),
+\begin{equation}
+ \sup_{f\in\cH_d^\alpha(L)}
+ \E\bigl[\|\widehat f_n^{\rm ERM}-f\|_{L^2(P_X)}^2\bigr]
+ \leq C(\log n)^c n^{-2\alpha/(2\alpha+d)}.
+ \label{eq:holder-network-erm-rate}
+\end{equation}
+The architecture and sparsity budget are chosen using the smoothness
+parameters and the input dimension.
+\end{theorem}
+
+The polynomial part of \cref{eq:holder-network-erm-rate} matches the minimax
+rate in \cref{eq:generic-smooth-rate}. The theorem shows that the network
+class and empirical-risk criterion do not lose statistical accuracy on a
+generic smoothness class. Classical nonparametric estimators attain the same
+benchmark, so the rate is not a neural advantage. The unresolved versatility
+question concerns adaptation across several structures by one computationally
+specified training procedure.
+
+An alternative oracle rule samples network parameters conditional on fitting
+the observations. \Cref{sec:deep-lifts} explains how a small approximating
+network can yield a generalization guarantee for that rule, even when the
+learner is not supplied with the small network. Efficient sampling remains a
+separate computational question.
+
+The next positive result makes the target structure and the training
+algorithm much more specific. The target is a multi-index function whose
+features form one low-dimensional linear subspace. The analysis first asks
+what target gradients would reveal and then studies a staged neural procedure
+that receives only regression data.
 
 \section{Multi-index models and average derivatives}
 \label{sec:agop}
@@ -891,7 +1103,7 @@ $\sigma(z)=z_+$, $\tau\geq1$, and
   |z|-1/2,& |z|>1.
  \end{cases}
  \qquad
- R_\tau(h)=\E\bigl[\ell_H(h(X)-Y)\wedge\tau\bigr].
+ L_\tau(h)=\E\bigl[\ell_H(h(X)-Y)\wedge\tau\bigr].
  \label{eq:huber-truncated-risk}
 \end{equation}
 \begin{theorem}[Single-index prediction by staged SGD, informal form]
@@ -910,13 +1122,13 @@ For a sufficiently large second-stage iteration count $T'$ and under the
 specified initialization and tuning assumptions, its returned predictor
 $\widehat y_{T,T',m}$ satisfies, with high probability,
 \begin{equation}
- R_\tau(\widehat y_{T,T',m})-\E[\ell_H(\varepsilon)]
+ L_\tau(\widehat y_{T,T',m})-\E[\ell_H(\varepsilon)]
  \leq \widetilde C\left(
        \sqrt{\frac{d+\log(1/\delta)}{T}}
        +\sqrt{\frac{\log(1/\delta)}{m}}\right),
  \label{eq:mousavi-risk}
 \end{equation}
-where $R_\tau$ is truncated population Huber risk, $\ell_H$ is the Huber
+where $L_\tau$ is truncated population Huber risk, $\ell_H$ is the Huber
 loss, and $\widetilde C$ suppresses logarithmic factors and constants
 determined by the fixed link, truncation level, and tuning parameters.
 \end{theorem}
@@ -925,20 +1137,79 @@ $T'$ chosen sufficiently large, the required number $T$ of distinct samples
 is $\widetilde O(d)$. In contrast, learning a degree-$p$ target with a
 rotationally invariant kernel can require $d^{\Omega(p)}$ samples.
 
-The theorem gives a positive learning result for the two-stage procedure. The
+The staged-SGD theorem gives a positive learning result for the two-stage
+procedure. The
 nearly linear dependence on \(d\) requires Gaussian covariates, explicit
 weight decay, online first-stage samples, bias resampling, and separate
 training of the two layers. The theorem does not show that ordinary
 simultaneous training adapts across the structural families in
 \cref{eq:structured-family}.
 
+\section{A multilayer empirical-risk result}
+\label{sec:multilayer-erm}
+
+The staged-SGD theorem analyzes a specified optimization procedure for a
+single-index target. A different positive result applies to multilayer
+networks and a much larger compositional class, but assumes access to a global
+empirical-risk minimizer. Consider a target of the form
+\begin{equation}
+ f=g_q\circ g_{q-1}\circ\cdots\circ g_0,
+ \label{eq:hierarchical-composition}
+\end{equation}
+where $d_0=d$, $d_{q+1}=1$, $[a_0,b_0]=[0,1]$, and
+$g_i:[a_i,b_i]^{d_i}\to[a_{i+1},b_{i+1}]^{d_{i+1}}$. Each coordinate of
+\(g_i\) depends on at most \(t_i\) coordinates of its input and has
+H\"older smoothness \(\beta_i\). Later nonsmooth maps can
+reduce the effective smoothness of an earlier constituent. Define
+\begin{equation}
+ \beta_i^*=\beta_i\prod_{\ell=i+1}^{q}(\beta_\ell\wedge1).
+ \label{eq:effective-composition-smoothness}
+\end{equation}
+
+\begin{theorem}[Regression rate for hierarchical compositions, informal form]
+\label{thm:hierarchical-network-erm}
+Suppose that the input is supported on $[0,1]^d$ and that the responses follow
+\cref{eq:regression-model}. If the constituent maps range over fixed bounded
+H\"older balls, an empirical-risk minimizer over a suitably sparse ReLU
+network class with depth of order \(\log n\) satisfies, for constants
+\(C,c>0\),
+\begin{equation}
+ \E\bigl[\|\widehat f_n-f\|_{L^2(P_X)}^2\bigr]
+ \leq C(\log n)^c
+ \max_{0\leq i\leq q}
+ n^{-2\beta_i^*/(2\beta_i^*+t_i)}.
+ \label{eq:composition-statistical-rate}
+\end{equation}
+If \(t_i\leq\min(d_0,\ldots,d_{i-1})\) for
+\(i=1,\ldots,q\), the polynomial part of the rate matches the minimax lower
+bound for the stated composition class.
+\end{theorem}
+
+Each network block approximates one low-dimensional constituent, and the
+successive layers compose these approximations. The largest term in
+\cref{eq:composition-statistical-rate} is governed by a local arity \(t_i\),
+not by the full ambient dimension. The theorem therefore shows that a
+multilayer network class and ideal empirical-risk minimization can exploit a
+specified hierarchical composition.
+
+The hierarchical-composition theorem is informative but preliminary as an
+explanation of ordinary deep learning. The estimator uses a tuned sparse
+architecture and a global empirical-risk minimizer, and the guarantee assumes
+that the target already
+belongs to the stated composition class. The theorem does not show that
+gradient training discovers an unknown hierarchy or that one training rule
+adapts across the structures listed in \cref{sec:versatility}. Polynomial-
+spline estimators can also exploit related hierarchical interaction models,
+so the rate does not give neural networks exclusive access to the structure.
+
 \section{Optional reading}
 \label{sec:optional}
 
-The material through \cref{eq:mousavi-risk} was presented in class. The
-optional sections compare other feature-adaptation mechanisms, state the
+The material through \cref{eq:composition-statistical-rate} was presented in
+class. The optional sections compare other feature-adaptation mechanisms, state the
 entropy result that was not presented in class, and summarize what additional
-depth can change.
+depth can change. The final subsection connects stable approximation to a
+specified random interpolation rule.
 
 \subsection{Additional feature-adaptation mechanisms}
 
@@ -1013,8 +1284,8 @@ guarantees; ``neural networks versus classical methods'' is too coarse.}
 \subsection{Entropy limits for one regression procedure}
 \label{sec:yang}
 
-The preceding results describe function classes on which particular methods
-perform well. A universal entropy theorem gives a converse question that
+The preceding feature-adaptation results describe function classes on which
+particular methods perform well. A universal entropy theorem gives a converse question that
 applies to every regression procedure: if a method has risk $Cn^{-\gamma}$
 at every sample size, how large can the set of targets receiving that
 guarantee be?
@@ -1226,48 +1497,10 @@ The proposition establishes a representation advantage for depth. The
 separations do not show that gradient descent finds the deep representation
 from data.
 
-Hierarchical composition gives a statistical counterpart to the depth
-separations. Consider a target of the form
-\begin{equation}
- f=g_q\circ g_{q-1}\circ\cdots\circ g_0,
- \label{eq:hierarchical-composition}
-\end{equation}
-where each coordinate of $g_i$ depends on at most $t_i$ coordinates of its
-input and has H\"older smoothness $\beta_i$. Later nonsmooth maps can reduce
-the effective smoothness of an earlier constituent. Define
-\begin{equation}
- \beta_i^*=\beta_i\prod_{\ell=i+1}^{q}(\beta_\ell\wedge1).
- \label{eq:effective-composition-smoothness}
-\end{equation}
-\begin{theorem}[Regression rate for hierarchical compositions, informal form]
-Under bounded-domain and noise assumptions, an empirical risk minimizer over
-a suitably sparse ReLU network class with depth of order $\log n$ satisfies
-for constants $C,c>0$,
-\begin{equation}
- \E\bigl[\|\widehat f_n-f\|_2^2\bigr]
- \leq C(\log n)^c
- \max_{0\leq i\leq q}
- n^{-2\beta_i^*/(2\beta_i^*+t_i)}.
- \label{eq:composition-statistical-rate}
-\end{equation}
-If $t_i\leq\min(d_0,\ldots,d_{i-1})$ for $i=1,\ldots,q$, the polynomial
-part of the rate matches the minimax lower bound for the stated composition
-class.
-\end{theorem}
-Each part of the network approximates one
-low-dimensional constituent, and successive layers compose these
-approximations. Depth therefore converts a specified compositional
-description into an estimator whose rate is governed by the hardest local
-constituent rather than by the ambient dimension.
-
-The statistical conclusion has two important boundaries. The estimator is a
-global empirical risk minimizer over a tuned network class; the theorem does
-not show that ordinary gradient training discovers an unknown composition.
-The theorem also does not prove that every shallow neural estimator must have
-a slower rate. Polynomial-spline estimators can exploit related hierarchical
-interaction models. The statistical result shows that deep networks can
-exploit hierarchical composition. The result does not give neural networks
-exclusive access to the structure.
+The main-text theorem \cref{thm:hierarchical-network-erm} gives a statistical
+result for a specified hierarchical composition class. A different effect of
+depth occurs even when additional layers do not change the represented
+function class.
 
 Depth can also change the regularizer induced by parameter norm without
 changing the represented function class. The relevant matrix factorization
@@ -1300,6 +1533,129 @@ factorization can alter the implicit or explicit regularization. A general
 theorem converting either mechanism into a statistical and computational
 advantage under standard deep-network training remains unavailable.
 
+\subsection{From stable approximation to random interpolation}
+\label{sec:deep-lifts}
+\hypertarget{sec:deep-lifts}{}
+
+The integral representation in \cref{eq:integral-representation} supplies a
+small approximant, but its representing measure depends on the unknown
+target. Can the existence of a small approximant nevertheless control the
+risk of a learner that receives only observations? A conditional sampling
+rule gives one answer. Its guarantee depends on how much parameter volume
+represents functions close to the target.
+
+Let $X_1,\ldots,X_n$ be independent with law $P_X$ supported on
+$[-R,R]^d$ for $R>0$, and let $Y_i=f(X_i)$, so the observations are noiseless.
+For a scalar-output ReLU network of width $W$ and depth $L$, write
+$g_\theta$ for its output and let $\pi$ be uniform on the box in which all
+weights and biases lie in $[-M,M]$, with $M\geq1$. Given a tolerance
+$\tau>0$, define the set of \emph{approximate interpolators}
+\begin{equation}
+ \cI_\tau=\left\{\theta:\max_{1\leq i\leq n}
+ |g_\theta(X_i)-Y_i|\leq\tau\right\}.
+ \label{eq:approximate-interpolators}
+\end{equation}
+Conditional on the observations, draw $\widehat\theta$ from $\pi$ restricted
+to $\cI_\tau$ and normalized to have mass one. Equivalently, draw independent
+parameters from $\pi$ until one satisfies \cref{eq:approximate-interpolators}.
+This rejection procedure has no efficient runtime guarantee. For a fresh
+$X$ with law $P_X$, independent of the sample and the parameter draws, define
+the population error probability at tolerance $\tau$ by
+\begin{equation}
+ \Delta_\tau(\theta)=\P\bigl(|g_\theta(X)-f(X)|>\tau\bigr)
+ \qquad\text{for fixed }\theta.
+ \label{eq:interpolation-tail-risk}
+\end{equation}
+The measure $\pi$ selects a complete network; the measure $\mu$ in
+\cref{eq:integral-representation} specifies the atoms composing one function.
+
+\begin{theorem}[Generalization from a small approximant, informal form]
+\label{thm:deep-lift-generalization}
+Suppose a ReLU network of width $w<W$, depth $\ell\leq L$, and parameters
+in $[-M,M]$ approximates $f$ uniformly on $\operatorname{supp}(P_X)$ to
+error at most $\tau/2$. Then $\pi(\cI_\tau)>0$, and for every
+$\delta\in(0,1)$, with probability at least $1-\delta$,
+\begin{equation}
+ \Delta_\tau(\widehat\theta)
+ \leq\widetilde O_d\!\left(\frac{w\ell WL}{n}\right).
+ \label{eq:deep-lift-generalization}
+\end{equation}
+The probability includes the observations and conditional parameter draw.
+The notation suppresses logarithmic factors in the architecture sizes,
+$M$, $R+1$, $\max\{1,\tau^{-1}\}$, and $\delta^{-1}$; constants may depend
+on $d$.
+\end{theorem}
+
+The small network is a \emph{witness}: its existence certifies the bound,
+although the sampler never receives its parameters. The proof embeds the
+witness in the larger network, keeps the added ReLU units inactive, and
+allows many remaining weights to vary freely. Controlling output changes
+under perturbations of the witness parameters gives a positive-volume
+family of approximate interpolators. These embeddings are called
+\emph{deep lifts}. For any fixed $\theta$ with
+$\Delta_\tau(\theta)\geq t$, independence gives
+$\P(\theta\in\cI_\tau)\leq(1-t)^n\leq e^{-nt}$.
+Comparing the expected volume of these poorly predicting interpolators with
+the witness's guaranteed interpolation volume yields
+\cref{eq:deep-lift-generalization}. Uniform parameter sampling can therefore
+favor some functions over others. The bound still grows with $W$ and $L$;
+the theorem supplies no prescription to maximize architecture size.
+
+\begin{example}[ReLU variation representations]
+\label{ex:deep-lift-barron}
+On the Euclidean unit ball $B_d$, consider representations
+\begin{equation}
+ f(x)=\int a\,\relu(b^\top x+c)\,d\rho(a,b,c),\qquad
+ Q:=\inf_\rho\int |a|(\|b\|_1+|c|)\,d\rho<\infty,
+ \label{eq:relu-barron-lift-norm}
+\end{equation}
+where $\rho$ ranges over probability measures representing $f$ at every
+$x\in B_d$. The quantity $Q$ is a \emph{ReLU variation norm}; its definition
+differs from the spectral Barron norm in \cref{eq:barron-norm}.
+For $Q>0$, a stronger approximation result than
+\cref{lem:mc-sparsification} gives an $r$-term ReLU sum satisfying
+\begin{equation}
+ \|f-f_r\|_{L^\infty(B_d)}\leq C_d Qr^{-(d+3)/(2d)}.
+ \label{eq:relu-barron-uniform-rate}
+\end{equation}
+The sum can be implemented at width $2d+3$ and depth $r$ by copying the
+input and accumulating the summands. The construction also controls
+perturbations throughout the computation: sufficiently small per-layer
+disturbances of size $\epsilon$ cause output error $O_{d,Q}(r\epsilon)$.
+The resulting stability constants enter the parameter-volume estimate
+logarithmically. Their linear growth in $r$ therefore avoids the extra depth
+factor from applying the generic bound \cref{eq:deep-lift-generalization}.
+
+In the noiseless setup above, now with $P_X$ supported on $B_d$, fix
+$W>2d+3$ and take $M=\max\{1,2Q\}$. Choosing
+$L\asymp_d(Q/\tau)^{2d/(d+3)}$, rounded up to a positive integer, gives
+$\Delta_\tau(\widehat\theta)\leq
+\widetilde O_d((W/n)(Q/\tau)^{2d/(d+3)})$ with high probability.
+Since $|f(x)|\leq Q$, clip $g_{\widehat\theta}$ to $[-Q,Q]$ to obtain
+$\widehat f$. The elementary inequality
+$\|\widehat f-f\|_{L^2(P_X)}^2\leq
+\tau^2+4Q^2\Delta_\tau(\widehat\theta)$, with
+$\tau\asymp Q(W/n)^{(d+3)/(4d+6)}$, yields
+\begin{equation}
+ \|\widehat f-f\|_{L^2(P_X)}^2
+ \leq\widetilde O_d\!\left(Q^2(W/n)^{(d+3)/(2d+3)}\right).
+ \label{eq:deep-lift-barron-rate}
+\end{equation}
+The bound holds with probability at least $1-\delta$ for fixed
+$\delta\in(0,1)$ and sufficiently large $n$; the suppressed logarithms
+include the confidence dependence. The architecture and tolerance are tuned
+for this example, and both $Q$ and the hidden constants can depend on $d$.
+\end{example}
+
+The example converts an integral representation into a statistical
+guarantee using uniform approximation, a stable implementation, and
+parameter-volume bounds. The Hilbert-space sampling lemma alone supplies
+only the finite-approximation step. The resulting learning rule remains
+computationally idealized, and the result establishes neither the same
+guarantee for gradient training nor an advantage over a specified competing
+estimator. The bibliographical notes connect the construction to the
+interpolation discussion in \href{lecture09.pdf}{Lecture 9}.
+
 \section{Take-home messages}
 
 \begin{enumerate}[leftmargin=*]
@@ -1319,21 +1675,40 @@ representing measure.
 
 \item \textbf{Density answers the minimum approximation question.} The RBF
 and ridge density results show that the error can be made arbitrarily small.
-For H\"older balls, quantitative approximation theory relates error to the
-number of terms; suitable neural-network constructions give corresponding
-smoothness-dependent rates.
+For smooth classes, quantitative approximation theory relates error to the
+number of terms. Constructive wavelet networks give an \(m^{-1/2}\) rate under
+the stated \(W^{s,1}\) condition, while ReLU constructions recover the full
+H\"older exponent up to their parameter overhead.
+
+\item \textbf{Target-dependent term selection is nonlinear approximation.}
+For an orthonormal basis, retaining the \(m\) largest target coefficients gives
+the best \(m\)-term approximation. A projector onto one fixed subspace is a
+linear map of the target; selecting the retained indices from the target is
+not. For wavelet bases, finite-resolution transforms and coefficient
+thresholding turn the selection rule into a practical adaptive method.
 
 \item \textbf{Barron's theorem gives a target-dependent representation
-advantage.} On a spectral Barron ball, a shallow ridge network attains an
-\(m^{-1/2}\) approximation rate, while the Kolmogorov \(m\)-width for fixed
-linear spaces can decay only as \(m^{-1/d}\). The comparison depends on the
-target class, norm, and target-dependent choice of ridge atoms.
+advantage.} On the spectral Barron ball defined through ordinary Fourier
+transforms, a shallow ridge network attains an \(m^{-1/2}\) approximation rate,
+while the Kolmogorov \(m\)-width for fixed linear spaces can decay only as
+\(m^{-1/d}\). The comparison depends on the target class, norm, and
+target-dependent choice of ridge atoms.
 
 \item \textbf{A fixed kernel restricts the representing measure.} A fixed
 feature law \(\tau\) permits measures of the form \(d\mu=p\,d\tau\) with
 \(p\in L^2(\tau)\). A variation representation may use a measure concentrated
-on features selected for the target. The larger representation class creates a
-feature-selection problem.
+on features selected for the target. The neural tangent kernel is another
+fixed-feature description: its features are the parameter gradients at
+initialization. The larger variation class creates a feature-selection
+problem.
+
+\item \textbf{Versatility requires more than representing many target
+classes.} Neural networks can represent projection-pursuit, single-index,
+multi-index, generic smooth, and hierarchical-composition targets. The open
+algorithmic question asks whether one computationally specified training
+procedure adapts across these structures. Global empirical-risk results give
+near-minimax rates for smooth and hierarchical classes, but do not solve the
+nonconvex optimization problem.
 
 \item \textbf{Gradient information can reduce a multi-index problem from
 dimension \(d\) to dimension \(s\).} For
@@ -1349,6 +1724,13 @@ output weights. For a monotone single-index model, the procedure satisfies a
 prediction bound with nearly linear dependence on the ambient dimension. The
 result does not show that ordinary simultaneous training realizes the general
 Barron representation advantage.
+
+\item \textbf{A multilayer ERM result can exploit specified composition.}
+For a hierarchical target, the oracle rate depends on the local arities and
+effective smoothness parameters rather than directly on the ambient input
+dimension. The theorem assumes a tuned network class and a global empirical-
+risk minimizer; it does not show that gradient training discovers an unknown
+hierarchy.
 \end{enumerate}
 \printendnotes
 
@@ -1360,7 +1742,14 @@ there is over statistical decision rules, without a computational
 restriction.
 
 The Hilbert-space sampling argument is a standard probabilistic-method form
-of finite approximation in a convex or variation ball. The wavelet route to
+of finite approximation in a convex or variation ball. The vector-valued
+integral in \cref{eq:integral-representation} is a Bochner integral;
+\citet{diesteluhl1977} give a standard treatment of integration in Banach
+spaces. Strong measurability and integrability of the norm are the relevant
+conditions, and the bounded-dictionary assumption makes the latter condition
+automatic for a finite representing measure.
+
+The wavelet route to
 \cref{cor:rbf-density} follows \citet{delyon1995}: a target-dependent
 continuous wavelet transform supplies the representing measure, and sampling
 that measure supplies a finite scale--location approximation. The appendices
@@ -1369,15 +1758,42 @@ example. Countable dyadic wavelet bases and multiresolution analysis are
 developed by \citet{mallat1989}; \citet{daubechies1988} constructs compactly
 supported orthonormal wavelets with high regularity. The RBF corollary uses
 the continuous-wavelet construction rather than the full dyadic theory.
+The \(L^2\) estimate in \cref{eq:delyon-wavelet-rate} is the
+\(s>d/2\) specialization of the constructive radial-wavelet result of
+\citet{delyon1995}. Its \(W^{s,1}\) assumption and \(m^{-1/2}\) saturation
+differ from the full H\"older-ball statement in
+\cref{eq:holder-approximation-rate}.
 Classical quantitative approximation rates for H\"older and related smoothness
-classes are discussed by \citet{devore1998}; \citet{petersen2026} survey
-corresponding neural-network approximation results.
+classes are discussed by \citet{devore1998}. The ReLU parameter count stated
+after \cref{eq:delyon-wavelet-rate} follows the H\"older approximation result
+of \citet{ohnkim2019}; \citet{petersen2026} survey corresponding
+neural-network approximation results.
+
+The best-\(m\)-term result in \cref{prop:best-m-term-orthogonal} is elementary
+for an orthonormal basis. Its wavelet consequences belong to nonlinear
+approximation theory: regularity controls the decreasing rearrangement of the
+wavelet coefficients, thresholding produces the corresponding adaptive
+approximant, and a finite discrete wavelet transform makes the procedure
+computable. \citet{devore1998} develops the approximation-space results and
+their numerical interpretation. The important distinction for this lecture is
+that the selected scales and locations depend on the target, while a linear
+wavelet method retains a fixed index set.
 
 The shallow-network upper bound and fixed-linear-space lower bound in
 \cref{thm:barron} are normalized versions of results in
 \citet{barron1993}. Fourier conventions and the precise Barron norm change
-constants. The anchored norm in \cref{eq:barron-norm} includes the constant
-part so that the displayed quantity is a norm rather than a seminorm.
+constants. The main text uses the smaller class \(f=c+g\), where the ordinary
+Fourier transform of \(g\) is integrable and has finite weighted first moment.
+Barron's original formulation also permits modified Fourier representations
+by complex measures, including cases in which the target itself has no
+integrable ordinary Fourier transform. The smaller class suffices for both
+parts of \cref{thm:barron}: the upper-bound proof applies directly, and the
+smoothed cosine functions used for the lower bound have smooth compactly
+supported Fourier transforms. The main text chooses the smaller class to make
+the target definition more familiar. The larger class makes the lower-bound
+proof easier because it contains the pure cosine modes directly; the smoothing
+argument is needed only to keep the lower-bound witnesses in the smaller
+ordinary-transform class.
 Barron's lower-bound proof uses an orthogonal family of Fourier modes. The
 resulting fixed-space quantity is a Kolmogorov width. Classical nonlinear
 \(m\)-term approximation and its relation to widths are surveyed by
@@ -1387,9 +1803,38 @@ Bach~\citep{bach2017} develops the fixed-feature RKHS and target-dependent
 variation-space comparison used after \cref{thm:barron}. Bach also
 analyzes structured statistical rates and conditional-gradient selection from
 an infinite neuron dictionary. The selection step remains a nonconvex
-optimization problem for the ridge dictionary. The measure-valued formula in
-\cref{eq:mean-field-representation} is standard in infinite-width two-layer
-network limits; \citet{mei2019} analyze corresponding mean-field dynamics.
+optimization problem for the ridge dictionary.
+
+\citet{savarese2019} give the exact one-dimensional ReLU characterization in
+\cref{rem:relu-spline-variation}. Their parameter cost is one half of the sum
+of squared non-bias weights across both layers, while the hidden-unit and
+output biases are unregularized. They show that minimum-cost interpolation
+admits a linear spline solution with knots at the sample locations; the
+optimizer in function space is generally not unique. Their higher-dimensional
+discussion does not provide an analogous complete characterization.
+
+The finite-width identity behind the mean-field representation is immediate.
+For the parameterization
+\begin{equation*}
+ f_m(x)=\frac1m\sum_{j=1}^m
+ a_j\sigma(w_j^\top x+b_j),
+ \qquad
+ \rho_m=\frac1m\sum_{j=1}^m\delta_{(a_j,w_j,b_j)},
+\end{equation*}
+one has $f_m=f_{\rho_m}$. Mean-field theory studies the nontrivial limit in
+which the empirical neuron measures $\rho_m$ converge to a measure $\rho$
+that need not be atomic. Under an appropriate training and time scaling, the
+finite-dimensional parameter dynamics converge to an evolution equation for
+$\rho$. \citet{mei2019} analyze the resulting measure-valued dynamics,
+finite-width approximation, and a kernel sublimit.
+
+\citet{jacot2018} introduced the neural tangent kernel and showed that the
+kernel becomes deterministic and remains constant during training in their
+infinite-width limit. \citet{chizat2019} analyze the associated lazy-training
+regime and its relation to linearization. \appendixref{app:ntk} derives the
+finite-width prediction identity before stating the limiting fixed-kernel
+description. The fixed-kernel limit is useful for analyzing one training
+regime, but it does not explain an advantage attributed to learned features.
 
 Projection pursuit regression was introduced by \citet{friedman1981}.
 \citet{jones1992} proves the Hilbert-space greedy lemma used in
@@ -1424,13 +1869,39 @@ and its adaptive-estimation discussion are from \citet{yang2007}; the
 maxiset terminology and comparison with minimax analysis are developed by
 \citet{kerkyacharian2002}.
 
-The optional depth separations are due to \citet{telgarsky2016} and
-\citet{eldan2016}. The effect of additional linear layers on representation
-cost is analyzed by \citet{parkinson2025}. Hierarchical interaction models
-and corresponding neural or spline estimators are studied by
-\citet{kohler2017}, \citet{bauer2019}, \citet{schmidthieber2020}, and
-\citet{kohlerlanger2021}. \citet{petersen2026} provide a broad reference for
-modern neural-network approximation theory.
+The smooth-network ERM benchmark in \cref{thm:holder-network-erm} and the
+hierarchical-composition result in \cref{thm:hierarchical-network-erm} are
+informal specializations of results in \citet{schmidthieber2020}.
+Hierarchical interaction models and corresponding neural or spline estimators
+are also studied by \citet{kohler2017}, \citet{bauer2019}, and
+\citet{kohlerlanger2021}. The optional depth separations are due to
+\citet{telgarsky2016} and \citet{eldan2016}. The effect of additional linear
+layers on representation cost is analyzed by \citet{parkinson2025}.
+\citet{petersen2026} provide a broad reference for modern neural-network
+approximation theory.
+
+\paragraph{Stable approximation and random interpolation.}
+\Cref{sec:deep-lifts} follows \citet{madhowwang2026}, version 2 of their
+preprint. \Cref{thm:deep-lift-generalization} specializes their Theorem 3
+to scalar outputs; their Theorem 36 retains finer stability information.
+Their Lemmas 34--35 and Appendix I.1 give
+\cref{ex:deep-lift-barron}. The uniform approximation input
+\cref{eq:relu-barron-uniform-rate} is recorded in
+\citet[Lemma 2.3]{yangzhou2025}. The statistical rate here uses noiseless
+observations; comparison with a noisy-regression minimax exponent does not
+establish minimax optimality for this observation model.
+\citet{buzaglo2024} previously related uniform parameter sampling to a
+nonuniform distribution over represented functions. Madhow and Wang extend
+the analysis to deep networks with continuous bounded parameters and study
+label corruptions. Their corruption proof adds localized corrections to a
+small witness, connecting to the construction in
+\href{lecture09.pdf\#nameddest=section.2}{Lecture 9, Section 9.2}.
+The corrections furnish a witness in the proof; the sampled network need
+not explicitly implement that construction. Regression interpolation uses
+a positive tolerance, and the fixed-corruption-fraction result in their
+Corollary 7 is a finite-sample guarantee, not asymptotic consistency at a
+fixed positive corruption fraction. None of these results supplies an
+efficient sampling algorithm or a guarantee for ordinary SGD.
 \section*{Glossary}
 
 \begin{description}[style=unboxed,leftmargin=1.5em,labelindent=0pt]
@@ -1445,6 +1916,10 @@ returns an approximating function.
 A real-valued measure represented in
 \cref{def:signed-integral-representation} as a measurable sign function times
 a finite positive measure.
+\item[Bochner integral]
+An integral of a Banach- or Hilbert-space-valued function, defined by
+approximation in norm by simple vector-valued functions. Strong measurability
+and integrability of the function's norm ensure its existence.
 \item[Total variation measure and norm]
 For $d\mu=s\,d|\mu|$ with $|s|=1$, the positive measure $|\mu|$ is the
 total variation measure and $\|\mu\|_{\TV}=|\mu|(\Theta)$ is the total
@@ -1452,6 +1927,11 @@ variation norm.
 \item[H\"older continuity]
 The condition $|h(x)-h(x')|\leq L\|x-x'\|^\beta$ for
 $0<\beta\leq1$. Lipschitz continuity is the case $\beta=1$.
+\item[Linear approximation method]
+An approximation map that is linear in the target, such as orthogonal
+projection onto a fixed finite-dimensional subspace. The term describes the
+target-to-approximant map, not the dependence of the approximating functions
+on their input.
 \item[Nonlinear $m$-term approximation]
 Approximation by a sum of at most $m$ dictionary atoms whose identities and
 coefficients may depend on the target. The selection makes the approximation
@@ -1496,18 +1976,46 @@ where the input locations are sampled from a fixed distribution.
 \item[Variation space]
 The class of integral feature representations whose signed representing
 measure has finite total variation.
+\item[Linear spline]
+A continuous real-valued function that is affine on each interval determined
+by a finite ordered set of knots. Its slope is constant between consecutive
+knots and may change at a knot.
 \item[Spectral Barron class]
-A class of restrictions of ambient Fourier representations with bounded
-anchored spectral norm, as in \cref{eq:barron-norm,eq:barron-class}.
+A class of restrictions of functions \(f=c+g\) for which the ordinary Fourier
+transform of \(g\) has bounded weighted first moment, as in
+\cref{eq:barron-norm,eq:barron-class}.
 \item[Variation Barron space]
 A variation space generated by a ridge-feature dictionary. Spectral Barron
 conditions can imply membership in a variation Barron space, but the two
 definitions are not identical. The literature uses several feature
 normalizations and hence several related Barron norms.
+\Cref{eq:relu-barron-lift-norm} specifies the ReLU variation norm used in
+the random-interpolation example.
 \item[Mean-field representation]
-An infinite-width two-layer network written as an integral over a probability
-measure on neuron parameters. Mean-field training theory also specifies a
-geometry and an evolution equation for that measure.
+An integral representation of a two-layer network with respect to a measure
+on neuron parameters. In the infinite-width limit, the measure can arise as a
+non-atomic limit of finite networks' empirical neuron measures.
+\item[Approximate interpolator]
+A predictor whose residual at every training observation is at most a stated
+tolerance, as in \cref{eq:approximate-interpolators}.
+\item[Deep lift]
+An embedding of a small network into a larger network, with parameter
+perturbations controlled so that the resulting positive-volume family
+computes nearby functions. A small witness can thereby certify a
+generalization bound for conditional parameter sampling.
+\item[Neural tangent kernel]
+The kernel obtained by taking inner products of a network's parameter
+gradients. In the neural-tangent infinite-width regime, the kernel remains
+fixed at its initialization limit and the prediction dynamics become kernel
+gradient descent.
+\item[Oracle statistical result]
+A risk guarantee for an ideal estimator, such as a global empirical-risk
+minimizer, without a guarantee that the defining optimization problem can be
+solved efficiently.
+\item[Versatility]
+The proposed ability of one neural architecture and training procedure to
+adapt across several target structures without selecting a different
+specialized estimation method for each structure.
 \item[Average gradient outer product]
 The matrix $\E[\nabla f(X)\nabla f(X)^\top]$, whose leading eigenspace records
 directions along which $f$ varies on average.
@@ -1546,6 +2054,7 @@ characterized by both an upper bound and a converse.
 \setcounter{courseexercise}{0}
 \exercisegroup{Integral representations and density}
 \input{../exercises/l15-monte-carlo-sparsification.tex}
+\input{../exercises/l15-relu-spline-variation.tex}
 \input{../exercises/l15-density-versus-rate.tex}
 \input{../exercises/l15-holder-bias-variance.tex}
 \exercisegroup{Adaptive atoms and fixed features}
@@ -2032,8 +2541,8 @@ approximations preserve the coefficient bound up to an $o(1)$ term, proving
 \cref{eq:fourier-mode-network-limit}.
 \end{proof}
 
-For a representation satisfying \cref{eq:barron-density-representation}, set
-$d\nu(\omega)=(2\pi)^{-d}F(\omega)\,d\omega$. Integrating the
+For \(f=c+g\in\cB(\R^d)\), set
+$d\nu(\omega)=(2\pi)^{-d}\widehat g(\omega)\,d\omega$. Integrating the
 threshold representations in \cref{eq:fourier-mode-threshold-identity}
 against $\nu$ produces a complex signed measure on the threshold ridge
 parameters. Taking real parts produces a real signed ridge-parameter measure
@@ -2054,9 +2563,11 @@ $L^2(Q)$ target by smooth compactly supported functions, also proves
 \subsection{Measure-valued spectral representations}
 \label{app:fourier-measure-extension}
 
-The density formulation in \cref{def:spectral-barron-norm} is sufficient for
-the main theorem. A measure-valued formulation enlarges the class and includes
-pure Fourier modes without smoothing. For a real-valued
+The ordinary-Fourier-transform formulation in
+\cref{def:spectral-barron-norm} is sufficient for the main theorem and keeps
+the main-text definition in terms of the familiar Fourier transform of a
+function. A measure-valued formulation enlarges the class and includes pure
+Fourier modes without smoothing. For a real-valued
 \(f:\R^d\to\R\), let \(\mathfrak R(f)\) contain every finite complex Borel
 measure \(\nu\) such that
 \begin{equation}
@@ -2071,17 +2582,18 @@ where the integral is real. Define the anchored measure cost
  \int_{\R^d}\|\omega\|_1\,d|\nu|(\omega).
  \label{eq:barron-measure-coefficient}
 \end{equation}
-The radius-(C) class on (Q) consists of restrictions of ambient functions
-whose anchored measure cost is at most (C), in parallel with
-\cref{eq:barron-class}. Every density
-\(F\) in \cref{eq:barron-density-representation} defines
-\(d\nu=(2\pi)^{-d}F\,d\omega\), so the density-defined Barron ball is
-contained in the measure-defined ball with the same radius. The
+The radius-\(C\) class on \(Q\) consists of restrictions of ambient functions
+whose anchored measure cost is at most \(C\), in parallel with
+\cref{eq:barron-class}. Every \(f=c+g\in\cB(\R^d)\) defines
+\(d\nu=(2\pi)^{-d}\widehat g\,d\omega\), so the ordinary-transform Barron ball
+is contained in the measure-defined ball with the same radius. The
 Fourier-to-threshold construction in \cref{prop:fourier-to-ridge} applies
 directly to \(\nu\) and gives the
-same neural upper bound. The main text uses the density class because smooth
-spectral approximations to cosine modes also give the fixed-space lower bound
-inside that smaller class.
+same neural upper bound. The main text uses the smaller ordinary-transform
+class to simplify the definition. The larger class gives the fixed-space lower
+bound more directly because the cosine witnesses already belong to the class.
+For the smaller class, smooth spectral approximations to the cosine modes give
+the same lower-bound order.
 
 \subsection{Fourier modes on the cube}
 
@@ -2118,8 +2630,7 @@ $2\cos u\cos v=\cos(u-v)+\cos(u+v)$.
 \begin{proposition}[Smooth spectral approximations to cosine modes]
 \label{prop:smooth-cosine-spectra}
 For every nonzero $\omega\in\R^d$ and every $0<\delta\leq1$, there is a
-real-valued function $u_{\omega,\delta}$ satisfying
-\cref{eq:barron-density-representation} such that
+real-valued function $u_{\omega,\delta}\in\cB(\R^d)$ such that
 \begin{align}
  \left\|u_{\omega,\delta}
  -\sqrt2\cos(\omega^\top\,\cdot)\right\|_{L_\infty(Q)}
@@ -2142,7 +2653,9 @@ $\rho_\delta(z)=\delta^{-d}\rho(z/\delta)$ and define the Fourier density
  \left(\rho_\delta(\xi-\omega)+\rho_\delta(\xi+\omega)\right).
  \label{eq:smoothed-cosine-density}
 \end{equation}
-Fourier inversion gives
+The density in \cref{eq:smoothed-cosine-density} is smooth and compactly
+supported, so its inverse Fourier transform is a Schwartz function and hence
+belongs to \(L^1(\R^d)\). Fourier inversion gives
 \begin{equation}
  u_{\omega,\delta}(x)
  =\sqrt2\cos(\omega^\top x)
@@ -2570,6 +3083,67 @@ kernel. For a redundant fixed feature representation, several coefficient
 functions $p$ may represent the same $f$; the RKHS norm is the infimum of
 $\|p\|_{L_2(\tau)}$ over those coefficient functions.
 
+\section{The neural tangent kernel as a fixed-feature limit}
+\label{app:ntk}
+
+Let $f_\vartheta$ be differentiable in its parameter vector $\vartheta$, and
+consider training data $(x_i,y_i)_{i=1}^n$. Define the tangent feature map and
+the corresponding kernel at time $t$ by
+\begin{equation}
+ \Phi_t(x)=\nabla_\vartheta f_{\vartheta_t}(x),
+ \qquad
+ K_t(x,x')=\langle\Phi_t(x),\Phi_t(x')\rangle.
+ \label{eq:time-dependent-ntk}
+\end{equation}
+For the empirical squared loss
+\begin{equation}
+ L_n(\vartheta)=\frac1{2n}\sum_{i=1}^n
+ \bigl(f_\vartheta(x_i)-y_i\bigr)^2,
+ \label{eq:ntk-empirical-loss}
+\end{equation}
+gradient flow satisfies $\dot\vartheta_t=-\nabla L_n(\vartheta_t)$. Let
+$\mathbf f_t=(f_{\vartheta_t}(x_i))_{i=1}^n$,
+$\mathbf y=(y_i)_{i=1}^n$, and
+$\mathbf K_t=(K_t(x_i,x_j))_{i,j=1}^n$. The chain rule gives the exact
+prediction dynamics
+\begin{equation}
+ \dot{\mathbf f}_t
+ =-\frac1n\mathbf K_t(\mathbf f_t-\mathbf y).
+ \label{eq:exact-ntk-dynamics}
+\end{equation}
+Equation~\eqref{eq:exact-ntk-dynamics} is not a fixed-kernel description of a
+finite network: the tangent features, and hence $\mathbf K_t$, generally
+change during training.
+
+\begin{theorem}[Neural tangent kernel limit, informal form]
+\label{thm:ntk-limit}
+For standard infinite-width parameterizations and suitable regularity
+conditions, the random kernel at initialization converges to a deterministic
+kernel $K_\infty$. On every fixed training-time interval, the kernel changes
+by a vanishing amount as the widths tend to infinity. The prediction dynamics
+therefore converge to
+\begin{equation}
+ \dot{\mathbf f}_t
+ =-\frac1n\mathbf K_\infty(\mathbf f_t-\mathbf y).
+ \label{eq:limiting-ntk-dynamics}
+\end{equation}
+\end{theorem}
+
+The limiting dynamics use the tangent features at initialization. Equivalently,
+the network behaves like the first-order parameter linearization
+\begin{equation}
+ f_\vartheta(x)
+ \approx f_{\vartheta_0}(x)
+ +\langle\Phi_0(x),\vartheta-\vartheta_0\rangle.
+ \label{eq:network-linearization}
+\end{equation}
+For the feature-learning question in the main text, the neural tangent limit
+is the wrong asymptotic regime: the limit removes the movement of features
+that is supposed to produce the neural advantage. The limit remains useful as
+an exact description of one wide-network scaling and as a fixed-feature
+baseline. The theorem does not imply that finite networks, or infinite-width
+limits with different scalings, cannot learn features.
+
 \section{First-stage contraction for the staged-SGD result}
 \label{app:sgd-contraction}
 
@@ -2598,13 +3172,19 @@ regime uses squared loss, an almost-sure bound on \(Y\), and uniform bounds on
 Appropriately scaled Huber and logistic losses satisfy the ReLU conditions.
 Monotonicity of the link is not required for the contraction theorem.
 
+With the output weights $a$ and biases $b$ fixed, define the regularized
+population objective
+\[
+ F_\lambda(W)=\E[\ell(\widehat y(X;W,a,b),Y)]
+              +\frac\lambda2\|W\|_F^2.
+\]
 The key identity comes from Gaussian integration by parts.
 \begin{proposition}[Population-gradient decomposition, informal form]
 Under the smooth-activation assumptions, or under the corresponding
 conditions for a ReLU network and a convex Lipschitz loss, the gradient of the
 regularized population risk has the form
 \begin{equation}
- \nabla_W R_\lambda(W)
+ \nabla_W F_\lambda(W)
    =\bigl(H(W)+\lambda I_m\bigr)W+D(W)U,
  \label{eq:population-gradient-decomposition}
 \end{equation}
@@ -2615,7 +3195,7 @@ write \(W_\perp=W\Pi_\perp\). Right-multiplying
 \cref{eq:population-gradient-decomposition} by \(\Pi_\perp\) removes the target
 term:
 \begin{equation}
- \nabla_W R_\lambda(W)\Pi_\perp
+ \nabla_W F_\lambda(W)\Pi_\perp
  =\bigl(H(W)+\lambda I_m\bigr)W_\perp.
  \label{eq:orthogonal-gradient}
 \end{equation}
@@ -2682,6 +3262,24 @@ nonparametric regression.
 \newblock \emph{The Annals of Statistics}, 47(4):2261--2285, 2019.
 \newblock \url{https://doi.org/10.1214/18-AOS1747}.
 
+\bibitem[Buzaglo et al.(2024)]{buzaglo2024}
+Gon Buzaglo, Itamar Harel, Mor Shpigel Nacson, Alon Brutzkus, Nathan Srebro,
+and Daniel Soudry.
+\newblock How uniform random weights induce non-uniform bias: Typical
+interpolating neural networks generalize with narrow teachers.
+\newblock In \emph{Proceedings of the 41st International Conference on
+Machine Learning}, volume 235 of \emph{Proceedings of Machine Learning
+Research}, pages 5035--5081, 2024.
+\newblock \url{https://proceedings.mlr.press/v235/buzaglo24a.html}.
+
+\bibitem[Chizat et al.(2019)]{chizat2019}
+L\'ena\"ic Chizat, Edouard Oyallon, and Francis Bach.
+\newblock On lazy training in differentiable programming.
+\newblock In \emph{Advances in Neural Information Processing Systems},
+volume 32, 2019.
+\newblock
+\url{https://papers.neurips.cc/paper_files/paper/2019/hash/ae614c557843b1df326cb29c57225459-Abstract.html}.
+
 \bibitem[Cohen et al.(2012)]{cohendaubechiesdevore2012}
 Albert Cohen, Ingrid Daubechies, Ronald DeVore, G\'erard Kerkyacharian, and
 Dominique Picard.
@@ -2723,6 +3321,12 @@ Ronald A. DeVore.
 \newblock \emph{Acta Numerica}, 7:51--150, 1998.
 \newblock \url{https://doi.org/10.1017/S0962492900002816}.
 
+\bibitem[Diestel and Uhl(1977)]{diesteluhl1977}
+Joseph Diestel and J.~Jerry Uhl, Jr.
+\newblock \emph{Vector Measures}.
+\newblock Mathematical Surveys, volume 15. American Mathematical Society,
+1977.
+
 \bibitem[Eldan and Shamir(2016)]{eldan2016}
 Ronen Eldan and Ohad Shamir.
 \newblock The power of depth for feedforward neural networks.
@@ -2751,6 +3355,15 @@ Marian Hristache, Anatoli Juditsky, J\"org Polzehl, and Vladimir Spokoiny.
 \newblock Structure adaptive approach for dimension reduction.
 \newblock \emph{The Annals of Statistics}, 29(6):1537--1566, 2001.
 \newblock \url{https://doi.org/10.1214/aos/1015345954}.
+
+\bibitem[Jacot et al.(2018)]{jacot2018}
+Arthur Jacot, Franck Gabriel, and Cl\'ement Hongler.
+\newblock Neural tangent kernel: Convergence and generalization in neural
+networks.
+\newblock In \emph{Advances in Neural Information Processing Systems},
+volume 31, 2018.
+\newblock
+\url{https://proceedings.neurips.cc/paper/2018/hash/5a4be1fa34e62bb8a6ec6b91d2462f5a-Abstract.html}.
 
 \bibitem[Jones(1992)]{jones1992}
 Lee K. Jones.
@@ -2787,6 +3400,13 @@ descent with pruning.
 \newblock 2026.
 \newblock \url{https://arxiv.org/abs/2608.25743}.
 
+\bibitem[Madhow and Wang(2026)]{madhowwang2026}
+Sunil Madhow and Yu-Xiang Wang.
+\newblock ``Deep lifts'': Neural networks can generalize even with the
+dumbest optimizer.
+\newblock arXiv:2610.23009v2, October 29, 2026.
+\newblock \url{https://arxiv.org/abs/2610.23009v2}.
+
 \bibitem[Mallat(1989)]{mallat1989}
 St\'ephane G. Mallat.
 \newblock A theory for multiresolution signal decomposition: The wavelet
@@ -2812,6 +3432,13 @@ with SGD.
 \newblock 2023.
 \newblock \url{https://arxiv.org/abs/2209.14863}.
 
+\bibitem[Ohn and Kim(2019)]{ohnkim2019}
+Ilsang Ohn and Yongdai Kim.
+\newblock Smooth function approximation by deep neural networks with general
+activation functions.
+\newblock \emph{Entropy}, 21(7):627, 2019.
+\newblock \url{https://doi.org/10.3390/e21070627}.
+
 \bibitem[Parkinson et al.(2025)]{parkinson2025}
 Suzanna Parkinson, Greg Ongie, and Rebecca Willett.
 \newblock ReLU neural networks with linear layers are biased towards single-
@@ -2833,6 +3460,12 @@ Mikhail Belkin.
 backpropagation-free machine learning models.
 \newblock \emph{Science}, 383(6690):1461--1467, 2024.
 \newblock \url{https://doi.org/10.1126/science.adi5639}.
+
+\bibitem[Savarese et al.(2019)]{savarese2019}
+Pedro Savarese, Itay Evron, Daniel Soudry, and Nathan Srebro.
+\newblock How do infinite width bounded norm networks look in function space?
+\newblock 2019.
+\newblock \url{https://arxiv.org/abs/1902.05040}.
 
 \bibitem[Schmidt-Hieber(2020)]{schmidthieber2020}
 Johannes Schmidt-Hieber.
@@ -2876,6 +3509,13 @@ Yuhong Yang.
 Artificial Intelligence and Statistics}, volume 2 of \emph{Proceedings of
 Machine Learning Research}, pages 636--643, 2007.
 \newblock \url{https://proceedings.mlr.press/v2/yang07a.html}.
+
+\bibitem[Yang and Zhou(2025)]{yangzhou2025}
+Yunfei Yang and Ding-Xuan Zhou.
+\newblock Optimal rates of approximation by shallow ReLU$^k$ neural
+networks and applications to nonparametric regression.
+\newblock \emph{Constructive Approximation}, 62:329--360, 2025.
+\newblock \url{https://doi.org/10.1007/s00365-024-09679-z}.
 
 \end{thebibliography}
 

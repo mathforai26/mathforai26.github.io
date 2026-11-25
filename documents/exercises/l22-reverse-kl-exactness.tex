@@ -1,0 +1,77 @@
+\begin{exercisechunk}
+\item \textbf{Hard and graded reverse KL.}\suppmark
+\label[exercise]{ex:l22-reverse-kl-exactness}
+\exerciseprofile{2}{2}{3}{\exproof\quad\excalculation\quad\exinterpretation}{%
+Identify why hard reverse KL supplies no finite graded comparison among
+imperfect rules and what additional information makes one possible.}
+Let $\mathcal U$ be finite, let $\mu(u)>0$ for every $u\in\mathcal U$, and
+let $f:\mathcal U\to\{0,1\}$. Define
+\[
+ P_f(u,y)=\mu(u)\mathbb I\{y=f(u)\},
+ \qquad
+ Q_q(u,y)=\mu(u)q(y\mid u),
+\]
+where $q(\,\cdot\mid u)$ is a conditional mass function.
+\begin{enumerate}[(a)]
+\item Prove that $D(Q_q,P_f)<+\infty$ if and only if
+$q(f(u)\mid u)=1$ for every $u\in\mathcal U$. Determine the value of the
+divergence when it is finite.
+\item Prove
+\[
+ D(P_f,Q_q)=\sum_{u\in\mathcal U}\mu(u)
+ \log\frac{1}{q(f(u)\mid u)}.
+\]
+Fix $u_0\in\mathcal U$ and $0<\eta<1$. Let
+$q(1-f(u_0)\mid u_0)=\eta$ and let $q$ return the correct answer with
+probability one at every other prompt. Compute both KL divergences.
+\item For fixed $\eta$, explain how the forward divergence can be made
+arbitrarily small by changing only $\mu(u_0)$. Explain why the same
+construction never satisfies the reverse-KL support requirement.
+\item Fix $0<\epsilon<1/2$ and define
+\[
+ P_{\epsilon,f}(u,y)
+ =\mu(u)\bigl((1-\epsilon)\mathbb I\{y=f(u)\}
+              +\epsilon\mathbb I\{y=1-f(u)\}\bigr).
+\]
+For $e_q(u)=q(1-f(u)\mid u)$, prove
+\[
+ D(Q_q,P_{\epsilon,f})
+ =\sum_{u\in\mathcal U}\mu(u)\left(
+ (1-e_q(u))\log\frac{1-e_q(u)}{1-\epsilon}
+ +e_q(u)\log\frac{e_q(u)}{\epsilon}\right).
+\]
+Show that the contribution at $u$ diverges as $\epsilon\downarrow0$ when
+$e_q(u)>0$. Explain why smoothing makes the objective finite and graded but
+does not reveal $f(u)$ at an unobserved prompt.
+\item Let $r(\,\cdot\mid u)$ be a positive reference mass function, let
+$c:\mathcal U\times\{0,1\}\to\mathbb R$ be an evaluable cost, and let
+$\beta>0$. Define
+\[
+ P_{\beta,c}(u,y)
+ =\mu(u)\frac{r(y\mid u)e^{-\beta c(u,y)}}{Z_\beta(u)},
+ \qquad
+ Z_\beta(u)=\sum_y r(y\mid u)e^{-\beta c(u,y)}.
+\]
+Prove
+\[
+ D(Q_q,P_{\beta,c})
+ =\sum_{u\in\mathcal U}\mu(u)\left(
+ D(q(\,\cdot\mid u),r(\,\cdot\mid u))
+ +\beta\sum_yq(y\mid u)c(u,y)+\log Z_\beta(u)\right).
+\]
+Now take $c(u,y)=\mathbb I\{y\ne f(u)\}$. Show that the minimizing
+conditional mass function assigns positive probability to the incorrect
+answer at every input for every finite $\beta$. Conclude that the graded Gibbs
+objective is not by itself an exact-learning guarantee.
+
+Identify the information, beyond finite positive demonstrations, that permits
+an optimization method to evaluate the $q$-dependent terms on generated
+prompt--answer pairs.
+\end{enumerate}
+\begin{hints}
+A KL term is infinite when its first argument assigns positive mass to an
+event to which its second argument assigns zero mass. For the two graded
+targets, substitute their mass functions into the definition of KL and cancel
+the common prompt mass $\mu(u)$.
+\end{hints}
+\end{exercisechunk}

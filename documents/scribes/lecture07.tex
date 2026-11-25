@@ -5,10 +5,11 @@
 \usepackage[inline,shortlabels]{enumitem}
 \usepackage{booktabs}
 \usepackage{xcolor}
+\usepackage{../misc_files/course-definition-boxes}
 \usepackage{microtype}
 
 % Revision date: maintained by scripts/build_lecture_notes.py. Keep this command.
-\newcommand{\lecturerevised}{2026-10-09 23:46 UTC-07:00}
+\newcommand{\lecturerevised}{2026-11-07 09:46 UTC+00:00}
 \usepackage{eso-pic}
 \AddToShipoutPictureBG{%
   \AtPageLowerLeft{%
@@ -522,8 +523,8 @@ F(\theta)=\cC(N_\theta)=-\E_{P_S}[Y N_\theta(X)].
 \label{eq:correlation-objective}
 \end{equation}
 For a hard predictor $h:\{-1,1\}^d\to\{-1,1\}$, define its classification
-risk by $R_{01}(h)=P_S(h(X)\ne Y)$. For binary-valued predictions,
-$\cC(h)=2R_{01}(h)-1$. The identity does not extend to a real-valued score
+risk by $L_{01}(h)=P_S(h(X)\ne Y)$. For binary-valued predictions,
+$\cC(h)=2L_{01}(h)-1$. The identity does not extend to a real-valued score
 $f$: an arbitrarily small score can have the correct sign everywhere.
 \Cref{ex:l7-correlation-loss} asks you to prove these claims and derive the
 corresponding decompositions for squared and logistic loss. The main result
@@ -596,18 +597,18 @@ k\ge(288A+144)\log d.
 Let $h_\theta(x)=\operatorname{sign}(N_\theta(x))$, with fair tie-breaking
 when $N_\theta(x)=0$. Equivalently,
 \[
-R_{01}(h_\theta)
+L_{01}(h_\theta)
 =P_S(YN_\theta(X)<0)+\frac12P_S(N_\theta(X)=0).
 \]
 Then, for every $\gamma>0$,
 \begin{equation}
-\P\!\left(R_{01}(h_{\Theta_T})\le\frac12-\gamma\right)
+\P\!\left(L_{01}(h_{\Theta_T})\le\frac12-\gamma\right)
 \le\frac12+e^{-k/36},
 \label{eq:classification-probability}
 \end{equation}
 and
 \begin{equation}
-\left|\E[R_{01}(h_{\Theta_T})]-\frac12\right|
+\left|\E[L_{01}(h_{\Theta_T})]-\frac12\right|
 \le e^{-k/36}.
 \label{eq:classification-expectation}
 \end{equation}

@@ -1,0 +1,36 @@
+\begin{exercisechunk}
+\item \textbf{Average reward error after policy optimization.}\suppmark
+\label[exercise]{ex:l20-offline-error}
+\exerciseprofile{2}{2}{2}{\exproof\quad\excalculation\quad\exinterpretation}{%
+Use coverage to convert logged reward accuracy into a policy-selection guarantee.}
+Let $\cY=\{a,b\}$, with logging probabilities
+$\mu(a)=1-\delta$, $\mu(b)=\delta$, where $0<\delta<1$.
+The true and fitted rewards are
+$r(a)=\widehat r(a)=1$, $r(b)=0$, and $\widehat r(b)=2$.
+\begin{enumerate}[(a)]
+\item Show that the logged squared error is $4\delta$, while maximizing
+estimated expected reward over all policies selects $b$ with probability
+one and incurs true-reward gap one. For that selected policy $\pi_b$,
+show that $C(\pi_b)=1/\delta$ and
+$\varepsilon\sqrt{C(\pi_b)}=2$, where $\varepsilon=2\sqrt\delta$.
+Explain why the vanishing logged error as $\delta\downarrow0$ does not
+force a vanishing policy-selection error.
+\item Now consider any finite response set, logging distribution $\mu$,
+and rewards satisfying, for some $\varepsilon\ge0$,
+\[
+ \sum_y\mu(y)(\widehat r(y)-r(y))^2\le\varepsilon^2.
+\]
+For $B\ge1$, let $\Pi_B=\{\pi\ll\mu:C(\pi)\le B\}$.
+Let $\pi^\star$ and $\widehat\pi$ maximize true and estimated expected
+reward, respectively, over $\Pi_B$.
+Show that
+\[
+ \sum_y\pi^\star(y)r(y)-\sum_y\widehat\pi(y)r(y)
+ \le2\varepsilon\sqrt B.
+\]
+\end{enumerate}
+\begin{hints}
+For part (b), apply \cref{prop:pessimism} to each policy in $\Pi_B$ and
+insert the estimated reward between the two true rewards.
+\end{hints}
+\end{exercisechunk}

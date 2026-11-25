@@ -1,0 +1,63 @@
+\begin{exercisechunk}
+\item \textbf{Off-policy context mismatch and indistinguishable targets.}
+\label[exercise]{ex:l20-offpolicy-context}
+\exerciseprofile{2}{2}{2}{\exproof\quad\excalculation\quad\exinterpretation}{%
+Distinguish response-distribution correction from context-distribution
+correction under shared policy parameters.}
+Let the context set be $\{x_+,x_-\}$, the action set be $\{0,1\}$, and
+$r(x,a)=a$. Let the offline context distribution $\mu$ be uniform and consider
+the scalar policy class
+\[
+ \pi_\theta(1\mid x_+)=\sigma(\theta),\qquad
+ \pi_\theta(1\mid x_-)=\sigma(-\theta).
+\]
+The two problem instances differ only in their target context distributions:
+$\nu_+$ puts probability one on $x_+$ and $\nu_-$ puts probability one on
+$x_-$. Write $J_+$ and $J_-$ for their respective expected-reward objectives.
+
+Call a possibly randomized update rule \emph{local} for this exercise if the
+conditional law of $\theta_{t+1}$, given $\theta_0,\ldots,\theta_t$, is a fixed
+function of that parameter history and the joint law under $X\sim\mu$ of
+\[
+ \bigl(\vartheta\mapsto\pi_\vartheta(\cdot\mid X),\ r(X,\cdot)\bigr).
+\]
+In particular, the update rule is not given $\nu_+$ or $\nu_-$. Use the same
+initialization law in the two instances, independently of the instance.
+\begin{enumerate}[(a)]
+\item Show that
+\[
+ J_+(\theta)=\sigma(\theta),\qquad
+ J_-(\theta)=\sigma(-\theta),\qquad
+ J_+(\theta)+J_-(\theta)=1.
+\]
+For $\theta_+^\star=\log 3$ and $\theta_-^\star=-\log 3$, show that
+$J_+(\theta_+^\star)=J_-(\theta_-^\star)=3/4$.
+\item Prove that the two runs of any local update can be coupled so that their
+parameter sequences agree at every round. For $T\ge1$, define their average
+comparator gaps by
+\[
+ \overline\delta_{T,\pm}
+ =\frac1T\sum_{t=0}^{T-1}
+ \E\bigl[J_\pm(\theta_\pm^\star)-J_\pm(\theta_t^\pm)\bigr],
+\]
+where the expectation uses the corresponding run. Show that
+\[
+ \overline\delta_{T,+}+\overline\delta_{T,-}=\frac12,
+ \qquad
+ \max\{\overline\delta_{T,+},\overline\delta_{T,-}\}\ge\frac14.
+\]
+\item Show that no behavior policy can induce the uniform context marginal
+$\mu$ under either target distribution in this contextual bandit. Then compute
+$\nu_\pm(x)/\mu(x)$ and verify
+\[
+ \sum_x\mu(x)\frac{\nu_\pm(x)}{\mu(x)}
+ \nabla_\theta\sum_a\pi_\theta(a\mid x)r(x,a)
+ =\begin{cases}
+ \sigma'(\theta),&\text{for $\nu_+$},\\
+ -\sigma'(\theta),&\text{for $\nu_-$}.
+ \end{cases}
+\]
+Explain why giving the target context distribution or these context weights
+violates the information restriction in the definition of a local update.
+\end{enumerate}
+\end{exercisechunk}

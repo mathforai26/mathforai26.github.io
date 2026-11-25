@@ -6,6 +6,7 @@
 \usepackage[inline,shortlabels]{enumitem}
 \usepackage{booktabs}
 \usepackage{xcolor}
+\usepackage{../misc_files/course-definition-boxes}
 \usepackage{microtype}
 \usepackage{float}
 \usepackage{tikz}
@@ -14,7 +15,7 @@
 \usetikzlibrary{arrows.meta,positioning,calc}
 
 % Revision date: maintained by scripts/build_lecture_notes.py. Keep this command.
-\newcommand{\lecturerevised}{2026-10-09 23:51 UTC-07:00}
+\newcommand{\lecturerevised}{2026-11-18 11:06 UTC-06:00}
 \usepackage{eso-pic}
 \AddToShipoutPictureBG{%
   \AtPageLowerLeft{%
@@ -118,13 +119,35 @@ September 15, 2026
 prepared and expanded the present notes.
 
 \medskip
-\noindent\textbf{About these lecture notes.}
-This lecture asks how a structured hidden state can explain a sequence,
-how to predict and generate after observing a prefix, and how to fit the
-model from observations. The main construction first fits observed lag
-coefficients, then recovers a compact recurrent predictor by matrix
-factorization. Fitting a dynamical model from data is called
-\emph{system identification}.
+How can a structured hidden state explain a sequence, and how can we fit a
+model that predicts and generates after an observed prefix? The main
+construction first fits observed lag coefficients, then recovers a compact
+recurrent predictor by matrix factorization. The lecture connects this
+construction to latent-variable fitting, memory, and attention.
+
+\noindent\textbf{Scope and reading guide.}
+The main text follows the classroom development from state-space models to
+the subspace algorithm, including questions about memory, parameter sharing,
+backpropagation, and attention. The synthetic comparisons and finite-state
+parallel simulation were added after class. The optional analysis justifies
+the algorithm and connects estimation
+error to prediction and generation. Cayley--Hamilton was not presented in
+class; it is retained as an optional comparison and an exercise. Superscript
+asterisks\suppmark{} mark optional material.
+We assume basic matrix algebra, conditional probability, and Gaussian
+distributions. Lecture~1 supplies the attention terminology; Lecture~4
+supplies autoregression, sequence KL, and recovery bounds.
+
+\section{State, observations, and the modeling choice}
+\label{sec:state-space}
+
+A state-space model specifies what information a process retains and how
+that information produces observations. The state is \emph{latent} when it is not
+directly observed. Latent-variable modeling is much broader than dynamical
+systems. In a finite mixture model, for example, each observation has an
+unobserved categorical component label, and its posterior label probabilities
+act as soft cluster assignments. Missing-data and latent-factor models use
+the same modeling pattern without temporal dynamics.
 
 For language, a latent state has a direct modeling interpretation.
 Spoken or written language can be treated as a partial and noisy observation
@@ -141,46 +164,12 @@ usually marginalize over a stochastic latent trajectory. An observable
 conditional model can therefore be easier to train and more effective even
 when a latent-process description is scientifically plausible.
 
-\medskip
-\noindent\textbf{Scope and reading guide.}
-The main text follows the classroom sequence: nonlinear state-space
-models, conditional generation, estimation and identifiability, latent
-likelihoods and EM, observable prediction, linear models, and the
-subspace algorithm. It develops the questions about memory, parameter
-sharing, backpropagation, and attention raised in class.
-The synthetic comparisons are additions to the lecture.
-The optional section after this development justifies the algorithm and
-relates estimation error to prediction, sequence KL, and generation.
-Cayley--Hamilton was not presented in class; it is retained as an optional
-noiseless comparison and an exercise. After the take-home messages, the notes
-continue with endnotes, bibliographical notes, the glossary, exercises,
-appendices, and references.
-
-\medskip
-\noindent\textbf{Notation.}
-States are \(S_t\in\cS\), observations are \(Z_t\in\cZ\), and
-\(Z_{<t}=Z_{1:t-1}\). Finite observation labels are denoted \(X_t\).
-Vectors are columns. \(T\) is trajectory length; \(d\) and \(m\) are
-state and observation dimensions. Expectations refer to the model law
-specified at their use; logarithms are natural.
-We assume basic matrix algebra, conditional probability, and Gaussian
-distributions. Lecture~1 supplies the attention terminology; Lecture~4
-supplies autoregression, sequence KL, and recovery bounds.
-We write \([d]=\{1,\ldots,d\}\).
-Superscript asterisks\suppmark{} mark optional material; numbered endnotes
-contain short refinements.
-
-\section{State, observations, and the modeling choice}
-\label{sec:state-space}
-
-A state-space model specifies what information a process retains and how
-that information produces observations. Let \(\cS\) and \(\cZ\) be the
-state and observation spaces. The state is \emph{latent} when it is not
-directly observed. Latent-variable modeling is much broader than dynamical
-systems. In a finite mixture model, for example, each observation has an
-unobserved categorical component label, and its posterior label probabilities
-act as soft cluster assignments. Missing-data and latent-factor models use
-the same modeling pattern without temporal dynamics. We use the equations
+Let \(\cS\) and \(\cZ\) be the state and observation spaces. Write
+\(S_t\in\cS\) for the state and \(Z_t\in\cZ\) for the observation at
+time \(t\). For a trajectory of length \(T\), write
+\(Z_{1:T}=(Z_1,\ldots,Z_T)\) and \(Z_{<t}=Z_{1:t-1}\).
+Vectors are columns. Expectations refer to the model law specified at their
+use; logarithms are natural. We use the equations
 \begin{equation}
  S_0\sim\pi_\theta,\qquad
  S_{t+1}=f_\theta(S_t,V_{t+1}),\qquad
@@ -439,7 +428,8 @@ The correspondence is not one-to-one. Different randomized maps can
 implement the same kernels; different hidden representations can give
 the same observation law.
 
-For a finite HMM, let \(S_t\in[d]\) and \(X_t\in[N]\), with
+For a finite HMM, write \([d]=\{1,\ldots,d\}\), let \(S_t\in[d]\),
+and denote the finite observation labels by \(X_t\in[N]\), with
 \[
  A_{ij}=Q_\theta(S_t=i\mid S_{t-1}=j),\qquad
  C_{aj}=Q_\theta(X_t=a\mid S_t=j).
@@ -536,6 +526,7 @@ whose update may require difficult integration.
 \section{What can be learned from observations?}
 \label{sec:estimation}
 
+Fitting a dynamical model from data is called \emph{system identification}.
 If finite hidden states were observed, transition and emission counts
 would give direct estimates of \(A,C\). For linear models with observed
 states, least squares estimates the linear maps under standard rank
@@ -626,11 +617,12 @@ particle filter above, update these samples as observations arrive.
 \(\theta^{(k)}\) to compute a posterior over hidden trajectories,
 then maximizes the expected \emph{complete-data log likelihood}, the log
 joint mass or density of states and observations. The posterior expectation
-is the E-step; maximizing over parameters is the M-step:
+is the E-step; maximizing over parameters is the M-step. For fixed
+observations \(z_{1:T}\), let \(S^{(k)}\) have the posterior law \(q_k\):
 \begin{align}
- q_k(ds)&=Q_{\theta^{(k)}}(ds_{0:T}\mid Z_{1:T}),\nonumber\\
+ q_k(ds)&=Q_{\theta^{(k)}}(ds_{0:T}\mid z_{1:T}),\nonumber\\
  \theta^{(k+1)}&\in\arg\max_\theta
- \E_{S\sim q_k}[\log Q_\theta(S,Z_{1:T})].
+ \E[\log Q_\theta(S^{(k)},z_{1:T})].
  \label{eq:em}
 \end{align}
 The names E-step and M-step describe a conceptual decomposition, not
@@ -1353,6 +1345,54 @@ independently of unobserved system noises are simpler to analyze than
 inputs correlated with those noises, for example through feedback.
 Sufficient excitation still matters.
 
+\subsection{Parallel evaluation of finite-state dynamics}
+\label{sec:finite-state-scan}
+
+The scan idea also applies to nonlinear transitions when their compositions
+have a manageable representation. Consider a deterministic model with finite
+state set \(Q\), finite input alphabet \(\Sigma\), and known transition maps
+\(F_u:Q\to Q\), one for each \(u\in\Sigma\). Fix an initial state \(s_0\)
+and an input sequence \(u_{1:T}\). The resulting states satisfy
+\[
+ s_t=F_{u_t}(s_{t-1}),\qquad
+ s_t=(F_{u_t}\circ\cdots\circ F_{u_1})(s_0).
+\]
+The lowercase \(s_t\) denotes a deterministic state for the fixed inputs.
+A block of inputs can be represented by its action on every possible
+incoming state. For \(1\leq a\leq b\leq T\), define the block's transition map
+\[
+ \Phi_{a:b}=F_{u_b}\circ\cdots\circ F_{u_a}:Q\to Q.
+\]
+Its \emph{transition table} lists the values
+\((\Phi_{a:b}(q))_{q\in Q}\) in a fixed order of the states.
+For \(a\leq b<c\), adjacent blocks combine as
+\(\Phi_{a:c}=\Phi_{b+1:c}\circ\Phi_{a:b}\).
+Each table has \(|Q|\) entries, regardless of the block length.
+A parallel scan can therefore compute all prefix tables by repeatedly
+combining adjacent blocks, then evaluate each table at \(s_0\).
+
+\begin{theorem}[Finite-state transformer simulation; stated without proof]
+\label{thm:finite-state-scan}
+For every finite nonempty \(Q,\Sigma\), transition rule, initial state \(s_0\), and
+length \(T\geq2\), there is a softmax-attention transformer with ReLU
+feed-forward blocks and suitable token and positional encodings that
+outputs \(s_{1:T}\) exactly for every \(u_{1:T}\in\Sigma^T\), in exact real arithmetic.
+Its depth is \(O(\log T)\), embedding dimension is \(O(|Q|)\), and
+feed-forward width is \(O(|Q|^2)\).
+\end{theorem}
+
+The construction represents and composes transition tables; it does not
+wait for each preceding state to become available. Lecture~14 develops
+the scan invariant and the transformer implementation.
+The theorem concerns representation, with parameters and positional
+encodings allowed to depend on \(T\). Learning those parameters and
+generalizing to new lengths require separate arguments.
+The width also depends on the number of states: a system with \(b\) state
+bits can have \(|Q|=2^b\) states. Thus a small recurrent memory need not
+give a small transition-table representation. Affine scans and finite-state
+scans are useful when their respective representations make composition
+affordable; associativity by itself does not bound that cost.
+
 \subsection{An exact recurrent evaluation of linear attention}
 \label{sec:attention-state}
 
@@ -1894,7 +1934,9 @@ are compatible. Prediction stability and generation stability must
 be checked separately.
 \item Deterministic recurrent states permit backpropagation through
 observed prefixes. Structured affine updates can also support parallel
-training and recurrent evaluation of some attention maps.
+training and recurrent evaluation of some attention maps. Finite-state
+transition tables give another parallel evaluation, with cost depending
+on the number of states.
 \end{enumerate}
 
 \clearpage
@@ -1978,6 +2020,15 @@ bounds require their structural and conditioning assumptions.
 These are additional ways to exploit dynamical structure.
 
 \paragraph{Recurrent computation and language models.}
+\citet{liu2023automata}, Theorem~1 and Appendix~C.2, prove
+\cref{thm:finite-state-scan} using parallel prefix composition.
+Their softmax construction uses sufficiently concentrated attention and
+ReLU blocks that recover exact table entries despite small selection error.
+The result allows length-dependent parameters and encodings; it is not a
+learning or length-generalization guarantee. Lecture~14 develops the
+construction, and Lecture~16 discusses the experiments on learned
+computation and scratchpad training.
+
 \citet{pascanu2013} analyzes vanishing and exploding gradients in
 recurrent-network training. \citet{katharopoulos2020} derives recurrent
 causal linear attention. \citet{dao2024}, Sections~2 and~5, develops
@@ -2063,6 +2114,10 @@ Variation in observed regressors and separation of retained singular
 values from zero; both affect recovery from noisy data.
 \item[Backpropagation through time]
 Differentiation of the unrolled recurrent computation.
+\item[Parallel scan; transition table]
+A scan computes all prefix compositions of an associative operation.
+A finite-state transition table records a block's output state for every
+possible incoming state, allowing adjacent blocks to be composed.
 \end{description}
 \endgroup
 
@@ -2679,6 +2734,12 @@ Tien-Yien Li and James A. Yorke.
 \newblock Period Three Implies Chaos.
 \newblock American Mathematical Monthly, 82(10):985--992, 1975.
 \newblock \url{https://doi.org/10.1080/00029890.1975.11994008}.
+
+\bibitem[Liu et al.(2023)]{liu2023automata}
+Bingbin Liu, Jordan T. Ash, Surbhi Goel, Akshay Krishnamurthy, and Cyril Zhang.
+\newblock Transformers Learn Shortcuts to Automata.
+\newblock In \emph{International Conference on Learning Representations}, 2023.
+\newblock \url{https://arxiv.org/abs/2210.10749}.
 
 \bibitem[Mikusheva(2009)]{mikusheva2009}
 Anna Mikusheva; Paul Schrimpf, scribe.

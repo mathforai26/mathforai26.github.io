@@ -5,13 +5,14 @@
 \usepackage{array,booktabs}
 \usepackage[inline,shortlabels]{enumitem}
 \usepackage{xcolor}
+\usepackage{../misc_files/course-definition-boxes}
 \usepackage{microtype}
 \usepackage{tikz}
 \usetikzlibrary{arrows.meta,positioning,calc,fit}
 \usepackage{../exercises/course-exercises}
 
 % Revision date: maintained by scripts/build_lecture_notes.py. Keep this command.
-\newcommand{\lecturerevised}{2026-10-25 23:07 UTC-06:00}
+\newcommand{\lecturerevised}{2026-11-18 11:08 UTC-06:00}
 \usepackage{eso-pic}
 \AddToShipoutPictureBG{%
   \AtPageLowerLeft{%
@@ -94,35 +95,23 @@ October 20, 2026
 \end{minipage}}
 \end{center}
 
-\noindent\textbf{Reading guide.}
-Lecture 13 asked what a learned representation preserves for later tasks.
-This lecture asks whether neural networks can represent symbolic computation.
-With repeated application and an external memory, the answer is yes. The
-Church--Turing thesis reduces the question to simulating a Turing machine, and
-a Turing machine separates into a finite controller and an unbounded tape. A
-neural network therefore needs to implement only a finite transition table.
-Bit encodings turn the table into Boolean functions, and Boolean circuits
-compile exactly into ReLU networks.
+Can neural networks represent symbolic computation? With repeated application
+and an external memory, a finite neural controller can execute general
+algorithms. We establish that representability result, then study how depth
+and input-specified maps change the resources needed for a computation.
+The constructions establish exact representations and resource counts;
+learning the required computation is a separate question.
 
-The remaining topics study how computational resources and the location of a
-map affect how the map is represented. A repeated tent-map construction shows
-that
-depth can make an exact representation exponentially smaller. Associative and
-iterated lookup move the map from the network parameters into the input and
-ask how a sequence model can apply and compose the supplied map.
-
-The material presented in class runs through \cref{sec:routing}.
-The starred Boolean-depth section is supplementary. Section~14.4 and all
-later sections are extra reading; they separate program correctness from
-learning, record arithmetic assumptions, and give a conditional lower bound.
-The main arguments require only elementary finite mathematics, algebra, and
-induction.
-
-The exact constructions establish representability and resource counts. They
-do not show that training will find the required computation. The extra
-reading in \cref{sec:claims} returns to the learning question. Lecture 15
-replaces exact equality by approximation error and studies the resulting
-tradeoff.
+\noindent\textbf{Scope and reading guide.}
+The material presented in class runs through \cref{sec:routing}. The
+parity-learning comparison in \cref{sec:depth-learning}, the starred
+Boolean-depth section, and finite-state simulation in \cref{sec:automata-scan}
+are supplementary. \Cref{sec:claims,sec:arithmetic,sec:lower-bound}
+are extra reading on program correctness and learning, arithmetic assumptions,
+and a conditional lower bound. The main arguments require only elementary
+finite mathematics, algebra, and induction; the parity comparison also uses
+expectations of independent signs, as in Lecture~8. Lecture~15 replaces exact
+equality by approximation error and studies the resulting tradeoff.
 
 \section{From symbolic computation to Boolean circuits}
 \label{sec:gates}
@@ -634,6 +623,77 @@ The theorem is an exact representation statement for one function family.
 Composition reuses the same small folding operation; a single hidden layer
 must list all breakpoints separately.
 
+\subsection{Depth and learning}
+\label{sec:depth-learning}
+
+Does gradient-based training exploit a representation that requires depth?
+One proposed prerequisite is that a shallow network must already predict the
+target usefully. Parities let us examine that proposal with an exact shallow
+obstruction and an empirical deep-learning result. For this comparison,
+replace ReLU by the quadratic activation $\sigma(t)=t^2$.
+
+Let $d\geq3$ be an integer and write $[d]=\{1,\ldots,d\}$. Let $X$ be
+uniform on $\{-1,1\}^d$, fix $S\subseteq[d]$ with $k=|S|>2$, and set
+$Y=\chi_S(X)=\prod_{j\in S}X_j$. A network with one quadratic hidden
+layer of width $m\geq1$ and an affine output has the form
+\[
+ f_\theta(x)=c_0+\sum_{r=1}^m c_r(w_r^\top x+b_r)^2,
+ \qquad w_r\in\R^d,\quad b_r,c_r,c_0\in\R,
+\]
+where $\theta$ collects all the parameters. Every such score is a polynomial
+of degree at most two, regardless of the width $m$.
+
+\begin{proposition}[Shallow quadratic scores and parity]
+\label{prop:quadratic-parity}
+For every width and every parameter vector $\theta$,
+\[
+ \E[Yf_\theta(X)]=0,
+ \qquad
+ \E[(Y-f_\theta(X))^2]=1+\E[f_\theta(X)^2]\geq1.
+\]
+The population correlation loss $-\E[Yf_\theta(X)]$ has zero gradient with
+respect to every parameter.
+\end{proposition}
+
+\begin{proof}
+Each monomial of $f_\theta$ omits some coordinate in $S$. In its product
+with $Y$, that coordinate appears to the first power. Independence and
+$\E[X_j]=0$ make the expectation of the product zero. Summing over the
+monomials proves the correlation identity. Expanding the square and using
+$Y^2=1$ proves the squared-loss identity. The correlation loss is identically
+zero as a function of $\theta$, so its gradient is zero.
+\end{proof}
+
+No shallow quadratic score improves on the zero predictor under squared
+loss. The gradient conclusion concerns the population correlation loss;
+finite-batch gradients need not vanish. Moreover, zero correlation of a
+real-valued score does not imply chance classification accuracy after
+thresholding the score.
+
+Depth removes the degree-two restriction. The identity
+\[
+ \mu(a,b)=\frac{(a+b)^2-(a-b)^2}{4}=ab
+\]
+represents multiplication with two quadratic units. For $d\geq4$, composing
+these units gives a two-hidden-layer representation:
+\[
+ \mu(\mu(x_1,x_2),\mu(x_3,x_4))=x_1x_2x_3x_4.
+\]
+Representation alone still leaves the training question open.
+In \emph{joint training}, all layers are updated using the loss of the
+complete network's final prediction. Derivatives of the deeper network can
+contain higher-degree input terms, so the shallow orthogonality argument
+does not force the corresponding population correlation gradients to vanish.
+
+Experiments with quadratic networks having two or three hidden layers report
+100\% observed classification accuracy on small parity instances of degree
+greater than two after training by stochastic gradient descent (SGD).
+These experiments provide evidence that joint training can achieve accurate
+classification even when every shallow quadratic score has zero target
+correlation and cannot improve on the zero predictor under squared loss.
+The experiments do not establish an asymptotic learning guarantee for these
+deeper networks.
+
 \section*{Optional: depth separation on Boolean inputs}
 
 The tent-map argument raises a natural question. Does the binary branching
@@ -1144,14 +1204,128 @@ $y=x$. The picture resembles a discrete cobweb diagram, but the inequality is
 needed only for causal parallel preprocessing, not for defining or computing
 the iterates themselves.
 
+\section{Supplementary: parallel simulation of finite-state dynamics}
+\label{sec:automata-scan}
+
+Pointer doubling repeatedly applies one input-specified map. A finite-state
+process instead applies a possibly different transition at each input
+position. Can all states of that process still be computed in logarithmically
+many parallel rounds? The useful intermediate object is the effect of an
+input block on every possible incoming state. Lecture~5 likewise uses
+composition of transition maps to parallelize recurrent evaluation.
+
+Let \(Q=[M]\) be a finite state set, \(\Sigma\) a finite input alphabet,
+and \(\delta:Q\times\Sigma\to Q\) a fixed transition rule. Fix an initial
+state \(s_0\in Q\). For a supplied sequence \(u_{1:T}\in\Sigma^T\), define
+\[
+ F_u(s)=\delta(s,u),\qquad s_t=F_{u_t}(s_{t-1}).
+\]
+The task is to return the complete state sequence \(s_{1:T}\).
+The transition rule is fixed in this task; the input sequence varies.
+The lowercase states are deterministic functions of the supplied inputs.
+Unlike the Turing-machine controller in \cref{sec:gates}, this model has
+no additional tape: a value in \(Q\) specifies its entire evolving state.
+
+\subsection{A parallel prefix construction}
+
+Represent a map \(F:Q\to Q\) by its \emph{transition table}
+\((F(1),\ldots,F(M))\). A table describes an update for every incoming
+state, so two tables can be composed before the actual incoming state is
+known. Initialize position \(t\) with \(G_t^{(0)}=F_{u_t}\), and set
+\(G_t^{(\ell)}=\mathrm{id}_Q\) for \(t\leq0\). At round \(\ell+1\),
+all positive positions simultaneously compute
+\begin{equation}
+ G_t^{(\ell+1)}
+ =G_t^{(\ell)}\circ G_{t-2^\ell}^{(\ell)}.
+ \label{eq:automata-scan}
+\end{equation}
+The order of composition preserves the input order: the earlier block
+acts first.
+
+\begin{proposition}[Prefix-composition invariant]
+\label{prop:automata-scan}
+For every \(\ell\geq0\) and \(t\in[T]\),
+\[
+ G_t^{(\ell)}
+ =F_{u_t}\circ\cdots\circ F_{u_{\max\{1,t-2^\ell+1\}}}.
+\]
+Consequently, \(L=\lceil\log_2 T\rceil\) rounds give
+\(G_t^{(L)}(s_0)=s_t\) simultaneously for all \(t\in[T]\).
+\end{proposition}
+\begin{proof}
+At round zero, the table contains the single transition \(F_{u_t}\).
+Suppose the invariant holds at round \(\ell\).
+If \(t>2^\ell\), the table at \(t-2^\ell\) describes the immediately
+preceding block, of length at most \(2^\ell\). Composing that table
+with the table at \(t\) gives precisely the suffix ending at \(t\)
+of length \(\min\{t,2^{\ell+1}\}\).
+If \(t\leq2^\ell\), the table at \(t\) already describes the whole
+prefix and the other table is the identity. Induction proves the formula.
+For \(2^L\geq T\), every table describes a whole prefix; evaluation at
+\(s_0\) yields the stated state.
+\end{proof}
+
+Each positive position reads only itself and a preceding position, so the
+scan's communication pattern is causal. There is no need to order the
+states in \(Q\) to make their transitions point backward: the sequence
+positions store whole transition tables, rather than separate state-keyed
+records as in pointer doubling.
+The displayed algorithm makes \(O(T\log T)\) table compositions and stores
+\(T\) tables with \(M\) entries each. Its logarithmic round count measures
+sequential dependence, not total work or accelerator running time.
+
+\subsection{Representation by a transformer}
+
+The scan becomes a transformer construction when attention retrieves the
+two required tables and a position-wise network composes them.
+The following result gives the resources for those operations.
+
+\begin{theorem}[Logarithmic-depth simulation; stated without full proof]
+\label{thm:automata-transformer}
+For every finite nonempty \(Q,\Sigma\), transition rule \(\delta\),
+initial state \(s_0\), and length \(T\geq2\), there is a transformer
+with softmax attention, ReLU feed-forward blocks, and suitable token and
+positional encodings whose decoded output equals \(s_{1:T}\) for every
+\(u_{1:T}\in\Sigma^T\). In exact real arithmetic, the construction has
+depth \(O(\log T)\), embedding dimension \(O(|Q|)\), two attention
+heads per block, and feed-forward width \(O(|Q|^2)\).
+\end{theorem}
+
+The construction encodes each token by its transition table. Positional
+attention selects the tables in \eqref{eq:automata-scan}; a fixed-depth
+ReLU block computes their composition. More explicitly, if maps
+\(F,G:[M]\to[M]\) are represented by their tables, each output coordinate is
+\[
+ (F\circ G)(j)=\sum_{k=1}^M F(k)\,\I\{G(j)=k\}.
+\]
+Equality tests on the finite set of integer entries and selection of the
+corresponding value can be implemented by ReLU blocks with \(O(M^2)\)
+width. Softmax selection has small nonzero error; the construction uses
+ReLU maps that are constant on neighborhoods of valid table entries,
+so each composition restores the exact table.
+A fixed final readout selects the \(s_0\) entry of each prefix table.
+These implementation facts explain how the
+abstract invariant yields the representation theorem; the bibliographical
+notes locate the complete construction.
+
+The theorem permits parameters, attention scales, and positional encodings
+to depend on \(T\). It therefore supplies a family of exact simulators,
+not a guarantee that one trained network extrapolates to all lengths.
+Moreover, \(b\) bits of recurrent memory permit \(2^b\) states, so the
+table representation can be exponential in the recurrent memory size.
+The useful conclusion is that finite-state recurrence admits parallel
+evaluation with explicit resource costs. Which representation training
+finds, and how its errors change on new inputs, are separate questions.
+
 \section{Extra reading: program correctness, representation, and learning}
 \label{sec:claims}
 
 The associative-lookup, iterated-lookup, and pointer-doubling constructions
-prove the correctness of abstract lookup programs.
-An empirical claim about a trained transformer requires two additional
-steps: the architecture must implement the abstract operations with stated
-resources, and training must find suitable parameters from finite data.
+prove the correctness of abstract lookup programs. The prefix-composition
+invariant likewise proves program correctness; \cref{thm:automata-transformer}
+additionally supplies a transformer representation.
+A claim about a trained transformer must specify both architectural
+representation and learning from finite data.
 Keeping the three statements separate identifies what a construction, a
 compiler theorem, or an experiment contributes:
 \begin{enumerate}[leftmargin=*]
@@ -1256,6 +1430,11 @@ hidden layer: $\tau^{\circ L}\in\cF_{L\text{-NN}}(3L)$, whereas
 $\tau^{\circ L}\notin\cF_{1\text{-NN}}(2^L-2)$. The zero extension of the
 tent map supplies a standard network map on $\R$; only its values on $[0,1]$
 affect the iterates.
+\item A shallow quadratic score has zero correlation with a parity of degree
+greater than two under uniform inputs. Deeper quadratic networks can
+represent such parities, and joint training achieves perfect observed
+classification accuracy on small instances. The shallow obstruction is
+exact; the learning evidence is empirical.
 \item One length-uniform attention program can apply a map supplied as
 key--value pairs in its input. If the stored values are also keys, $K$
 successive rounds compose that supplied map and compute $p^K(x)$.
@@ -1263,6 +1442,10 @@ successive rounds compose that supplied map and compute $p^K(x)$.
 $L$ parallel rounds. Causal parallel doubling additionally requires the map
 records to be ordered so that every retrieved record is no later than the
 requesting record.
+\item A finite-state process can be simulated by composing input-dependent
+transition tables in parallel. Logarithmic-depth transformers represent
+the resulting trajectories with width polynomial in the number of states;
+the construction may depend on the input length.
 \item Program correctness, transformer representation, and learning the
 program from data are distinct aspects. Exact constructions settle the first
 two under stated models; RASP-L and MicroPy provide empirical evidence about
@@ -1313,6 +1496,20 @@ Telgarsky uses the term triangle function for the same single-peak shape.
 The dynamical-systems interpretation of the tent map is developed by
 \citet{alligood1997}; the period-three theorem is due to \citet{li1975}.
 
+The learning comparison in \cref{sec:depth-learning} follows Appendix~C.7
+of \citet{barak2022}. The squared-loss identity is a direct consequence of
+the same parity orthogonality used in Lecture~8. Their experiments challenge
+the broad principle motivating \citet{malach2019}, who prove optimization
+obstructions for particular ReLU networks and fractal distributions, then
+conjecture a more general link between shallow approximation and deep
+learning. The comparison requires care: their formal conjecture concerns
+classification error in a ReLU setting, whereas the exact obstruction above
+concerns quadratic scores, correlation, and squared loss. Appendix~C.7 gives
+empirical evidence for joint training, rather than a theorem refuting that
+precise ReLU classification conjecture. The source counts the affine output
+as a layer; two and three hidden layers here correspond to three and four
+layers there.
+
 \citet{weiss2021} introduced RASP as a computational model for describing
 transformer operations through sequence-valued maps, selection, and
 aggregation. The language makes dependency and resource accounting visible.
@@ -1337,6 +1534,33 @@ constraint.
 The MicroPy experiment is reported by \citet{xu2026}. Its execution traces
 externalize intermediate program state, allowing the same learned transition
 mechanism to be applied many more times at test time than during training.
+
+\Cref{thm:automata-transformer} is Theorem~1 of
+\citet{liu2023automata}; Appendix~C.2 implements the prefix-composition
+invariant with softmax attention and perturbation-tolerant ReLU blocks.
+The elementary scan proof above specializes the same parallel-prefix
+algorithm to the course notation. Their Sections~4--5 distinguish
+representability from empirical learning and length generalization;
+Lecture~16 discusses the scratchpad intervention.
+
+For optional further reading, their Theorem~2 and Appendix~C.3 use
+Krohn--Rhodes theory to construct depth independent of \(T\) for
+\emph{solvable} automata. Here solvability means that every subgroup of
+the semigroup generated by the transition maps is a solvable group;
+their Appendix~A.2 supplies the algebraic definitions. A semigroup is a
+set closed under an associative operation, here composition.
+For fixed \(Q,\Sigma,\delta\), the construction has depth
+\(O(|Q|^2\log |Q|)\) and width at most linear in \(T\), with potentially
+very large dependence on \(|Q|\). Their Theorem~4 gives a conditional
+obstruction for nonsolvable automata: a family of constant-depth,
+polynomial-width transformers with \(O(\log T)\)-bit precision simulating
+all input lengths would imply \(\mathsf{TC}^0=\mathsf{NC}^1\).
+These are polynomial-size circuit classes: constant-depth threshold
+circuits and logarithmic-depth bounded-fan-in Boolean circuits,
+respectively. The conjectured separation rules out constant depth under
+the stated resources; it does not prove a matching
+\(\Omega(\log T)\) transformer-depth lower bound. The algebraic results
+are separate from the previous-link lower bound in \cref{sec:lower-bound}.
 
 \section*{Glossary}
 
@@ -1367,6 +1591,8 @@ A maximal interval on which a scalar function has the form $x\mapsto ax+b$.
 \item[$\cF_{L\text{-NN}}(m)$]
 The class of scalar functions represented by a ReLU network with $L$ hidden
 layers and at most $m$ hidden ReLU units in total.
+\item[Joint training]
+Updating all layers of a network using the loss of its final prediction.
 \item[Stream]
 A sequence-valued variable $s:[N]\to\cD$ with one value per position.
 \item[Causal selector]
@@ -1382,6 +1608,11 @@ The parallel update $q_{\ell+1}(u)=q_\ell(q_\ell(u))$, which doubles the
 number of original map applications represented after each stage.
 \item[Length-uniform program]
 One sequence program whose operations do not change with the input length.
+\item[Transition table; parallel prefix composition]
+A table \((F(1),\ldots,F(M))\) represents a map on the entire finite
+state set. Parallel prefix composition computes
+\(F_{u_t}\circ\cdots\circ F_{u_1}\) for every position \(t\), allowing the
+state trajectory to be read out after the compositions are complete.
 \end{description}
 
 \section{Exercises}
@@ -1420,6 +1651,15 @@ Kathleen T. Alligood, Tim D. Sauer, and James A. Yorke.
 \newblock \emph{Chaos: An Introduction to Dynamical Systems}.
 \newblock Springer, 1997.
 \newblock \url{https://doi.org/10.1007/978-3-642-59281-2}.
+
+\bibitem[Barak et al.(2022)]{barak2022}
+Boaz Barak, Benjamin L. Edelman, Surbhi Goel, Sham Kakade, Eran Malach,
+and Cyril Zhang.
+\newblock Hidden progress in deep learning: SGD learns parities near the
+computational limit.
+\newblock In \emph{Advances in Neural Information Processing Systems},
+volume 35, 2022.
+\newblock \url{https://arxiv.org/abs/2207.08799}.
 
 \bibitem[Church(1936)]{church1936}
 Alonzo Church.
@@ -1473,6 +1713,19 @@ Tien-Yien Li and James A. Yorke.
 \newblock Period Three Implies Chaos.
 \newblock \emph{American Mathematical Monthly}, 82(10):985--992, 1975.
 \newblock \url{https://doi.org/10.1080/00029890.1975.11994008}.
+
+\bibitem[Liu et al.(2023)]{liu2023automata}
+Bingbin Liu, Jordan T. Ash, Surbhi Goel, Akshay Krishnamurthy, and Cyril Zhang.
+\newblock Transformers Learn Shortcuts to Automata.
+\newblock In \emph{International Conference on Learning Representations}, 2023.
+\newblock \url{https://arxiv.org/abs/2210.10749}.
+
+\bibitem[Malach and Shalev-Shwartz(2019)]{malach2019}
+Eran Malach and Shai Shalev-Shwartz.
+\newblock Is deeper better only when shallow is good?
+\newblock In \emph{Advances in Neural Information Processing Systems},
+volume 32, 2019.
+\newblock \url{https://arxiv.org/abs/1903.03488}.
 
 \bibitem[Newell and Simon(1976)]{newell1976}
 Allen Newell and Herbert A. Simon.

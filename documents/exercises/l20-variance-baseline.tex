@@ -1,0 +1,21 @@
+\begin{exercisechunk}
+\item \textbf{Which baseline minimizes variance?}
+\label[exercise]{ex:l20-variance-baseline}
+\exerciseprofile{2}{2}{2}{\exproof\quad\excalculation}{%
+Distinguish the value baseline from the baseline minimizing score-estimator variance.}
+At one fixed policy, let $S\in\R^d$ be its score and $R\in\R$ its
+reward, with $\E[S]=0$, $0<\E[\|S\|_2^2]<\infty$, and
+$\E[R^2\|S\|_2^2]<\infty$. For a deterministic scalar $b$, set
+$g_b=(R-b)S$ and define its total variance by
+$V(b)=\E[\|g_b-\E[g_b]\|_2^2]$.
+\begin{enumerate}[(a)]
+\item Show that the unique variance-minimizing baseline is
+\[
+ b^\star=\frac{\E[R\|S\|_2^2]}{\E[\|S\|_2^2]}.
+\]
+\item For $A\sim\operatorname{Bernoulli}(p)$ with $0<p<1$, take
+$R=A$ and $S=A-p$. Show that $b^\star=1-p$ and that
+$g_{b^\star}=p(1-p)$ for either action, so $V(b^\star)=0$.
+Determine for which $p$ this baseline equals the value baseline $\E[R]=p$.
+\end{enumerate}
+\end{exercisechunk}

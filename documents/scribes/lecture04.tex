@@ -6,10 +6,11 @@
 \usepackage[inline,shortlabels]{enumitem}
 \usepackage{booktabs}
 \usepackage{xcolor}
+\usepackage{../misc_files/course-definition-boxes}
 \usepackage{microtype}
 
 % Revision date: maintained by scripts/build_lecture_notes.py. Keep this command.
-\newcommand{\lecturerevised}{2026-10-09 23:51 UTC-07:00}
+\newcommand{\lecturerevised}{2026-11-07 09:59 UTC+00:00}
 \usepackage{eso-pic}
 \AddToShipoutPictureBG{%
   \AtPageLowerLeft{%
@@ -96,7 +97,6 @@ September 10, 2026
 Csaba Szepesv\'ari prepared and substantially expanded the present notes.
 
 \medskip
-\noindent\textbf{About these lecture notes.}
 We know how to fit a sequence model by next-token prediction. We now ask
 whether fitting successful examples makes the model generate successful
 sequences. The answer depends on how prediction errors affect later
@@ -104,58 +104,14 @@ generation, what cost we care about, and what structure the model preserves.
 This leads from log loss to error recovery, reverse KL, and models with
 explicit memory.
 
-\medskip
-\noindent\textbf{Scope relative to class.}
-Further questions and ideas arose while preparing these notes, so they
-extend and refine the discussion from the lecture.
-The lecture developed the positive-data fitting question, the binary
-error-propagation example, stability of Markov models, and the
-concentration-dependent reverse-KL bound. The state-space introduction
-and system-identification material are now collected in Lecture~5,
-which develops these topics in detail.
-The notes group the cost bounds first, then use exact fixed-KL cost
-intervals to develop two laws attaining the cost bounds. We reuse these
-laws when interpreting normalized loss, comparing fitting objectives,
-and introducing recovery. Repeated errors, parity, and the explicit
-modulus calculations are developed in exercises.
-A further section asks how parameter sharing affects learning as
-sequence length grows. The fitting and structural choices follow.
-Headings ending in a superscript asterisk\suppmark{} mark supplementary
-material: sharper comparisons
-between likelihood and cost and a finite-sample fitting guarantee. The exercises retain the calculations and proofs left to
-students. Longer proofs, a statistical obstruction to reverse-KL fitting,
-reverse-KL optimization details, and recovery for history-dependent generators
-are in the appendices.
-
-\medskip
-\noindent\textbf{Notation and reading guide.}
-Tokens are \(X_t\in[N]\). We use \(S_t\) for a state when
-discussing persistent and revisable memory.
-A vector $x\in \R^d$ is a column vector.
-For indices \(a\le b\), write \(X_{a:b}=(X_a,\ldots,X_b)\) and
-\(X_{<t}=X_{1:t-1}\); lowercase \(x_{a:b}\) denotes a realized sequence.
-For a symbol \(u\), \(u^k=(u,\ldots,u)\) is the length-\(k\) constant
-sequence, so \(0^T=(0,\ldots,0)\), and juxtaposition denotes
-concatenation, as in \(10^{T-1}=(1,0,\ldots,0)\).
-Sequence notation is useful because the same object has two roles: it is an
-ordered tuple in \([N]^T\), and it is a time-indexed function on \([T]\).
-We use tuple notation when order and prefixes matter, and ordinary vector
-notation when applying linear algebra.
-For a sequence cost \(c: [N]^T\to \R\) and a distribution \(P\) over
-\([N]^T\), \(\E_P[c]\) abbreviates \(\E[c(X_{1:T})]\) for
-\(X_{1:T}\sim P\). Thus
-\[
-  \E_P[c]=\sum_{x_{1:T}}P(x_{1:T})c(x_{1:T}).
-\]
-By default, in what follows, \(P\) is the data law and \(Q\), or \(Q_\theta\), is
-a model law.
-We use \(\kappa\) for a KL value or budget, \(s\) for a cost-discrepancy
-value or budget, and \(\eta\) for per-token accuracy, including the
-optimization tolerance introduced in \cref{sec:likelihood-pitfall}.
-Logarithms are natural. Read through \cref{sec:take-home}; the supplementary
-material can be read separately. Numbered endnotes, bibliographical notes, the
-glossary, exercises, appendices, and references follow the take-home
-messages in that order.
+\noindent\textbf{Scope and reading guide.}
+The class developed positive-data fitting, binary error propagation, Markov
+stability, and the concentration-dependent reverse-KL bound. The notes extend
+the cost comparisons, fitting guarantees, and recovery analysis. Lecture~5
+develops the state-space and system-identification material introduced in
+class. Read through \cref{sec:take-home}; superscript asterisks\suppmark{}
+mark supplementary material that may be skipped on a first reading.
+The appendices give longer proofs and further fitting and recovery results.
 
 \section{From next-token prediction to useful generation}
 \label{sec:prediction-generation}
@@ -175,6 +131,15 @@ expectations are finite sums. Many results hold more generally;
 replace it. It is also easy to extend the results to allow variable length
 sequences as outlines in Lecture 1. For simplicity, we restrict our attention
 to the fixed length case.
+
+Tokens are \(X_t\in[N]\). For indices \(a\le b\), write
+\(X_{a:b}=(X_a,\ldots,X_b)\) and \(X_{<t}=X_{1:t-1}\);
+lowercase \(x_{a:b}\) denotes a realized sequence. A sequence is both an
+ordered tuple in \([N]^T\) and a time-indexed function on \([T]\).
+We use tuple notation when order and prefixes matter, and ordinary
+column-vector notation when applying linear algebra. Throughout, \(P\)
+denotes the data law and \(Q\), or \(Q_\theta\), a model law.
+Logarithms are natural.
 
 Let \(X^{(1)}_{1:T},\ldots,X^{(n)}_{1:T}\) be independent training sequences
 from \(P\), a distribution over $[N]^T$.
@@ -351,7 +316,13 @@ exception to this which will be noted when it arises.
 
 With this, let is turn to formulating the specific question studied next.
 Let \(P\) be the law of positive sequences, \(Q\) the
-fitted law, and \(c\) the cost. One should generally think that \(\E_P[c]=0\);
+fitted law, and \(c:[N]^T\to\R\) the cost. For a sequence
+\(X_{1:T}\) with law \(P\), write
+\[
+  \E_P[c]=\E[c(X_{1:T})]
+  =\sum_{x_{1:T}}P(x_{1:T})c(x_{1:T}).
+\]
+One should generally think that \(\E_P[c]=0\);
 the results will aim at this case but will be more general.
 Recall from \cref{eq:population-kl} that the population log loss is
 \[
@@ -361,7 +332,8 @@ As explained earlier, one should think about log-loss minimization, or
 likelihood fitting as seeking a model $Q$ that with small $\KL(P, Q)$.
 Yet, the task calls
 for small generated cost \(\E_Q[c]\).
-Suppose fitting gives us \(\KL(P, Q)\le\kappa\).
+Suppose fitting gives us \(\KL(P, Q)\le\kappa\), where \(\kappa\ge0\)
+is a KL budget.
 The basic question we ask is how large can \(\E_Q[c]\) be?
 In other words, is controlling KL this way sufficient to control generation
 cost? To what degree? What are the strengths and weaknesses of this approach?
@@ -942,6 +914,9 @@ and the correctness of its final answer. Applying
 \cref{prop:point-mass-cost-interval} to each cost gives the exact
 range of possible performance.
 
+For a symbol \(u\), write \(u^k=(u,\ldots,u)\) for the length-\(k\)
+constant sequence; juxtaposition denotes concatenation, as in
+\(10^{T-1}=(1,0,\ldots,0)\).
 Now take \(\cX=\{0,1\}^T\), with \(T\ge2\), and set
 \(x^\star=0^T\).
 Think of this as a simplified model of generating a solution to a
@@ -1353,10 +1328,12 @@ We use loss per predicted token as the optimization objective.
 For \(n\) observed sequences, define empirical \emph{per-token}
 log loss
 \[
- \widehat L(Q)=\frac1{nT}\sum_{i=1}^n\sum_{t=1}^T
+ L_n(Q)=\frac1{nT}\sum_{i=1}^n\sum_{t=1}^T
  -\log Q(X_t^{(i)}\mid X_{<t}^{(i)}).
 \]
-This averages the losses of the \(nT\) token predictions.
+This empirical risk averages the losses of the \(nT\) token predictions;
+\(n\) counts independent sequences, and each sequence loss is normalized
+by its length \(T\).
 We use this normalization despite the warning in
 \cref{sec:late-predictions}: per-token loss can improve as sequence
 length grows without task performance improving.
@@ -1370,9 +1347,9 @@ For response \(y_i\) to prompt \(u_i\), let \(T_i\) count its predicted
 tokens and put \(\ell_i(Q)=-\log Q(y_i\mid u_i)\).
 Two averaging conventions are
 \[
- \widehat L_{\rm token}(Q)=\frac{\sum_i\ell_i(Q)}{\sum_iT_i},
+ L_{{\rm token},n}(Q)=\frac{\sum_i\ell_i(Q)}{\sum_iT_i},
  \qquad
- \widehat L_{\rm response}(Q)=\frac1n\sum_i\frac{\ell_i(Q)}{T_i}.
+ L_{{\rm response},n}(Q)=\frac1n\sum_i\frac{\ell_i(Q)}{T_i}.
 \]
 The first weights predicted tokens equally; the second weights each
 response's average loss equally. Prompt and padding tokens excluded from
@@ -1385,20 +1362,20 @@ When an optimizer is run with finite compute, it generally does not
 return a model with the lowest possible empirical loss.
 The \emph{optimization error} of its returned model \(\widehat Q\) is
 \begin{equation}
- E(\widehat Q):=\widehat L(\widehat Q)
- -\inf_{Q\in\mathcal Q}\widehat L(Q).
+ E(\widehat Q):=L_n(\widehat Q)
+ -\inf_{Q\in\mathcal Q}L_n(Q).
  \label{eq:approximate-fit-error}
 \end{equation}
 We say that \(\widehat Q\) satisfies the \emph{optimization tolerance}
 \(\eta\ge0\) if \(E(\widehat Q)\le\eta\), equivalently,
 \begin{equation}
- \widehat L(\widehat Q)\le\inf_{Q\in\mathcal Q}\widehat L(Q)+\eta.
+ L_n(\widehat Q)\le\inf_{Q\in\mathcal Q}L_n(Q)+\eta.
  \label{eq:approximate-fit}
 \end{equation}
 Establishing whether a returned model satisfies this tolerance is a
 \emph{certification question}. For example, suppose
 \(\mathcal Q=\{Q_\theta:\theta\in\R^d\}\) and
-\(f(\theta)=\widehat L(Q_\theta)\) is differentiable and strongly convex
+\(f(\theta)=L_n(Q_\theta)\) is differentiable and strongly convex
 with known parameter \(\mu>0\). Then
 \[
  E(Q_\theta)\le\frac{\|\nabla f(\theta)\|_2^2}{2\mu},
@@ -1453,8 +1430,8 @@ Let \(T\ge2\). Take the laws \(Q_-,Q_+\) in \cref{eq:endpoint-generators} with
 For every sample of \(n\) sequences from \(P=\delta_{0^T}\),
 \begin{equation}
  \begin{gathered}
- \widehat L(P)=0,\qquad
- \widehat L(Q_-)=\widehat L(Q_+)=\eta,\\
+ L_n(P)=0,\qquad
+ L_n(Q_-)=L_n(Q_+)=\eta,\\
  \E_{Q_-}[c_{\mathrm{fin}}]=0,\qquad
  \E_{Q_+}[c_{\mathrm{fin}}]=1-e^{-T\eta}.
  \end{gathered}
@@ -1627,23 +1604,24 @@ future as well as predictions of the next token. The model must predict
 For an observed sequence \(x_{1:T}\) and a model with \(Q(x_{1:T})>0\),
 define the \emph{\(k\)-step prediction loss}, for \(1\le k\le T\), by
 \begin{equation}
-  \cL_k(Q)
+  \ell_k(Q)
   =-\sum_{t=0}^{T-k}
   \log Q(X_{t+k}=x_{t+k}\mid X_{\le t}=x_{\le t}).
   \label{eq:multistep-loss}
 \end{equation}
+The observation \(x_{1:T}\) is fixed and suppressed in \(\ell_k(Q)\).
 The prefix is empty when \(t=0\). In particular,
-\(\cL_1(Q)=-\log Q(x_{1:T})\) is the usual sequence log loss.
-One can add \(\lambda\cL_k(Q)\), with \(\lambda>0\) and \(k\ge2\),
+\(\ell_1(Q)=-\log Q(x_{1:T})\) is the usual sequence log loss.
+One can add \(\lambda\ell_k(Q)\), with \(\lambda>0\) and \(k\ge2\),
 to this objective and average over the demonstrations.
 
 For the laws in \cref{sec:endpoint-generators}, evaluated on \(0^T\),
 \begin{equation}
- \cL_2(Q_-)=0,\qquad \cL_2(Q_+)=\kappa.
+ \ell_2(Q_-)=0,\qquad \ell_2(Q_+)=\kappa.
  \label{eq:endpoint-multistep}
 \end{equation}
 Their next-token losses agree. At \(\kappa>0\), any positive weight
-on \(\cL_2\) therefore favors \(Q_-\), which recovers from its initial
+on \(\ell_2\) therefore favors \(Q_-\), which recovers from its initial
 error, over \(Q_+\), which preserves it. The calculation is in
 \cref{ex:multistep-benefit}.\endnote{\textbf{A separate benefit under misspecification.}
 A finite model class may contain a law with the correct marginal of
@@ -2016,8 +1994,27 @@ established earlier.
 Limited context and contraction are different properties. The rule
 \(X_{t+1}=X_t\) uses only one token of context and preserves its initial
 bit forever. During generation, recent tokens can keep transmitting old
-information. Restricting a transformer's accessible prefix therefore
-does not establish \cref{eq:markov-contraction}.
+information. A rolling KV cache supplies additional bounded persistent state:
+its stored keys and values are contextualized internal activations rather
+than token identities.\endnote{\textbf{The token suffix and cache have
+different state capacities.}
+For a vocabulary of size \(V\), a suffix of \(w\) token identities has at
+most \(V^w\) possible values and can therefore distinguish at most
+\(w\log_2 V\) bits of state. Suppose a rolling cache stores \(w\) positions
+for each of \(L\) layers, with \(H_{\rm KV}\) key/value heads of dimension
+\(d_h\) and \(b\) bits per stored scalar. The cache then uses
+\(2bwLH_{\rm KV}d_h\) bits of raw storage, which can greatly exceed the
+\(w\log_2 V\)-bit token-suffix capacity 
+(not mentioning that outputs, being visible, are expected to carry
+information supporting users). Retained cache entries were
+computed from earlier contextual activations, so they can carry the influence
+of tokens that have already been evicted. If every layer uses a width-\(w\)
+local-attention window, the dependency graph can reach \(L(w-1)\) positions
+into the past. These counts describe possible state and causal dependence;
+whether these potential dependencies are used in a meaningful manner
+is a different issue.}
+Restricting the token prefix and cache state therefore does not by itself
+establish \cref{eq:markov-contraction}.
 
 For prompting, a sliding window creates a more immediate difficulty:
 a fact in the original prompt can leave the accessible context before
@@ -2337,7 +2334,7 @@ A cost whose centered log exponential moment is at most
 It satisfies \(\sigma_P(c)^2\le v_P(c)\le C_{\max}^2/4\)
 for \(0\le c\le C_{\max}\).
 \item[\(k\)-step prediction loss]
-\(\cL_k(Q)\) scores a token \(k\) positions ahead from the observed
+\(\ell_k(Q)\) scores a token \(k\) positions ahead from the observed
 prefix, summing over the model's intervening tokens.
 \item[Critic; adversarial fitting]
 A critic scores sequences to maximize a divergence lower bound.
@@ -2946,10 +2943,10 @@ Using \cref{eq:hellinger-affinity} and \(1-u\le e^{-u}\),
 \]
 
 Since \(P\in\mathcal Q\), \cref{eq:approximate-fit} gives
-\(\widehat L(\widehat Q)\le\widehat L(P)+\eta\). Hence
+\(L_n(\widehat Q)\le L_n(P)+\eta\). Hence
 \[
  \log\Lambda_{\widehat Q}
- =nT\bigl(\widehat L(P)-\widehat L(\widehat Q)\bigr)
+ =nT\bigl(L_n(P)-L_n(\widehat Q)\bigr)
  \ge-nT\eta.
 \]
 For a fixed candidate \(Q\), apply Markov's inequality to
@@ -3147,14 +3144,16 @@ Under candidate \(i\in\{0,1\}\), a demonstration has law
 \[
  P_i(u,y)=\mu(u)\I\{y=f_i(u)\}.
 \]
-After \(n\) independent demonstrations, a possibly randomized learner
-returns a conditional law \(\widehat q\), inducing
+Let \(I\) be uniform on \(\{0,1\}\). Conditional on \(I=i\), draw
+\(n\) independent demonstrations with law \(P_i\). A possibly randomized
+learner \(\mathcal L\) observes the demonstrations but not \(I\), and uses
+private randomness independent of \(I\) and the demonstrations.
+The learner returns a conditional law \(\widehat q\), inducing
 \(\widehat Q(u,y)=\mu(u)\widehat q(y\mid u)\).
 Then
 \begin{equation}
  \inf_{\mathcal L}\max_{i\in\{0,1\}}
- \mathbb P_{P_i^{\otimes n},\mathcal L}
- \bigl(\KL(\widehat Q, P_i)=+\infty\bigr)
+ \P\bigl(\KL(\widehat Q, P_i)=+\infty\mid I=i\bigr)
  =\frac12(1-\alpha)^n.
  \label{eq:support-lower}
 \end{equation}

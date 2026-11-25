@@ -16,7 +16,7 @@ The task cost is \(c(A)=\I\{A=0\}\), so its expectation is
 \(C(z)=\E[c(A)]=1-p(z)\). The correct action is known, so every gradient below
 is evaluated exactly. Define the log-loss surrogate
 \[
- L(z)=-\log p(z).
+ \ell(z)=-\log p(z).
 \]
 For \(a>0\), initialize \(z(0)=-a\).
 For a differentiable loss \(f(z)\), its \emph{gradient flow} is the
@@ -26,7 +26,7 @@ continuous-time rule
 \]
 For this policy, define the scalar Fisher information by
 \[
- F(z)=\E_{A\sim\pi_z}\!\left[
+ F(z)=\E\!\left[
    \left(\frac{\partial}{\partial z}\log\pi_z(A)\right)^2
  \right].
 \]
@@ -38,20 +38,20 @@ flow} for maximizing \(J\) is
 \]
 \begin{enumerate}[(a),beginpenalty=10000]
 \item Use this definition to derive the gradient flows for minimizing \(C\)
-and \(L\):
+and \(\ell\):
 \[
  \dot z_C=p(z_C)(1-p(z_C)),
  \qquad
- \dot z_L=1-p(z_L).
+ \dot z_\ell=1-p(z_\ell).
 \]
-\item Let \(\tau_C(a)\) and \(\tau_L(a)\) be the first times at which the
+\item Let \(\tau_C(a)\) and \(\tau_\ell(a)\) be the first times at which the
 corresponding flow reaches \(z=0\). Show that
 \[
  \tau_C(a)=e^a-e^{-a}+2a,
  \qquad
- \tau_L(a)=a+1-e^{-a}.
+ \tau_\ell(a)=a+1-e^{-a}.
 \]
-Deduce that \(\tau_C(a)\sim e^a\) and \(\tau_L(a)\sim a\) as
+Deduce that \(\tau_C(a)\sim e^a\) and \(\tau_\ell(a)\sim a\) as
 \(a\to\infty\).
 \item Show that the Fisher information of the Bernoulli policy is
 \[

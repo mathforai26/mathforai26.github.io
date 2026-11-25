@@ -1,0 +1,30 @@
+\ifdefined\Needspace\Needspace{25\baselineskip}\fi
+\begin{samepage}
+\begin{exercisechunk}
+\item \textbf{The retention cost of a compulsory probability floor.}
+\label[exercise]{ex:l21-probability-floor}
+\exerciseprofile{2}{2}{2}{\exproof\quad\excalculation\quad\exinterpretation}{%
+Compare retention between two learners with the same order of continuation regret.}
+In the two-action full-information problem, maintain $Q_0=1/2$ and
+update $Q_t$ by the projected-gradient rule \cref{eq:projected}, with
+$Q_t$ in place of $X_t$ and $\eta=T^{-1/2}$.
+For a fixed $0<\alpha\le1$, play action one with probability
+$X_t=(1-\alpha)Q_t+\alpha/2$; the complete loss vector is still observed.
+The update of $Q_t$ uses that vector and is independent of the sampled action.
+Call the resulting algorithm $\cA_{T,\alpha}$.
+\begin{enumerate}[(a)]
+\item Prove
+$\operatorname{Cont}_{\cP_{\rm fi}}^{\cA_{T,\alpha}}(T)\le\sqrt T+\alpha T/2$.
+\item On the constant loss vector $c=(0,1)^\top$, prove
+$\operatorname{Ret}_{\delta_c}^{\cA_{T,\alpha},\infty}(K)=\alpha K/2$.
+\item Set $\alpha=1/T$. Compare the continuation order and tail retention
+with those of the unmodified projected-gradient learner.
+Explain why this comparison rules out the claim that a positive probability
+floor is necessary for optimal-order continuation under full feedback.
+\end{enumerate}
+\begin{hints}
+Compare the mixture losses at $X_t$ and $Q_t$ before using the projected
+gradient bound.
+\end{hints}
+\end{exercisechunk}
+\end{samepage}

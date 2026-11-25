@@ -1,0 +1,43 @@
+\begin{exercisechunk}
+\item \textbf{A fixed comparison rule and a symmetric learner.}
+\label[exercise]{ex:l22-comparison-symmetry}
+\exerciseprofile{3}{2}{3}{\exproof\quad\excalculation\quad\exinterpretation}{%
+Apply learner symmetry to a specified target rather than to a target class.}
+Fix $m\ge1$. For $x\in\{0,1\}^{2m}$, let $L(x)$ and $R(x)$ be the integers
+encoded by the first and second blocks of $m$ bits. Let
+\[
+ h_{\ge}(x)=\mathbb I\{L(x)\ge R(x)\},
+ \qquad
+ h_>(x)=\mathbb I\{L(x)>R(x)\}.
+\]
+Let $X$ be uniform on $\{0,1\}^{2m}$. Let $s$ swap the two bit blocks, let
+$c$ flip a binary label, and let $g=cs$ act on a rule by
+$(gh)(x)=c(h(s^{-1}x))$.
+A randomized learner $\mathcal A$ is \emph{equivariant under $g$} if, for
+every labeled dataset $D$, the output $\mathcal A(gD)$ has the same law as
+$g\mathcal A(D)$, where $gD$ transforms every input by $s$ and every label
+by $c$.
+\begin{enumerate}[(a)]
+\item Prove that $gh_{\ge}=h_>$. Determine
+$\mathbb P(h_{\ge}(X)\ne h_>(X))$ and the positive-label probability of each
+rule.
+\item Let $\mathcal A$ be equivariant under $g$. Prove directly, using a
+coupling of the two labeled-sample experiments, that the exact-recovery
+failure probabilities of $\mathcal A$ on $h_{\ge}$ and $h_>$ are equal.
+\item Prove that, when $\mathcal A$ is trained on $n$ independent uniform
+examples labeled by the fixed intended rule $h_{\ge}$,
+\[
+ \mathbb P(\mathcal A\text{ does not return }h_{\ge})
+ \ge \frac12(1-2^{-m})^n.
+\]
+Deduce that the failure probability is greater than $1/4$ when
+$n<2^{m-1}$.
+\item Give one target-aware membership query whose answer distinguishes the
+two rules. Identify the assumption of the passive-data lower bound that the
+query changes.
+\end{enumerate}
+\begin{hints}
+The two rules disagree exactly when the encoded integers are equal. For part
+(b), transform every input by $s$ and every label by $c$.
+\end{hints}
+\end{exercisechunk}

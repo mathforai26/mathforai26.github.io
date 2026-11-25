@@ -1,0 +1,50 @@
+\begin{exercisechunk}
+\item \textbf{Symmetries of a gradient-trained linear classifier.}
+\label[exercise]{ex:l22-gradient-symmetry}
+\exerciseprofile{2}{2}{3}{\exproof\quad\excalculation\quad\exinterpretation}{%
+Verify a symmetry of the complete training procedure, including the loss,
+initialization, regularization, and hard-decision rule.}
+Let
+\[
+ z_{w,b}(x)=\langle w,x\rangle+b,
+ \qquad
+ \ell_{\mathrm{ce}}(z,y)=\log(1+\exp(z))-yz,
+\]
+where $x,w\in\mathbb R^d$ and $y\in\{0,1\}$. For a labeled dataset
+$D=((x_i,y_i))_{i=1}^n$, define
+\[
+ F_D(w,b)=\frac1n\sum_{i=1}^n
+ \ell_{\mathrm{ce}}(z_{w,b}(x_i),y_i)
+ +\frac\lambda2\lVert w\rVert_2^2.
+\]
+Let $P$ be a permutation matrix. Write $PD=((Px_i,y_i))_{i=1}^n$ and
+$\bar D=((x_i,1-y_i))_{i=1}^n$.
+\begin{enumerate}[(a)]
+\item Prove
+\[
+ F_{PD}(Pw,b)=F_D(w,b),
+ \qquad
+ F_{\bar D}(-w,-b)=F_D(w,b).
+\]
+Deduce the corresponding transformations of the gradients.
+\item Apply full-batch gradient descent with a fixed stepsize sequence.
+Prove that runs initialized at $(w_0,b_0)$, $(Pw_0,b_0)$, and
+$(-w_0,-b_0)$ on $D$, $PD$, and $\bar D$, respectively, remain related by
+the same transformations at every iteration.
+\item Suppose that $w_0$ has independent identically distributed centered
+Gaussian coordinates and that $b_0$ has a centered Gaussian law independent
+of $w_0$. Explain why the randomized learner has input-coordinate and
+binary-label symmetry. Which property of the initialization law is used for
+each symmetry?
+\item Replace the isotropic penalty by
+$\tfrac12\sum_{j=1}^d\lambda_jw_j^2$. Give a necessary and sufficient
+condition on $(\lambda_1,\ldots,\lambda_d)$ for the particular permutation
+$P$ to remain a symmetry. Explain why the deterministic hard decision
+$\mathbb I\{z\ge0\}$ breaks label symmetry at $z=0$, and give an equivariant
+tie rule.
+\end{enumerate}
+\begin{hints}
+Use $\ell_{\mathrm{ce}}(-z,1-y)=\ell_{\mathrm{ce}}(z,y)$. Differentiate an
+objective identity only after accounting for the orthogonal parameter map.
+\end{hints}
+\end{exercisechunk}

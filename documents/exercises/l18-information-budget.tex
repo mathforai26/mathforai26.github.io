@@ -1,0 +1,30 @@
+\begin{exercisechunk}
+\item \textbf{Repeated decisions and fresh randomness.}
+\label[exercise]{ex:l18-information-budget}
+\exerciseprofile{2}{2}{2}{\exproof\quad\excalculation\quad\exinterpretation}{%
+Separate the number of recorded actions from the information they provide
+about a teacher parameter.}
+Fix $p\in[1/4,3/4]$, a horizon $H$, and a budget $m=nH$.
+In family R, each teacher episode draws one
+$\operatorname{Bernoulli}(p)$ bit and repeats it $H$ times.
+In family I, all teacher actions are independent
+$\operatorname{Bernoulli}(p)$ bits. Episodes are independent in both
+families. The target in this exercise is estimation of the scalar
+parameter $p$, not comparison of the two families' trajectory laws.
+\begin{enumerate}[(a)]
+\item Show that the un-clipped average of all $m$ recorded actions has
+variance $Hp(1-p)/m$ in family R and $p(1-p)/m$ in family I.
+Deduce expected absolute error bounds of $\sqrt{Hp(1-p)/m}$ and
+$\sqrt{p(1-p)/m}$, respectively.
+\item Suppose a separately requested initial action costs $c$ units
+and gives a fresh $\operatorname{Bernoulli}(p)$ bit, where $c$ is a
+positive integer and $m/c$ is an integer. A full demonstration still
+costs $H$ units. In family R, compare the variances obtained by spending
+all $m$ units on full demonstrations or on separate initial-action
+queries. For which $c$ is the second strategy strictly better when $H>1$?
+\item In family I with $c=1$, explain why choosing query stages and
+prefixes adaptively cannot produce more informative observations than
+the $m$ independent actions already obtained passively. Assume the
+teacher uses fresh independent randomness for every response.
+\end{enumerate}
+\end{exercisechunk}

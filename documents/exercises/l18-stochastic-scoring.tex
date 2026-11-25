@@ -1,0 +1,16 @@
+\begin{exercisechunk}
+\item \textbf{Scoring a stochastic teacher.}
+\label[exercise]{ex:l18-stochastic-scoring}
+\exerciseprofile{2}{1}{1}{\excalculation\quad\exinterpretation}{%
+Distinguish matching a random action from estimating its distribution.}
+Fix $p\in(0,1)$. A teacher action $A$ has law
+$\operatorname{Bernoulli}(p)$. A learner action $\widehat A$ has law
+$\operatorname{Bernoulli}(q)$ and is independent of $A$, where $q\in[0,1]$.
+\begin{enumerate}[(a)]
+\item Show that $\P(A\ne\widehat A)=p+(1-2p)q$ and determine every minimizing $q$,
+including the case $p=1/2$. Does this criterion identify $q=p$?
+\item For the learner's distribution, compute its expected log loss on
+$A$. Show that the unique minimizer is $q=p$, and express the excess
+loss as a KL divergence.
+\end{enumerate}
+\end{exercisechunk}

@@ -1,0 +1,19 @@
+\begin{exercisechunk}
+\item \textbf{Every string map has a next-token representation.}
+\label[exercise]{ex:l16-autoregressive-representation}
+\exerciseprofile{2}{1}{1}{\exproof\quad\exconstruction}{%
+Separate the expressiveness of autoregressive output from the difficulty
+of representing its next-token rule.}
+Let $\Delta$ be a finite data alphabet and
+$\Sigma=\Delta\cup\{\mathtt{SEP},\mathtt{EOS}\}$, where the two added
+tokens are distinct and do not belong to $\Delta$.
+Given $p:\Sigma^*\to\Sigma$, the runtime $G$ starts from
+$h_0=x\mathtt{SEP}$, repeatedly appends $p(h)$ to the current prefix,
+and stops when $p(h)=\mathtt{EOS}$, without appending the stop token.
+It returns only the generated answer, excluding $x\mathtt{SEP}$.
+
+For an arbitrary function $F:\Delta^*\to\Delta^*$, construct a total
+next-token rule $p$ and prove that $G^p(x)=F(x)$ for every $x\in\Delta^*$.
+Your construction must define $p$ on all strings in $\Sigma^*$ and cover
+the case $F(x)$ is empty. Neither $F$ nor $p$ is assumed computable.
+\end{exercisechunk}

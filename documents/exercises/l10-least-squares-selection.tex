@@ -12,7 +12,7 @@ Fix $x_1,\ldots,x_n\in\R^d$ and $y_1,\ldots,y_n\in\R$. Let
 let $\mathbf X\in\R^{n\times d}$ have row $i$ equal to $x_i^\top$, and set
 $y=(y_1,\ldots,y_n)^\top$. Define
 \[
- L_n(w)=\frac12\sum_{i=1}^n
+ F_n(w)=\frac12\sum_{i=1}^n
  \bigl(\langle w,x_i\rangle-y_i\bigr)^2.
 \]
 Consider gradient descent
@@ -36,7 +36,7 @@ equation is equivalent to $\mathbf Xw=y$.
 
 \item Define
 $w^\star=\mathbf X^\top(\mathbf X\mathbf X^\top)^{-1}y$.
-Prove that every minimizer of $L_n$ has the unique form
+Prove that every minimizer of $F_n$ has the unique form
 \[
  w^\star+v,
  \qquad v\in\cR^\perp.

@@ -1,0 +1,25 @@
+\begin{exercisechunk}
+\item \textbf{Majority cycles in random utility models.}\suppmark
+\label[exercise]{ex:l19-random-utility-cycles}
+\exerciseprofile{2}{2}{2}{\exproof\quad\exconstruction\quad\exinterpretation}{%
+Distinguish failure of Bradley--Terry from failure of a general random utility model.}
+Let $U=(U_a,U_b,U_c)\in\R^3$ be jointly distributed, with
+$\P(U_y=U_{y'})=0$ for distinct $y,y'\in\{a,b,c\}$.
+The same utility law is used for every compared pair, independently of
+which pair is presented. Define $p(y,y')=\P(U_y>U_{y'})$.
+\begin{enumerate}[(a)]
+\item Prove the triangle bounds
+\[
+ 1\le p(a,b)+p(b,c)+p(c,a)\le2.
+\]
+\item Construct a distribution supported on three utility vectors for which
+$p(a,b)=p(b,c)=p(c,a)=2/3$. Verify these probabilities and the absence
+of ties.
+\item Decide whether the probabilities $p(a,b)=p(b,c)=p(c,a)=3/4$
+from \cref{sec:misspecification} admit such a random utility model.
+Then construct a random utility model for the pooled probabilities
+from \cref{ex:l19-pooled-evaluators}. Explain why incompatibility with
+Bradley--Terry has different implications in these two examples.
+You may use the identity requested in \cref{ex:l19-gumbel-comparisons}.
+\end{enumerate}
+\end{exercisechunk}

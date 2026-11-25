@@ -1,0 +1,3112 @@
+\documentclass[11pt,twoside]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage[inline,shortlabels]{enumitem}
+\usepackage{xcolor}
+\usepackage{../misc_files/course-definition-boxes}
+\usepackage{microtype}
+
+% Revision date: maintained by scripts/build_lecture_notes.py. Keep this command.
+\newcommand{\lecturerevised}{2026-11-19 09:09 UTC-06:00}
+\usepackage{eso-pic}
+\AddToShipoutPictureBG{%
+  \AtPageLowerLeft{%
+    \put(\LenToUnit{0.5\paperwidth},\LenToUnit{0.5in}){%
+      \makebox(0,0){\normalfont\footnotesize\color{black!60}Last revised: \lecturerevised}%
+    }%
+  }%
+}
+
+\usepackage[square,authoryear]{natbib}
+\usepackage[colorlinks=true,linkcolor=blue!60!black,
+  urlcolor=blue!60!black,citecolor=blue!60!black]{hyperref}
+\usepackage[nameinlink,capitalize]{cleveref}
+\crefname{exercise}{Exercise}{Exercises}
+\Crefname{exercise}{Exercise}{Exercises}
+
+% When including shared exercise chunks in the repository, uncomment:
+\usepackage{../exercises/course-exercises}
+\usepackage{needspace}
+
+% Short refinements that may be skipped on a first reading.
+\usepackage{enotez}
+\DeclareInstance{enotez-list}{lecture}{list}{format=\normalsize,number={#1.}}
+\setenotez{list-name=Endnotes,list-style=lecture,backref=true}
+\crefname{endnote}{Endnote}{Endnotes}
+\Crefname{endnote}{Endnote}{Endnotes}
+
+
+\definecolor{courseblue}{HTML}{17365D}
+\newcommand{\E}{\mathbb E}
+\newcommand{\I}{\mathbb I}
+\renewcommand{\P}{\mathbb P}
+\newcommand{\R}{\mathbb R}
+\newcommand{\KL}{D}
+\newcommand{\TV}{\mathrm{TV}}
+\makeatletter
+\@for\@letter:=A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z\do{%
+  \expandafter\edef\csname c\@letter\endcsname{\noexpand\mathcal{\@letter}}}
+\makeatother
+\newcommand{\lecturenumber}{20}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{example}[theorem]{Example}
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+
+\renewcommand{\thepage}{\lecturenumber--\arabic{page}}
+\renewcommand{\thesection}{\lecturenumber.\arabic{section}}
+\renewcommand{\theequation}{\lecturenumber.\arabic{equation}}
+
+\pagestyle{myheadings}
+\markboth{Lecture \lecturenumber: Learning from Rewards with Policy Gradients}
+{Lecture \lecturenumber: Learning from Rewards with Policy Gradients}
+
+% Course-wide notation convention:
+% See learning-notation-conventions.tex: \ell is one-observation loss;
+% L is population risk and L_n is empirical average loss. Keep the standard
+% term empirical risk minimization (ERM). Parameterization does not change
+% this convention. State local exceptions and all normalization factors.
+% Every vector is a column vector. If a matrix stores one vector per position,
+% row i contains the transpose of that vector. Write every row-shaped vector
+% explicitly as the transpose of a column vector.
+% Use n for the number of independent training examples. Use sentence case in
+% optional theorem titles. Use example environments for worked examples that
+% are referenced later. Reserve \boxed{} for literal boxes in diagrams.
+
+\hypersetup{pdftitle={Lecture 20: Learning from Rewards with Policy Gradients},
+  pdfauthor={Csaba Szepesvari}}
+\begin{document}
+\raggedbottom
+\begin{center}
+\fcolorbox{courseblue}{white}{%
+\begin{minipage}{0.92\textwidth}
+\vspace{1mm}
+\textbf{CMPUT 654: Mathematical Foundations of Modern AI Systems}
+\hfill Fall 2026
+\vspace{3mm}
+\begin{center}
+{\Large\bfseries Lecture \lecturenumber: Learning from Rewards\\[1mm]
+with Policy Gradients}
+\vspace{1mm}
+
+November 17, 2026
+\end{center}
+\vspace{2mm}
+\textit{Lecturer: Csaba Szepesv\'ari}
+\hfill
+\textit{Notes prepared by: Csaba Szepesv\'ari}
+\vspace{1mm}
+\end{minipage}}
+\end{center}
+
+Reinforcement learning is a major part of training frontier models and
+improving their problem-solving abilities. Policy-gradient methods are
+central to this training. We study how these methods work and what
+determines whether---and how quickly---they learn.
+
+\noindent\textbf{Reading guide.}
+The prerequisites are log probabilities and autoregressive factorization,
+logistic classification from \href{lecture10.pdf}{Lecture 10},
+gradient methods from \href{lecture11.pdf}{Lecture 11}, and the policy and
+feedback terminology of \href{lecture18.pdf}{Lecture 18}.
+\href{lecture19.pdf}{Lecture 19} supplies the learned-reward and
+KL-regularization comparison. We first isolate sampling effects with separate
+policy parameters, then use population classification problems to examine
+parameter sharing. The linear examples distinguish properties of the update
+from properties of the policy class; they do not give convergence guarantees
+for a shared neural policy. We also examine when fitting successful responses
+improves reward, and how missing contexts can undo correct behavior.
+The optional section and its exercises study
+changes to context weighting. The appendices give supplementary proofs and
+extensions, including the online and natural-gradient counterexamples.
+
+\section{From rewards to parameter updates}
+\label{sec:feedback}
+
+Consider training a language model to solve programming problems. Starting
+from a pretrained model, we generate candidate programs, run tests, and use
+the resulting rewards to update the model. The aim is to increase the
+probability that future programs pass the tests. A test supplies an
+evaluation, while a parameter update requires a direction in parameter
+space. Our first task is to derive such a direction from the generated
+program and its reward.
+
+Lecture 17 used verification to select outputs from a fixed generator.
+Here we use evaluations to train the generator. Lecture 18 established
+advantages of collecting data interactively; the question now is how
+policy-gradient updates make use of those data.
+
+Language-model training can also involve genuine multi-turn interaction.
+For example, a model may issue a search query or a program call, observe the
+result, and then choose its next action; a user may also respond between model
+turns. An earlier model action then changes the information available later.
+The policy therefore determines a distribution over complete interaction
+trajectories, and a terminal task reward must be assigned to several model
+actions. This setting is a sequential reinforcement-learning problem.
+Autoregressive generation of one response also contains many token decisions.
+When no external observation arrives before the response ends, those decisions
+can be treated as the single sampled response $Y$ below. Multi-turn interaction
+requires the sequential formulation because later model decisions condition on
+new external observations. \Cref{app:return} gives the trajectory estimator,
+returns to go, and history-dependent value baselines.
+
+Fix a prompt $x$ and a finite set $\cY$ of complete responses. The prompt
+was denoted by $u$ in Lectures 18--19; here $x$ also serves as the input
+in our classification examples, and $u$ will be a scalar policy parameter.
+Let $\theta\in\R^d$ parameterize a differentiable, strictly positive policy
+$\pi_\theta(\cdot\mid x)$. Generate $Y\sim\pi_\theta(\cdot\mid x)$,
+then observe a bounded reward $R$. The conditional reward law given $Y=y$
+is fixed independently of $\theta$, with mean $r(x,y)$. The objective is
+\begin{equation}
+ J_x(\theta)=\E[R]=\sum_{y\in\cY}\pi_\theta(y\mid x)r(x,y).
+ \label{eq:reward-objective}
+\end{equation}
+The symbol $J_x$ denotes expected reward, which we maximize. This is
+Lecture 18's policy objective at a fixed prompt, expressed as a function
+of the policy parameter $\theta$. Gradients are with respect to $\theta$
+unless another variable is indicated.
+A deterministic verifier is the special case $R=r(x,Y)\in\{0,1\}$.
+Learning with such computable feedback is called \emph{reinforcement learning
+with verifiable feedback} (RLVF), also called \emph{reinforcement learning with
+verifiable rewards} (RLVR). A learned reward model supplies another
+possible evaluator. In either case, $J_x$ measures the criterion that the
+evaluator supplies.
+
+\subsection{A derivative that can be sampled}
+
+Enumerating \cref{eq:reward-objective} may be impossible, and a test need not
+be differentiable. We therefore seek an expression for $\nabla J_x$ using
+one generated response, its reward, and derivatives of the policy.
+Differentiating the finite sum gives
+$\nabla J_x=\sum_y r(x,y)\nabla\pi_\theta(y\mid x)$.
+The sampler supplies weights $\pi_\theta(y\mid x)$, so we insert those
+weights by writing
+\[
+ \nabla\pi_\theta(y\mid x)
+ =\pi_\theta(y\mid x)\nabla\log\pi_\theta(y\mid x).
+\]
+The \emph{score} of a prompt--response pair is the vector
+$s_\theta(x,y)=\nabla\log\pi_\theta(y\mid x)$.
+The logarithm appears because its derivative converts the available
+sampling distribution into the derivative we want.
+
+\begin{proposition}[Score identity and baseline cancellation]
+\label{prop:score}
+Under the finite-response setup above,
+\begin{equation}
+ \nabla J_x(\theta)=\E[R s_\theta(x,Y)],
+ \qquad \E[s_\theta(x,Y)]=0.
+ \label{eq:score-identities}
+\end{equation}
+For every fixed scalar $b$,
+\begin{equation}
+ \E[(R-b)s_\theta(x,Y)]=\nabla J_x(\theta).
+ \label{eq:baseline-identity}
+\end{equation}
+\end{proposition}
+\begin{proof}
+Conditioning on the sampled response replaces its reward by its mean:
+\[
+ \E[R s_\theta(x,Y)]
+ =\sum_y\pi_\theta(y\mid x)r(x,y)s_\theta(x,y)
+ =\sum_y r(x,y)\nabla\pi_\theta(y\mid x)=\nabla J_x(\theta).
+\]
+The score has mean zero because policy probabilities sum to one:
+\[
+ \E[s_\theta(x,Y)]
+ =\sum_y\nabla\pi_\theta(y\mid x)
+ =\nabla\!\left(\sum_y\pi_\theta(y\mid x)\right)=0.
+\]
+Subtracting $b\E[s_\theta(x,Y)]$ proves
+\cref{eq:baseline-identity}.
+\end{proof}
+
+A \emph{baseline} is the reference value $b$ subtracted from the reward in
+the score estimator.
+The baseline can depend on the prompt, current parameters, and
+previous observations, provided it is fixed before the current response is
+sampled. Conditional on that history, the same proof applies.
+A baseline using the current response requires its own calculation;
+\cref{sec:groups} studies that case. When forming the estimator, we hold
+$b$ fixed, even if its numerical value was computed from $\theta$.
+Differentiating through $b$ would define a different update.
+
+The policy's \emph{value} at prompt $x$ is its expected reward
+$J_x(\theta)$. The \emph{advantage} of response $y$ is
+$r(x,y)-J_x(\theta)$, its expected reward above the policy's average at
+that prompt. With the exact value as baseline,
+\[
+ \E[R-J_x(\theta)\mid Y=y]=r(x,y)-J_x(\theta).
+\]
+When $b$ estimates the value, $R-b$ is used as an \emph{advantage estimate}.
+One can fit a value predictor $v_w(x)$ to rewards sampled from the current
+policy and use its predictions as baselines for later responses.
+Lecture 11's temporal-difference example uses $v_w(s)$ for a state-value
+predictor; \cref{app:return} gives the sequential version of the advantage.
+One motivation for subtracting a baseline is to reduce the variance of
+the gradient estimator. The value baseline need not minimize that variance;
+\cref{ex:l20-variance-baseline} asks you to find the minimizing baseline.
+
+\begin{remark}[Other unbiased estimators]
+\label{rem:score-characterization}
+One may ask whether there are other unbiased estimators of the gradient
+from one evaluated response. Essentially, the answer is no: if the same
+estimator must work for every unknown reward function, it has the form
+$R s_\theta(x,Y)+h(Y)$, where $h$ is independent of the reward
+function and $\E[h(Y)]=0$. Scalar baselines are one choice of this
+mean-zero correction.\endnote{Fix $\theta,x$ and write
+$p_y=\pi_\theta(y\mid x)$, $g_y=\nabla\pi_\theta(y\mid x)$,
+and $h_y=h(y)$. A scalar baseline chooses $h_y=-b g_y/p_y$.
+For any known vectors $c_y$, the choice
+$h_y=c_y-\sum_jp_jc_j$ has mean zero. A known reward predictor
+$\widehat r_y$ gives the unbiased estimator
+$(R-\widehat r_Y)s_\theta(x,Y)+\sum_y\widehat r_y g_y$;
+computing the correction may require enumerating responses. The
+characterization permits arbitrary reward functions. For two actions with
+exactly one correct action and deterministic correctness reward,
+$(2R-1)\nabla\pi_\theta(Y\mid x)$ always equals the gradient of the
+correct-action probability: a failure identifies the other action, whose
+probability gradient is $-\nabla\pi_\theta(Y\mid x)$. This zero-variance
+estimator uses the restricted reward family. For the universal-reward
+requirement, policy probabilities are needed: access to $\nabla\pi$ alone,
+without $\pi$, does not generally
+determine the required ratio.}
+\Cref{ex:l20-unbiased-estimators} asks you to characterize all such estimators.
+\end{remark}
+
+At iteration $t=0,1,\ldots$, draw $Y_t$ from
+$\pi_{\theta_t}(\cdot\mid x)$ using fresh randomness and observe $R_t$.
+Throughout the lecture, parameter iterates and quantities computed from
+them retain lowercase notation, even when random; sampled observations
+use capitals. Using a scalar baseline $b_t$ chosen before drawing $Y_t$
+and step size $\eta_t>0$ gives the
+\emph{stochastic policy-gradient} update
+\begin{equation}
+ \theta_{t+1}=\theta_t+
+ \eta_t(R_t-b_t)s_{\theta_t}(Y_t\mid x).
+ \label{eq:sampled-update}
+\end{equation}
+This score-function update is known as \emph{REINFORCE}.
+One update requires generating a response, evaluating it once, and computing
+a gradient of its log probability. A batch averages several such directions.
+Generation, evaluation, and the backward computation all contribute to cost.
+For prompts sampled from a fixed distribution on a finite prompt set,
+independent of $\theta$,
+averaging \cref{eq:score-identities} over the prompt gives the gradient of
+average reward across prompts.
+
+\subsection{Token scores and complete responses}
+
+The response-level estimator can be implemented with an autoregressive
+model. Write $p_\theta(\cdot\mid x,y_{<h})$ for the next-token model,
+as in Lectures 1 and 19. For a fixed generation length $H$, write a
+response as $y=y_{1:H}$ and its prefix as $y_{<h}=y_{1:h-1}$, with
+$y_{<1}$ the empty sequence. Then
+\begin{equation}
+ \pi_\theta(y_{1:H}\mid x)=\prod_{h=1}^H
+ p_\theta(y_h\mid x,y_{<h}),\qquad
+ s_\theta(x,y_{1:H})=\sum_{h=1}^H
+ \nabla\log p_\theta(y_h\mid x,y_{<h}).
+ \label{eq:token-score}
+\end{equation}
+\endnote{For generation that stops at a sampled end-of-sequence token
+$\mathrm{EOS}$, assume a maximum length $H$ and pad after EOS with an
+absorbing symbol of conditional probability one, as in Lecture 18.
+The same fixed-$H$ formula applies to the padded responses. Sampled EOS
+contributes its score; padding contributes zero. Equivalently, without
+padding, the product and sum run to the actual length $|y|$, including
+EOS when sampled, as in Lecture 19. Truncation at $H$ adds no sampled
+decision and hence no score term. The EOS factors already encode the
+probability of termination.}
+A terminal reward multiplies the sum
+of token scores; computing the sum does not require differentiating the
+verifier. The update changes token probabilities through the shared model
+parameters. It supplies no separate observation identifying which token
+caused success or failure.
+
+\paragraph{Intermediate rewards.}
+Suppose feedback arrives after individual tokens, with $R_{h+1}$ observed
+after $Y_h$, and the objective is the expected total reward
+$J(\theta)=\E[R]$, where $R=\sum_{h=1}^H R_{h+1}$.
+Evaluations of intermediate reasoning steps, often called \emph{process
+feedback}, can supply such rewards. Assume that the feedback law given the
+generated prefix is independent of $\theta$. Writing
+$s_h=\nabla\log p_\theta(Y_h\mid x,Y_{<h})$, we can replace the full return
+by the \emph{return to go} in each score term:
+\[
+ \nabla J(\theta)
+ =\E\!\left[\sum_{h=1}^H s_h R\right]
+ =\E\!\left[\sum_{h=1}^H s_h\sum_{k=h}^H R_{k+1}\right].
+\]
+Past rewards cannot be affected by the current token, and their score terms
+have expectation zero. Removing them is intended to reduce variance;
+the variance of the full sum need not decrease in every problem.\endnote{For
+example, take two independent Bernoulli actions with separate logits and
+constant rewards $R_2=1$ and $R_3=-1$. The full-return estimator is identically
+zero, whereas the return-to-go estimator is $-s_2$ and has positive variance.
+The baseline calculation in \cref{ex:l20-variance-baseline} provides another
+way to see why subtracting a mean-zero score term need not reduce variance.}
+\Cref{app:return} proves the identity and explains its connection to
+Rao--Blackwellization.
+
+\section{Softmax bandits}
+\label{sec:bandits}
+
+We now study whether sampled policy-gradient updates learn and how long
+learning takes. Fix one prompt and give each possible response its own
+logit. The resulting model is a \emph{multi-armed bandit}: the learner
+chooses an action and observes a reward for that action. Separate logits
+remove parameter sharing while retaining the dependence of future samples
+on the current policy. We will establish eventual convergence, prove a
+learning-time bound for deterministic binary feedback, and then see how
+stochastic rewards can make learning much slower. We then identify a small
+fixed-step regime that recovers the $1/t$ expected rate.
+
+\subsection{Setup and update}
+\label{sec:bandit-setup}
+
+Let $\cA=[K]$ be the action set, with $K\ge2$. Each action $a$ has an
+unknown, fixed \emph{reward distribution} $\mu_a$ on $[-B,B]$, where
+$0<B<\infty$, and mean reward
+\[
+ r_a=\int z\,\mu_a(dz).
+\]
+For a logit vector $\theta\in\R^K$, use the softmax policy and objective
+\[
+ \pi_\theta(a)=\frac{e^{\theta_a}}{\sum_{j=1}^K e^{\theta_j}},
+ \qquad J(\theta)=\sum_{a=1}^K\pi_\theta(a)r_a.
+\]
+The fixed prompt is suppressed. Write $a^\star\in\arg\max_a r_a$ and
+\[
+ J^\star=\sup_{\theta\in\R^K}J(\theta)=\max_a r_a=r_{a^\star}.
+\]
+The equality follows by concentrating softmax probability on a best
+action. The supremum need not be attained at a finite parameter.
+
+Start from a finite deterministic $\theta_0$ and write
+$\pi_t=\pi_{\theta_t}$. Let $\cF_t$ be the history generated by
+$(A_0,R_0),\ldots,(A_{t-1},R_{t-1})$, before round $t$. At that round,
+draw $A_t$ from $\pi_t$ and obtain a fresh reward with distribution
+$\mu_{A_t}$. Precisely, for every $a\in\cA$ and measurable set $C\subseteq\R$,
+\begin{equation}
+ \P(A_t=a,\ R_t\in C\mid\cF_t)=\pi_t(a)\mu_a(C).
+ \label{eq:bandit-sampling}
+\end{equation}
+Thus the action probabilities depend on the history, while the reward law
+given the action remains fixed. In particular,
+$\E[R_t\mid\cF_t]=J(\theta_t)$.
+
+\begin{remark}[Sampled softmax update]
+\label{rem:sampled-softmax}
+For the separate-logit softmax policy, viewed as a probability vector,
+\[
+ \nabla\log\pi_\theta(a)=e_a-\pi_\theta,
+\]
+where $e_a$ is the $a$th standard basis vector. With zero baseline and a
+fixed step size $\eta>0$, \cref{eq:sampled-update} therefore becomes
+\begin{equation}
+ \theta_{t+1}=\theta_t+\eta R_t(e_{A_t}-\pi_t).
+ \label{eq:vector-pg}
+\end{equation}
+Verify the score identity and derive the update from \cref{eq:sampled-update}.
+\end{remark}
+
+We measure both the quality of the current policy and the reward lost
+during training. Define the \emph{suboptimality gap} and
+\emph{expected cumulative regret}
+by
+\[
+ \delta_t=J^\star-J(\theta_t),\qquad
+ \cR_T=\sum_{t=0}^{T-1}\E[\delta_t]
+       =TJ^\star-\E\!\left[\sum_{t=0}^{T-1}R_t\right].
+\]
+The last equality follows from $\E[R_t\mid\cF_t]=J(\theta_t)$.
+The benchmark $TJ^\star$ is the expected reward from always choosing a
+best action. Thus $\cR_T/T$ is the expected reward lost per training round.
+
+\paragraph{An exact-gradient comparison.}
+Before studying the sampled update, consider whether a large suboptimality gap
+must be visible in the exact gradient.
+
+\begin{proposition}[A probability-dependent gradient bound]
+\label{prop:gradient-gap}
+For the separate-logit softmax policy,
+\begin{equation}
+ \partial_{\theta_a}J(\theta)=\pi_\theta(a)(r_a-J(\theta)),
+ \qquad
+ \pi_\theta(a^\star)\bigl(J^\star-J(\theta)\bigr)
+ \le\|\nabla J(\theta)\|_2.
+ \label{eq:gradient-gap}
+\end{equation}
+\end{proposition}
+\begin{proof}
+The softmax derivative is
+$\partial_{\theta_a}\pi_\theta(j)=\pi_\theta(j)
+(\I\{j=a\}-\pi_\theta(a))$.
+Substitution into $\partial_{\theta_a}J$ gives the first identity.
+The coordinate for $a^\star$ is nonnegative and at most the Euclidean norm
+of the gradient, proving the inequality.
+\end{proof}
+
+The bound connects to gradient domination in Lecture 11:
+\[
+ J^\star-J(\theta)\le
+ \frac{\|\nabla J(\theta)\|_2}{\pi_\theta(a^\star)}.
+\]
+A small gradient certifies a small gap only when the optimal action has
+enough probability. The same probability also determines how often a
+sampled update observes that action. The convergence results below must
+account for this dependence on the current policy.
+
+\subsection{Almost-sure convergence}
+\label{sec:time}
+
+For the separate-logit update, every positive constant step size eventually
+learns a best action under the following assumptions. The statement concerns
+the entire sampled training trajectory.
+
+\begin{theorem}[Constant-step almost-sure convergence]
+\label{thm:as}
+In the setup of \cref{sec:bandit-setup}, suppose the mean rewards $r_a$
+are distinct. For every fixed $\eta>0$, the update \cref{eq:vector-pg}
+satisfies
+\[
+ \pi_t(a^\star)\longrightarrow1,
+ \qquad \delta_t\longrightarrow0
+ \qquad\text{almost surely}.
+\]
+\end{theorem}
+
+The proof is outside of the scope of this lecture. The theorem permits arbitrary positive
+constant steps. Bounded rewards also give a consequence for expected regret.
+
+\begin{corollary}[Sublinear expected regret]
+\label{cor:sublinear-regret}
+Under the assumptions of \cref{thm:as},
+\[
+ \frac{\cR_T}{T}\longrightarrow0\qquad(T\to\infty).
+\]
+\end{corollary}
+
+\Cref{ex:l20-sublinear-regret} asks you to prove the corollary.
+\emph{Hint:} First show that $\E[\delta_t]\to0$.
+Neither statement gives a learning-time bound. We next obtain one for a
+deterministic binary verifier.
+
+\subsection{A learning-time bound for a binary verifier}
+\label{sec:binary}
+
+How many generated and evaluated responses are sufficient to make failures
+uncommon? We answer this question for a policy choosing between two options
+at a fixed input $x$. For example, $x$ may encode a question and a proposed
+solution, and the policy must decide whether to accept ($a=1$) or reject
+($a=0$) the solution. Assume the reward is deterministically one for a
+correct decision and zero otherwise. Without loss of generality, suppose
+$r_a=a$; the other case follows by exchanging the action labels.
+
+The reward laws on these actions satisfy
+$\mu_0(\{0\})=\mu_1(\{1\})=1$, so $R_t=A_t$.
+For the two-logit policy, put
+\[
+ u_t=\theta_{t,1}-\theta_{t,0},\qquad
+ p_t=\pi_t(1)=\sigma(u_t)=\frac1{1+e^{-u_t}},\qquad q_t=1-p_t.
+\]
+Subtracting the two coordinate updates in \cref{eq:vector-pg} gives
+\begin{equation}
+ u_{t+1}=u_t+2\eta A_t(1-p_t).
+ \label{eq:binary-update}
+\end{equation}
+Both logits move, which accounts for the factor $2$.
+\Cref{ex:l20-binary-update} asks you to derive the reduction.
+Conditional on $\cF_t$, $A_t$ is Bernoulli with parameter $p_t$.
+Here $J^\star=1$ and $\delta_t=q_t$. Put $m_t=\E[q_t]$; the expectation
+averages the trained policy's failure probability over its training samples.
+
+\begin{theorem}[Learning from a binary verifier]
+\label{thm:binary}
+For \cref{eq:binary-update}, with finite deterministic $u_0$ and any fixed
+$\eta>0$, let $c_0=2\eta e^{-2\eta}p_0^2$. After $t\ge0$ updates,
+\begin{equation}
+ \E[\delta_t]=\E[1-p_t]
+ \le\frac{1}{\delta_0^{-1}+c_0t}.
+ \label{eq:binary-rate}
+\end{equation}
+Moreover, $p_t\to1$ almost surely.
+\end{theorem}
+
+\begin{corollary}[Logarithmic regret for a binary verifier]
+\label{cor:binary-regret}
+Under the assumptions of \cref{thm:binary}, for every integer $T\ge1$,
+\[
+ \cR_T\le q_0+\frac1{c_0}\log\!\bigl(1+c_0q_0(T-1)\bigr).
+\]
+In particular, $\cR_T=O(\log T)$ for fixed $\eta$ and $p_0$ as $T\to\infty$.
+\end{corollary}
+\begin{proof}
+Here $\delta_t=q_t$. Sum \cref{eq:binary-rate} and compare the decreasing
+summands after $t=0$ with an integral:
+\[
+ \cR_T\le\sum_{t=0}^{T-1}\frac1{q_0^{-1}+c_0t}
+ \le q_0+\int_0^{T-1}\frac{ds}{q_0^{-1}+c_0s}
+ =q_0+\frac1{c_0}\log\!\bigl(1+c_0q_0(T-1)\bigr).
+\]
+\end{proof}
+
+To prove \cref{thm:binary}, we first quantify what one successful response
+does to the policy, then accumulate the expected progress over training.
+
+\subsubsection{Finding the progress estimate}
+
+A failure gives no update. A success increases $u_t$ by $2\eta q_t$.
+Consequently, $p_t$ never decreases and $p_0\le p_t$ on every trajectory.
+Before the first success the policy stays fixed, so the number of evaluations
+up to and including that success has mean $1/p_0$. A very small initial
+success probability already imposes a long wait.
+
+To predict the progress after a success, write $p=p_t$ and $q=q_t$.
+The derivative $dp/du=pq$ suggests that a small successful logit change
+$2\eta q$ increases $p$ by approximately
+\[
+ (pq)(2\eta q)=2\eta p q^2.
+\]
+A success occurs with probability $p$, so expected progress should be
+approximately $2\eta p^2q^2$. The two factors of $q$ have distinct sources:
+the logit update shrinks, and the logistic policy becomes less sensitive to
+logit changes as it approaches probability one. We therefore look for a
+finite-step lower bound with this dependence. The approximation motivates
+the bound; it will not be used as a proof step.
+
+Let $q^+$ denote the failure probability after a successful update from
+$(p,q)$. Success multiplies the success-to-failure odds by $e^{2\eta q}$.
+Converting the new odds back to a probability gives
+\begin{equation}
+ q^+=\frac{q}{q+pe^{2\eta q}},\qquad
+ q-q^+=\frac{pq(e^{2\eta q}-1)}{q+pe^{2\eta q}}.
+ \label{eq:finite-progress}
+\end{equation}
+We want a lower bound on improvement. Lower-bound the numerator and
+upper-bound the denominator. Convexity of the exponential gives
+$2\eta q\le e^{2\eta q}-1$, while $p+q=1$ and $q\le1$ give
+\[
+ q+pe^{2\eta q}\le e^{2\eta q}\le e^{2\eta}.
+\]
+The two elementary bounds yield
+\begin{equation}
+ 2\eta e^{-2\eta}pq^2\le q-q^+.
+ \label{eq:success-progress}
+\end{equation}
+The finite-step estimate retains the predicted dependence, with the
+additional factor $e^{-2\eta}$. Multiplying by the probability $p_t$ of the
+successful observation, and using $p_0\le p_t$, gives
+\begin{equation}
+ c_0 q_t^2\le\E[q_t-q_{t+1}\mid\cF_t],
+ \qquad c_0=2\eta e^{-2\eta}p_0^2>0.
+ \label{eq:binary-drift}
+\end{equation}
+The constant $c_0$ is deterministic. We can therefore take expectations and
+use $m_t^2\le\E[q_t^2]$ to close the recurrence:
+\begin{equation}
+ m_{t+1}\le m_t-c_0m_t^2.
+ \label{eq:quadratic-drift}
+\end{equation}
+
+\subsubsection{Accumulating progress}
+
+The policy-gradient calculation has produced a scalar recurrence. Extracting
+a rate from that recurrence is a standard, reusable argument; the same
+quadratic recurrence appeared in Lecture 11's analysis of separable
+cross-entropy. We now explain the rate before proving the general bound.
+
+Suppose an error is of size $a$ and decreases by approximately $ca^2$ per
+step. Halving the error requires a change of size $a/2$, so the number of
+steps should be of order $a/(ca^2)=1/(ca)$. At the next, smaller error
+scale, the required change halves but the progress per step quarters.
+Successive halvings therefore take about twice as long. Adding those times
+gives a total dominated by the last halving: reaching error $\varepsilon$
+should cost order $1/(c\varepsilon)$ steps. This predicts the rate when
+progress has the stated size; a lower bound on progress will give an upper
+bound on the required time.
+
+How can we make that calculation precise without splitting time into
+halvings? Divide each small decrease in error by the progress available at
+that error. For quadratic progress, accumulating these ratios gives
+\[
+ \int_\varepsilon^{a_0}\frac{du}{cu^2}
+ =\frac1c\left(\frac1\varepsilon-\frac1{a_0}\right).
+\]
+The reciprocal appears because it is the integral of inverse quadratic
+progress. The discrete proof compares this integral with one rectangle
+per step. The same construction works for other powers.
+
+\begin{proposition}[Standard drift-to-rate bound]
+\label{prop:drift-rate}
+Let $(a_t)_{t\ge0}$ be a nonnegative sequence with $a_0>0$, and suppose
+\[
+ a_{t+1}\le a_t-ca_t^\alpha
+ \qquad(t\ge0)
+\]
+for constants $c>0$ and $\alpha>1$. Then
+\[
+ a_t\le\bigl(a_0^{1-\alpha}+c(\alpha-1)t\bigr)^{-1/(\alpha-1)}.
+\]
+In particular, quadratic decrease ($\alpha=2$) gives
+$a_t\le(a_0^{-1}+ct)^{-1}$.
+\end{proposition}
+\begin{proof}
+The recurrence makes $a_t$ nonincreasing. If an iterate reaches zero,
+all subsequent iterates are zero, so consider steps with $a_{t+1}>0$.
+One step decreases the error by at least $ca_t^\alpha$.
+On the interval $[a_{t+1},a_t]$, the function $u^{-\alpha}$ is at
+least $a_t^{-\alpha}$. Therefore
+\[
+ c\le\frac{a_t-a_{t+1}}{a_t^\alpha}
+ \le\int_{a_{t+1}}^{a_t}u^{-\alpha}\,du.
+\]
+The intervals from successive steps are adjacent. Summing their integrals
+from step zero through step $t-1$ gives
+\[
+ ct\le\int_{a_t}^{a_0}u^{-\alpha}\,du
+ =\frac{a_t^{1-\alpha}-a_0^{1-\alpha}}{\alpha-1}.
+\]
+Rearranging proves the bound. For quadratic progress, each integral is
+exactly $1/a_{t+1}-1/a_t$: the familiar reciprocal proof is the same
+calculation written without integrals.
+\end{proof}
+
+The reusable part needs only a deterministic recurrence. For our sampled
+algorithm, the separate tasks were to prove conditional drift, take
+expectations, and use convexity to obtain that recurrence for $m_t$.
+
+
+\begin{proof}[Completion of the proof of \cref{thm:binary}]
+Apply \cref{prop:drift-rate} to \cref{eq:quadratic-drift} with
+$a_t=m_t$, $a_0=q_0$, $c=c_0$, and $\alpha=2$ to obtain
+\cref{eq:binary-rate}.
+For almost-sure convergence, the decreasing sequence $q_t$ has a
+nonnegative limit $q_\infty$. Bounded convergence and the rate give
+$\E[q_\infty]=\lim_t\E[q_t]=0$, so $q_\infty=0$ almost surely.
+\end{proof}
+
+\Cref{ex:l20-binary-baseline} asks you to extend the theorem to any fixed
+baseline $b\in[0,1]$, with the same rate.
+
+The bound gives a sufficient evaluation budget: for $0<\varepsilon<q_0$,
+\[
+ t\ge\frac{\varepsilon^{-1}-q_0^{-1}}{2\eta e^{-2\eta}p_0^2}
+ \quad\Longrightarrow\quad \E[q_t]\le\varepsilon.
+\]
+The dependence on initialization need not be sharp; the proof replaced every
+$p_t$ by $p_0$. \Cref{ex:l20-first-success} separates a necessary waiting
+cost from this sufficient guarantee. Likewise, the factor $2\eta e^{-2\eta}$
+comes from a coarse finite-step estimate and does not identify an optimal
+step size.
+
+The proof uses deterministic zero/one rewards: an incorrect response gives
+no update, and a correct response increases the logit difference. Thus the
+success probability never decreases. We next change the reward laws while
+keeping the same softmax update and see how this monotonicity can fail.
+
+\subsection{Nearly linear regret with stochastic rewards}
+\label{sec:slow}
+
+Consider two actions with $\theta_0=0$ and reward laws
+\[
+ \mu_1(\{+1\})=\frac{1+\Delta}{2},\qquad
+ \mu_1(\{-1\})=\frac{1-\Delta}{2},\qquad
+ \mu_2(\{0\})=1,\qquad 0<\Delta<1.
+\]
+The first law is a biased Rademacher distribution. Its mean is
+$r_1=\Delta$, while $r_2=0$, so action 1 is optimal.
+
+A sequence of negative rewards from action 1 reduces its sampling
+probability. Once that probability is at most $1/(2T)$, repeatedly choosing
+action 2 leaves the logits unchanged because its reward is zero. For the
+next $T$ evaluations, the conditional probability of never choosing action 1
+is then at least
+\[
+ \left(1-\frac1{2T}\right)^T\ge\frac12.
+\]
+Thus reaching a very small optimal-action probability can cause a long period
+with little corrective information. A regret lower bound must also quantify
+the probability of reaching such a state. Balancing that probability against
+the cost of the subsequent delay yields the following result.
+
+\begin{theorem}[Polynomial expected regret]
+\label{thm:slow}
+For the two-action instance above and update \cref{eq:vector-pg}, define
+$\lambda_\Delta=\tfrac12\log((1+\Delta)/(1-\Delta))$.
+If $\lambda_\Delta<\eta$, then, for every $\varepsilon>0$,
+\begin{equation}
+ \cR_T=\widetilde\Omega\!\left(
+ T^{1-(1+\varepsilon)\lambda_\Delta/\eta}\right)
+ \qquad(T\to\infty).
+ \label{eq:slow-regret}
+\end{equation}
+Here the notation suppresses logarithmic factors in $T$ and constants
+depending on the fixed instance, step size, and $\varepsilon$.
+\end{theorem}
+
+The theorem is stated without its technical lower-bound proof. For any fixed
+$\eta>0$ and $\alpha\in(0,1)$, choose a fixed $\Delta>0$ sufficiently small
+that $\lambda_\Delta<\alpha\eta/2$. Taking $\varepsilon=1$ in the theorem gives
+\[
+ \cR_T=\widetilde\Omega(T^{1-\alpha}).
+\]
+Thus the regret exponent can be arbitrarily close to one across fixed
+instances, even for a fixed step size.
+
+The reward laws satisfy the assumptions of \cref{thm:as}, so this same
+instance has $\pi_t(1)\to1$ almost surely and $\cR_T/T\to0$.
+A polynomial lower bound with exponent below one is compatible with
+sublinear regret. The convergence theorem places no quantitative bound on
+how long unsuccessful training trajectories can last.
+
+The logarithmic bound in \cref{cor:binary-regret} used deterministic
+zero/one rewards. Here a negative reward from the optimal action reduces
+its probability, while a draw of the zero-reward action leaves the policy
+unchanged. The resulting delays invalidate the monotonicity argument and
+can make expected regret polynomial.
+
+\subsection{Small fixed steps recover the \texorpdfstring{$1/t$}{1/t} rate}
+\label{sec:fixed-step-rate}
+
+The preceding lower bound leaves open whether stochastic rewards themselves
+prevent a $1/t$ expected rate. A sufficiently small, horizon-independent
+fixed step recovers that rate. The theorem permits signed rewards and an
+arbitrary finite deterministic initialization, but requires every pair of
+arms to have distinct mean rewards.
+
+Define the smallest and largest gaps from the unique best arm and the
+smallest pairwise mean separation by
+\[
+ \Delta_{\min}=\min_{a\ne a^\star}(J^\star-r_a),\qquad
+ \Delta_{\max}=\max_{a\ne a^\star}(J^\star-r_a),\qquad
+ \Delta_{\mathrm{pair}}=\min_{a\ne b}|r_a-r_b|.
+\]
+The stepsize below depends on $\Delta_{\mathrm{pair}}$, which also compares
+pairs of suboptimal arms, rather than only on $\Delta_{\min}$.
+
+\begin{theorem}[Expected rate for a small fixed step]
+\label{thm:fixed-step-rate}
+In the setup of \cref{sec:bandit-setup}, suppose the mean rewards are
+distinct. Define
+\begin{equation}
+ M=\prod_{a\ne a^\star}
+ \left(1+\frac{3\Delta_{\max}}{\Delta_{\min}}
+ \exp(\theta_{0,a}-\theta_{0,a^\star})\right)^2.
+ \label{eq:fixed-step-constant}
+\end{equation}
+If
+\begin{equation}
+ 0<\eta\le\frac{\Delta_{\mathrm{pair}}^2}{40\sqrt K B^3},
+ \label{eq:fixed-step-condition}
+\end{equation}
+then, for every $t\ge0$,
+\begin{equation}
+ \E[\delta_t]
+ \le\frac{\delta_0}
+ {1+\dfrac{\eta\delta_0}{2M}t}.
+ \label{eq:fixed-step-rate}
+\end{equation}
+In particular, for $t\ge1$,
+\[
+ \E[\delta_t]\le\frac{2M}{\eta t}.
+\]
+Moreover, $\pi_t(a^\star)\to1$ almost surely.
+\end{theorem}
+
+\begin{corollary}[Logarithmic regret for a small fixed step]
+\label{cor:fixed-step-regret}
+Under the assumptions of \cref{thm:fixed-step-rate}, for every integer
+$T\ge1$,
+\[
+ \cR_T\le \delta_0+\frac{2M}{\eta}
+ \log\!\left(1+\frac{\eta\delta_0}{2M}(T-1)\right).
+\]
+Consequently, $\cR_T=O(\log T)$ for a fixed bandit instance, stepsize,
+and initialization.
+\end{corollary}
+
+The main proof problem is that the probability of the best arm and the
+current suboptimality gap depend on the same training history. The proof
+first constructs a polynomial Lyapunov function that gives the uniform
+inverse-moment bound
+\begin{equation}
+ \sup_{t\ge0}\E[\pi_t(a^\star)^{-2}]\le M.
+ \label{eq:fixed-step-moment}
+\end{equation}
+A one-step smoothness calculation gives the conditional progress estimate
+\begin{equation}
+ \delta_t-\E[\delta_{t+1}\mid\cF_t]
+ \ge\frac{\eta}{2}\pi_t(a^\star)^2\delta_t^2.
+ \label{eq:fixed-step-progress}
+\end{equation}
+Put $m_t=\E[\delta_t]$. Cauchy--Schwarz combines the two estimates without
+assuming independence:
+\[
+ m_t^2
+ =\left(\E[(\pi_t(a^\star)\delta_t)\pi_t(a^\star)^{-1}]\right)^2
+ \le M\E[\pi_t(a^\star)^2\delta_t^2].
+\]
+Taking expectations in \cref{eq:fixed-step-progress} therefore yields
+\begin{equation}
+ m_t-m_{t+1}\ge\frac{\eta}{2M}m_t^2.
+ \label{eq:fixed-step-recurrence}
+\end{equation}
+The standard drift-to-rate bound in \cref{prop:drift-rate} proves
+\cref{eq:fixed-step-rate}; summing that rate proves
+\cref{cor:fixed-step-regret}. The polynomial Lyapunov calculation establishing
+\cref{eq:fixed-step-moment} is the technical part of the proof and is omitted.
+
+The constant $M$ can be large. Under uniform initialization,
+\[
+ M=\left(1+\frac{3\Delta_{\max}}{\Delta_{\min}}
+ \right)^{2(K-1)},
+\]
+so the theorem's guarantee can be exponential in $K$. The proof does not show
+that this particular exponential dependence is necessary under uniform
+initialization. Severe dependence on initial coverage is nevertheless real.
+The construction in \citet[Theorem~5.6]{mei2024} has a suboptimal plateau
+whose length contains the factor $1/\pi_0(a^\star)$. With the other
+construction parameters fixed, an exponentially small initial probability
+of the best arm therefore produces an exponentially long plateau. The
+displayed value of $M$ is an upper bound whose precise dependence on $K$ may
+be loose; the theorem does not give a polynomial guarantee in $K$ or in
+$1/\pi_0(a^\star)$.
+
+For the two-arm instance in \cref{sec:slow}, $B=1$ and
+$\Delta_{\mathrm{pair}}=\Delta$.
+The sufficient condition in \cref{thm:fixed-step-rate} is then
+$\eta\le\Delta^2/(40\sqrt2)$, whereas \cref{thm:slow} applies when
+$\eta>\lambda_\Delta$, with $\lambda_\Delta\sim\Delta$ as
+$\Delta\downarrow0$. The two theorems leave an intermediate stepsize regime
+between these sufficient conditions.
+
+\Cref{app:small-step} states a complementary finite-horizon guarantee that
+allows tied mean rewards. Decreasing steps also reduce later corrections to
+an early preference for a suboptimal arm. \Cref{app:diffusion} develops a
+related lower bound in a continuous-time model; that result is supplementary.
+
+\section{Learning with shared parameters}
+\label{sec:sharing}
+
+The preceding convergence guarantees use separate logits for one prompt.
+A language model shares parameters across prompts: an update that improves
+one response can change the probabilities of responses to other prompts.
+We now examine how much this changes the convergence question. Expected
+reward still measures the desired performance. We first identify a region
+where its gradient guarantees learning, then show how exact policy gradient
+can fail to reach that region even on a separable classification problem.
+We then compare reward maximization with fitting successful responses,
+separating restrictions of the policy class from missing training contexts.
+
+\subsection{Classification as a contextual bandit}
+
+Classification lets us compare reward maximization and supervised learning
+on the same prediction problem. Let $X\sim\nu$ take values in $\R^d$,
+with $\E[\|X\|_2^2]<\infty$, and let $y:\R^d\to\{-1,1\}$ be the
+measurable correct-label function. Given $X=x$, draw a label $A\in\{-1,1\}$ from
+the linear logistic policy
+\[
+ \pi_\theta(a\mid x)
+ =\frac{\exp(a\theta^\top x/2)}
+ {\exp(-\theta^\top x/2)+\exp(\theta^\top x/2)}
+ =\sigma(a\theta^\top x).
+\]
+This is the ordinary two-action softmax policy. The two logits are
+$-\theta^\top x/2$ and $\theta^\top x/2$; subtracting a common logit gives
+the equivalent pair $(0,\theta^\top x)$ used in the two-action reduction of
+\cref{sec:binary}. The same policy is Lecture 10's binary predictor $q_w$
+with $w=\theta$, now sampled to choose an action. The log-odds
+$\theta^\top x$ is the quantity denoted there by $s_w(x)$. The policy score
+$s_\theta(x,a)=\nabla_\theta\log\pi_\theta(a\mid x)$ is a vector.
+Define $r(x,a)=\I\{a=y(x)\}$ and observe $R=r(X,A)$.
+This is a \emph{contextual bandit}:
+the learner observes the context, chooses one action, and receives its
+reward. In this model the logits are linear in the features; reward
+linearity is a separate condition.
+
+Following Lectures 10--11, write $z(x)=y(x)x$ for the
+\emph{signed feature vector}. Its inner product
+$m_\theta(x)=z(x)^\top\theta$ is the \emph{signed margin}, also the
+log odds of choosing the correct label. The probability of choosing that
+label is $p_\theta(x)=\pi_\theta(y(x)\mid x)=\sigma(m_\theta(x))$.
+
+\paragraph{Reward and log loss.}
+The log loss at $x$ is
+$\ell(\theta,x)=-\log p_\theta(x)=\log(1+e^{-z(x)^\top\theta})$.
+Expected reward and population cross-entropy are, respectively,
+\begin{equation}
+ J(\theta)=\E[p_\theta(X)],
+ \qquad L(\theta)=\E[\ell(\theta,X)].
+ \label{eq:classification-objectives}
+\end{equation}
+Each log loss is convex in $\theta$, so $L$ is convex as well.
+The experiment defining $J$ draws a context $X$ from $\nu$ and then
+draws the predicted label $A$ from $\pi_\theta(\cdot\mid X)$.
+Because reward is one exactly when the prediction is correct,
+$J(\theta)=\P(A=y(X))$: the probability of a correct prediction,
+averaged over both the context and the policy's random choice of label.
+Always choosing the most probable label instead gives the deterministic
+classifier $h_\theta(x)=\operatorname{sign}(\theta^\top x)$, with
+$\operatorname{sign}(0)=1$ as in Lecture 10. Its probability of a correct
+prediction is $\P(h_\theta(X)=y(X))$, a different objective.
+The population is \emph{linearly separable} if
+there is a $w\in\R^d$ with $z(X)^\top w>0$ almost surely.
+Then $J(cw)\to1$ as $c\to\infty$ by bounded convergence. Population
+separability is stronger than observing a separable finite training sample.
+Throughout the separable contextual-bandit results below,
+\[
+ J^\star=\sup_\theta J(\theta)=1,
+ \qquad \delta(\theta)=J^\star-J(\theta)=1-J(\theta).
+\]
+
+\paragraph{Comparing the gradients.}
+To isolate the effect of the objective, suppose all labels are available
+and compute both population gradients exactly. At each context $x$,
+the gradients of success probability and log loss are
+\begin{equation}
+ \begin{aligned}
+ \nabla p_\theta(x)&=p_\theta(x)(1-p_\theta(x))z(x),\\
+ -\nabla\ell(\theta,x)&=(1-p_\theta(x))z(x).
+ \end{aligned}
+ \label{eq:classification-weights}
+\end{equation}
+Thus $\nabla p_\theta(x)=-p_\theta(x)\nabla\ell(\theta,x)$:
+at context $x$, increasing success probability gives the same direction
+as decreasing log loss, scaled by $p_\theta(x)$.
+When the policy assigns very small probability to the correct label at
+$x$, that context has little influence on the population policy gradient.
+Updates from other contexts can reduce this probability under either
+objective. For log loss, convexity gives a global guarantee: on a separable
+population, exact gradient flow satisfies $L(\theta(t))\to0$, as in
+Lecture 11. Since $\delta(\theta)=1-J(\theta)\le L(\theta)$, we also have
+$J(\theta(t))\to1$. Individual correct-label probabilities need not
+increase monotonically. \Cref{prop:shared-pg} will show that policy gradient
+can fail to achieve this convergence.
+
+\subsection{When a good initialization is enough}
+\label{sec:local-pg}
+
+Under separability, maximizing $J$ is the right optimization problem:
+$\sup_\theta J(\theta)=1$. Searching the entire parameter space could
+therefore find policies with arbitrarily high reward. The question for
+policy gradient is whether successive local improvements reach those
+policies. Lecture 11 gave two sufficient ingredients: the objective must
+improve along the trajectory, and its gradient must control the remaining
+error. Exact gradient-ascent flow never decreases $J$, so from $\theta(0)$
+it can only visit parameters satisfying $J(\theta)\ge J(\theta(0))$.
+The gradient bound need only hold on that set.
+
+\begin{proposition}[Gradient domination in a high-reward region]
+\label{prop:local-pg}
+Let $J:\R^d\to\R$ have a globally Lipschitz gradient and a finite supremum
+$J^\star$. Put $\delta(\theta)=J^\star-J(\theta)$. Suppose that, for some
+$\bar\delta,c>0$ and $r\in\{1,2\}$,
+\[
+ c\,\delta(\theta)^r\le\|\nabla J(\theta)\|_2^2
+ \quad\text{whenever }\delta(\theta)\le\bar\delta.
+\]
+If $0<\delta_0=\delta(\theta(0))\le\bar\delta$, exact gradient ascent flow
+$\dot\theta(t)=\nabla J(\theta(t))$ satisfies
+\[
+ \delta(\theta(t))\le
+ \begin{cases}
+ \delta_0e^{-ct},&r=1,\\
+ (\delta_0^{-1}+ct)^{-1},&r=2.
+ \end{cases}
+\]
+\end{proposition}
+\begin{proof}
+First check that the gradient bound remains applicable. Along the flow,
+\[
+ \frac{d}{dt}J(\theta(t))=\|\nabla J(\theta(t))\|_2^2\ge0,
+\]
+so $\delta(\theta(t))\le \delta_0\le\bar\delta$. Inside this region the error obeys
+$\dot\delta\le-c\delta^r$. For $r=1$, integration gives exponential decay.
+For $r=2$, $\frac{d}{dt}(1/\delta)\ge c$ while $\delta>0$, giving the reciprocal
+bound. If the error reaches zero, it stays zero. These are the continuous
+versions of the scalar rate arguments from Lecture 11 and
+\cref{prop:drift-rate}.
+\end{proof}
+
+The proposition is a general optimization argument; the policy model must
+supply its gradient bound.\endnote{Another standard local result concerns
+a finite maximizer $\theta^\star$ of a $C^2$ objective with
+$\nabla^2J(\theta^\star)\prec0$. In a sufficiently small ball,
+$J$ is strongly concave, a gradient flow initialized in that ball remains
+there, and the
+local reward gap and parameter distance decay exponentially. In our
+separable softmax model, reward one is approached only as parameters
+diverge, so a neighborhood of a finite maximizer is unavailable.}
+For the next application of the gradient bound, suppose $\nu$ is supported on
+finitely many distinct points $x_1,\ldots,x_m$, with masses
+$\mu_j=\nu(\{x_j\})>0$. Write $z_j=y(x_j)x_j$ and
+$p_j(\theta)=\sigma(z_j^\top\theta)$, writing $p_j$ when $\theta$ is fixed, so
+$J(\theta)=\sum_j\mu_jp_j(\theta)$. Along a flow, abbreviate
+$p_j(t)=p_j(\theta(t))$.
+The useful bound follows once every correct-label probability stays
+bounded away from zero. A sufficiently high initial reward guarantees
+that property.
+
+\begin{proposition}[A sufficient initialization for policy-gradient convergence]
+\label{prop:initialized-pg}
+For the finite population above, let $w$ be a unit vector such that
+$z_j^\top w\ge\gamma>0$ for every $j$. Define
+\[
+ \mu_{\min}=\min_j\mu_j,\qquad
+ \delta_0=\delta(\theta(0)).
+\]
+If $\delta_0<\mu_{\min}$, put $\alpha=1-\delta_0/\mu_{\min}>0$.
+Then exact policy-gradient flow satisfies
+\[
+ \delta(\theta(t))\le
+ \frac{1}{\delta_0^{-1}+\gamma^2\alpha^2t}.
+\]
+In particular, $p_j(t)\to1$ for every $j$.
+\end{proposition}
+\begin{proof}
+\textbf{Prevent a context from losing its correct action.}
+Total error decreases along the flow, and the contribution of any one
+context is at most that total:
+\[
+ \mu_j(1-p_j(t))\le\delta(\theta(t))\le \delta_0.
+\]
+Consequently $\alpha\le p_j(t)$ for every $j$ and $t$.
+The initial error is too small to permit the complete loss of even the
+least likely context.
+
+\textbf{Use separation to bound the gradient.}
+The separator increases every correct-label margin, so its inner product
+with the gradient has no cancellation:
+\[
+ \gamma\alpha\delta(\theta)
+ \le\gamma\sum_j\mu_jp_j(1-p_j)
+ \le w^\top\nabla J(\theta)
+ \le\|\nabla J(\theta)\|_2.
+\]
+The same calculation holds throughout the region $\delta(\theta)\le \delta_0$.
+The finite logistic mixture has a globally Lipschitz gradient, since
+$\|\nabla^2J(\theta)\|_{\mathrm{op}}
+\le\frac14\sum_j\mu_j\|z_j\|_2^2$.
+Apply \cref{prop:local-pg} with $\bar\delta=\delta_0$, $r=2$, and
+$c=\gamma^2\alpha^2$.
+Since $\mu_j>0$, convergence of total error to zero forces every
+$p_j(t)$ to one.
+\end{proof}
+
+The condition concerns population reward, and becomes demanding when a
+context has very small probability. It is sufficient, not necessary.
+The next result replaces a favorable initialization by a geometric
+condition and applies directly to sampled updates.
+
+\subsection{When contexts help one another}
+\label{sec:nonnegative-pg}
+
+A successful update points along the signed feature of the sampled
+context. Its effect on a second context is determined by the inner product
+of their signed features. If all these inner products are nonnegative,
+learning from one context preserves the progress made on every other one.
+
+\begin{proposition}[Sampled policy gradient with nonnegative feature inner products]
+\label{prop:nonnegative-pg}
+In the binary contextual-bandit model, assume
+$\|z(X)\|_2\le B$ almost surely, and let $w$ be a unit vector with
+$w^\top z(X)\ge\gamma>0$ almost surely. Suppose
+$z(x)^\top z(x')\ge0$ for $(\nu\otimes\nu)$-almost every pair.
+At round $t$, draw a fresh $X_t\sim\nu$, sample
+$A_t\sim\pi_{\theta_t}(\cdot\mid X_t)$, and observe
+$R_t=\I\{A_t=y(X_t)\}$. For any fixed $\eta>0$, use zero-baseline REINFORCE:
+\[
+ \theta_{t+1}=\theta_t+\eta R_t
+ \nabla\log\pi_{\theta_t}(A_t\mid X_t).
+\]
+For a finite deterministic initialization, define
+$\alpha=\operatorname*{ess\,inf}_{x\sim\nu}p_{\theta_0}(x)>0$ and
+$\delta_0=\delta(\theta_0)$. Then
+\[
+ \E[\delta(\theta_t)]\le
+ \frac{1}{\delta_0^{-1}+\eta e^{-\eta B^2}\gamma^2\alpha^2t},
+ \qquad \delta(\theta_t)\longrightarrow0\quad\text{almost surely}.
+\]
+\end{proposition}
+\begin{proof}
+\textbf{Preserve a lower bound on success probabilities.}
+A failure gives no update. A success at $x$ gives the increment
+$\eta(1-p_\theta(x))z(x)$. Every other correct margin increases by
+\[
+ h(x')=\eta(1-p_\theta(x))z(x')^\top z(x),
+ \qquad 0\le h(x')\le\eta B^2.
+\]
+Thus $p_{\theta_t}(x')\ge\alpha$ almost surely for almost every $x'$.
+Bounded features give
+$\alpha\ge\sigma(-B\|\theta_0\|_2)>0$; from zero initialization,
+$\alpha=1/2$.
+
+\textbf{Relate finite-step progress to the gradient.}
+We need a lower bound on the change in a probability, not just its
+first-order approximation. Since
+$(\log\sigma')'=1-2\sigma\ge-1$, for every scalar margin $m\in\R$
+and $0\le h\le\eta B^2$,
+\[
+ \sigma(m+h)-\sigma(m)
+ =\int_0^h\sigma'(m+s)\,ds
+ \ge e^{-\eta B^2}\sigma'(m)h.
+\]
+Let $\cF_t$ contain all observations before round $t$.
+Average this inequality over a test context and then the sampled update.
+Writing $g_t=\nabla J(\theta_t)$, whose score estimate has conditional
+mean $g_t$, gives
+\[
+ \begin{aligned}
+ \E[J(\theta_{t+1})-J(\theta_t)\mid\cF_t]
+ &\ge e^{-\eta B^2}
+ \E[g_t^\top(\theta_{t+1}-\theta_t)\mid\cF_t]\\
+ &=\eta e^{-\eta B^2}\|g_t\|_2^2.
+ \end{aligned}
+\]
+The separator supplies the same gradient bound used above:
+\[
+ \gamma\alpha\delta(\theta_t)
+ \le w^\top g_t\le\|g_t\|_2.
+\]
+For $a_t=\E[\delta(\theta_t)]$, conditional expectation and Jensen's
+inequality therefore give
+$a_{t+1}\le a_t-ca_t^2$, with
+$c=\eta e^{-\eta B^2}\gamma^2\alpha^2$.
+The reciprocal argument in \cref{prop:drift-rate} gives the stated rate.
+The errors decrease on every sample path outside a null event.
+Their limit has expectation zero by bounded convergence, so that limit
+is zero almost surely.
+\end{proof}
+
+Orthogonal signed features satisfy the condition, but positive inner
+products also allow examples to help one another. The result uses
+deterministic zero--one rewards and a zero baseline; these assumptions
+make every nonzero update favorable to all contexts. Separability alone
+permits negative interactions and does not ensure convergence.
+\Cref{app:diagonal-pg} permits some negative interactions under a weighted
+diagonal-domination condition, but only for exact gradient flow initialized
+with nonnegative margins.
+
+\subsection{A separable problem that exact policy gradient fails to learn}
+
+We want an update that increases the correct-label probability at one
+context to decrease that probability at a second context. Take two equally
+likely contexts with signed features
+\begin{equation}
+ z_1=(1,0)^\top,\qquad z_2=(-2,1)^\top,
+ \qquad \theta=(u,v)^\top.
+ \label{eq:two-context-features}
+\end{equation}
+One realization takes $x_j=z_j$ and $y(x_j)=1$ for $j=1,2$.
+The margins are $u$ and $-2u+v$. Increasing $u$ improves the first margin
+and decreases the second twice as fast; increasing $v$ can repair the second.
+The population is separable: $w=(1,3)^\top$ gives both margins equal
+to one, so scaling $w$ makes both correct-label probabilities tend to one.
+
+\begin{proposition}[Exact policy gradient can fail on a separable population]
+\label{prop:shared-pg}
+For \cref{eq:two-context-features}, start at $\theta(0)=(4,0)^\top$.
+Population gradient ascent flow $\dot\theta=\nabla J(\theta)$ satisfies
+\[
+ u(t)\to\infty,\qquad 0\le v(t)<1,
+ \qquad p_1(t)\to1,\quad p_2(t)\to0.
+\]
+Thus $J(\theta(t))\to1/2$ and $\delta(\theta(t))\to1/2$, although
+$\sup_\theta J(\theta)=1$.
+From the same initialization, cross-entropy gradient flow
+$\dot\theta=-\nabla L(\theta)$ satisfies $p_1(t),p_2(t)\to1$.
+\end{proposition}
+\begin{proof}
+\textbf{Find what would prevent recovery.}
+Put $a=\sigma'(u)$ and $c=\sigma'(-2u+v)$. The policy-gradient equations are
+\begin{equation}
+ \dot u=\frac{a-2c}{2},\qquad \dot v=\frac c2.
+ \label{eq:shared-pg-flow}
+\end{equation}
+The factor $1/2$ comes from the context probabilities. If $v$ stays bounded
+while $u$ increases, the corrective term $c$ decreases roughly as $e^{-2u}$,
+whereas $a$ decreases roughly as $e^{-u}$. To prove failure, we therefore
+try to bound the total increase in $v$ as $u$ grows.
+
+\textbf{Compare correction with deterioration.}
+Temporarily suppose $u\ge4$ and $0\le v\le1$. The sigmoid derivative gives
+\[
+ \frac14e^{-u}\le a,\qquad c\le e^{-2u+v}\le e^{1-2u}.
+\]
+Since $2e^{1-u}\le2e^{-3}<1/8$, the contribution $2c$ is at most
+$e^{-u}/8$. Hence
+\[
+ \frac1{16}e^{-u}\le\dot u,
+ \qquad \frac{dv}{du}=\frac{\dot v}{\dot u}\le8e^{1-u}.
+\]
+The ratio measures how much the corrective coordinate can change per unit
+increase in $u$. Integrating from the initial value gives
+\[
+ 0\le v(u)\le\int_4^u8e^{1-s}\,ds<8e^{-3}<1.
+\]
+The resulting bound verifies the region used to obtain it: $u$ increases,
+$v$ is nonnegative, and $v$ cannot reach one. If $u$ had a finite upper
+bound, the positive lower bound on $\dot u$ would force further growth.
+Thus $u\to\infty$ and $-2u+v\to-\infty$, proving the PG claim.
+
+\textbf{Check the supervised comparison.}
+Cross-entropy $L$ is convex, and its gradient flow makes $L$ nonincreasing.
+For any fixed comparator $w$, convexity gives
+\[
+ \frac{d}{dt}\frac{\|\theta(t)-w\|_2^2}{2}
+ =-\langle\theta(t)-w,\nabla L(\theta(t))\rangle
+ \le L(w)-L(\theta(t)).
+\]
+Integrate and use monotonicity of $L(\theta(t))$ to obtain
+\[
+ L(\theta(t))\le L(w)+\frac{\|\theta(0)-w\|_2^2}{2t}.
+\]
+For $w=b(1,3)^\top$ with $b>0$, $L(w)=\log(1+e^{-b})$.
+First let $t\to\infty$, then $b\to\infty$. We obtain
+$L(\theta(t))\to0$, which forces both correct-label probabilities to one.
+\end{proof}
+
+The policy-gradient failure occurs with correct rewards and exact population
+gradients. The small correct-label probability at the second context allows
+updates from the first context to suppress its corrective contribution further.
+Fresh contexts alone do not remove this mechanism:
+\cref{prop:shared-online} proves that online, zero-baseline REINFORCE with
+i.i.d. contexts and any positive constant step also has positive probability
+of approaching expected reward $1/2$ on this population.
+
+\subsection{Natural gradient and representability of policy updates}
+
+The two-context failure disappears when the feature vectors are orthogonal:
+an update from one example then leaves every other margin unchanged.
+For the finite population, write $m_j(\theta)=z_j^\top\theta$ for
+margin $j$ and $m_j(t)=m_j(\theta(t))$ along a flow. When the current
+parameter is fixed, suppress it in $m_j$ and $p_j$.
+
+\begin{proposition}[Policy gradient learns with orthogonal features]
+\label{prop:orthogonal-pg}
+For a finite population with mutually orthogonal nonzero signed features
+$z_1,\ldots,z_m$, exact population policy-gradient flow from any finite
+initial parameter satisfies $p_j(t)\to1$ for every $j$, and hence
+$\delta(\theta(t))\to0$.
+\end{proposition}
+\begin{proof}
+Orthogonality removes all cross terms in each margin derivative:
+\[
+ \dot m_j=z_j^\top\nabla J(\theta)
+ =\mu_j\|z_j\|_2^2\sigma'(m_j)>0.
+\]
+If the increasing margin $m_j$ had a finite upper bound, its derivative
+would have a positive lower bound, a contradiction. Thus every margin
+tends to infinity.
+\end{proof}
+
+In the two-context example, the invertible change of variables
+$\boldsymbol m=\mathbf Z\theta$, where $\mathbf Z $ has rows $z_1^\top,z_2^\top$, makes the
+two margins independent coordinates. The transformed features are the
+coordinate vectors, so ordinary gradient flow in $\boldsymbol m$ learns both examples.
+Yet ordinary gradient flow in $\theta$ fails. The family of policies is
+identical; the gradient algorithm depends on its coordinates.
+
+To see the dependence generally, write $\theta=\psi(\xi)$ for a
+smooth invertible reparameterization and let $B=D\psi(\xi)$ be its
+invertible Jacobian. Write $g_\theta=\nabla_\theta J(\theta)$ and
+$g_\xi=\nabla_\xi(J\circ\psi)(\xi)$ for the gradients in the two
+coordinate systems. The chain rule gives $g_\xi=B^\top g_\theta$.
+Ordinary gradient flow in the $\xi$ coordinates therefore induces
+\[
+ \dot\theta=B\dot\xi=Bg_\xi=BB^\top g_\theta,
+\]
+which generally differs from gradient flow $\dot\theta=g_\theta$ in the
+original coordinates. A rescaling of parameters can change the policy's
+learning trajectory.
+
+Natural gradient removes this dependence of the flow on coordinates.
+Using Lecture 18's notation, define the \emph{policy Fisher information matrix} by
+\[
+ I(\theta)=\E[s_\theta(X,A)s_\theta(X,A)^\top],
+ \qquad s_\theta(x,a)=\nabla\log\pi_\theta(a\mid x).
+\]
+When $I$ is positive definite, the \emph{natural-gradient direction}
+is $h_\theta=I(\theta)^{-1}g_\theta$. Under a change of coordinates,
+this direction obeys the following rule.
+
+\begin{proposition}[Reparameterization invariance of natural-gradient flow]
+\label{prop:npg-invariance}
+Under the smooth invertible change of coordinates above, suppose the
+Fisher matrix is positive definite. The natural directions satisfy
+\[
+ B h_\xi=h_\theta.
+\]
+Thus the flows describe the same policy trajectory from corresponding
+initial conditions, while the solutions exist.
+\end{proposition}
+\begin{proof}
+Scores transform by the same chain rule as gradients, so
+$I_\xi=B^\top I_\theta B$, where $I_\theta=I(\theta)$ and $I_\xi$
+is the Fisher matrix computed in the $\xi$ coordinates. Consequently,
+\[
+ h_\xi=(B^\top I_\theta B)^{-1}B^\top g_\theta
+ =B^{-1}I_\theta^{-1}g_\theta=B^{-1}h_\theta.
+\]
+Multiplication by $B$ gives the stated rule and the equality of flows.
+\end{proof}
+
+The parameter direction changes coordinates; the induced policy motion
+does not. This invariance is a useful property, but does not uniquely
+select the Fisher matrix: any positive-definite metric transforming as
+$M_\xi=B^\top M_\theta B$ gives the same covariance rule for
+$M^{-1}g$. The Fisher choice comes from the policy's local KL geometry,
+connecting it to mirror descent. Invariance alone gives no guarantee of
+fast learning or convergence to an optimal policy.\endnote{For an increment
+$h$, the context-averaged divergence satisfies
+$\E[\KL(\pi_{\theta+h}(\cdot\mid X),\pi_\theta(\cdot\mid X))]
+=h^\top I(\theta)h/2+o(\|h\|_2^2)$.
+With $g=\nabla J(\theta)$ and $I=I(\theta)$, the maximizer of
+$g^\top h-h^\top Ih/2$ is $I^{-1}g$.
+This is a local quadratic approximation to KL-regularized improvement;
+its steepest-direction interpretation depends on the chosen metric.}
+
+For a fixed $\eta>0$, we use the additive NPG step
+$\theta^+=\theta+\eta h_\theta$. Such finite steps are exactly
+covariant under affine changes of coordinates. Under a nonlinear change,
+$\psi(\xi+\eta h_\xi)=\theta+\eta h_\theta+O(\eta^2)$;
+the discretization generally loses exact invariance.
+
+Return to the $\theta$ coordinates and write $g=\nabla J(\theta)$.
+For a finite population, conditional on $X=x_j$, the score is
+$(\I\{A=y(x_j)\}-p_j)z_j$. Define $\mathbf Z $ by row $j$ equal to
+$z_j^\top$, let $W=\operatorname{diag}(\mu_j p_j(1-p_j))$, and let
+$\mathbf1\in\R^m$ be the all-ones column vector.
+Then
+\begin{equation}
+ g=\mathbf Z ^\top W\mathbf1,\qquad I=\mathbf Z ^\top W\mathbf Z.
+ \label{eq:context-fisher}
+\end{equation}
+All diagonal entries of $W$ are positive at finite parameters, so $I$ is positive
+definite whenever the signed features span $\R^d$.
+
+We can now give a positive convergence result. Suppose the policy class
+contains a parameter direction that increases every correct-label margin
+equally. Natural gradient follows precisely that direction.
+
+\begin{proposition}[Exponential learning with a common margin increment]
+\label{prop:npg-positive}
+Suppose $\mathbf Z $ has full column rank and $\mathbf Z h=\mathbf1$ has a solution.
+From any finite $\theta_0$, exact population NPG with fixed $\eta>0$
+satisfies $\theta_t=\theta_0+t\eta h$ and
+\[
+ \delta(\theta_t)\le e^{-\eta t}\sum_j\mu_j e^{-z_j^\top\theta_0}.
+\]
+In particular, every correct-label probability tends to one.
+\end{proposition}
+\begin{proof}
+Since $\mathbf Z h=\mathbf1$, \cref{eq:context-fisher} gives
+$Ih=\mathbf Z ^\top W\mathbf Z h=\mathbf Z ^\top W\mathbf1=g$ at every parameter.
+Thus each NPG step adds $\eta h$, increasing every margin by $\eta$.
+The bound follows by averaging
+$1-\sigma(z_j^\top\theta_0+t\eta)\le e^{-z_j^\top\theta_0-t\eta}$.
+\end{proof}
+
+The two-context example satisfies this condition because $\mathbf Z $ is invertible:
+\begin{equation}
+ I^{-1}g=\mathbf Z ^{-1}\mathbf1=(1,3)^\top,
+ \qquad \mathbf Z \theta^+=\mathbf Z \theta+\eta\mathbf1.
+ \label{eq:two-context-npg}
+\end{equation}
+Both correct-label log odds increase by $\eta$ on every step, and both
+probabilities tend to one. In fact, the two-context class can represent
+every pair of interior binary distributions: $\boldsymbol m=\mathbf Z\theta$ is an invertible
+change of coordinates. NPG gives the same policy update in either set of
+coordinates.
+
+The successful NPG update has a useful policy-space interpretation. A
+\emph{policy mirror-descent} step with KL regularization maximizes
+\[
+ \E\left[\sum_a\pi(a\mid X)r(X,a)
+ -\frac1\eta\KL(\pi(\cdot\mid X),\pi_\theta(\cdot\mid X))\right]
+\]
+over all conditional distributions. Lecture 19's regularized optimization
+calculation gives the exponential-weights update
+\begin{equation}
+ \pi^+(a\mid x)=
+ \frac{\pi_\theta(a\mid x)e^{\eta r(x,a)}}
+ {\sum_{a'}\pi_\theta(a'\mid x)e^{\eta r(x,a')}}.
+ \label{eq:context-mirror}
+\end{equation}
+Because the correct label has reward one and the other label has reward
+zero, each correct-label log odds increases by $\eta$.
+For a finite population, the target is representable on the support of
+$\nu$ exactly
+when a parameter direction $h$ satisfies $\mathbf Z h=\mathbf1$.
+Separability only requires $\mathbf Z w>0$ coordinatewise for some $w$.
+
+These conditions differ already with three equally likely contexts:
+\begin{equation}
+ z_1=(1,0)^\top,\quad z_2=(0,1)^\top,\quad z_3=(-3,1)^\top.
+ \label{eq:three-context-features}
+\end{equation}
+The vector $w=(1,4)^\top$ gives margins $(1,4,1)^\top$, so the
+population is separable. Every parameter satisfies $m_3=-3m_1+m_2$;
+reparameterization preserves this relation and cannot make the three
+margins independent coordinates. In particular, $\mathbf Z h=\mathbf1$ requires
+$h_1=h_2=1$ and $-3h_1+h_2=1$, which is impossible. Moreover, exact NPG itself
+can fail on this population.
+
+\begin{proposition}[Separation does not ensure NPG consistency]
+\label{prop:shared-npg}
+For \cref{eq:three-context-features}, initialize $\theta_0=(6,6)^\top$
+and use exact population NPG with any fixed $0<\eta\le1/10$.
+Writing $p_{j,t}=p_j(\theta_t)$, we have $p_{1,t},p_{2,t}\to1$ and
+$p_{3,t}\to0$, so $J(\theta_t)\to2/3$,
+and $\delta(\theta_t)\to1/3$, although $\sup_\theta J(\theta)=1$.
+\end{proposition}
+
+\Cref{app:shared-npg} proves the proposition. NPG corrects the coordinate
+dependence exposed by the two-context example, but its update remains
+restricted to changes the policy class can represent. Exact computation
+of the natural direction does not ensure consistency under separability.
+
+Approximating the natural direction does not require forming the full
+Fisher matrix. A fresh score sample $s$ gives an unbiased matrix-vector
+product $s(s^\top h)$ for $Ih$, computable with $O(d)$ arithmetic after
+the score is obtained. Iterative methods can therefore approximate the
+linear solve using vector operations. Their accuracy depends on sampling,
+conditioning, and the computation spent on the solve; matrix approximation
+and finite-step discretization are separate sources of error.
+
+\emph{Approximate policy mirror descent} (APMD) fits successive
+mirror-descent targets using sampled rewards and an inner optimization
+procedure, resetting the reference to the fitted policy after each round.
+Its guarantees require control of the error in approximating those targets.
+For linear softmax policies, reward linearity in the policy features,
+up to context-dependent constants, ensures that the targets are representable.
+The three-context example violates that stronger condition. More inner
+optimization cannot remove its target representation error at a fixed
+reference and positive $\eta$.
+\Cref{app:rebel} shows that exact population minimization of one pairwise
+squared-loss objective produces precisely NPG and inherits
+\cref{prop:shared-npg}. That result concerns the specified update; it does
+not establish failure of every APMD implementation.
+
+\subsection{Fitting successful responses}
+\label{sec:successful-fitting}
+
+Once a verifier has identified correct responses, we can train on those
+responses with cross-entropy. When does this improve the probability of
+success? We first recall the guarantee from Lecture 4, then examine two
+obstacles: a policy class that cannot fit the demonstration distribution,
+and training data that omit some deployment contexts.
+
+\begin{proposition}[Reward from fitting successful responses]
+\label{prop:successful-fitting}
+Fix one prompt, a finite response set $\cY$, and rewards
+$r:\cY\to[0,1]$. Let $q$ be a distribution supported on
+$\{y:r(y)=1\}$. For a policy $\pi_\theta$, put
+\[
+ \begin{aligned}
+ J(\theta)&=\sum_y\pi_\theta(y)r(y),
+ &J^\star&=\sup_{\vartheta}J(\vartheta),\\
+ L(\theta)&=-\sum_yq(y)\log\pi_\theta(y),
+ &H(q)&=-\sum_yq(y)\log q(y).
+ \end{aligned}
+\]
+Then $L(\theta)-H(q)=\KL(q,\pi_\theta)$ and
+\begin{equation}
+ J^\star-J(\theta)\le1-J(\theta)
+ \le 1-e^{-\KL(q,\pi_\theta)}
+ \le \KL(q,\pi_\theta).
+ \label{eq:successful-fitting}
+\end{equation}
+For any parameter sequence $(\theta_t)_{t\ge0}$,
+$L(\theta_t)\to H(q)$ implies $J(\theta_t)\to1$ as $t\to\infty$.
+\end{proposition}
+\begin{proof}
+Apply \href{lecture04.pdf}{Lecture 4}, Proposition 4.2.4, to the data law
+$q$, generated law $\pi_\theta$, and cost $c(y)=1-r(y)$.
+The cost lies in $[0,1]$ and has expectation zero under $q$.
+The log-loss identity is the one from Lecture 3.
+\end{proof}
+
+Lecture 4, Exercise 2, already asks for the bound and its sharpness.
+The premise here is that excess log loss approaches zero. Minimizing loss
+within a restricted policy class need not achieve that premise. Moreover,
+decreasing the upper bound in \cref{eq:successful-fitting} does not imply
+that the expected reward shortfall decreases.
+
+\begin{example}[Correct demonstrations can reduce reward]
+\label{ex:successful-compromise}
+At one prompt, let three responses have rewards $(1,1,0)$ and use
+the one-parameter policy
+\[
+ \pi_\theta=\frac{(e^\theta,e^{-\theta},1)}{Z(\theta)},\qquad
+ Z(\theta)=e^\theta+e^{-\theta}+1.
+\]
+The fixed demonstration distribution is $q=(1/2,1/2,0)$: both demonstrated
+responses are correct. Its population cross-entropy and the policy's
+expected reward are
+\[
+ L(\theta)=\log Z(\theta),\qquad J(\theta)=1-\frac1{Z(\theta)}.
+\]
+From any $\theta(0)>0$, cross-entropy gradient flow converges to
+$\theta=0$ and reduces reward to $2/3$. Exact policy-gradient flow increases
+$\theta$ without bound and makes reward tend to one.
+\end{example}
+
+The policy can put nearly all its mass on either correct response.
+Giving the two correct responses equal probabilities, however, forces
+$\theta=0$, where the incorrect response also has probability $1/3$.
+Thus the policy class can approach reward one but cannot approach $q$.
+At the cross-entropy optimum,
+$\KL(q,\pi_0)=\log(3/2)>0$; the first inequality in
+\cref{eq:successful-fitting} is attained.
+\Cref{ex:l20-successful-fitting} asks you to prove the flow claims and
+check that allowing independent logits removes this conflict.
+
+The example compares exact gradients of two objectives: cross-entropy
+under fixed demonstrations and reward under the current policy.
+Fresh on-policy evaluations can estimate the latter gradient, but the known
+reward table already permits its exact computation. The example therefore
+isolates the objectives and the policy restriction; it gives no sample
+complexity separation between offline and online learning.\endnote{If
+$Y\sim\pi_\theta$ and $R$ is its reward, taking the sample gradient of
+$-R\log\pi_\theta(Y)$ while holding the sampled data fixed gives the
+descent direction $R s_\theta(Y)$. Its expectation is $\nabla J(\theta)$
+by \cref{prop:score}. Thus refreshing reward-weighted training examples
+on-policy can implement PG. Fitting the fixed distribution in
+\cref{ex:successful-compromise} is a different procedure.}
+
+\begin{example}[Missing contexts can undo correct behavior]
+\label{ex:missing-contexts}
+Return to the binary logistic policy. The deployment population has two
+equally likely contexts
+$x_1=(1,0)^\top$ and $x_2=(-1,1)^\top$, both with correct label $1$.
+Training contains only $x_1$. For $\theta=(u,v)^\top$, the training
+objectives and deployment reward are
+\[
+ L_{\rm tr}(\theta)=-\log\sigma(u),\qquad
+ J_{\rm tr}(\theta)=\sigma(u),\qquad
+ J(\theta)=\frac{\sigma(u)+\sigma(v-u)}2.
+\]
+Initialize $\theta(0)=(M,2M)^\top$ for $M>0$. The deterministic classifier
+is correct at both contexts, and its sampled-label reward is $\sigma(M)$,
+arbitrarily close to one for large $M$.
+Both cross-entropy flow $-\nabla L_{\rm tr}$ and exact PG flow
+$\nabla J_{\rm tr}$ keep $v=2M$ and send $u\to\infty$.
+The unseen context's correct-label probability $\sigma(2M-u)$ tends
+to zero, and deployment reward tends to $1/2$.
+\end{example}
+
+The full population is separable, and the initial direction already
+classifies both contexts correctly. Failure comes from continued optimization
+on incomplete data: neither training objective constrains the unseen
+context. Both flows eventually select the direction $(1,0)^\top$.
+The example connects Lecture 10's implicit-bias analysis to the question
+of identifying a rule beyond its observed inputs. It does not distinguish
+PG from cross-entropy.
+\Cref{ex:l20-missing-contexts} asks you to verify the dynamics.
+
+Reusing only successful recorded actions gives a different update.
+For recorded actions $Y_i$ with rewards $R_i=1$, every baseline-one score term satisfies
+$(R_i-1)s_\theta(x_1,Y_i)=0$, so the parameter stays at its initial
+value; multiplying those terms by finite importance weights preserves zero.
+Exact PG on the training context still averages over the policy's possible
+failures. At finite logits those failures have positive probability, and
+fresh sampling can produce nonzero baseline-one updates.
+The exercise and \cref{eq:importance} distinguish a zero update on an
+all-success batch from a zero population gradient.
+
+\section{Baselines can change future sampling}
+\label{sec:baselines}
+
+Exact-gradient comparisons do not determine the behavior of sampled
+updates. A baseline preserves the conditional mean update but changes
+individual increments and therefore future sampling. We return to
+two-action bandits with a natural-gradient example in which one baseline
+permits permanent failure and another ensures convergence.
+
+Reward shifts expose the same distinction. Adding an action-independent
+constant $c$ leaves the exact gradient unchanged because $\E[c\,s]=0$,
+but changes a sampled direction from $Rs$ to $(R+c)s$. Shifting the reward
+and leaving the baseline fixed can therefore change sample paths.
+
+Take deterministic rewards $r(1)=1$ and $r(0)=1/2$, and parameterize the policy directly by a scalar
+log-odds parameter $u$, with $p=\sigma(u)$ and $q=1-p$.
+The expected reward is $J(u)=1/2+p/2$, with derivative $J'(u)=pq/2$.
+The derivative becomes small near either deterministic policy.
+
+The scalar \emph{Fisher information} is the second moment of the score:
+\[
+ I(u)=\E[(A-p)^2]=pq,\qquad A\sim\operatorname{Bernoulli}(p).
+\]
+The natural-gradient direction divides the reward gradient by this
+quantity, giving $I(u)^{-1}J'(u)=1/2$.\endnote{For a Bernoulli policy,
+$\KL(\pi_u,\pi_{u+v})=
+\log(1+e^{u+v})-\log(1+e^u)-pv$.
+The second derivative of $\log(1+e^u)$ is $pq$, so
+$\KL(\pi_u,\pi_{u+v})=I(u)v^2/2+o(v^2)$ as $v\to0$.}
+In this example the exact direction is constant; we will examine what
+happens when it is estimated from one reward.
+
+At round $t$, set $p_t=\sigma(u_t)$ and $q_t=1-p_t$, draw
+$A_t\sim\operatorname{Bernoulli}(p_t)$, and observe $R_t=r(A_t)$.
+For a baseline $b$ chosen before that draw, the sampled natural-gradient
+direction is
+\begin{equation}
+ H_{b,t}=\frac{(R_t-b)(A_t-p_t)}{p_tq_t}
+ =\begin{cases}(1-b)/p_t,&A_t=1,\\(b-1/2)/q_t,&A_t=0.
+ \end{cases}
+ \label{eq:natural-update}
+\end{equation}
+The update is $u_{t+1}=u_t+\eta H_{b_t,t}$. If $\cF_t$ is the history
+before drawing $A_t$, then for every $\cF_t$-measurable baseline $b_t$,
+$\E[H_{b_t,t}\mid\cF_t]=I(u_t)^{-1}J'(u_t)=1/2$.
+Use the same fixed step $\eta>0$ and finite deterministic $u_0$ in both
+baseline choices below.
+
+\begin{proposition}[Two baselines, different limiting behavior]
+\label{prop:baseline-paths}
+For \cref{eq:natural-update}:
+\begin{enumerate}[(a)]
+\item With $b_t=0$, there is positive probability that every sampled action
+is 0 and $p_t\to0$.
+\item With the exact value baseline $b_t=J(u_t)$, we have $p_t\to1$
+on every sample path.
+\end{enumerate}
+Since $J^\star=1$ and $J(u)=(1+p(u))/2$, the suboptimality gap converges
+to $1/2$ in part (a) on the stated event and to zero in part (b).
+\end{proposition}
+\begin{proof}
+\textbf{(a) Follow a possible failure trajectory.}
+A sample of action 0 gives $H_{0,t}=-1/(2q_t)$. To see whether repeated selections
+can prevent recovery, first compute the policy along that sequence.
+Let $\bar u_t$ be the deterministic sequence obtained by always selecting 0,
+and let $\bar p_t=\sigma(\bar u_t)$ and $\bar q_t=1-\bar p_t$.
+Then
+\[
+ \bar u_{t+1}=\bar u_t-\frac{\eta}{2\bar q_t}
+ \le\bar u_t-\frac\eta2,\qquad
+ \bar p_t\le e^{u_0-\eta t/2}.
+\]
+The optimal-action probabilities are summable along this sequence.
+For the event $E_N=\{A_0=\cdots=A_{N-1}=0\}$, conditional sampling gives
+$\P(E_N)=\prod_{t=0}^{N-1}(1-\bar p_t)$.
+To show that the infinite product is positive, choose $t_0$ so that
+$\bar p_t\le1/2$ for $t\ge t_0$ and use
+$-2\bar p_t\le\log(1-\bar p_t)$. Hence
+\[
+ -\infty<-2\sum_{t=t_0}^\infty\bar p_t
+ \le\sum_{t=t_0}^\infty\log(1-\bar p_t).
+\]
+Every earlier factor is positive. Continuity of probability for the
+decreasing events $E_N$ therefore gives
+$\P(\bigcap_{N\ge1}E_N)=\prod_{t=0}^\infty(1-\bar p_t)>0$.
+On this event $u_t=\bar u_t\to-\infty$, so $p_t\to0$.
+
+\textbf{(b) Make both observations favor the better action.}
+Subtracting $J(u_t)$ gives action 0 a negative advantage and action 1 a
+positive advantage. Their scores have the same respective signs.
+Substituting $b_t=1/2+p_t/2$ into \cref{eq:natural-update} gives
+\[
+ H_{J(u_t),t}=\begin{cases}q_t/(2p_t),&A_t=1,\\p_t/(2q_t),&A_t=0.
+ \end{cases}
+\]
+Both increments are positive. If the increasing sequence $u_t$ had a finite
+upper bound $U$, then $u_t\in[u_0,U]$ would keep $p_t$ and $q_t$ bounded
+away from zero. Both possible values of $H_{J(u_t),t}$ would consequently have a
+common positive lower bound. The update would increase $u_t$ by at least a
+fixed positive amount at every step, contradicting the bound $U$.
+Thus $u_t\to\infty$ and $p_t\to1$ on every path.
+\end{proof}
+
+Baseline choice therefore affects more than the variance of an estimate
+at a fixed policy: individual updates alter future sampling probabilities,
+and in this example change the limiting policy. The example
+concerns the natural-gradient update \cref{eq:natural-update}; the
+almost-sure theorem in \cref{sec:time} concerns the unpreconditioned vector
+update \cref{eq:vector-pg}. The exact value baseline also uses reward means
+that a learner generally must estimate. A learned baseline needs an error
+analysis of its own. \Cref{ex:l20-variance-baseline} asks a separate question:
+which baseline minimizes the estimator's variance at one fixed policy?
+
+\section{Group baselines and reuse of sampled responses}
+\label{sec:groups}
+
+The preceding section used the policy's exact expected reward as a
+baseline. In practice we must estimate that value. One approach is to
+generate several responses to the same prompt and subtract their sample mean
+reward, with the aim of reducing gradient variance. Reusing those rewards
+to estimate the gradient introduces dependence: each reward contributes
+to the baseline subtracted from it. We first calculate how this dependence
+changes the expected update and how to correct it.
+We return to the unpreconditioned score estimator of \cref{sec:feedback}.
+
+Fix $x$ and $\theta$. Generate $n\ge2$ independent response--reward pairs
+$(Y_i,R_i)$ under the experiment of \cref{sec:feedback}, and write
+$s_i=s_\theta(x,Y_i)$ and $\bar R=n^{-1}\sum_{i=1}^n R_i$.
+The \emph{group-centered estimator} is
+\[
+ g_{\rm group}=\frac1n\sum_{i=1}^n(R_i-\bar R)s_i.
+\]
+For each $i$, separate its own contribution from the other rewards:
+\begin{align*}
+ \E[\bar R s_i]
+ &=\frac1n\E[R_i s_i]
+   +\frac1n\sum_{j\ne i}\E[R_j]\E[s_i]\\
+ &=\frac1n\nabla J_x(\theta).
+\end{align*}
+The cross terms vanish by independence and the zero-mean score identity.
+The own-response term survives, giving the following correction.
+
+\begin{proposition}[Group centering and leave-one-out correction]
+\label{prop:group}
+Under the preceding sampling experiment,
+\begin{equation}
+ \E[g_{\rm group}]=\left(1-\frac1n\right)\nabla J_x(\theta).
+ \label{eq:group-bias}
+\end{equation}
+Define the \emph{leave-one-out baseline}
+$b_i=(n-1)^{-1}\sum_{j\ne i}R_j$ and estimator
+$g_{\rm loo}=n^{-1}\sum_i(R_i-b_i)s_i$. Then
+\begin{equation}
+ g_{\rm loo}=\frac{n}{n-1}g_{\rm group},\qquad
+ \E[g_{\rm loo}]=\nabla J_x(\theta).
+ \label{eq:loo}
+\end{equation}
+\end{proposition}
+\begin{proof}
+Subtract the preceding expression for $\E[\bar R s_i]$ from
+$\E[R_i s_i]=\nabla J_x(\theta)$ and average over $i$.
+For the exact correction, write
+$R_i-b_i=n(R_i-\bar R)/(n-1)$ and substitute into $g_{\rm loo}$.
+\end{proof}
+
+Group centering changes the mean by a known scalar factor. Using a baseline
+that excludes the current response removes that factor. Both procedures
+require $n$ generated responses and $n$ evaluations per prompt.
+Using rewards from several responses to the same prompt to construct
+advantage estimates is one component of
+\emph{group relative policy optimization} (GRPO).\endnote{%
+Here the ``group'' is the sample of responses generated for the same prompt.
+The advantages are ``relative'' because each reward is centered by the mean
+reward of that sample; the standardized version also divides by the sample's
+reward standard deviation.}\label{en:group-relative}
+The identities above establish the mean update; they do not establish
+a variance reduction.
+
+\subsection{Mixed rewards and standardization}
+
+With binary feedback of success probability $p$, all-equal groups have zero
+centered advantages. Independence gives
+\begin{equation}
+ \P\!\left(0<\sum_{i=1}^n R_i<n\right)=1-p^n-(1-p)^n.
+ \label{eq:mixed-group}
+\end{equation}
+The formula measures how often centering avoids an all-zero set of
+advantages. It supplies no accuracy bound for the gradient estimator:
+nonzero advantages can multiply cancelling scores or an unhelpful direction.
+For small $p$, the inequality $1-(1-p)^n\le np$ also shows why a fixed-size
+group may seldom contain a successful response.
+
+Group-relative methods often \emph{standardize} rewards by dividing the
+centered values by their empirical standard deviation. For a concrete
+response-level procedure, define
+\[
+ v_n=\left(\frac1n\sum_{i=1}^n(R_i-\bar R)^2\right)^{1/2},
+ \qquad
+ \widehat A_i=\begin{cases}(R_i-\bar R)/v_n,&v_n>0,\\0,&v_n=0.
+ \end{cases}
+\]
+The values $\widehat A_i$ are standardized group advantages.
+The zero-variance convention makes the operation well-defined.
+Averaging $\widehat A_i s_i$ introduces a random scaling correlated with
+the group; \cref{eq:group-bias,eq:loo} no longer establish its mean.
+\Cref{ex:l20-standardization} computes the resulting estimator for a binary
+policy. The group calculation describes one component of GRPO; policy
+ratios, clipping, and regularization further modify the update.
+
+\subsection{Reusing responses from an older policy}
+
+Generating and evaluating long responses can be expensive. Taking several
+updates on one collected batch spreads that cost across updates, but the
+sampling policy then differs from the policy being trained.
+To understand the resulting correction, suppose
+responses were sampled from a fixed policy $q$ with positive mass wherever
+$\pi_\theta$ is positive. The evaluator law remains unchanged. Under that
+sampling experiment, define
+$w_\theta(Y)=\pi_\theta(Y\mid x)/q(Y\mid x)$. A direct change of measure gives
+\begin{equation}
+ \E[w_\theta(Y)R s_\theta(x,Y)]
+ =\sum_y\pi_\theta(y\mid x)r(x,y)s_\theta(x,y)
+ =\nabla J_x(\theta).
+ \label{eq:importance}
+\end{equation}
+The parameter $\theta$ in this identity is fixed independently of the
+sampled batch. If $\theta$ is fitted to that same batch, the identity does
+not establish conditional unbiasedness of the empirical estimate.
+
+\paragraph{Context-distribution mismatch.}
+\Cref{eq:importance} fixes the prompt. Suppose instead that prompts belong
+to a finite set, the objective averages them under a target distribution
+$\nu$, and a collected batch averages them under a distribution $\mu$.
+Assume $\nu(x)>0$ only if $\mu(x)>0$. Under the experiment
+$X\sim\mu$, $Y\sim q(\cdot\mid X)$, followed by the usual reward draw,
+assume $q(y\mid x)>0$ whenever $\pi_\theta(y\mid x)>0$. The same change of
+measure gives
+\begin{equation}
+ \E\!\left[
+ \frac{\nu(X)}{\mu(X)}
+ \frac{\pi_\theta(Y\mid X)}{q(Y\mid X)}
+ R s_\theta(X,Y)
+ \right]
+ =\nabla J_\nu(\theta),
+ \quad
+ J_\nu(\theta)=\sum_x\nu(x)
+ \sum_y\pi_\theta(y\mid x)r(x,y).
+ \label{eq:context-importance}
+\end{equation}
+Omitting $\nu(X)/\mu(X)$ gives the gradient of the objective averaged under
+$\mu$, rather than the objective averaged under $\nu$. The response ratio
+therefore does not correct a prompt-distribution mismatch.
+
+\begin{example}[Action correction does not correct contexts]
+\label{ex:offpolicy-context}
+Let the contexts be $x_+$ and $x_-$, let $A\in\{0,1\}$, and set
+$r(x,a)=a$. Consider the shared scalar policy
+\[
+ \pi_\theta(1\mid x_+)=\sigma(\theta),\qquad
+ \pi_\theta(1\mid x_-)=\sigma(-\theta).
+\]
+For the uniform batch distribution $\mu$,
+\[
+ J_\mu(\theta)
+ =\tfrac12\sigma(\theta)+\tfrac12\sigma(-\theta)
+ =\tfrac12,
+\]
+so even an exactly action-corrected population policy gradient is zero.
+For the target distribution $\nu$ concentrated on $x_+$,
+$J_\nu(\theta)=\sigma(\theta)$ and $\nabla J_\nu(\theta)=\sigma'(\theta)>0$.
+The failure comes from using the wrong context-weighted objective together
+with a policy class that couples the contexts; global optimization of
+$J_\mu$ cannot select the target direction either. Natural gradient computed
+under $\mu$ also has zero direction. In compatible-function-approximation
+terms, no scalar $v$ represents the advantage as
+$v\nabla\log\pi_\theta(A\mid X)$ at both contexts: the required signs are
+opposite.
+\end{example}
+
+\Needspace{4\baselineskip}
+In a multi-turn problem, the policy affects the distribution of later
+histories. Correcting only the action distribution conditional on a sampled
+history does not correct this state-distribution mismatch; exact correction
+generally requires an occupancy or trajectory ratio. Such ratios can have
+high variance. \Cref{ex:l20-offpolicy-context} gives a two-instance lower
+bound based on the preceding example.
+
+For baseline one, the same change of measure gives
+$\E[w_\theta(Y)(R-1)s_\theta(x,Y)]=\nabla J_x(\theta)$.
+Every term is zero on an all-success batch. A batch drawn from a
+full-support logging policy can have that property without contradicting unbiasedness before
+conditioning on the observed rewards. Deliberately retaining only successes
+changes the sampling experiment: the omitted failures prevent the same
+importance-weighted formula from estimating the full gradient in general.
+For autoregressive responses, $w_\theta$ is a product of token-probability
+ratios. Such products can have high variance. Proximal policy optimization
+(PPO) uses a clipped surrogate when reusing a collected batch.\endnote{PPO's
+clipping depends on the sign of the estimated advantage. For a probability
+ratio $w$, a fixed estimated advantage $\widehat A$, and $0<\varepsilon<1$,
+the sample term in the clipped objective equals
+\[
+ \ell_\varepsilon(w,\widehat A)=
+ \begin{cases}
+  \widehat A\min\{w,1+\varepsilon\},&\widehat A\ge0,\\
+  \widehat A\max\{w,1-\varepsilon\},&\widehat A<0.
+ \end{cases}
+\]
+The benefit assigned to changes favored by $\widehat A$ is capped;
+unfavorable changes retain the term $w\widehat A$. Hence
+$\ell_\varepsilon(w,\widehat A)\le w\widehat A$: the clipped surrogate
+lower-bounds the unclipped surrogate. The inequality alone supplies neither
+a statistical lower confidence bound on expected reward nor a constraint
+$w\in[1-\varepsilon,1+\varepsilon]$.}
+Tokenwise clipping and repeated fitting to
+the same batch are additional algorithmic choices, beyond the exact
+response-level identity. The full practical surrogate is supplementary
+reading; no convergence claim for it follows from \cref{eq:importance}.
+
+\section{What the feedback objective guarantees}
+\label{sec:accuracy}
+
+Improving expected reward helps solve the intended task only insofar as
+the reward measures success on that task. With verifiable feedback, the
+test specifies the target: passing a finite test suite, for example, is
+the rewarded event. If a learned reward model supplies the evaluations,
+we must also relate its predictions to the intended reward. We finish
+with a bound on the cost of that error and a brief offline comparison.
+
+For a fixed prompt and strictly positive reference policy, recall the
+KL-regularized objective from Lecture 19:
+\[
+ F_r(\pi)=\sum_y\pi(y)r(y)-\beta\KL(\pi,\pi_{\rm ref}),\qquad\beta>0.
+\]
+Write $\widehat r:\cY\to\R$ for the learned reward.
+Let $\pi^\star$ maximize $F_r$ and $\widehat\pi$ maximize $F_{\widehat r}$
+over the same policy class, assuming both maximizers exist.
+
+\begin{proposition}[Uniform reward accuracy controls the optimized objective gap]
+\label{prop:reward-error}
+If $\max_y|\widehat r(y)-r(y)|\le\varepsilon$ for $\varepsilon\ge0$, then
+\[
+ F_r(\pi^\star)-F_r(\widehat\pi)\le2\varepsilon.
+\]
+\end{proposition}
+\begin{proof}
+Uniform reward accuracy gives $|F_r(\pi)-F_{\widehat r}(\pi)|\le\varepsilon$
+for every policy. Insert the estimated objective at both policies:
+\[
+ F_r(\pi^\star)\le F_{\widehat r}(\pi^\star)+\varepsilon
+ \le F_{\widehat r}(\widehat\pi)+\varepsilon
+ \le F_r(\widehat\pi)+2\varepsilon.
+\]
+The middle inequality uses optimality for the estimated objective.
+\end{proof}
+
+Uniform accuracy controls the error even at responses favored by the
+optimized policy. Average accuracy on logged responses gives less information
+about rare responses. \emph{Offline learning} uses a fixed collected dataset;
+its policy cannot request new evaluations to check such responses.
+A policy $\pi$ has \emph{coverage quantity}
+$C(\pi)=\sum_{y:\mu(y)>0}\pi(y)^2/\mu(y)$ relative to logging
+distribution $\mu$, provided $\pi(y)=0$ whenever $\mu(y)=0$.
+The quantity $C(\pi)$ grows when the policy emphasizes responses rare in the logs.
+A \emph{pessimistic objective} subtracts an error allowance so that the
+result is a lower bound on true reward under the assumed error control.
+\Cref{app:pessimism} derives a coverage-dependent allowance and explains
+how a quadratic probability-ratio penalty can implement it. The associated
+constrained problem has a Lagrangian with that penalty, connecting the
+statistical requirement to regularized optimization.
+
+With online verifiable feedback, the learner can evaluate newly sampled
+responses directly. The training problem then includes both finding
+successful responses and updating the policy so that future successes
+become more likely, as in the sampling analyses above.
+
+\section{Changing which contexts receive updates (optional)}
+\label{sec:context-weighting}
+
+The failure example suggests a different way to use rewards: give less
+weight to contexts that already succeed reliably. The next two results
+study that change in the finite binary contextual-bandit model. Throughout
+this section, $\mu_j>0$, $\|z_j\|_2\le B$, and a unit vector $w$
+satisfies $z_j^\top w\ge\gamma>0$ for every $j$. These methods modify
+the reward objective or its weighting; their guarantees do not apply to
+ordinary ascent on $J$.
+
+\subsection{Improving the worst context}
+
+Suppose all correct-label probabilities and their gradients are available.
+Define the worst-context success probability
+$Q(\theta)=\min_jp_\theta(x_j)$. At a tie, improving one active context
+can hurt another. To improve all active contexts, let $g(\theta)$ be the
+minimum-norm vector in the convex hull of
+$\{\nabla p_\theta(x_j):p_\theta(x_j)=Q(\theta)\}$.
+
+\begin{proposition}[Worst-context reward ascent]
+\label{prop:worst-context}
+Along any absolutely continuous solution of
+$\dot\theta(t)=g(\theta(t))$ almost everywhere, starting from a finite
+parameter with $q_0=Q(\theta(0))$, we have
+\[
+ 1-Q(\theta(t))\le
+ \frac{1}{(1-q_0)^{-1}+\gamma^2q_0^2t}.
+\]
+Consequently, the average-reward gap satisfies
+$\delta(\theta(t))\le1-Q(\theta(t))$ and obeys the same upper bound.
+\end{proposition}
+
+\Cref{ex:l20-worst-context} asks you to prove the rate and explain the
+choice at ties. The direction requires evaluating all contexts and
+solving a finite convex quadratic problem. The result concerns exact
+gradient flow, with no sampling-cost guarantee.
+
+\subsection{Capping updates using sampled rewards}
+
+We can suppress updates on an already successful context without knowing
+its correct label in advance. Choose $1/2\le\tau<1$, draw fresh contexts
+and on-policy actions as in \cref{prop:nonnegative-pg}, and update by
+\begin{equation}
+ \theta_{t+1}=\theta_t+\eta R_t
+ \I\{\pi_{\theta_t}(A_t\mid X_t)\le\tau\}
+ \nabla\log\pi_{\theta_t}(A_t\mid X_t),\qquad\eta>0.
+ \label{eq:capped-update}
+\end{equation}
+A rewarded action is known to be correct, so the decision to retain its
+update uses only the sampled reward and the policy probability.
+If another update later lowers that probability, the context becomes
+eligible again. Away from threshold equalities, the mean update is the
+gradient of $\sum_j\mu_j\min\{p_j,\tau\}$.
+
+\begin{proposition}[A fixed cap and a schedule converging to optimality]
+\label{prop:capped-pg}
+From $\theta_0=0$, the fixed-cap algorithm makes at most
+\[
+ M_\tau=\frac{2\log(\tau/(1-\tau))+\eta B^2}
+ {\eta(1-\tau)\gamma^2}
+\]
+nonzero updates. Almost surely, after finite time every $p_j>\tau$.
+
+For convergence to reward one, suppose the finite context set is known.
+Start at $\theta_0=0$ and use stages $k=1,2,\ldots$ with
+$\tau_k=\sigma(k)$. Record a correct action for each context when a
+reward of one is observed. After each round, check the current probability
+of every recorded correct action. Advance to stage $k+1$ exactly when
+all contexts have such a record and all these probabilities exceed
+$\tau_k$; retain the records and parameters. Every stage finishes in
+finite time almost surely, and
+\[
+ \min_jp_{\theta_t}(x_j)\longrightarrow1
+ \quad\text{almost surely as }t\to\infty.
+\]
+Consequently, $\delta(\theta_t)\to0$ almost surely.
+\end{proposition}
+
+\Cref{ex:l20-capped-pg} asks you to prove both claims, including control
+of the iterates between stage completions. The schedule uses no separator
+or margin constant. Its certificate requires the known finite support,
+stored successful actions, and evaluations of the current policy at all
+contexts. A fixed cap needs no such certificate. Counting updates leaves
+open the waiting time for the next eligible success; neither claim gives
+a polynomial bound on the number of reward queries.
+
+\section{Take-home messages}
+\label{sec:take-home}
+\begin{itemize}[leftmargin=*]
+\item Policy gradients turn rewards for generated responses into parameter
+updates through gradients of token log probabilities. The evaluator need
+not be differentiable.
+\item The cost of training depends on which responses the policy samples.
+Deterministic binary feedback gives a $1/t$ expected suboptimality-gap bound and
+logarithmic expected regret. A sufficiently small, horizon-independent fixed
+step gives the same dependence on time for bounded stochastic rewards with
+distinct means, although the proved constant can grow exponentially with the
+number of actions. Larger fixed steps can give nearly linear regret despite
+almost-sure convergence.
+\item On a finite separable population, sufficiently high initial reward
+guarantees convergence of exact policy-gradient flow. Nonnegative signed-feature
+inner products guarantee convergence of sampled REINFORCE. Separability
+alone permits failure despite exact rewards and gradients. Natural-gradient flow is
+invariant to smooth invertible reparameterization. A common margin-increment
+direction gives exponential learning; separability alone does not ensure
+that such a direction exists or that NPG learns.
+\item Fitting successful responses guarantees high reward when excess
+log loss approaches zero. A restricted class may not fit their distribution.
+Even with a separable population, optimization on data omitting contexts can
+undo initially correct behavior under either cross-entropy or exact PG.
+\item Baselines affect individual updates and therefore future observations.
+In the natural-gradient example, preserving the mean direction does not
+preserve the limiting behavior.
+\item Group baselines estimate advantages from several responses to one prompt,
+while batch reuse spreads generation and evaluation costs across updates. Centering,
+standardization, and sampling corrections change the estimator. A response
+likelihood ratio corrects reuse at a fixed prompt; a change in the prompt or
+state distribution requires a separate correction. Reward accuracy and
+offline coverage impose additional requirements.
+\end{itemize}
+
+\printendnotes
+
+\section*{Bibliographical notes}
+\label{sec:bibliography}
+
+The motivation comes from the role of reinforcement learning in reasoning
+model training. \citet{openai2024reasoning} report improving o1's
+problem-solving performance with increased reinforcement-learning compute.
+\citet{deepseek2025} use GRPO with rule-based accuracy and format rewards
+for DeepSeek-R1-Zero; they report an increase in AIME 2024 average pass@1
+from 15.6\% to 71.0\% during RL training. These are empirical results for
+language models. The finite-policy analyses in this lecture explain
+properties of the updates under their stated assumptions.
+
+The score-function identity is the basis of REINFORCE
+\citep{williams1992}. \Cref{ex:l20-unbiased-estimators} asks for an elementary
+characterization under the universal-reward requirement.
+\Cref{prop:gradient-gap} is the elementary
+separate-logit form of the nonuniform gradient bounds used in tabular
+policy-gradient analysis. \Cref{prop:drift-rate} is the standard scalar
+decrease argument also used in Lecture 11's nonlinear gradient-dominance
+analysis. The integral proof explains how to choose the transformation.
+\Cref{thm:binary} is a self-contained classroom
+specialization; no novelty is claimed for its drift calculation.
+\citet{mei2024} analyze stochastic-gradient bandit convergence through
+the interaction of update noise and exploration. Their expected-rate proof
+factors an expectation involving the pathwise minimum optimal-arm probability
+as though that random quantity were independent of the current gap.
+Their Theorem~5.6 gives the inverse-initial-probability plateau lower bound
+discussed after \cref{thm:fixed-step-rate}.
+\citet[Appendix B.1]{baudry2025} identify the error and explain that a uniform
+inverse second moment of the optimal-arm probability would repair the
+argument. \Cref{thm:fixed-step-rate} supplies that moment bound and gives a
+corrected expected $1/t$ rate. The permitted step is $K$ times larger than the
+step prescribed by \citet{mei2024}; the corrected constant is $2M/\eta$, with
+$M$ defined in \cref{eq:fixed-step-constant}. The proof of
+\cref{thm:fixed-step-rate} uses a polynomial Lyapunov function that extends
+the subset-product construction used by
+\citet[Section 2.3]{jia2026}. \Citet{mei2025} prove the
+arbitrary-constant-step almost-sure convergence result in
+\cref{thm:as}. \citet[Theorem 2]{baudry2025} prove
+\cref{thm:slow}; their Theorem 1 gives a complementary two-arm small-step
+upper bound.
+
+\citet{osband2026} studies allocation of a finite training budget. His
+classification experiments marginalize actions exactly. The proposed
+horizon loss weights an example's logit-gap gradient by
+$\sigma(m+H)(1-\sigma(m))$, moving from cross-entropy toward expected
+reward as the remaining horizon $H$ decreases to zero. His independent-logit
+analysis and experiments motivate this modification; they do not establish
+consistency with shared features. \Cref{sec:sharing} examines that separate
+obstruction.
+
+\Cref{prop:local-pg} recalls the standard gradient-domination argument
+from Lecture 11. \Cref{prop:initialized-pg} verifies its assumptions for
+a high-reward region of the finite separable population. Both statements
+concern exact gradient flow. \Cref{prop:nonnegative-pg,prop:diagonal-pg,prop:worst-context,prop:capped-pg}
+are derivations developed for these notes; their priority has not been
+established. The capped-update proof uses the separator-progress and
+squared-norm comparison familiar from perceptron analysis.
+\citet{lin2026draft} give related noncontextual bandit counterexamples,
+including failure with linearly realizable rewards, and sufficient geometric
+conditions on the features. The contextual examples in
+\cref{prop:shared-pg,prop:shared-online,prop:shared-npg} give self-contained
+demonstrations of the failure mechanisms.
+
+\citet{mousavi2026} study reward-weighted score updates under a behavior
+policy $q$, with their main analysis omitting full importance correction.
+For a fixed prompt, $K$ actions, one correct action $y^\star$, and uniform $q$,
+\[
+ \E[R\nabla\log\pi_\theta(Y\mid x)]
+ =\frac1K\nabla\log\pi_\theta(y^\star\mid x).
+\]
+Thus this special case follows the supervised cross-entropy gradient in
+expectation, using reward feedback to obtain its samples. Their separate
+fully on-policy guarantee in Appendix A.5 permits some contexts to remain
+unsuccessful; it does not establish consistency on every separable population.
+
+\citet{li2026offlinepg} study offline policy optimization with a standalone
+parameterized actor. Their local-update lower bound formalizes the
+context-distribution failure in \cref{ex:offpolicy-context}: two contextual
+bandit instances have the same offline population information, policy class,
+rewards, and exact critics, but opposite target context distributions. Any
+update using only that offline population information has average comparator
+regret at least $1/4$ on one instance at every horizon, despite bounded density
+ratios. The contextual-bandit data distribution in the construction is not
+induced by a behavior policy under either target initial-state distribution.
+Their Appendix C.3 gives an admissible MDP construction for deterministic
+local updates satisfying a sign-symmetry condition. Compatible function
+approximation rules out the two-context construction; without compatibility,
+an NPG-style least-squares update computed under the offline distribution need
+not recover the target direction.
+
+\Cref{prop:orthogonal-pg} isolates the absence of interference.
+\Cref{prop:successful-fitting} recalls Lecture 4's zero-cost forward-KL
+bound, whose proof and sharpness are already in that lecture and its
+Exercise 2. The elementary constructions in
+\cref{ex:successful-compromise,ex:missing-contexts} distinguish
+target-distribution misspecification from optimization on incomplete data;
+no novelty is claimed. The second construction specializes Lecture 10's
+implicit-bias discussion and also checks exact PG directly.
+\Cref{prop:npg-invariance} gives the standard coordinate-transformation
+argument. \Cref{prop:npg-positive} proves the positive result under the
+common-increment condition and connects it to exact mirror-descent targets.
+For implementation, \citet{ollivier2017} introduce TANGO: stochastic
+vector updates track the Fisher solve while parameters change more slowly.
+Theorem 3 proves convergence in probability to the exact natural-gradient
+flow at each fixed finite time as the outer step tends to zero. The
+assumptions include bounded gradient moments, a smooth Fisher matrix, and
+a uniform positive lower eigenvalue bound. The result avoids explicit
+Fisher estimation; it does not assert efficient approximation in every
+dimension or apply uniformly along our nearly deterministic limiting
+policies.
+
+\citet{huang2026apmd} introduce the APMD framework and study concrete
+instantiations. Section 2.2 assumes rewards linear in policy features;
+Appendix B.4.1 characterizes target realizability up to context-dependent
+constants. Section 4.3 gives the Rebel-OnPolicy objective and Appendix M
+relates it to NPG. \Cref{app:rebel} derives that connection for our binary
+model without reward realizability. The counterexample concerns exact
+population minimization of that objective, outside the assumptions of the
+paper's concrete convergence guarantees.
+
+\citet{mei2022} study how baselines affect stochastic natural-gradient
+convergence. \Cref{prop:baseline-paths} gives an elementary two-action
+illustration with fully specified updates. The claim concerns that
+preconditioned update, and the exact value baseline is assumed available.
+\citet{shao2024} introduce GRPO in DeepSeekMath, using group-relative
+advantages, tokenwise surrogates, response-length weighting, and a KL
+penalty. Their experiments use learned rewards. The independent-group
+identities in \cref{sec:groups} isolate operations that can also be used
+with verifiable rewards. \citet{schulman2017} introduce PPO's clipped
+surrogate and batch-reuse procedure.
+
+Recent work also applies policy optimization to multi-turn language-model
+agents. \citet{feng2025retool} interleave model generations with code
+execution and train from task outcomes. \citet{wang2025ragen} study
+trajectory-level policy optimization in interactive environments. These
+systems instantiate the sequential setup of \cref{app:return}; their
+algorithmic choices and empirical findings are outside the scope of these
+notes.
+
+The decreasing-step example in \cref{app:diffusion} comes from the
+unpublished manuscript \emph{Lower bound on continuous-time policy gradient
+with decreasing stepsizes} \citep{decreasingdraft}, consulted on
+November 16, 2026. The statement concerns its Gaussian-bandit diffusion;
+the full manuscript proof is outside these notes.
+\citet{lattimore2026diffusion} develops a diffusion analysis with regret
+upper and lower bounds. \citet[Theorem 1]{lattimore2026lyapunov} transfers
+the upper-bound argument to discrete time; \cref{thm:small-step} states
+that result. Its learning rate is constant during a run but depends on
+the horizon and reward gaps. Section 2 of the latter paper supplies the
+stopped-process and Lyapunov argument summarized in \cref{app:small-step}.
+
+For offline preference learning, \citet{huang2024} connect pessimism to
+regularization in $\chi^2$-preference optimization ($\chi$PO).
+The elementary argument in \cref{app:pessimism} explains one reason for a
+quadratic probability-ratio penalty. The paper uses a mixed
+$\chi^2$/KL regularizer and a clipped preference loss; its guarantees
+require the paper's statistical assumptions. Its $\chi^2$ convention
+includes a factor $1/2$, unlike the unscaled sum in
+\cref{eq:coverage-chi} below.
+
+\section*{Glossary}
+\begin{description}[style=nextline,leftmargin=1.5em,labelindent=0pt]
+\item[Verifiable feedback (RLVF/RLVR)]
+Computable checks supply reward evaluations of generated responses;
+the evaluator need not supply a correct response to imitate.
+\item[Score $s_\theta(x,y)$]
+The log-probability gradient $\nabla\log\pi_\theta(y\mid x)$;
+its expectation under the policy is zero.
+\item[Stochastic policy gradient and REINFORCE]
+A parameter update using sampled rewards multiplied by policy scores,
+possibly with a baseline. This score-function update is called REINFORCE;
+a preconditioner, such as inverse Fisher information, changes the direction.
+\item[Value, advantage, and baseline]
+The policy's value at prompt $x$ is $J_x(\theta)$; a response's advantage
+is $r(x,y)-J_x(\theta)$. A value predictor estimates the expected reward.
+Subtracting a baseline $b$ gives the advantage estimate $R-b$ when $b$
+estimates the value. Independence from the current response, conditional on
+prior information, permits baseline cancellation even if the estimate is inaccurate.
+\item[Multi-turn interaction and return to go]
+Model actions are interleaved with observations from a user, tool, or other
+environment. An action can change the distribution of later observations.
+The return to go $G_h$ contains the rewards from action $h$ onward and can
+replace the full trajectory return in the score term for that action.
+\item[Softmax bandit and reward laws]
+Each action $a$ has a fixed reward distribution $\mu_a$ with mean $r_a$.
+The policy assigns each action its own logit; sampled rewards update those
+logits through the softmax score.
+\item[Suboptimality gap and expected cumulative regret]
+For $J^\star=\sup_\theta J(\theta)$, the suboptimality gap is
+$\delta(\theta)=J^\star-J(\theta)$, with
+$\delta_t=\delta(\theta_t)$ along the iterates;
+$\cR_T=\sum_{t<T}\E[\delta_t]$ accumulates expected losses during training.
+\item[Drift-to-rate bound]
+A scalar recurrence $a_{t+1}\le a_t-ca_t^\alpha$ with $c>0$ and
+$\alpha>1$ gives decay of order $t^{-1/(\alpha-1)}$.
+Integrating inverse progress turns the nonlinear decrease into additive
+progress; quadratic decrease gives reciprocal decay.
+\item[Contextual bandit and population separation]
+A context is observed before one action is chosen and rewarded. In the
+classification model, $X\sim\nu$ and $z(x)=y(x)x$ is the signed feature
+vector. Population separation means $z(X)^\top w>0$ almost surely for
+some $w$.
+\item[Capped reward updates]
+Retain a rewarded score update only when the sampled action's current
+probability is at most a threshold $\tau$. A finite-support stage certificate
+allows thresholds to increase while preserving convergence to reward one.
+\item[Fisher information and natural gradient]
+The policy Fisher matrix is $I(\theta)=\E[ss^\top]$, where $s$ is the
+policy score. When $I$ is invertible, the natural-gradient direction is
+$I^{-1}\nabla J$. In the scalar binary example, $I(u)=p(1-p)$.
+The natural direction transforms as a tangent vector under smooth invertible
+changes of parameters, giving the same policy flow in either coordinate system.
+\item[Policy mirror descent and target representability]
+KL-regularized improvement over all policies gives
+$\pi^+(a\mid x)\propto\pi(a\mid x)e^{\eta r(x,a)}$.
+In the finite binary linear model, the target is representable exactly when
+$\mathbf Z h=\mathbf1$ has a solution. Separability requires only $\mathbf Z w>0$.
+\item[Approximate policy mirror descent (APMD)]
+Successive mirror-descent targets are approximately fitted, with the fitted
+policy used as the next reference. Guarantees require controlled fitting
+error; separability alone does not provide that control.
+\item[Successful-response fitting]
+Cross-entropy fits a fixed distribution $q$ of reward-one responses.
+Its excess over $H(q)$ is $\KL(q,\pi_\theta)$, which upper-bounds
+the shortfall $1-J(\theta)$ from reward one. This shortfall upper-bounds
+the optimization gap $J^\star-J(\theta)$. A reward-optimal policy need not
+reproduce $q$.
+\item[Group centering and leave-one-out baseline]
+Group centering subtracts the mean of all group rewards. A leave-one-out
+baseline omits the reward whose score it multiplies.
+\item[Group standardization]
+Division of centered rewards by a group standard deviation, with an explicit
+rule for groups of zero variance.
+\item[GRPO and PPO]
+GRPO uses group-relative advantages in policy optimization. PPO uses a
+clipped surrogate for updates based on responses from an older policy.
+The estimator identities in these notes address specific components of
+these procedures.
+\item[Context-distribution correction]
+If the target prompt distribution is $\nu$ and the batch distribution is
+$\mu$, full importance correction includes the ratio $\nu(X)/\mu(X)$ in
+addition to the response likelihood ratio. In a sequential problem, the
+corresponding object is an occupancy or trajectory ratio.
+\item[Offline pessimism and coverage]
+A pessimistic objective lower-bounds true reward under an error assumption.
+The coverage quantity $C(\pi)=\sum_y\pi(y)^2/\mu(y)$ controls transfer of
+squared reward error from a logging distribution $\mu$ to a policy $\pi$.
+\end{description}
+
+\section{Exercises}
+\label{sec:exercises}
+\exerciseinstructions
+\setcounter{courseexercise}{0}
+\Needspace{10\baselineskip}
+\input{../exercises/l20-unbiased-estimators.tex}
+\Needspace{10\baselineskip}
+\input{../exercises/l20-sublinear-regret.tex}
+\Needspace{10\baselineskip}
+\input{../exercises/l20-binary-update.tex}
+\Needspace{10\baselineskip}
+\input{../exercises/l20-first-success.tex}
+\Needspace{10\baselineskip}
+\input{../exercises/l20-binary-baseline.tex}
+\Needspace{10\baselineskip}
+\input{../exercises/l20-successful-fitting.tex}
+\Needspace{10\baselineskip}
+\input{../exercises/l20-missing-contexts.tex}
+\Needspace{10\baselineskip}
+\input{../exercises/l20-variance-baseline.tex}
+\Needspace{10\baselineskip}
+\input{../exercises/l20-standardization.tex}
+\Needspace{10\baselineskip}
+\input{../exercises/l20-offpolicy-context.tex}
+\Needspace{10\baselineskip}
+\input{../exercises/l20-offline-error.tex}
+\Needspace{10\baselineskip}
+\input{../exercises/l20-worst-context.tex}
+\Needspace{10\baselineskip}
+\input{../exercises/l20-capped-pg.tex}
+
+\appendix
+\section{Multi-turn interaction and return to go}
+\label{app:return}
+
+In a multi-turn language-model application, a history may include user
+messages, tool results, and earlier model outputs. Only actions generated by
+the trained policy have policy-score terms; the laws producing the intervening
+observations need not be differentiable. The trajectory score identity assigns
+a terminal reward to every model action that could have affected it. When the
+environment also supplies intermediate rewards, a score for the current action
+need only be multiplied by rewards that can depend on that action. Past rewards
+can be removed by conditioning.
+
+Consider a finite-horizon interaction with $H$ actions, finite state and
+action spaces, and rewards $R_2,\ldots,R_{H+1}$ taking values in a finite set.
+As in Lecture 18, $R_{h+1}$ is observed after action $A_h$. The initial-state,
+transition, and reward laws are independent of $\theta$.
+Let $H_h$ be the random tuple of observations before action $A_h$,
+including the current state, and sample
+$A_h\sim\pi_\theta(\cdot\mid H_h)$.
+Assume positive differentiable policy probabilities. Define
+$s_h=\nabla\log\pi_\theta(A_h\mid H_h)$ and the
+\emph{return to go} $G_h=\sum_{k=h}^H R_{k+1}$.
+
+The policy's value before action $h$ is $\E[G_h\mid H_h]$.
+The advantage of the chosen action is
+\[
+ \E[G_h\mid H_h,A_h]-\E[G_h\mid H_h].
+\]
+Subtracting the value from the observed return gives an advantage estimate:
+\[
+ \E[G_h-\E[G_h\mid H_h]\mid H_h,A_h]
+ =\E[G_h\mid H_h,A_h]-\E[G_h\mid H_h].
+\]
+A value predictor can estimate the baseline from the pre-action history.
+The following result permits such a baseline in the score estimator.
+
+\begin{proposition}[Return-to-go identity]
+\label{prop:return}
+For the interaction just described, with objective
+$J(\theta)=\E[\sum_{h=1}^H R_{h+1}]$,
+\[
+ \nabla J(\theta)=\E\!\left[\sum_{h=1}^H s_hG_h\right].
+\]
+A baseline measurable before action $h$ can be subtracted from $G_h$
+without changing the expectation, provided the products are integrable.
+\end{proposition}
+\begin{proof}
+Only policy factors in the trajectory probability depend on $\theta$.
+Differentiating them gives the trajectory score $\sum_h s_h$, so
+\[
+ \nabla J(\theta)=\E\!\left[
+ \sum_{h=1}^H s_h\sum_{k=1}^H R_{k+1}\right].
+\]
+Given $H_h$, every past reward $R_{k+1}$ with $k<h$ is known and
+$\E[s_h\mid H_h]=0$. Hence
+$\E[s_hR_{k+1}]=\E[R_{k+1}\E[s_h\mid H_h]]=0$ for $k<h$.
+Removing those terms leaves $G_h$. The identical calculation applies to
+any pre-action baseline.
+\end{proof}
+
+\paragraph{The Rao--Blackwell connection.}
+Rao--Blackwellization is the Monte Carlo technique of replacing an estimator
+by its conditional expectation, preserving its mean and reducing its
+variance. To see the connection here, group the full-return estimator by
+reward. The term associated with $R_{k+1}$ is
+$Z_k=R_{k+1}\sum_{h=1}^H s_h$. Average over the actions sampled after that
+reward is observed. Since every later score has conditional mean zero,
+\[
+ \overline Z_k:=\E[Z_k\mid H_{k+1}]
+ =R_{k+1}\sum_{h=1}^k s_h,
+ \qquad
+ \sum_{k=1}^H\overline Z_k=\sum_{h=1}^H s_hG_h,
+\]
+where $H_{H+1}$ denotes the full history. For each reward term, the law of
+total variance gives, for every $u\in\R^d$,
+\[
+ \operatorname{Var}(u^\top\overline Z_k)
+ \leq\operatorname{Var}(u^\top Z_k).
+\]
+The same conditioning principle appears in
+\href{lecture06.pdf}{Lecture 6}, Appendix A, where averaging over resampling
+recovers the corpus mean. Here each reward term is conditioned on a
+different history. The separate variance inequalities therefore do not
+give a variance ordering for their sums.
+
+The identity uses intermediate rewards only when an evaluator or environment
+actually supplies them. With a single terminal reward, every $G_h$ contains
+that same terminal evaluation. The identity alone supplies no finer
+feedback about the correctness of intermediate reasoning. Optimizing a sum
+of process rewards need not maximize the original terminal reward.
+
+\section{A finite-horizon regret guarantee}
+\label{app:small-step}
+
+\Cref{thm:fixed-step-rate} gives a horizon-independent guarantee when all
+mean rewards are distinct. The following result instead allows ties among
+optimal arms. It assumes rewards in $[0,1]$, zero initialization, and a
+step chosen for a prescribed finite horizon.
+
+Consider $K\ge2$ arms. Each pull of arm $a$ gives a fresh independent reward
+in $[0,1]$ with mean $r_a$. Put $J^\star=\max_a r_a$ and
+\[
+ \Delta_a=J^\star-r_a,\qquad
+ \Delta_{\min}=\min_{a:\Delta_a>0}\Delta_a,\qquad
+ \Delta_{\max}=\max_a\Delta_a.
+\]
+Assume at least one arm is suboptimal; optimal arms may be tied.
+As in \cref{sec:bandit-setup}, $\cR_T$ denotes expected cumulative regret.
+
+\begin{theorem}[Regret with a horizon-dependent constant step]
+\label{thm:small-step}
+For the bandit above, use \cref{eq:vector-pg} with $\theta_0=0$.
+For every integer $T\ge K$, if
+\[
+ 0<\eta\le\frac{\Delta_{\min}^2}
+ {120\Delta_{\max}\log(TK)},
+ \qquad\text{then}\qquad
+ \cR_T=O\!\left(\frac{K\log K\log T}{\eta}\right),
+\]
+where the implicit constant is universal.
+\end{theorem}
+
+Choosing $\eta$ equal to the displayed upper bound gives
+$\cR_T=O((\log T)^2)$ for a fixed bandit instance.
+The step stays constant for all $T$ updates, but its choice uses $T$ and
+the reward gaps. The theorem controls cumulative regret and permits tied
+optimal means; it does not give a last-iterate rate for one
+horizon-independent step.
+
+\paragraph{How the proof controls rare trajectories.}
+The full proof is outside these notes. With probability at least $1-1/T$,
+before every update all logits exceed $-2\log(TK)$ and no optimal logit
+lies more than one below a suboptimal logit.
+The analysis stops the process when either condition fails and uses a
+Lyapunov potential to bound expected cumulative regret before stopping.
+On the exceptional event, cumulative regret is at most $T$, so its
+contribution to expected regret is at most one. Quantifying that event
+is essential: almost-sure convergence alone does not bound its expected cost.
+
+\section{A decreasing-step diffusion lower bound}
+\label{app:diffusion}
+
+The lower bound below formalizes the possibility that early noise favors a
+suboptimal action and later decreasing steps provide insufficient correction.
+Its continuous-time model is specified here so that the result's scope can
+be compared with the discrete updates in the main text.
+
+Let $K=m+2$ and $0<\Delta\le1$. The first two arms have Gaussian reward means $1$ and
+$1-\Delta$ and variance one; the remaining $m$ arms have deterministic
+zero reward. Write $r=(1,1-\Delta,0,\ldots,0)^\top$ and
+$\zeta=(1,1,0,\ldots,0)^\top$ for the mean and variance vectors.
+Let $B_t$ be standard $K$-dimensional Brownian motion, whose coordinates
+are independent. Start with $\theta_0=X_0=0\in\R^K$ and define
+$\pi_{t,a}=e^{\theta_{t,a}}/\sum_b e^{\theta_{t,b}}$.
+The accumulated reward process $X_t$ and logit process obey the It\^o equations
+\begin{equation}
+ dX_{t,a}=\pi_{t,a}r_a\,dt+\sqrt{\pi_{t,a}\zeta_a}\,dB_{t,a},
+ \qquad
+ d\theta_t=\eta_t(\mathrm{Id}_K-\pi_t\mathbf1^\top)\,dX_t,
+ \label{eq:diffusion}
+\end{equation}
+where $\mathrm{Id}_K$ is the identity matrix and $\mathbf1$ is the all-one
+column vector. The drift of each reward coordinate is its mean weighted by
+its sampling probability, and its infinitesimal noise variance is
+$\pi_{t,a}\zeta_a\,dt$. Equation \cref{eq:diffusion} defines the model;
+we do not derive a diffusion limit of the discrete update here.
+Here $J^\star=1$. Define the expected continuous-time regret, using the
+same averaging convention as in the main text, by
+\[
+ \cR_T=\E\!\left[\int_0^T(J^\star-r^\top\pi_t)\,dt\right]
+ =\E\!\left[\int_0^T\left(\Delta\pi_{t,2}+\sum_{a=3}^K\pi_{t,a}\right)\,dt\right].
+\]
+
+\begin{theorem}[Inverse-square-root steps in the diffusion model]
+\label{thm:diffusion}
+There exist absolute constants $c_m,C_m,c_\Delta,T_0,c_*>0$ such that,
+for every $T\ge T_0$, integer $m\ge4$, and $\Delta>0$ satisfying
+\[
+ c_m\log T\le m\le C_m\frac{T}{\log T},\qquad
+ \Delta\le c_\Delta\min\left\{\sqrt{\frac{\log m}{m}},\frac1{\log T}\right\},
+\]
+the model \cref{eq:diffusion} with $\eta_t=(1+t)^{-1/2}$ satisfies
+$c_*T\Delta\le\cR_T$.
+\end{theorem}
+
+The theorem is stated without proof. For a concrete specialization,
+choose $m=\lceil C\log T\rceil$ with a sufficiently large fixed $C$, and
+$\Delta=c/\log T$ with a sufficiently small fixed $c>0$. For large $T$,
+$1/\log T\le\sqrt{\log m/m}$ and the theorem's conditions hold.
+Consequently,
+\[
+ \cR_T=\Omega(T/\log T),\qquad K=m+2=\Theta(\log T).
+\]
+The theorem uses noisy rewards and a horizon-dependent instance family.
+The result shows a slow-learning mechanism for the stated diffusion, without
+asserting the same lower bound for discrete-time policy gradient.
+
+\section{Diagonal domination for exact policy gradient}
+\label{app:diagonal-pg}
+
+The nonnegative-inner-product condition in
+\cref{prop:nonnegative-pg} ensures that every sampled successful update
+helps every context. Exact gradient flow can permit negative interactions
+because it averages the effects of all contexts before updating, provided
+the initial margins are nonnegative.
+
+Use the finite separable population from \cref{sec:local-pg}, with masses
+$\mu_j$, signed features $z_j$, margins $m_j(\theta)=z_j^\top\theta$, and a
+unit vector $w$ satisfying $z_j^\top w\ge\gamma>0$ for every $j$.
+
+\begin{proposition}[Weighted diagonal domination]
+\label{prop:diagonal-pg}
+Suppose that, for every context $j$,
+\begin{equation}
+ \sum_{k:z_j^\top z_k<0}\mu_k|z_j^\top z_k|
+ \le \mu_j\|z_j\|_2^2.
+ \label{eq:diagonal-domination}
+\end{equation}
+If $m_j(\theta(0))\ge0$ for every $j$, put
+$\delta_0=\delta(\theta(0))$. Exact policy-gradient flow satisfies
+\[
+ \delta(\theta(t))
+ \le\frac{1}{\delta_0^{-1}+\gamma^2t/4}.
+\]
+In particular, $p_j(\theta(t))\to1$ for every $j$.
+\end{proposition}
+\begin{proof}
+We first show that no correct-label margin becomes negative. Along the flow,
+\[
+ \dot m_j
+ =z_j^\top\nabla J(\theta)
+ =\sum_k\mu_k\sigma'(m_k)z_j^\top z_k.
+\]
+Suppose $m_j=0$ while every margin is nonnegative. Since
+$\sigma'(m_k)\le\sigma'(0)=1/4$, discard the nonnegative cross terms and
+bound the negative terms to obtain
+\[
+ \dot m_j
+ \ge\frac14\left(
+ \mu_j\|z_j\|_2^2
+ -\sum_{k:z_j^\top z_k<0}\mu_k|z_j^\top z_k|
+ \right)\ge0.
+\]
+The gradient field is locally Lipschitz, so this inward-pointing boundary
+condition makes the region $m_j\ge0$ for every $j$ invariant.
+
+Consequently, $p_j=\sigma(m_j)\ge1/2$ throughout the trajectory. The
+separator now gives
+\[
+ \frac\gamma2\delta(\theta)
+ =\frac\gamma2\sum_j\mu_j(1-p_j)
+ \le\gamma\sum_j\mu_jp_j(1-p_j)
+ \le w^\top\nabla J(\theta)
+ \le\|\nabla J(\theta)\|_2.
+\]
+Thus $\|\nabla J(\theta)\|_2^2\ge\gamma^2\delta(\theta)^2/4$.
+Applying \cref{prop:local-pg} proves the rate. Since every $\mu_j$ is
+positive, convergence of the average gap to zero forces every $p_j$ to one.
+\end{proof}
+
+Condition \cref{eq:diagonal-domination} permits negative feature inner
+products: the self-effect at each context must dominate the total weighted
+harmful interaction. A single sampled update can still reduce another
+margin, so the proposition does not extend the pathwise argument of
+\cref{prop:nonnegative-pg}.
+
+\section{Online sampling with shared parameters}
+\label{app:shared-online}
+
+The exact-gradient counterexample concerns a population objective. To check
+whether fresh online data remove its failure, we now analyze the actual
+sampled update. The key question is whether the second context can remain
+unsuccessful forever while updates from the first keep reducing its success
+probability.
+
+Use the two equally likely contexts in \cref{eq:two-context-features}.
+At each integer time $t\ge0$, draw $X_t\sim\nu$ independently of the
+past. Given $X_t$ and the current parameter, sample
+$A_t\sim\pi_{\theta_t}(\cdot\mid X_t)$ using fresh randomness, and observe
+$R_t=\I\{A_t=y(X_t)\}$. Zero-baseline REINFORCE with step $\eta>0$ is
+\begin{equation}
+ \theta_{t+1}=\theta_t+\eta R_t(1-p_{\theta_t}(X_t))z(X_t),
+ \qquad \theta_0=(4,0)^\top.
+ \label{eq:shared-online}
+\end{equation}
+
+\begin{proposition}[Online REINFORCE can fail on the separable population]
+\label{prop:shared-online}
+For every fixed $\eta>0$, the update \cref{eq:shared-online} has positive
+probability of satisfying $p_{1,t}\to1$ and $p_{2,t}\to0$.
+On that event $J(\theta_t)\to1/2$ and $\delta(\theta_t)\to1/2$.
+\end{proposition}
+\begin{proof}
+\textbf{Construct the candidate failure process.}
+Take independent sequences of context draws $X_t$ and uniform random
+variables $U_t,W_t$ on $[0,1]$, with all three sequences mutually
+independent. Use $U_t$ to sample labels on context 1 and $W_t$ on context 2.
+Consider an auxiliary process that suppresses every update on context 2.
+Its parameter has the form $(\bar u_t,0)^\top$. On context 1 it increases
+$\bar u_t$ by $\eta(1-\sigma(\bar u_t))$ when
+$U_t\le\sigma(\bar u_t)$, and otherwise makes no update.
+
+\textbf{Quantify how quickly the second probability decreases.}
+Index successful context-1 updates by $k$, and let $b_k$ be $e^{\bar u}$
+after $k$ such updates. Then
+\[
+ b_{k+1}=b_k\exp\left(\frac{\eta}{1+b_k}\right),
+ \qquad b_0=e^4.
+\]
+The elementary inequality $s\le e^s-1$ gives
+\[
+ \eta\sigma(4)\le\frac{\eta b_k}{1+b_k}
+ \le b_{k+1}-b_k,
+ \qquad e^4+k\eta\sigma(4)\le b_k.
+\]
+Let $N_t$ count successful auxiliary updates before time $t$.
+Since $\bar u_t\ge4$, every event
+$\{X_t=x_1,\ U_t\le\sigma(4)\}$ produces such an update. These events
+are independent with probability $\sigma(4)/2$, so the strong law gives
+$ct\le N_t$ eventually almost surely for some fixed $c>0$.
+The auxiliary probability of success on context 2 therefore satisfies
+\[
+ \bar p_{2,t}=\sigma(-2\bar u_t)
+ \le\frac1{(e^4+\eta\sigma(4)N_t)^2},
+ \qquad \sum_{t=0}^\infty\bar p_{2,t}<\infty
+ \quad\text{almost surely}.
+\]
+
+\textbf{Show that the actual learner can follow this process forever.}
+Condition on the entire context sequence and all $U_t$; call this
+information $\cG$. The auxiliary trajectory is then fixed, while the
+$W_t$ remain independent uniform variables. Hence the event
+$E=\{W_t>\bar p_{2,t}\text{ for every }t\text{ with }X_t=x_2\}$ satisfies
+\[
+ \P(E\mid\cG)=\prod_{t:X_t=x_2}(1-\bar p_{2,t})>0
+ \quad\text{almost surely}.
+\]
+Each factor is positive and the subtracted probabilities are summable;
+the logarithm argument in the proof of \cref{prop:baseline-paths} proves
+positivity of the infinite product. Averaging gives $\P(E)>0$.
+On $E$, the actual and auxiliary processes coincide by induction, because
+context 2 always gives reward zero. Thus $v_t=0$, $u_t\to\infty$, and
+the two correct-label probabilities tend to one and zero, respectively.
+\end{proof}
+
+The failure event occurs despite infinitely many visits to each context.
+The zero-baseline update makes no use of an incorrect label's zero reward,
+while successful updates on the first context reduce the probability of
+ever obtaining a positive reward on the second.
+
+\section{A separable population on which exact NPG fails}
+\label{app:shared-npg}
+
+The main text distinguished separation from representability of a
+mirror-descent update. We now prove that the three-context example also
+defeats exact natural-gradient steps themselves. The proof tracks whether
+the second coordinate can grow enough faster than the first to repair the
+third margin.
+
+\begin{proposition}[Restatement of \cref{prop:shared-npg}]
+For the three equally likely contexts in \cref{eq:three-context-features},
+initialize $\theta_0=(6,6)^\top$ and use exact population NPG with any
+fixed $0<\eta\le1/10$. Then $p_{1,t},p_{2,t}\to1$ and $p_{3,t}\to0$,
+so $J(\theta_t)\to2/3$ and $\delta(\theta_t)\to1/3$, although
+$\sup_\theta J(\theta)=1$.
+\end{proposition}
+\begin{proof}
+\textbf{Compute the natural direction.}
+At $\theta=(u,v)^\top$, put
+$a=\sigma'(u)$, $b=\sigma'(v)$, and $c=\sigma'(-3u+v)$.
+\Cref{eq:context-fisher} gives
+\[
+ I=\frac13\begin{pmatrix}a+9c&-3c\\-3c&b+c\end{pmatrix},
+ \qquad g=\frac13\begin{pmatrix}a-3c\\b+c\end{pmatrix}.
+\]
+The first two feature vectors span $\R^2$, so $I$ is invertible.
+Define $\alpha=9c/a$ and $\beta=c/b$. Solving $Ih=g$ yields
+\[
+ h_u=\frac{1+\beta}{1+\alpha+\beta},
+ \qquad h_v=1+\frac{3\beta}{1+\alpha+\beta}.
+\]
+When $c$ is small relative to $a$ and $b$, this direction is close to
+$(1,1)^\top$, which decreases the third margin.
+
+\textbf{Find a quantity that would have to grow for recovery.}
+Let $d=v-u$. The third margin is $-2u+d$.
+For the third margin to become positive, $d$ must exceed $2u$.
+For one NPG step, write $\Delta u=\eta h_u$ and
+$\Delta d=\eta(h_v-h_u)$. Then
+\[
+ 0<\Delta u\le\eta,
+ \qquad
+ 0\le\frac{\Delta d}{\Delta u}
+ =\frac{\alpha+3\beta}{1+\beta}.
+\]
+Suppose for now that $u\ge6$ and $0\le d\le1$. The same
+sigmoid-derivative bounds as in \cref{prop:shared-pg} give
+\[
+ \alpha\le36e^{1-u},\qquad \beta\le4e^{2-u},
+ \qquad \Delta d\le C e^{-u}\Delta u,
+ \quad C=36e+12e^2.
+\]
+
+\textbf{Bound the total increase of that quantity.}
+Because $\Delta u\le\eta$, for $s\in[u,u+\Delta u]$ we have
+$e^{-u}\le e^\eta e^{-s}$. Thus
+\[
+ \Delta d\le C e^\eta\int_u^{u+\Delta u}e^{-s}\,ds.
+\]
+Starting with $u_0=6$ and $d_0=0$, summing over steps gives
+\[
+ 0\le d_t\le C e^\eta\int_6^{u_t}e^{-s}\,ds
+ <C e^{\eta-6}\le C e^{-5.9}<0.511<1.
+\]
+Induction now verifies the region used in the bound. Moreover, throughout
+that region,
+\[
+ \frac{\eta}{1+(36e+4e^2)e^{-6}}\le\Delta u.
+\]
+Therefore $u_t\to\infty$, $v_t=u_t+d_t\to\infty$, and
+$-3u_t+v_t=-2u_t+d_t\to-\infty$.
+The limiting correct-label probabilities are consequently $(1,1,0)$.
+\end{proof}
+
+\section{Pairwise squared-loss fitting and NPG}
+\label{app:rebel}
+
+A method can solve its inner fitting problem exactly while failing to
+approach an optimal policy. We verify this distinction for a pairwise
+squared-loss update, whose fitting residual measures errors in the desired
+changes of log odds.
+
+Fix a reference parameter $\theta$ in the finite binary classification
+model. Draw $X\sim\nu$, then draw labels $A,A'$ independently from
+$\pi_\theta(\cdot\mid X)$. Observe their rewards
+$r(X,A),r(X,A')$. For a candidate increment $\eta h$, define the residual
+\[
+ f_h(x,a)=\frac1\eta\log\frac{\pi_{\theta+\eta h}(a\mid x)}
+ {\pi_\theta(a\mid x)}-r(x,a),
+ \qquad L_\theta(h)=\E[(f_h(X,A)-f_h(X,A'))^2].
+\]
+An idealized population update minimizes $L_\theta$ exactly and then resets
+the reference to $\theta+\eta h$. Sample-based implementations replace the
+expectation by a batch average and take finitely many optimization steps.
+
+\begin{proposition}[Exact pairwise fitting gives the NPG update]
+\label{prop:pairwise-npg}
+If the signed features span $\R^d$, then
+\[
+ L_\theta(h)=2\sum_j\mu_j p_j(1-p_j)(z_j^\top h-1)^2,
+\]
+and the unique minimizer is $h^\star=I(\theta)^{-1}\nabla J(\theta)$.
+Thus exact population minimization on the three-context population,
+initialized at $(6,6)^\top$ with $0<\eta\le1/10$, approaches expected reward
+$2/3$ and suboptimality gap $1/3$, even though the population is separable.
+\end{proposition}
+\begin{proof}
+Conditional on $X=x_j$, write $B=\I\{A=y(x_j)\}$ and
+$B'=\I\{A'=y(x_j)\}$. The difference of residuals is
+\[
+ f_h(x_j,A)-f_h(x_j,A')=(B-B')(z_j^\top h-1).
+\]
+The pair has unequal labels with probability $2p_j(1-p_j)$, proving
+the quadratic formula. Differentiating gives
+$\nabla_h L_\theta(h)=4(Ih-g)$ with $I,g$ from
+\cref{eq:context-fisher}. Positive definiteness of $I$ makes $I^{-1}g$
+the unique minimizer. Applying \cref{prop:shared-npg} proves the final claim.
+\end{proof}
+
+The minimum fitting loss is zero exactly when $\mathbf Z h=\mathbf1$ has a
+solution. In the three-context example the minimum is positive at every
+finite reference parameter, although the convex quadratic can be minimized
+exactly. The result concerns this population update. It neither establishes
+failure of every finite inner-loop implementation nor contradicts an APMD
+guarantee conditional on sufficiently accurate target fitting.
+
+\section{Offline reward error and pessimism}
+\label{app:pessimism}
+
+Logged data typically control error under their own sampling distribution.
+A policy chosen by optimizing the fitted reward changes that distribution.
+We need a bound that quantifies the cost of the change before treating the
+fitted reward as a reliable objective.
+
+Let $\varepsilon\ge0$ and let $\mu$ be a logging distribution on the finite
+response set. Suppose
+$e(y)=\widehat r(y)-r(y)$ satisfies
+$\sum_y\mu(y)e(y)^2\le\varepsilon^2$.
+Restrict attention to policies $\pi\ll\mu$, meaning that
+$\mu(y)=0$ implies $\pi(y)=0$. Define the \emph{coverage quantity}
+\[
+ C(\pi)=\sum_{y:\mu(y)>0}\frac{\pi(y)^2}{\mu(y)}.
+\]
+Large $C(\pi)$ allows the policy to put substantial weight on responses
+that are rare in the logs.
+
+\begin{proposition}[A regularized lower bound on reward]
+\label{prop:pessimism}
+Under this squared-error assumption, for every $\pi\ll\mu$ and $\lambda>0$,
+\begin{equation}
+ \left|\sum_y\pi(y)e(y)\right|
+ \le\varepsilon\sqrt{C(\pi)}
+ \le\lambda C(\pi)+\frac{\varepsilon^2}{4\lambda}.
+ \label{eq:offline-error}
+\end{equation}
+Consequently,
+\begin{equation}
+ \sum_y\pi(y)\widehat r(y)-\lambda C(\pi)
+       -\frac{\varepsilon^2}{4\lambda}
+ \le\sum_y\pi(y)r(y).
+ \label{eq:pessimistic-objective}
+\end{equation}
+\end{proposition}
+\begin{proof}
+To use the known error average, express the desired error under the logging
+distribution with a probability-ratio weight. Cauchy--Schwarz gives
+\[
+ \left|\sum_y\mu(y)\frac{\pi(y)}{\mu(y)}e(y)\right|
+ \le\left(\sum_y\frac{\pi(y)^2}{\mu(y)}\right)^{1/2}
+       \left(\sum_y\mu(y)e(y)^2\right)^{1/2}
+ \le\varepsilon\sqrt{C(\pi)},
+\]
+where the sums are over $\mu(y)>0$.
+For the second bound, expand
+$0\le(\sqrt{\lambda C(\pi)}-\varepsilon/(2\sqrt\lambda))^2$.
+Finally, subtract the error allowance from estimated reward to obtain
+\cref{eq:pessimistic-objective}.
+\end{proof}
+
+For a fixed $\lambda$, the term $\varepsilon^2/(4\lambda)$ is constant
+across policies. Maximizing the lower bound therefore amounts to maximizing
+estimated reward minus $\lambda C(\pi)$.
+The penalty is also the policy-dependent part of the Lagrangian for
+\[
+ \max_{\pi\ll\mu}\sum_y\pi(y)\widehat r(y)
+ \quad\text{subject to}\quad C(\pi)\le B,
+\]
+whose Lagrangian is
+$\sum_y\pi(y)\widehat r(y)-\lambda(C(\pi)-B)$, with $\lambda\ge0$.
+The identity
+\begin{equation}
+ C(\pi)-1=\sum_{y:\mu(y)>0}\mu(y)
+ \left(\frac{\pi(y)}{\mu(y)}-1\right)^2
+ \label{eq:coverage-chi}
+\end{equation}
+identifies the penalty, up to an additive constant, with a chi-squared
+divergence. This is a concrete way a regularized objective can implement
+pessimism under a stated error bound. \Cref{ex:l20-offline-error} shows why
+average accuracy alone allows poor policy selection and how a coverage
+constraint restores a guarantee.
+
+\begin{thebibliography}{99}
+\bibitem[OpenAI(2024)]{openai2024reasoning}
+OpenAI.
+\newblock Learning to reason with LLMs.
+\newblock September 12, 2024.
+\newblock \url{https://openai.com/index/learning-to-reason-with-llms/}.
+
+\bibitem[DeepSeek-AI(2025)]{deepseek2025}
+DeepSeek-AI.
+\newblock DeepSeek-R1: Incentivizing reasoning capability in LLMs via
+reinforcement learning.
+\newblock arXiv:2501.12948v1, 2025.
+\newblock \url{https://arxiv.org/abs/2501.12948v1}.
+
+\bibitem[Williams(1992)]{williams1992}
+Ronald J. Williams.
+\newblock Simple statistical gradient-following algorithms for connectionist
+reinforcement learning.
+\newblock \emph{Machine Learning}, 8:229--256, 1992.
+\newblock \url{https://doi.org/10.1007/BF00992696}.
+
+\bibitem[Mei et~al.(2023)]{mei2024}
+Jincheng Mei, Zixin Zhong, Bo Dai, Alekh Agarwal, Csaba Szepesv\'ari,
+and Dale Schuurmans.
+\newblock Stochastic gradient succeeds for bandits.
+\newblock \emph{Proceedings of ICML}, 2023.
+\newblock \href{https://proceedings.mlr.press/v202/mei23a/mei23a.pdf}{Published paper};
+arXiv:2402.17235.
+
+\bibitem[Mei et~al.(2024)]{mei2025}
+Jincheng Mei, Bo Dai, Alekh Agarwal, Sharan Vaswani, Anant Raj,
+Csaba Szepesv\'ari, and Dale Schuurmans.
+\newblock Small steps no more: Global convergence of stochastic gradient
+bandits for arbitrary learning rates.
+\newblock NeurIPS, 2024; updated arXiv version, 2025.
+\newblock \url{https://arxiv.org/abs/2502.07141}.
+
+\bibitem[Baudry et~al.(2025)]{baudry2025}
+Dorian Baudry, Emmeran Johnson, Simon Vary, Ciara Pike-Burke,
+and Patrick Rebeschini.
+\newblock Does stochastic gradient really succeed for bandits?
+\newblock NeurIPS, 2025.
+\newblock \href{https://proceedings.neurips.cc/paper_files/paper/2025/file/a4e683f0ce6b91e7fbdae9d32642d88f-Paper-Conference.pdf}{Conference paper}.
+
+\bibitem[Mei et~al.(2022)]{mei2022}
+Jincheng Mei, Wesley Chung, Valentin Thomas, Bo Dai,
+Csaba Szepesv\'ari, and Dale Schuurmans.
+\newblock The role of baselines in policy gradient optimization.
+\newblock NeurIPS, 2022.
+\newblock \href{https://papers.neurips.cc/paper_files/paper/2022/file/718d02a76d69686a36eccc8cde3e6a41-Paper-Conference.pdf}{Conference paper}.
+
+\bibitem[Osband(2026)]{osband2026}
+Ian Osband.
+\newblock Planning to learn.
+\newblock arXiv:2610.03667v1, 2026.
+\newblock \url{https://arxiv.org/abs/2610.03667v1}.
+
+\bibitem[Ollivier(2017)]{ollivier2017}
+Yann Ollivier.
+\newblock True asymptotic natural gradient optimization.
+\newblock arXiv:1712.08449v1, 2017.
+\newblock \url{https://arxiv.org/abs/1712.08449v1}.
+
+\bibitem[Lin et~al.(2026)]{lin2026draft}
+Max Qiushi Lin, Jincheng Mei, Matin Aghaei, Michael Lu, Bo Dai,
+Alekh Agarwal, Dale Schuurmans, Csaba Szepesv\'ari, and Sharan Vaswani.
+\newblock Rethinking the global convergence of softmax policy gradient with
+linear function approximation: The case of multi-armed bandits.
+\newblock Unpublished manuscript under submission; second-submission draft
+consulted November 16, 2026.
+
+\bibitem[Mousavi-Hosseini and Erdogdu(2026)]{mousavi2026}
+Alireza Mousavi-Hosseini and Murat A. Erdogdu.
+\newblock Post-training with policy gradients: Optimality and the base model barrier.
+\newblock arXiv:2603.06957v1, 2026.
+\newblock \url{https://arxiv.org/abs/2603.06957v1}.
+
+\bibitem[Li et~al.(2026)]{li2026offlinepg}
+Xiang Li, Yuheng Zhang, and Nan Jiang.
+\newblock Beyond state-wise mirror descent: Offline policy optimization with
+parametric policies.
+\newblock arXiv:2602.23811, 2026.
+\newblock \url{https://arxiv.org/abs/2602.23811}.
+
+\bibitem[Huang et~al.(2026)]{huang2026apmd}
+Audrey Huang, Nan Jiang, Sham M. Kakade, Sadhika Malladi,
+Akshay Krishnamurthy, and Dylan J. Foster.
+\newblock A theory of policy optimization in post-training: Coverage collapse
+and reference resets.
+\newblock arXiv:2611.14467v1, 2026.
+\newblock \url{https://arxiv.org/abs/2611.14467v1}.
+
+\bibitem[Shao et~al.(2024)]{shao2024}
+Zhihong Shao, Peiyi Wang, Qihao Zhu, Runxin Xu, Junxiao Song, Xiao Bi,
+Haowei Zhang, Mingchuan Zhang, Y. K. Li, Y. Wu, and Daya Guo.
+\newblock DeepSeekMath: Pushing the limits of mathematical reasoning in
+open language models.
+\newblock arXiv:2402.03300, 2024.
+\newblock \url{https://arxiv.org/abs/2402.03300}.
+
+\bibitem[Schulman et~al.(2017)]{schulman2017}
+John Schulman, Filip Wolski, Prafulla Dhariwal, Alec Radford, and Oleg Klimov.
+\newblock Proximal policy optimization algorithms.
+\newblock arXiv:1707.06347, 2017.
+\newblock \url{https://arxiv.org/abs/1707.06347}.
+
+\bibitem[Feng et~al.(2025)]{feng2025retool}
+Jiazhan Feng, Shijue Huang, Xingwei Qu, Ge Zhang, Yujia Qin,
+Baoquan Zhong, Chengquan Jiang, Jinxin Chi, and Wanjun Zhong.
+\newblock ReTool: Reinforcement learning for strategic tool use in LLMs.
+\newblock arXiv:2504.11536, 2025.
+\newblock \url{https://arxiv.org/abs/2504.11536}.
+
+\bibitem[Wang et~al.(2025)]{wang2025ragen}
+Zihan Wang, Kangrui Wang, Qineng Wang, Pingyue Zhang, Linjie Li,
+Zhengyuan Yang, Kefan Yu, Minh Nhat Nguyen, Licheng Liu, Eli Gottlieb,
+Monica Lam, Yiping Lu, Kyunghyun Cho, Jiajun Wu, Li Fei-Fei,
+Lijuan Wang, Yejin Choi, and Manling Li.
+\newblock RAGEN: Understanding self-evolution in LLM agents via multi-turn
+reinforcement learning.
+\newblock arXiv:2504.20073, 2025.
+\newblock \url{https://arxiv.org/abs/2504.20073}.
+
+\bibitem[Unpublished manuscript(2026)]{decreasingdraft}
+\emph{Lower bound on continuous-time policy gradient with decreasing stepsizes}.
+\newblock Unpublished manuscript, draft consulted November 16, 2026.
+
+\bibitem[Lattimore(2026a)]{lattimore2026diffusion}
+Tor Lattimore.
+\newblock A diffusion analysis of policy gradient for stochastic bandits.
+\newblock arXiv:2603.10219, 2026.
+\newblock \url{https://arxiv.org/abs/2603.10219}.
+
+\bibitem[Lattimore(2026b)]{lattimore2026lyapunov}
+Tor Lattimore.
+\newblock A Lyapunov analysis of softmax policy gradient for stochastic bandits.
+\newblock arXiv:2603.26547, 2026.
+\newblock \url{https://arxiv.org/abs/2603.26547}.
+
+\bibitem[Jia and Ouyang(2026)]{jia2026}
+Yuling Jia and Dong Ouyang.
+\newblock Convergence and regret of the policy gradient for multi-armed
+bandits in diffusion environment.
+\newblock arXiv:2607.29593v1, 2026.
+\newblock \url{https://arxiv.org/abs/2607.29593v1}.
+
+\bibitem[Huang et~al.(2024)]{huang2024}
+Audrey Huang, Wenhao Zhan, Tengyang Xie, Jason D. Lee, Wen Sun,
+Akshay Krishnamurthy, and Dylan J. Foster.
+\newblock Correcting the mythos of KL-regularization: Direct alignment
+without overoptimization via chi-squared preference optimization.
+\newblock arXiv:2407.13399, 2024; revised 2025.
+\newblock \url{https://arxiv.org/abs/2407.13399}.
+\end{thebibliography}
+\end{document}

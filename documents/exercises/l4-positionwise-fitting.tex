@@ -24,16 +24,16 @@ points \(x^{(1)},\ldots,x^{(n)}\in\cX\) satisfying
 mass function \(Q\) on \(\cX\), define its empirical log loss per token on
 these points by
 \[
-\widehat L_n(Q)=-\frac1{nT}\sum_{i=1}^n\log Q(x^{(i)}).
+L_n(Q)=-\frac1{nT}\sum_{i=1}^n\log Q(x^{(i)}).
 \]
 \begin{enumerate}[(a),beginpenalty=10000]
 \item Show that
 \[
- \widehat L_n(P_{\mathrm{par}})=\frac{T-1}{T}\log 2,
+ L_n(P_{\mathrm{par}})=\frac{T-1}{T}\log 2,
  \qquad
- \widehat L_n(Q_{\mathrm{coin}})=\log 2,
+ L_n(Q_{\mathrm{coin}})=\log 2,
  \qquad
- \widehat L_n(Q_{\mathrm{coin}})-\widehat L_n(P_{\mathrm{par}})
+ L_n(Q_{\mathrm{coin}})-L_n(P_{\mathrm{par}})
  =\frac{\log 2}{T}.
 \]
 Verify that for every \(x_{<T}\in\{0,1\}^{T-1}\),

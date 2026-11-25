@@ -1,0 +1,17 @@
+\begin{exercisechunk}
+\item \textbf{Maximum likelihood need not control forward KL.}
+\label[exercise]{ex:l18-likelihood-support}
+\exerciseprofile{2}{1}{1}{\excalculation\quad\exinterpretation}{%
+Explain why a finite-sample likelihood theorem can control Hellinger
+distance without controlling forward KL.}
+Let $P=\operatorname{Bernoulli}(1/2)$ and let $Q$ put probability one
+on $0$. Observe $n\ge1$ independent samples $X_1,\ldots,X_n$ from $P$,
+and maximize their likelihood over the realizable class $\{P,Q\}$.
+\begin{enumerate}[(a)]
+\item On $E=\{X_1=\cdots=X_n=0\}$, identify the unique maximum-likelihood
+model and show that $\P(E)=2^{-n}$.
+\item Show that $\KL(P\Vert Q)=\infty$, $h^2(P,Q)=2-\sqrt2$ using the
+lecture's normalization, and $\TV(P,Q)=1/2$. Explain why part (a) prevents a general
+claim that empirical maximum likelihood always has finite forward KL.
+\end{enumerate}
+\end{exercisechunk}

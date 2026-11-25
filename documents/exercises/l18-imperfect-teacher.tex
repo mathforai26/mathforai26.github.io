@@ -1,0 +1,20 @@
+\begin{exercisechunk}
+\item \textbf{Cloning an imperfect teacher.}
+\label[exercise]{ex:l18-imperfect-teacher}
+\exerciseprofile{2}{1}{2}{\exproof\quad\exconstruction\quad\exinterpretation}{%
+Translate distribution accuracy into failure probability without assuming
+that imitation improves the teacher.}
+Let $P,Q$ be probability masses on a finite trajectory space $\cT$,
+and let $F\subseteq\cT$ be the set of failed trajectories. Write
+$\alpha=P(F)$ and $h=h(P,Q)$.
+\begin{enumerate}[(a)]
+\item Prove $Q(F)\le(\sqrt\alpha+h)^2$.
+\item If $\alpha=0$ and $h^2\le b$, what failure guarantee follows?
+For $\alpha>0$, does $h\to0$ force the learner's failure probability
+below $\alpha$? Give an explicit example supporting your answer.
+\end{enumerate}
+\begin{hints}
+For part (a), apply the Euclidean triangle inequality to the vectors
+$(\sqrt{Q(\tau)})_{\tau\in F}$ and $(\sqrt{P(\tau)})_{\tau\in F}$.
+\end{hints}
+\end{exercisechunk}

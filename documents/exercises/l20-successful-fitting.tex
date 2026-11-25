@@ -1,0 +1,27 @@
+\begin{exercisechunk}
+\item \textbf{Fitting a distribution of correct responses.}
+\label[exercise]{ex:l20-successful-fitting}
+\exerciseprofile{2}{2}{2}{\exproof\quad\excalculation\quad\exconstruction}{%
+Separate representability of a successful policy from representability of the demonstration distribution.}
+In \cref{ex:successful-compromise}, the policy is
+$\pi_\theta=(e^\theta,e^{-\theta},1)/Z(\theta)$,
+$Z(\theta)=e^\theta+e^{-\theta}+1$, the rewards are $(1,1,0)$,
+and the demonstration distribution is $q=(1/2,1/2,0)$.
+\begin{enumerate}[(a)]
+\item Show that $L=\log Z$, $J=1-1/Z$, and
+\[
+ L'(\theta)=\frac{e^\theta-e^{-\theta}}{Z(\theta)},\qquad
+ J'(\theta)=\frac{e^\theta-e^{-\theta}}{Z(\theta)^2}.
+\]
+From any $\theta(0)>0$, prove that $\dot\theta=-L'(\theta)$
+makes $\theta(t)\to0$ and $J(\theta(t))\to2/3$, whereas
+$\dot\theta=J'(\theta)$ makes $\theta(t)\to\infty$ and
+$J(\theta(t))\to1$.
+\item Show that no parameter sequence $(\theta_t)_{t\ge0}$ satisfies
+$\pi_{\theta_t}\to q$ as $t\to\infty$.
+Now enlarge the class to
+$\pi_{u,v}=(e^u,e^v,1)/(e^u+e^v+1)$.
+Exhibit a parameter sequence along which
+$L(u,v)\to H(q)=\log2$ and $J(u,v)\to1$.
+\end{enumerate}
+\end{exercisechunk}

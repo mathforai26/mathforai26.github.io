@@ -5,6 +5,7 @@
 \usepackage[inline,shortlabels]{enumitem}
 \usepackage{booktabs}
 \usepackage{xcolor}
+\usepackage{../misc_files/course-definition-boxes}
 \usepackage{microtype}
 \usepackage{needspace}
 \usepackage{float}
@@ -12,7 +13,7 @@
 \usetikzlibrary{arrows.meta,calc,positioning}
 
 % Revision date: maintained by scripts/build_lecture_notes.py. Keep this command.
-\newcommand{\lecturerevised}{2026-10-09 23:37 UTC-07:00}
+\newcommand{\lecturerevised}{2026-11-07 09:59 UTC+00:00}
 \usepackage{eso-pic}
 \AddToShipoutPictureBG{%
   \AtPageLowerLeft{%
@@ -103,8 +104,8 @@ The empirical objective need not determine one predictor. This lecture asks
 what an optimization method selects among the resulting possibilities. The
 main text follows the development in class. We first distinguish
 non-uniqueness of parameters
-from non-uniqueness of the represented model. We then pay a debt from
-Lecture~9 by proving that zero-initialized gradient descent selects the
+from non-uniqueness of the represented model. We then prove the claim from
+Lecture~9 that zero-initialized gradient descent selects the
 minimum-Euclidean-norm least-squares interpolant. The central case is linear
 logistic classification on separable data: gradient descent and signed
 gradient descent select different max-margin directions, and either direction
@@ -113,8 +114,8 @@ steepest-descent result used to explain this selection, discuss the two regimes
 of Adam, and finish the main exposition with the distinction between constant
 and decreasing stepsizes under different sources of gradient noise. Material
 not reached in class is marked with $\suppmark$. The supplementary material
-treats early stopping as a spectral filter, the construction of
-\citet{wilson2017}, noise-induced
+treats early stopping as a spectral filter, a construction separating
+gradient and adaptive methods, noise-induced
 selection in neural networks, and parameter-space flatness. The prerequisites
 are linear algebra, least squares, and elementary probability.
 
@@ -186,11 +187,13 @@ choice of optimizer can create a preference resembling regularization without
 adding the term $\lambda J$ to the empirical objective.
 
 Population performance remains the criterion for deciding whether the
-preference is useful. If the training sample is random with law $P$, write
+preference is useful. Let $Z$ be an evaluation example with law $P$.
+For a fixed parameter $w$, write
 \[
- R_P(w)=\E_P[\ell_{\rm eval}(w;\,\cdot)]
+ L(w)=\E[\ell_{\rm eval}(w;Z)]
 \]
-for the population risk. The evaluation loss may differ from the empirical
+for the population risk. When comparing evaluation laws, write $L_P$ to
+make the law explicit. The evaluation loss may differ from the empirical
 training loss. When the optimizer itself adds bias, the main question is
 whether the induced bias decreases the population risk. Computational
 efficiency---using less computation to reach a given empirical loss, or
@@ -233,15 +236,16 @@ a model parameter. Let $f_w(x) = \langle x, w \rangle$.
 The data cannot distinguish $w$ from $w+v$ when $v\in\cR^\perp$ in the sense
 that $f_w(x_i)= f_{w+v}(x_i)$ for all $i\in [n]$ for any $w\in \R^d$ and $v\in \cR^\perp$.
 
-Consider
+For the half-squared loss, use the total training objective
+\(F_n=nL_n\), so that its gradient has no factor \(1/n\):
 \begin{equation}
- L_n(w)=\frac12\sum_{i=1}^n
+ F_n(w)=\frac12\sum_{i=1}^n
           \bigl(\langle w,x_i\rangle-y_i\bigr)^2.
  \label{eq:least-squares-loss}
 \end{equation}
 The gradient equation
 \begin{equation}
- \nabla L_n(w)
+ \nabla F_n(w)
  =\sum_{i=1}^n\bigl(\langle w,x_i\rangle-y_i\bigr)x_i=0
  \label{eq:normal-equation-sum}
 \end{equation}
@@ -249,7 +253,7 @@ is called the \emph{normal equation}. To write it in matrix form, let
 $\mathbf X\in\R^{n\times d}$ have row $i$ equal to $x_i^\top$, and let
 $y=(y_1,\ldots,y_n)^\top$. Then
 \[
- \nabla L_n(w)=\mathbf X^\top(\mathbf Xw-y).
+ \nabla F_n(w)=\mathbf X^\top(\mathbf Xw-y).
 \]
 
 Assume
@@ -402,7 +406,7 @@ empirical logistic loss
 At deployment, the predicted label is $h_w(x)=\sign(s_w(x))$, with
 $\sign(0)=1$. If $(X,Y)$ has law $P$, the population classification risk is
 \begin{equation}
- R_P(w)=\P\bigl(h_w(X)\ne Y\bigr),
+ L(w)=\P\bigl(h_w(X)\ne Y\bigr),
  \label{eq:population-risk}
 \end{equation}
 The smooth logistic loss is therefore a \emph{surrogate loss}: a tractable
@@ -1046,11 +1050,11 @@ support points correctly.
 \label{thm:two-point-reversal}
 For every $n\ge1$ and $\delta\in(0,1)$,
 \begin{align*}
- \E_{P_2^n}\bigl[R_{P_2}(\widehat w_\infty(S_n))
-               -R_{P_2}(\widehat w_2(S_n))\bigr]
+ \E_{P_2^n}\bigl[L_{P_2}(\widehat w_\infty(S_n))
+               -L_{P_2}(\widehat w_2(S_n))\bigr]
  &=\delta(1-\delta)^n,\\
- \E_{P_\infty^n}\bigl[R_{P_\infty}(\widehat w_2(S_n))
-               -R_{P_\infty}(\widehat w_\infty(S_n))\bigr]
+ \E_{P_\infty^n}\bigl[L_{P_\infty}(\widehat w_2(S_n))
+               -L_{P_\infty}(\widehat w_\infty(S_n))\bigr]
  &=\delta(1-\delta)^n.
 \end{align*}
 The gap is maximized at $\delta=1/(n+1)$ and is asymptotic to $1/(en)$.
@@ -1222,13 +1226,13 @@ sufficiently large $n$.
 \label{thm:private-amplification}
 For the minimum-$\ell_2$ and minimum-$\ell_\infty$ selectors above,
 \begin{align*}
- \E_{P_{2,n}^n}[R_{P_{2,n}}(\widehat w_2)]&\longrightarrow0,
+ \E_{P_{2,n}^n}[L_{P_{2,n}}(\widehat w_2)]&\longrightarrow0,
  &
- \E_{P_{2,n}^n}[R_{P_{2,n}}(\widehat w_\infty)]
+ \E_{P_{2,n}^n}[L_{P_{2,n}}(\widehat w_\infty)]
  &\longrightarrow\frac12e^{-1/2},\\
- \E_{P_{\infty,n}^n}[R_{P_{\infty,n}}(\widehat w_\infty)]&\longrightarrow0,
+ \E_{P_{\infty,n}^n}[L_{P_{\infty,n}}(\widehat w_\infty)]&\longrightarrow0,
  &
- \E_{P_{\infty,n}^n}[R_{P_{\infty,n}}(\widehat w_2)]
+ \E_{P_{\infty,n}^n}[L_{P_{\infty,n}}(\widehat w_2)]
  &\longrightarrow\frac12e^{-1/2}.
 \end{align*}
 Thus the limiting gap in either direction is approximately $0.303$.
@@ -1651,10 +1655,11 @@ for some $c>0$.
 
 \begin{proposition}[Equal margins preserve the signed-gradient ray]
 \label{prop:equal-margin-ray}
-For any differentiable margin loss
-$L(w)=\sum_{i=1}^n\ell(y_i\langle w,x_i\rangle)$ and every $\alpha\ge0$,
+For any differentiable margin loss $\ell$, let
+$F_n(w)=\sum_{i=1}^n\ell(y_i\langle w,x_i\rangle)$ be its total training
+objective. For every $\alpha\ge0$,
 \[
- \nabla L(\alpha s)=\ell'(c\alpha)\mathbf X^\top y.
+ \nabla F_n(\alpha s)=\ell'(c\alpha)\mathbf X^\top y.
 \]
 If $\ell'<0$, signed gradient descent initialized at zero remains on the ray
 $\{\alpha s:\alpha\ge0\}$.
@@ -1664,7 +1669,7 @@ $\{\alpha s:\alpha\ge0\}$.
 Equation \cref{eq:equal-margin-ray} gives
 $y_i\langle s,x_i\rangle=c$ for every $i$. Hence
 \[
- \nabla L(\alpha s)
+ \nabla F_n(\alpha s)
  =\sum_{i=1}^n\ell'(c\alpha)y_ix_i
  =\ell'(c\alpha)\mathbf X^\top y.
 \]
@@ -1687,7 +1692,7 @@ asks you to verify both the margin-loss and squared-loss calculations.
 vanishes at squared-loss interpolation. A clean way to keep stochasticity
 active is to perturb the label afresh at every update. Consider
 \[
- L(\theta)=\frac1{2n}\sum_{i=1}^n
+ L_n(\theta)=\frac1{2n}\sum_{i=1}^n
  \bigl(f_\theta(x_i)-y_i\bigr)^2
 \]
 and its zero-training-error set
@@ -1702,7 +1707,7 @@ Jacobians. The corresponding scalar quantity is
 \begin{equation}
  \mathcal R(\theta)
  =\frac1n\sum_{i=1}^n\|\nabla f_\theta(x_i)\|_2^2
- =\operatorname{tr}\bigl(\nabla^2L(\theta)\bigr),
+ =\operatorname{tr}\bigl(\nabla^2L_n(\theta)\bigr),
  \qquad \theta\in\mathcal M.
  \label{eq:label-noise-regularizer}
 \end{equation}

@@ -9,10 +9,11 @@
 \usepackage{tikz}
 \usetikzlibrary{arrows.meta,positioning}
 \usepackage{xcolor}
+\usepackage{../misc_files/course-definition-boxes}
 \usepackage{microtype}
 
 % Revision date: maintained by scripts/build_lecture_notes.py. Keep this command.
-\newcommand{\lecturerevised}{2026-10-09 23:46 UTC-07:00}
+\newcommand{\lecturerevised}{2026-11-18 09:44 UTC-06:00}
 \usepackage{eso-pic}
 \AddToShipoutPictureBG{%
   \AtPageLowerLeft{%
@@ -102,8 +103,10 @@ Csaba Szepesv\'ari prepared and expanded the present notes.
 \noindent\textbf{Reading guide.}
 Lecture 7 gave an example in which a small ReLU network represents a fixed
 parity but direct perturbed population-gradient training has no reliable
-classification advantage. This lecture first proves that result. It then
-changes the supervised task: running-parity labels expose a repeated two-bit
+classification advantage. This lecture first proves that result. A comparison
+added after class explains how direct training can succeed under different
+initialization and resource assumptions. The lecture then changes the
+supervised task: running-parity labels expose a repeated two-bit
 calculation whose final output is still the original parity. The path-star
 example and a constructed transformer theorem show that retrieval and
 combination must also be learned. The transformer theorem is included as
@@ -157,7 +160,7 @@ For fixed $\theta$, define the classifier and its risk by
 \[
 h_\theta(x)=\operatorname{sign}(N_\theta(x)),
 \qquad
-R_{01}(h_\theta)=\P(h_\theta(X)\ne Y),
+L_{01}(h_\theta)=\P(h_\theta(X)\ne Y),
 \]
 where $\operatorname{sign}(0)=1$.\endnote{Zero network outputs.
 Gaussian parameters can give the network output positive probability of being
@@ -218,10 +221,10 @@ classification conclusion.
 \label{thm:classification}
 Under the assumptions of \cref{lem:path-comparison}, for every $\gamma>0$,
 \begin{align}
-\P\!\left(R_{01}(h_{\Theta_T})\le\frac12-\gamma\right)
+\P\!\left(L_{01}(h_{\Theta_T})\le\frac12-\gamma\right)
 &\le\frac12+e^{-k/36},
 \label{eq:classification-probability}\\
-\left|\E[R_{01}(h_{\Theta_T})]-\frac12\right|
+\left|\E[L_{01}(h_{\Theta_T})]-\frac12\right|
 &\le e^{-k/36}.
 \label{eq:classification-expectation}
 \end{align}
@@ -230,8 +233,8 @@ Under the assumptions of \cref{lem:path-comparison}, for every $\gamma>0$,
 \begin{proof}
 By \cref{lem:path-comparison}, it suffices to establish the two risk bounds
 for the Gaussian comparison parameter $G=\Theta_T^{(0)}$, with the
-$e^{-k/36}$ terms removed. We will show that $R_{01}(h_G)$ and
-$1-R_{01}(h_G)$ have the same law.
+$e^{-k/36}$ terms removed. We will show that $L_{01}(h_G)$ and
+$1-L_{01}(h_G)$ have the same law.
 
 Fix $j\in S$. Let $D_j:\R^d\to\R^d$ flip the $j$th sign:
 \[
@@ -253,25 +256,25 @@ N_{J_j\theta}(x)=N_\theta(D_jx),
 \]
 Changing variables $z=D_jx$ in the uniform input average gives
 \begin{align*}
-R_{01}(h_{J_j\theta})
+L_{01}(h_{J_j\theta})
 &=2^{-d}\sum_x\I\{h_\theta(D_jx)\ne\chi_S(x)\}\\
 &=2^{-d}\sum_z\I\{h_\theta(z)\ne-\chi_S(z)\}
-=1-R_{01}(h_\theta).
+=1-L_{01}(h_\theta).
 \end{align*}
 Since $\Law(G)=\cN(0,(T+1)\sigma^2I_p)$ and $J_j$ is orthogonal,
 $\Law(J_jG)=\Law(G)$.
 Combining this invariance with the risk identity gives
 \[
-\Law(R_{01}(h_G))
-=\Law(R_{01}(h_{J_jG}))
-=\Law(1-R_{01}(h_G)).
+\Law(L_{01}(h_G))
+=\Law(L_{01}(h_{J_jG}))
+=\Law(1-L_{01}(h_G)).
 \]
 Thus the classification-risk distribution is symmetric about $1/2$. Hence
 \[
-\E[R_{01}(h_G)]=\frac12,
+\E[L_{01}(h_G)]=\frac12,
 \qquad
-\P\!\left(R_{01}(h_G)\le\frac12-\gamma\right)
-=\P\!\left(R_{01}(h_G)\ge\frac12+\gamma\right)\le\frac12.
+\P\!\left(L_{01}(h_G)\le\frac12-\gamma\right)
+=\P\!\left(L_{01}(h_G)\ge\frac12+\gamma\right)\le\frac12.
 \]
 The last inequality holds because the two events are disjoint.
 Total variation controls the difference of event probabilities and of
@@ -710,6 +713,74 @@ does not change the threshold.\endnote{General activations.
 using the nonnegative series coefficients of Gaussian activation kernels,
 parity cancellation, and bounds on Gaussian second moments.}
 \label{en:general-activations}
+
+\subsection{Direct training with sufficient resources}
+\label{sec:direct-learning}
+
+The lower bound identifies a particular combination of training procedure,
+parity degree, and resource limits. Direct training on the same final labels
+can succeed under other assumptions. The comparison clarifies what the
+small-gradient argument establishes before we change the supervised task.
+
+For small instances of the uniform-input problem $Y=\chi_S(X)$, experiments
+with several architectures show convergence times consistent with
+$T=d^{O(k)}$. Accuracy often remains near chance for much of training before
+improving rapidly. Such a plateau can coexist with gradual changes in the
+weights that identify the relevant input coordinates. The following positive
+guarantee covers a more restricted training procedure than those experiments.
+
+\begin{theorem}[Direct parity learning with large batches, informal]
+\label{thm:direct-parity-learning}
+Let $0<\varepsilon<1$, let $k\ge2$ be even, and let $d$ be odd with
+$d\ge Ck^4\log(dk/\varepsilon)$ for a sufficiently large absolute constant
+$C$. A structured random sign initialization and learning-rate and
+weight-decay schedules, which may differ between layers, can be chosen for a
+one-hidden-layer ReLU network so that, for every $S\subseteq[d]$ with
+$|S|=k$, minibatch stochastic gradient descent with the hinge loss
+$\ell(s,y)=[1-ys]_+$ has the following guarantee. Each update averages loss
+gradients over a fresh batch of independent examples.
+Write $\widehat\Theta$ for the resulting random parameter, and let $(X,Y)$ be
+an independent test pair with the uniform-input parity law. Averaging over
+initialization, training data, and the test pair gives
+\[
+ \E[\ell(N_{\widehat\Theta}(X),Y)]\le\varepsilon.
+\]
+Sufficient width $m$, examples per batch $n$, and number
+of updates $T$ have orders
+\[
+ m=O\!\left(2^k k\log(k/\varepsilon)\right),\qquad
+ n=O\!\left(d^k\log(d/\varepsilon)\right),\qquad
+ T=O(k^3m^2d/\varepsilon^2).
+\]
+\end{theorem}
+
+The hinge loss bounds the classification loss, so the guarantee also gives
+\[
+ \E[L_{01}(h_{\widehat\Theta})]
+ \le\E[\ell(N_{\widehat\Theta}(X),Y)]\le\varepsilon.
+\]
+The large batch is part of the computational cost: $T$ updates process $nT$
+examples. At the structured sign initialization, the population gradient
+distinguishes relevant from irrelevant coordinates through differences
+between the degree-$(k-1)$ and
+degree-$(k+1)$ Fourier coefficients already present in
+\cref{eq:w-derivative}. Accurate estimation makes those differences
+usable. \Cref{ex:l8-gradient-features} asks you to quantify the sample cost
+of estimating a small correlation. For a separate product-network architecture,
+a gradient-flow analysis proves a long accuracy plateau. The ReLU theorem
+guarantees small expected loss without characterizing the ReLU accuracy
+trajectory.
+
+The positive guarantee changes the Gaussian initialization, correlation
+objective, and independent Gaussian update perturbations used in
+\cref{lem:path-comparison}. The resource regimes also differ: for fixed $k$,
+$d^{O(k)}$ is polynomial in $d$, whereas a cost of order $d^{ck}$ for a fixed
+$c>0$ is superpolynomial when $k$ grows. The lower bound assumes polynomial
+resources and $k\ge(288A+144)\log d$. Neither result gives an impossibility
+for all learning algorithms; Lecture~7 explains efficient noiseless parity
+recovery by Gaussian elimination. Intermediate supervision provides a
+different way to make gradient information useful by changing the labels
+supplied during training.
 
 \section{Intermediate labels expose a repeated two-bit computation}
 \label{sec:intermediate}
@@ -1461,6 +1532,9 @@ over the parameter law makes the complete gradient norm exponentially small.
 probability. The KL chain rule, Pinsker's inequality, and a coupling show that
 the trained trajectory has nearly the same law. The symmetry obtained by
 flipping a parity input coordinate gives the classification-risk bounds.
+\item Direct final-label training can succeed with a different initialization
+and sufficiently large batches. Its cost depends strongly on the parity
+degree $k$; an accuracy plateau alone does not establish absence of progress.
 \item Running-parity labels replace one degree-$d$ final target by repeated
 examples of a two-bit rule while preserving the original final answer.
 Associativity expresses this calculation as a recurrent computation graph.
@@ -1485,7 +1559,16 @@ rollout bound before asserting reliability of a complete computation.
 
 The fixed-parity lower bound, Gaussian threshold estimate, Gaussian-gradient
 bound, and trajectory comparison are based on \citet{shoshani2025}. The
-running-parity transformer theorem and its three-update proof are from
+comparison in \cref{sec:direct-learning} uses \citet{barak2022}, Sections~3--4.
+\Cref{thm:direct-parity-learning} summarizes their Theorem~4; our $d,m,n$
+are their input dimension $n$, width $r$, and batch size $B$. Their
+Section~4.1 explains the Fourier-gap mechanism. Their Theorems~6--7 concern
+the separate disjoint-PolyNet architecture, with one relevant coordinate per
+input block; the plateau theorem concerns gradient flow. The title's
+``computational limit'' refers to statistical-query restrictions, not a
+lower bound for unrestricted algorithms on noiseless examples.
+
+The running-parity transformer theorem and its three-update proof are from
 \citet{wen2025}, Theorem 3 and Appendix B.4--B.5. In
 \cref{sec:transformer}, $d$ denotes their input length, $D$ the embedding
 dimension, $m$ the full feed-forward width, and $n$ the number of examples
@@ -1547,6 +1630,9 @@ For a score $f$ and signed label $y\in\{-1,1\}$, the loss $[1-yf]_+$.
 \item[Intermediate supervision]
 Training labels reveal intermediate computations whose final result is the
 original target behavior.
+\item[Minibatch stochastic gradient descent]
+A gradient method that estimates the population loss gradient by averaging
+loss gradients over a batch of examples at each update.
 \item[Computation graph]
 A directed graph whose nodes are intermediate values or operations and whose
 edges specify which computed values are supplied to later operations.
@@ -1669,6 +1755,14 @@ sum gives absolute and uniform convergence on the whole interval.
 \end{proof}
 
 \begin{thebibliography}{99}
+
+\bibitem[Barak et al.(2022)]{barak2022}
+Boaz Barak, Benjamin L. Edelman, Surbhi Goel, Sham Kakade, Eran Malach,
+and Cyril Zhang.
+\newblock Hidden progress in deep learning: SGD learns parities near the
+computational limit.
+\newblock Advances in Neural Information Processing Systems, 2022.
+\newblock \url{https://arxiv.org/abs/2207.08799}.
 
 \bibitem[Daniely et al.(2016)]{daniely2016}
 Amit Daniely, Roy Frostig, and Yoram Singer.

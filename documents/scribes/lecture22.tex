@@ -1,0 +1,1461 @@
+\documentclass[11pt,twoside]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage[inline,shortlabels]{enumitem}
+\usepackage{xcolor}
+\usepackage{../misc_files/course-definition-boxes}
+\usepackage{microtype}
+
+% Revision date: maintained by scripts/build_lecture_notes.py. Keep this command.
+\newcommand{\lecturerevised}{2026-11-24 22:19 UTC-06:00}
+\usepackage{eso-pic}
+\AddToShipoutPictureBG{%
+  \AtPageLowerLeft{%
+    \put(\LenToUnit{0.5\paperwidth},\LenToUnit{0.5in}){%
+      \makebox(0,0){\normalfont\footnotesize\color{black!60}Last revised: \lecturerevised}%
+    }%
+  }%
+}
+
+\usepackage[square,authoryear]{natbib}
+\usepackage[colorlinks=true,linkcolor=blue!60!black,
+  urlcolor=blue!60!black,citecolor=blue!60!black]{hyperref}
+\usepackage[nameinlink,capitalize]{cleveref}
+\crefname{exercise}{Exercise}{Exercises}
+\Crefname{exercise}{Exercise}{Exercises}
+\usepackage{../exercises/course-exercises}
+
+\usepackage{enotez}
+\DeclareInstance{enotez-list}{lecture}{list}{format=\normalsize,number={#1.}}
+\setenotez{list-name=Endnotes,list-style=lecture,backref=true}
+\crefname{endnote}{Endnote}{Endnotes}
+\Crefname{endnote}{Endnote}{Endnotes}
+
+\definecolor{courseblue}{HTML}{17365D}
+\newcommand{\E}{\mathbb E}
+\newcommand{\I}{\mathbb I}
+\renewcommand{\P}{\mathbb P}
+\newcommand{\R}{\mathbb R}
+\newcommand{\Law}{\mathcal L}
+\newcommand{\KL}{D}
+\newcommand{\TV}{\mathrm{TV}}
+\makeatletter
+\@for\@letter:=A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z\do{%
+  \expandafter\edef\csname c\@letter\endcsname{\noexpand\mathcal{\@letter}}}
+\makeatother
+\newcommand{\lecturenumber}{22}
+\newcommand{\suppmark}{\texorpdfstring{\textsuperscript{*}}{*}}
+\newcommand{\xor}{\mathbin{\oplus}}
+\DeclareMathOperator*{\argmin}{arg\,min}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{example}[theorem]{Example}
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+
+\renewcommand{\thepage}{\lecturenumber--\arabic{page}}
+\renewcommand{\thesection}{\lecturenumber.\arabic{section}}
+\renewcommand{\theequation}{\lecturenumber.\arabic{equation}}
+
+\pagestyle{myheadings}
+\markboth{Lecture \lecturenumber: Statistical and exact learning}
+{Lecture \lecturenumber: Statistical and exact learning}
+
+% Course-wide notation convention:
+% Consult notation-reference.md and the source definitions it indexes before
+% introducing symbols; repeat the comparison on the completed draft.
+% See learning-notation-conventions.tex: \ell is one-observation loss;
+% L is population risk and L_n is empirical average loss. Keep the standard
+% term empirical risk minimization (ERM). Parameterization does not change
+% this convention. State local exceptions and all normalization factors.
+% Every vector is a column vector. If a matrix stores one vector per position,
+% row i contains the transpose of that vector. Write every row-shaped vector
+% explicitly as the transpose of a column vector.
+% Use n for the number of independent training examples. Use sentence case in
+% optional theorem titles. Use example environments for worked examples that
+% are referenced later. Reserve \boxed{} for literal boxes in diagrams.
+
+\begin{document}
+\raggedbottom
+
+\begin{center}
+\fcolorbox{courseblue}{white}{%
+\begin{minipage}{0.92\textwidth}
+\vspace{1mm}
+\textbf{CMPUT 654: Mathematical Foundations of Modern AI Systems}
+\hfill Fall 2026
+
+\vspace{3mm}
+\begin{center}
+{\Large\bfseries Lecture \lecturenumber: Statistical and exact learning}
+
+\vspace{1mm}
+November 24, 2026
+\end{center}
+
+\vspace{2mm}
+\textit{Lecturer: Csaba Szepesv\'ari}
+\hfill
+\textit{Notes prepared by: Csaba Szepesv\'ari}
+\vspace{1mm}
+\end{minipage}}
+\end{center}
+
+Suppose that a designer wants to teach one specified rule to a machine. The
+designer may be able to label or verify individual examples without knowing
+how to construct a predictor that applies the rule to every valid input. A
+small average error then answers only part of the design question. The learned
+predictor may still implement a different rule on inputs that are rare under
+the training distribution. A two-rule argument first shows that passive data
+can leave some target unidentified. Learner symmetry then converts that
+class-level statement into a lower bound for the one intended rule. The same
+symmetry is often desirable: a representation convention should not decide a
+question that the data or task specification is meant to decide. The
+principal theorem quantifies the resulting cost and identifies the information
+that a teacher, query, architecture, or verifier must supply.
+
+\noindent\textbf{Reading guide.}
+The distinction between worst-case and application-specific guarantees from
+\href{lecture02.pdf}{Lecture 2}, teaching and active learning from
+\href{lecture06.pdf}{Lecture 6}, and maximum-margin implicit bias from
+\href{lecture10.pdf}{Lecture 10} provide the main prerequisites. The
+maximum-margin teaching proof is deferred to an appendix. An optional appendix
+revisits the reverse-KL support calculation from
+\href{lecture04.pdf}{Lecture 4}. The system-level discussion connects the
+result to verification from
+\href{lecture17.pdf}{Lecture 17} and selective queries from
+\href{lecture18.pdf}{Lecture 18}.
+
+\section{Teaching one intended rule}
+\label{sec:one-rule}
+
+The engineering objective in this lecture is one specified competence. The
+designer knows which behavior is intended, at least well enough to label or
+verify instances, and chooses a method intended to produce that behavior. The
+designer does not require the same method to learn every rule in a broad
+family.
+
+Let \(\cX\) be a finite set of valid inputs and let
+\(h^\star:\cX\to\{0,1\}\) be the intended rule. Fix an input law \(\rho\)
+on \(\cX\), and let \(X\) have law \(\rho\). For a candidate rule
+\(h:\cX\to\{0,1\}\), use zero--one loss
+\[
+ \ell(h,(x,y))=\I\{h(x)\ne y\}.
+\]
+The population risk under \(\rho\) is
+\begin{equation}
+ L_\rho(h)=\E[\ell(h,(X,h^\star(X)))]
+ =\P(h(X)\ne h^\star(X)).
+ \label{eq:population-error}
+\end{equation}
+The subscript remains visible because the argument will compare this one-law
+average with correctness under other input laws.
+
+\begin{definition}[Statistical and exact correctness]
+The rule \(h\) has \emph{statistical error at most \(\varepsilon\)} under
+\(\rho\) when \(L_\rho(h)\le\varepsilon\). The rule \(h\) is
+\emph{exactly correct} for the specified task when
+\begin{equation}
+ h(x)=h^\star(x)\qquad\text{for every }x\in\cX.
+ \label{eq:exact-rule}
+\end{equation}
+\end{definition}
+
+Exact correctness changes the quantifier over inputs without introducing a
+quantifier over target rules. The distinction is central: requiring
+\cref{eq:exact-rule} for the one intended \(h^\star\) does not require a
+learning procedure that succeeds for every map from \(\cX\) to
+\(\{0,1\}\).
+
+\begin{proposition}[Exactness as distributional robustness]
+\label{prop:all-laws}
+Let \(\cM(\cX)\) be the set of all probability laws on \(\cX\), and define
+\[
+ L_\nu(h)=\sum_{x\in\cX}\nu(x)\I\{h(x)\ne h^\star(x)\}
+ \qquad\text{for }\nu\in\cM(\cX).
+\]
+Then
+\begin{equation}
+ \sup_{\nu\in\cM(\cX)}L_\nu(h)
+ =\max_{x\in\cX}\I\{h(x)\ne h^\star(x)\}.
+ \label{eq:all-laws}
+\end{equation}
+Consequently, \(h\) is exactly correct if and only if the left side of
+\cref{eq:all-laws} is zero.
+\end{proposition}
+\begin{proof}
+Every average of the indicator is at most its maximum, so the left side is at
+most the right side. Conversely, let \(x_0\) attain the maximum and take
+\(\nu=\delta_{x_0}\). Then
+\(L_{\delta_{x_0}}(h)=\I\{h(x_0)\ne h^\star(x_0)\}\), which gives the reverse
+inequality.
+\end{proof}
+
+The exact criterion is appropriate when valid inputs have a
+distribution-independent specification of correctness. Examples include
+executing an algorithm, applying formal rules, checking a formal proof, and
+following a protocol. Statistical prediction remains appropriate when the
+target is intrinsically stochastic or when no unique correct response has
+been specified. A system may contain both kinds of component.
+
+\endnote{Changing the KL direction does not reveal the intended response at an
+unseen input. For a deterministic full-support target law, finite reverse KL
+characterizes exact conditional support, but every imperfect candidate has
+infinite divergence. Forward KL is finite and graded when the candidate assigns
+positive mass to each correct response, but it averages log loss under the input
+law. Replacing the target law by an empirical law only restricts the candidate
+to observed atoms. A graded reverse-KL objective requires a softened target or
+an evaluable cost, and either choice adds information or assumptions. The
+optional comparison appears in \cref{app:kl-directions};
+\cref{ex:l22-reverse-kl-exactness} develops the calculations.}
+
+\section{What passive examples can distinguish}
+\label{sec:pairwise}
+
+The first lower bound concerns two possible targets. The result is deliberately
+learner-independent: if the sample never enters the region where two rules
+disagree, no procedure can infer from that sample which rule supplied the
+labels.
+
+Let \(\cA\) be a possibly randomized learner that maps a labeled dataset to a
+binary rule. For a rule \(h:\cX\to\{0,1\}\), draw \(X_1,\ldots,X_n\)
+independently with common law \(\rho\), and define the labeled sample
+\begin{equation}
+ D_h=((X_1,h(X_1)),\ldots,(X_n,h(X_n))).
+ \label{eq:labeled-sample}
+\end{equation}
+The learner's output on \(D_h\) is the random rule \(H_{D_h}\); the randomness
+comes from the sample and any private randomness used by the learner. The
+pointwise exact-learning loss is
+\begin{equation}
+ \ell_{\mathrm{ex}}(g,h)=\I\{g\ne h\},
+ \label{eq:exact-learning-loss}
+\end{equation}
+where inequality means inequality as functions on \(\cX\). Define the expected
+exact-learning loss, or exact-recovery failure probability, by
+\begin{equation}
+ \phi_n(\cA,\rho,h)
+ =\E[\ell_{\mathrm{ex}}(H_{D_h},h)]
+ =\P(H_{D_h}\ne h).
+ \label{eq:failure-probability}
+\end{equation}
+The letter \(\phi\) is only a mnemonic for failure; no standard convention
+requires that notation.
+
+\begin{lemma}[Pairwise indistinguishability]
+\label{lem:pairwise}
+Let \(h,h':\cX\to\{0,1\}\) be distinct, and write
+\begin{equation}
+ \alpha_\rho(h,h')=\P(h(X)\ne h'(X)).
+ \label{eq:pair-disagreement}
+\end{equation}
+Every learner \(\cA\) satisfies
+\begin{equation}
+ \phi_n(\cA,\rho,h)+\phi_n(\cA,\rho,h')
+ \ge (1-\alpha_\rho(h,h'))^n.
+ \label{eq:pairwise-bound}
+\end{equation}
+\end{lemma}
+\begin{proof}
+Let
+\[
+ E=\bigcap_{i=1}^n\{h(X_i)=h'(X_i)\}.
+\]
+Independence gives \(\P(E)=(1-\alpha_\rho(h,h'))^n\). On \(E\), the two
+labeled datasets \(D_h\) and \(D_{h'}\) are identical. Conditional on any
+common dataset, one output rule cannot equal both distinct rules. Therefore
+the two conditional failure probabilities sum to at least one. Averaging this
+inequality on \(E\) gives \cref{eq:pairwise-bound}.
+\end{proof}
+
+The usual hypothesis-class consequence follows immediately. For a set
+\(\cH\) of candidate rules, define its \emph{worst-target failure probability}
+by
+\begin{equation}
+ \Phi_n(\cA,\rho,\cH)
+ =\sup_{h\in\cH}\phi_n(\cA,\rho,h).
+ \label{eq:class-failure}
+\end{equation}
+
+\begin{corollary}[A hypothesis class containing a close pair]
+\label{cor:class-pair}
+If distinct \(h,h'\) belong to \(\cH\), then every learner satisfies
+\begin{equation}
+ \Phi_n(\cA,\rho,\cH)
+ \ge\frac12(1-\alpha_\rho(h,h'))^n.
+ \label{eq:class-pair-bound}
+\end{equation}
+\end{corollary}
+\begin{proof}
+Each failure probability in \cref{eq:pairwise-bound} is at most
+\(\Phi_n(\cA,\rho,\cH)\).
+\end{proof}
+
+The corollary says that at least one member of a close pair is hard. The
+conclusion is useful when one procedure must work uniformly over \(\cH\), but
+the engineering problem in this lecture has different quantifiers. The target
+\(h^\star\) and the learner actually used are both fixed. The corollary allows
+its hard target to depend on the learner.
+
+A learner that always returns \(h^\star\) has
+\begin{equation}
+ \phi_n(\cA,\rho,h^\star)=0
+ \qquad\text{for every }n,
+ \label{eq:hard-coded-target}
+\end{equation}
+even though the same learner can fail with probability one on every other
+target. The pairwise sum remains large, so neither the lemma nor the class
+corollary rules out immediate success on the intended rule.
+
+The constant learner would be an excellent solution if the designer could
+implement the complete rule \(h^\star\). The premise of the teaching problem is
+that the designer can label or verify individual instances but does not possess
+that complete implementation. Target-dependent examples, features, and
+architectures should remain available; a lower bound should not prohibit useful
+target information.
+
+Ideally, the analysis would determine the exact-learning difficulty of the
+particular training procedure that will be used. A complete analysis of one
+large training system can be intractable. The next argument therefore retains
+one structural property of that procedure and proves a target-specific lower
+bound for every learner with the property. The mathematical class now consists
+of learners rather than target rules. The resulting statement is weaker than a
+complete analysis of the particular learner because it uses only the retained
+property. Learner symmetry is the property used here, and the symmetry must be
+verified for the task and learner under study.
+
+\section{Why and when to require learner symmetry}
+\label{sec:symmetry}
+
+Symmetry defines a class of learners through a property of their input--output
+behavior. A flexible learning procedure can represent many rules, but
+representability does not explain which rule the procedure selects. The role of
+learner symmetry is to state which choices should be determined by data or by
+an explicit task specification, rather than by features of the representation
+or implementation that the task declares irrelevant.
+
+\subsection{Why learning creates a role for symmetry}
+\label{sec:why-symmetry}
+
+The designer in this lecture knows the intended behavior well enough to label,
+verify, or deliberately select individual instances. The designer nevertheless
+lacks a complete executable predictor, or chooses not to encode one manually.
+Learning delegates some choices to data. A suitable learner should therefore
+avoid making those choices from information that the designer regards as
+irrelevant.
+
+For example, the numerical names \(0\) and \(1\) carry no semantic information
+in an ordinary binary classification problem. Consistently exchanging the
+names in the training data should exchange the predicted labels. Likewise,
+the storage order of an i.i.d.\ batch should not affect a batch learner. For
+object classification, translating an object within an image may be intended
+to preserve its class. In each case, symmetry prevents a convention---a class
+code, record order, or image origin---from deciding the learned behavior.
+
+The same transformations can be invalid for a different task. Label exchange
+is inappropriate when the labels have different error costs. Record order is
+part of the evidence in a time series or conversation. Translation is not a
+task symmetry when the target asks whether an object occurs on the left or the
+right. A symmetry must therefore come from the semantics and information
+structure of the task; visual or algebraic similarity alone is insufficient.
+
+The batch-order transformation acts on example indices rather than on the
+input space \(\cX\). The batch-order example illustrates the design principle
+but is not an element of the input--label group used in the theorem below.
+Label renamings and input translations do fit that formalism.
+
+Choosing a symmetry is itself an inductive bias. The choice asserts that
+alternatives related by the transformation deserve equal treatment before the
+data or specification distinguish them. A learner may and should contain
+other asymmetries supported by prior task knowledge. If the specification
+states that equality counts as a positive comparison, encoding that convention
+is legitimate. If the convention is meant to be learned from examples, then a
+tie example or an equivalent source of information must communicate it.
+
+Equivariance also differs from refusing to choose. A transformed dataset may
+lead to a transformed output. The requirement is that the two changes be
+consistent. Data break a symmetry whenever the observed dataset is not itself
+unchanged or statistically indistinguishable under the transformation. The
+lower bound will apply precisely when passive data fail to provide that
+asymmetry.
+
+Before treating a transformation \(g\) as a required learner symmetry, the
+designer should verify four conditions:
+\begin{enumerate}[leftmargin=*]
+\item \(g\) changes the representation while preserving the semantic task
+under the corresponding input and output relabeling;
+\item the observation or data-collection protocol transforms consistently
+under \(g\);
+\item the loss and evaluation criterion give corresponding transformed
+decisions the same value; and
+\item available prior knowledge does not justify preferring one
+orbit-related alternative.
+\end{enumerate}
+When a condition fails, the corresponding asymmetry can be useful task
+information. When all four conditions hold, breaking the symmetry through an
+implementation accident lets the representation decide a question that was
+delegated to learning.
+
+\subsection{Formal setup}
+\label{sec:symmetry-formal}
+
+The formal definitions record consistent transformations of inputs, labels,
+data, and learned rules. Let \(\cY:=\{0,1\}\), and let \(G\) be a group. Each
+\(g\in G\) induces two bijections,
+\[
+ g_{\cX}:\cX\to\cX
+ \qquad\text{and}\qquad
+ g_{\cY}:\cY\to\cY,
+\]
+and these maps form group actions on their respective spaces. We use
+\(g=(g_{\cX},g_{\cY})\) as shorthand for the two components of the task
+transformation.
+
+The action on rules is not a separate choice. Regard a rule
+\(h:\cX\to\cY\) as its graph
+\[
+ \operatorname{graph}(h)=\{(x,h(x)):x\in\cX\}
+ \subseteq\cX\times\cY.
+\]
+Transform the relation elementwise:
+\[
+ g\operatorname{graph}(h)
+ =\{(g_{\cX}x,g_{\cY}h(x)):x\in\cX\}.
+\]
+Because \(g_{\cX}\) is bijective, the transformed relation is the graph of a
+unique function. Denote that function by \(gh\). The defining commutative
+identity and its equivalent inverse form are
+\begin{equation}
+ (gh)(g_{\cX}x)=g_{\cY}(h(x)),
+ \qquad
+ (gh)(u)=g_{\cY}\bigl(h(g_{\cX}^{-1}u)\bigr).
+ \label{eq:function-action}
+\end{equation}
+
+The same pair of maps acts pointwise on a labeled dataset
+\(D=((x_1,y_1),\ldots,(x_n,y_n))\):
+\begin{equation}
+ gD=((g_{\cX}x_1,g_{\cY}y_1),\ldots,
+      (g_{\cX}x_n,g_{\cY}y_n)).
+ \label{eq:data-action}
+\end{equation}
+
+\begin{definition}[Invariant input law]
+The law \(\rho\) is \emph{\(G\)-invariant} when
+\begin{equation}
+ \Law(g_{\cX}X)=\rho
+ \qquad\text{for every }g\in G
+ \label{eq:invariant-law}
+\end{equation}
+whenever \(\Law(X)=\rho\).
+\end{definition}
+
+The learner may use a random initialization, randomized minibatches, or other
+private randomness. Represent the learner by a probability kernel
+\(\cA(\,\cdot\mid D)\) on the set of binary rules: after observing \(D\), its
+output \(H_D\) has conditional law \(\cA(\,\cdot\mid D)\).
+
+\begin{definition}[Equivariant learner]
+The learner \(\cA\) is \emph{\(G\)-equivariant} when, for every dataset
+\(D\), transformation \(g\in G\), and set \(B\) of output rules,
+\begin{equation}
+ \cA(gB\mid gD)=\cA(B\mid D),
+ \qquad gB=\{gh:h\in B\}.
+ \label{eq:learner-equivariance}
+\end{equation}
+Equivalently, the output on \(gD\) has the same law as the transformed output
+\(gH_D\) on \(D\). The random rule \(gH_D\) is obtained by applying the
+deterministic rule action in \cref{eq:function-action} to each realization of
+\(H_D\).
+\end{definition}
+
+The definition describes the complete learner, including the model class. A
+symmetry claim must account for the architecture, initialization, objective,
+optimizer, stopping rule, preprocessing, and conversion from scores to
+discrete predictions. Gradient methods provide an important class of examples
+because their equivariance can be checked directly.
+
+\subsection{Why gradient descent produces symmetric learners}
+\label{sec:gradient-symmetry}
+
+Gradient descent preserves a data transformation when the model and objective
+admit a compatible orthogonal realization in parameter space. The task
+transformation \(g=(g_{\cX},g_{\cY})\) is fixed first. The parameterization
+must then supply a suitable map; such a map need not exist.
+
+Let the parameter space be \(\R^p\). Fix \(g\in G\), and suppose that an
+orthogonal matrix \(S_g\in\R^{p\times p}\) describes a compatible parameter
+transformation. Let \(f_\theta\) denote the predictor with parameter
+\(\theta\), and let \(F_D(\theta)\) be the training objective on dataset
+\(D\). The two identities to check are
+\begin{align}
+ f_{S_g\theta}(g_{\cX}x)&=g_{\cY}\bigl(f_\theta(x)\bigr),
+ \label{eq:predictor-parameter-action}\\
+ F_{gD}(S_g\theta)&=F_D(\theta).
+ \label{eq:objective-invariance}
+\end{align}
+The label action in \cref{eq:predictor-parameter-action} acts on the
+predictor's output. For a probabilistic binary predictor, a label flip maps
+the probability assigned to label one to its complement.
+
+\begin{proposition}[Gradient-descent equivariance]
+\label{prop:gd-equivariance}
+Assume \cref{eq:predictor-parameter-action,eq:objective-invariance}, and let
+\(S_g\) be orthogonal. Consider the updates
+\begin{equation}
+ \theta_{t+1}(D)=\theta_t(D)-\eta_t\nabla F_D(\theta_t(D)),
+ \qquad t=0,\ldots,T-1,
+ \label{eq:gd-update}
+\end{equation}
+where the stepsizes do not depend on the representation of the dataset. If
+\begin{equation}
+ \theta_0(gD)=S_g\theta_0(D),
+ \label{eq:coupled-initialization}
+\end{equation}
+then
+\begin{equation}
+ \theta_t(gD)=S_g\theta_t(D)
+ \qquad\text{for every }t=0,\ldots,T.
+ \label{eq:coupled-iterates}
+\end{equation}
+Consequently, the learned predictor is \(G\)-equivariant. If the
+initialization is sampled independently of \(D\) and its law is invariant
+under every \(S_g\), the learner is equivariant as a probability kernel.
+\end{proposition}
+\begin{proof}
+Differentiate \cref{eq:objective-invariance} with respect to \(\theta\).
+Orthogonality gives
+\begin{equation}
+ \nabla F_{gD}(S_g\theta)=S_g\nabla F_D(\theta).
+ \label{eq:gradient-transformation}
+\end{equation}
+Suppose that \(\theta_t(gD)=S_g\theta_t(D)\). Substituting
+\cref{eq:gradient-transformation} into the update for \(gD\) gives
+\[
+ \theta_{t+1}(gD)
+ =S_g\theta_t(D)-\eta_t S_g\nabla F_D(\theta_t(D))
+ =S_g\theta_{t+1}(D).
+\]
+Induction from \cref{eq:coupled-initialization} proves
+\cref{eq:coupled-iterates}. The prediction identity
+\cref{eq:predictor-parameter-action} then proves equivariance of the output.
+For an invariant random initialization, couple the two runs using
+\(S_g\theta_0\) in the transformed run. The coupled initial parameters have
+the required marginal laws, so the same argument proves equality in law.
+\end{proof}
+
+The proposition explains why gradient learners are central to the symmetry
+lower bound. Once the model, loss, initialization, and update rule respect a
+transformation, gradient descent does not introduce a preference between the
+transformed problems. The preference must come from the data or from an
+explicit asymmetric component of the training setup. The resulting neutrality
+is desirable when the transformation represents an arbitrary convention, and
+the same neutrality creates the exact-learning obstruction when passive data
+rarely reveal which orbit element is intended.
+
+The same proof applies to stochastic gradient descent when each per-example
+loss satisfies the transformation identity and the two runs use the same
+sequence of example indices. Random reshuffling and minibatch sampling then
+preserve equivariance in law. Momentum, Euclidean gradient clipping, and
+isotropic weight decay also preserve orthogonal transformations. Coordinatewise
+adaptive methods, including Adam, preserve signed coordinate permutations but
+need not preserve arbitrary rotations. A data-dependent stopping rule preserves
+the symmetry only when its criterion has the corresponding invariance.
+
+\subsection{Gradient-learner examples and nonexamples}
+\label{sec:symmetry-examples}
+
+The following examples distinguish transformations respected by the complete
+training procedure from parameter redundancies and task transformations that
+should not be imposed as symmetries.
+
+\begin{example}[Coordinate permutations in a linear model]
+Let \(P\) be a permutation matrix and let
+\(z_{w,b}(x)=\langle w,x\rangle+b\). Replacing the inputs by \(Px\) and the
+weight vector by \(Pw\) leaves the score unchanged:
+\[
+ z_{Pw,b}(Px)=z_{w,b}(x).
+\]
+An empirical objective built from these scores and an isotropic regularizer
+therefore satisfies \cref{eq:objective-invariance}. An exchangeable
+initialization law and gradient descent produce a learner that is equivariant
+to input-coordinate permutations. Requiring this symmetry is justified only
+when the coordinate names carry no task information. Known feature roles,
+coordinate-specific units, or coordinate-specific regularization can supply a
+legitimate asymmetry.
+\end{example}
+
+\begin{example}[Coordinate and label symmetry of a multilayer perceptron]
+Consider a fully connected network with first-layer matrix \(W_1\), scalar
+output score \(z_\theta(x)\), and binary cross-entropy loss
+\begin{equation}
+ \ell_{\mathrm{ce}}(z,y)=\log(1+\exp(z))-yz.
+ \label{eq:binary-cross-entropy}
+\end{equation}
+For an input permutation \(P\), replace \(W_1\) by \(W_1P^\top\). The
+transformed network satisfies
+\[
+ z_{S_P\theta}(Px)=z_\theta(x).
+\]
+If the first-layer columns have an exchangeable joint initialization law, the
+resulting gradient learner has input-coordinate symmetry.
+
+For a binary-label flip, negate the weights and bias in the scalar output
+layer. The score changes from \(z\) to \(-z\), and
+\begin{equation}
+ \ell_{\mathrm{ce}}(-z,1-y)=\ell_{\mathrm{ce}}(z,y).
+ \label{eq:cross-entropy-label-flip}
+\end{equation}
+A final-layer initialization whose law is invariant under sign reversal
+therefore gives label symmetry. Standard independent, centered, symmetric
+initializations satisfy both requirements. Gradient descent, minibatch SGD,
+momentum, and Adam preserve the coordinate permutations and sign changes in
+these two actions. Thus a standard gradient-trained multilayer perceptron can
+have exactly the block-swap and label-flip symmetry used in
+\cref{sec:comparison}. Any regularizer must also remain invariant under the
+same parameter actions.
+
+Label symmetry is appropriate when zero and one are interchangeable names.
+An asymmetric evaluation cost, a distinguished safety label, or a
+task-specific output convention can invalidate the symmetry even though the
+network architecture still permits the parameter transformation.
+
+The preceding statement applies directly to predicted probabilities. A hard
+classifier also needs an equivariant treatment of a zero score. Random
+tie-breaking with equal probabilities is label symmetric; the deterministic
+rule \(\I\{z\ge0\}\) is not label symmetric at \(z=0\).
+\end{example}
+
+\begin{example}[Transformers]
+A standard transformer is not equivariant to arbitrary permutations of
+sequence positions: the causal mask and positional representation distinguish
+positions. A transformer can, however, be equivariant to a consistent
+renaming of vocabulary symbols when the renaming permutes the input-embedding
+rows, output coordinates, and any tied embedding parameters. Exchangeable
+initialization and a tokenwise cross-entropy objective preserve that action.
+Fixed special tokens, a tokenizer with distinguished structure, or
+token-specific preprocessing restrict the admissible renamings. A transformer
+with a symmetric binary classification head can also have the label-flip
+symmetry from the preceding example.
+\end{example}
+
+Two superficially similar symmetries do not yield a lower bound by themselves.
+Permuting hidden units can leave a neural network's input--output function
+unchanged. Such a parameter redundancy does not produce a distinct rule
+\(gh^\star\). Conversely, an architecture may force every represented rule to
+be invariant under a chosen input transformation. The transformation then
+belongs to the target's stabilizer whenever the target is representable. The
+target-specific lower bound uses a symmetry of the complete learner that maps
+the intended rule to a distinct output rule.
+
+The following audit is sufficient for applying the theorem to a gradient
+learner:
+\begin{enumerate}[leftmargin=*]
+\item specify the action on inputs, labels, and output rules;
+\item construct the corresponding parameter map \(S_g\) and verify
+\cref{eq:predictor-parameter-action};
+\item verify the objective identity \cref{eq:objective-invariance}, including
+regularization;
+\item check invariance of the initialization law and every optimizer state;
+\item check minibatch sampling, stopping, preprocessing, and discrete
+tie-breaking; and
+\item exhibit a transformation for which \(gh^\star\ne h^\star\).
+\end{enumerate}
+
+For the fixed target \(h^\star\), define its \emph{orbit}
+\begin{equation}
+ \cO_G(h^\star)=\{gh^\star:g\in G\}.
+ \label{eq:target-orbit}
+\end{equation}
+The orbit is not a collection of tasks that the designer wants to solve. The
+orbit records alternatives that the learner treats as transformed copies of
+the intended task. If the passive data law is also invariant, the learner has
+equal failure probabilities across these alternatives.
+
+\section{A target-specific symmetry lower bound}
+\label{sec:lower-bound}
+
+The main result now combines the two preceding developments. Pairwise
+indistinguishability says that at least one of two targets must be hard.
+Equivariance makes the orbit-related failure probabilities equal, so the lower
+bound applies to the particular target that the designer intends to teach.
+
+For \(g\in G\), define the \emph{target--orbit disagreement}
+\begin{equation}
+ \alpha_g(h^\star)
+ =\P(h^\star(X)\ne(gh^\star)(X)).
+ \label{eq:orbit-disagreement}
+\end{equation}
+Assume that the orbit contains a rule distinct from \(h^\star\), and define the
+\emph{target-specific disagreement}
+\begin{equation}
+ \Delta_{\rho,G}(h^\star)
+ =\inf_{g:\,gh^\star\ne h^\star}\alpha_g(h^\star).
+ \label{eq:target-disagreement}
+\end{equation}
+The restriction \(gh^\star\ne h^\star\) removes transformations in the
+target's stabilizer: those transformations do not create an alternative rule.
+
+\begin{theorem}[Target-specific symmetry lower bound]
+\label{thm:target-symmetry}
+Suppose that \(\rho\) is \(G\)-invariant and \(\cA\) is
+\(G\)-equivariant. For the fixed target \(h^\star\), every
+\(g\in G\) with \(gh^\star\ne h^\star\) satisfies
+\begin{equation}
+ \phi_n(\cA,\rho,h^\star)
+ \ge \frac12(1-\alpha_g(h^\star))^n.
+ \label{eq:target-symmetry-bound}
+\end{equation}
+Consequently,
+\begin{equation}
+ \phi_n(\cA,\rho,h^\star)
+ \ge \frac12(1-\Delta_{\rho,G}(h^\star))^n.
+ \label{eq:target-symmetry-delta}
+\end{equation}
+If \(\Delta_{\rho,G}(h^\star)>0\) and
+\(n<1/(2\Delta_{\rho,G}(h^\star))\), then
+\begin{equation}
+ \phi_n(\cA,\rho,h^\star)>\frac14.
+ \label{eq:quarter-lower-bound}
+\end{equation}
+\end{theorem}
+\begin{proof}
+Fix \(g\) such that \(gh^\star\ne h^\star\). Transforming
+\(D_{h^\star}\) by \(g\) gives a sample whose inputs are
+\(g_{\cX}X_1,\ldots,g_{\cX}X_n\) and whose labels satisfy
+\[
+ g_{\cY}(h^\star(X_i))=(gh^\star)(g_{\cX}X_i)
+\]
+by \cref{eq:function-action}. Invariance of \(\rho\) therefore implies
+\begin{equation}
+ \Law(gD_{h^\star})=\Law(D_{gh^\star}).
+ \label{eq:transformed-sample-law}
+\end{equation}
+Equivariance of the learner gives
+\[
+ \phi_n(\cA,\rho,gh^\star)
+ =\phi_n(\cA,\rho,h^\star).
+\]
+Apply \cref{lem:pairwise} to \(h^\star\) and \(gh^\star\). The two failure
+probabilities are equal, so each is at least half the right side of
+\cref{eq:pairwise-bound}. The resulting inequality is
+\cref{eq:target-symmetry-bound}.
+Taking transformations with disagreement approaching the infimum gives
+\cref{eq:target-symmetry-delta}.
+
+Finally, \((1-z)^n\ge1-nz\) for \(z\in[0,1]\). If
+\(n<1/(2\Delta_{\rho,G}(h^\star))\), then
+\[
+ \frac12(1-\Delta_{\rho,G}(h^\star))^n
+ \ge\frac12(1-n\Delta_{\rho,G}(h^\star))
+ >\frac14.
+\]
+\end{proof}
+
+The theorem concerns one fixed target, one fixed learner, and one fixed data
+law. The orbit in the proof is induced by the learner's symmetry. The theorem
+does not require the designer to want one procedure that learns every element
+of the orbit. Symmetry enters because the complete learner treats the orbit
+elements as transformed versions of the same learning problem.
+
+The proof also separates the roles of missing data and learner neutrality. The
+pairwise lemma gives only
+\[
+ \phi_n(\cA,\rho,h^\star)
+ +\phi_n(\cA,\rho,gh^\star)
+ \ge(1-\alpha_g(h^\star))^n.
+\]
+A learner can satisfy this inequality by favoring \(h^\star\) before seeing
+any data. Equivariance and input-law invariance give the additional identity
+\[
+ \phi_n(\cA,\rho,h^\star)
+ =\phi_n(\cA,\rho,gh^\star),
+\]
+which divides the indistinguishability cost equally between the two targets.
+The stronger conclusion is therefore a consequence of both an information
+deficit in the sample and a neutrality property of the learner.
+
+The neutrality property can be desirable. If \(g\) changes only a class code,
+coordinate convention, or another representation choice, favoring one orbit
+element would make that convention influence the learned rule. Removing the
+symmetry arbitrarily builds in an answer to the unresolved choice. On a sample
+that misses the disagreement region, an output chosen to equal \(h^\star\)
+cannot also equal \(gh^\star\). Such a preference is appropriate when prior
+task knowledge supports it; the preference should then be stated as part of
+the learner or specification.
+
+The theorem therefore gives a diagnostic and a design prescription. A
+target-specific architecture can supply a justified asymmetry. A target-aware
+curriculum can make the data law noninvariant. A membership query can
+deliberately enter a disagreement region, and a verifier can search for one.
+Each intervention states where information about the intended rule enters.
+The desirable symmetry may remain in the learner while the teaching protocol
+provides the evidence that breaks it.
+
+\section{Teaching the comparison rule}
+\label{sec:comparison}
+
+The comparison between \(\ge\) and \(>\) gives an explicit fixed target for
+which a coordinate-and-label symmetry has an exponentially small disagreement region. The
+example separates label balance and full support from the information needed
+for exact recovery.
+
+Fix \(m\ge1\) and let \(\cX=\{0,1\}^{2m}\). For
+\(x=(x_1,\ldots,x_{2m})\), define the two encoded integers
+\begin{equation}
+ L(x)=\sum_{j=1}^m2^{m-j}x_j,
+ \qquad
+ R(x)=\sum_{j=1}^m2^{m-j}x_{m+j}.
+ \label{eq:encoded-integers}
+\end{equation}
+The intended rule is
+\begin{equation}
+ h_{\ge}(x)=\I\{L(x)\ge R(x)\}.
+ \label{eq:ge-rule}
+\end{equation}
+The alternative rule is
+\begin{equation}
+ h_{>}(x)=\I\{L(x)>R(x)\}.
+ \label{eq:gt-rule}
+\end{equation}
+Both are affine linear classifiers. If
+\[
+ w=(2^{m-1},\ldots,1,-2^{m-1},\ldots,-1)^\top,
+\]
+then
+\begin{equation}
+ h_{\ge}(x)=\I\{\langle w,x\rangle\ge0\},
+ \qquad
+ h_{>}(x)=\I\{\langle w,x\rangle-\tfrac12\ge0\}.
+ \label{eq:linear-comparisons}
+\end{equation}
+
+Let \(\rho\) be uniform on \(\cX\). The labels are nearly balanced:
+\begin{equation}
+ \P(h_{\ge}(X)=1)=\frac12+2^{-m-1},
+ \qquad
+ \P(h_{>}(X)=1)=\frac12-2^{-m-1}.
+ \label{eq:balanced-labels}
+\end{equation}
+The two rules disagree exactly on ties, so
+\begin{equation}
+ \P(h_{\ge}(X)\ne h_{>}(X))
+ =\P(L(X)=R(X))=2^{-m}.
+ \label{eq:tie-mass}
+\end{equation}
+
+To expose the learner symmetry, let \(s\) swap the first and second
+\(m\)-bit blocks, and let \(c\) flip the binary label. Let \(g=(s,c)\) be the
+task transformation with input component \(s\) and label component \(c\).
+The induced action on rules gives
+\begin{align}
+ (gh_{\ge})(x)
+ &=c\bigl(h_{\ge}(s^{-1}x)\bigr)\notag\\
+ &=1-\I\{R(x)\ge L(x)\}
+ =\I\{L(x)>R(x)\}
+ =h_{>}(x).
+ \label{eq:comparison-transform}
+\end{align}
+The uniform input law is invariant under the block swap. A learner whose
+training rule is equivariant under the block swap and label flip therefore
+treats \(h_{\ge}\) and \(h_{>}\) as orbit alternatives.
+
+\begin{corollary}[Exponential passive-data requirement for one rule]
+\label{cor:comparison-lower}
+Let \(\cA\) be equivariant under the combined transformation \(g=(s,c)\). When
+the inputs are independent and uniform on \(\{0,1\}^{2m}\),
+\begin{equation}
+ \P(H_{D_{h_{\ge}}}\ne h_{\ge})
+ \ge\frac12(1-2^{-m})^n.
+ \label{eq:comparison-failure}
+\end{equation}
+In particular, the failure probability exceeds \(1/4\) when
+\(n<2^{m-1}\).
+\end{corollary}
+\begin{proof}
+Equation \eqref{eq:comparison-transform} identifies the distinct orbit
+alternative, and \cref{eq:tie-mass} gives its disagreement mass. Apply
+\cref{thm:target-symmetry}.
+\end{proof}
+
+The corollary applies to a concrete gradient learner. Consider a fully
+connected scalar-score network trained with binary cross-entropy by gradient
+descent or minibatch SGD. Suppose that the first-layer initialization is
+exchangeable across input coordinates, the output-layer initialization is
+invariant under sign reversal, and regularization, optimizer state, stopping,
+preprocessing, and hard-decision ties preserve the combined action. The
+parameter map that swaps the two blocks of first-layer columns and negates the
+output layer is a signed coordinate permutation. The calculation in
+\cref{sec:gradient-symmetry} proves equivariance under \(g=(s,c)\), so
+\cref{eq:comparison-failure} is a lower bound for this gradient-trained
+network on the fixed target \(h_{\ge}\).
+
+Returning \(h_{>}\) instead of \(h_{\ge}\) has statistical error only
+\(2^{-m}\) under \(\rho\). The error is exponentially small even though the
+returned rule is not the intended rule. Full support, balanced labels, and a
+linear representation therefore do not resolve the exact-learning problem.
+
+The designer can remove the information obstruction immediately. A single
+chosen query with \(L(x)=R(x)\) receives label one under \(h_{\ge}\) and label
+zero under \(h_{>}\). The exponential bound for uniform passive sampling does
+not apply to this query protocol. A law concentrated on a tie has disagreement
+mass one, so one observation misses the disagreement region with probability
+zero. The example isolates the useful information supplied by a teacher: the
+teacher knows which distinction the data must communicate.
+
+The comparison convention can instead be encoded directly when the formal
+operator \(\ge\) is already available to the system. Such an implementation
+uses legitimate task knowledge and need not preserve the symmetry exchanging
+\(\ge\) and \(>\). The learning problem is substantive when the system must
+infer how an instruction, symbol, or natural-language request maps to the
+comparison behavior. In that setting, a tie example communicates information
+that the rest of the passive sample lacks.
+
+\section{Target-aware teaching}
+\label{sec:teaching}
+
+The symmetry theorem is a design result as well as a lower bound. The theorem
+locates the missing distinction, so the designer can decide where to supply it. The
+distinction may enter through examples, queries, features, architecture,
+initialization, a regularizer, or a verifier.
+
+\Needspace{8\baselineskip}
+\begin{definition}[Teaching set for a specified learner]
+Fix a target rule \(h^\star\) and a deterministic learner \(\cA\). A labeled
+dataset \(D\) is a \emph{teaching set} for \((\cA,h^\star)\) when
+\begin{equation}
+ \cA(D)=h^\star.
+ \label{eq:teaching-set}
+\end{equation}
+\end{definition}
+
+The definition depends on both objects. A dataset that teaches a
+maximum-margin classifier need not teach a neural network trained by a
+different objective. The teacher's knowledge of \(h^\star\) is also part of
+the information protocol.
+
+The following result gives a finite-dimensional positive example. The result
+states the maximum-margin learner completely, including its treatment of the
+intercept, so the teaching claim has a unique meaning.
+
+Let \(\cX\subset\R^p\) be finite, and let
+\(f:\cX\to\{-1,1\}\) be an affine-linearly separable target with both labels.
+For a labeled dataset \(D\), write \(D_+\) and \(D_-\) for its positive and
+negative input sets. Define
+\begin{equation}
+ w_D=\argmin_{w\in\R^p}\frac12\lVert w\rVert_2^2
+ \quad\text{subject to}\quad
+ \langle w,x^+-x^-\rangle\ge2
+ \quad\text{for every }x^+\in D_+,\ x^-\in D_-.
+ \label{eq:pairwise-margin}
+\end{equation}
+The strictly convex objective makes \(w_D\) unique. Set
+\begin{equation}
+ b_D=-\frac12\left(
+     \min_{x^+\in D_+}\langle w_D,x^+\rangle
+    +\max_{x^-\in D_-}\langle w_D,x^-\rangle
+   \right),
+ \label{eq:margin-intercept}
+\end{equation}
+and return \(f_D(x)=1\) when
+\(\langle w_D,x\rangle+b_D\ge0\), and \(-1\) otherwise.
+
+\begin{proposition}[A small teaching set for the maximum-margin learner]
+\label{prop:max-margin-teaching}
+Let \(D_0=\{(x,f(x)):x\in\cX\}\). There is a subset
+\(D\subseteq D_0\) with
+\begin{equation}
+ |D|\le2p+2
+ \label{eq:teaching-size}
+\end{equation}
+such that
+\begin{equation}
+ w_D=w_{D_0},\qquad b_D=b_{D_0},\qquad
+ f_D(x)=f(x)\quad\text{for every }x\in\cX.
+ \label{eq:teaching-conclusion}
+\end{equation}
+\end{proposition}
+
+The proof in \cref{app:max-margin} selects at most \(p+1\) active
+positive--negative pairs that certify the full-data maximum-margin direction.
+Each pair contributes at most two examples. The result contrasts with passive
+sampling: target-aware selection can communicate the intended rule using a
+small subset of the domain even when random data rarely reveal the decisive
+distinctions.
+
+The proposition does not assert that a small teaching set is easy to find for
+an arbitrary trained system. Computing a teaching set may require solving a
+difficult design problem, and a more flexible learner can have more
+symmetries or a less transparent selection rule. The proposition establishes
+the possible benefit of matching the data to the target and the learner.
+
+\subsection{Where task knowledge can enter}
+\label{sec:task-knowledge}
+
+The comparison-rule example makes four interventions concrete.
+
+\begin{enumerate}[leftmargin=*]
+\item \textbf{Target-aware data.} Include equality cases or other inputs from
+the relevant disagreement region.
+\item \textbf{Active queries.} Ask for a label or counterexample at an input
+chosen to separate the current rule from the intended rule.
+\item \textbf{Task-specific structure.} Encode the roles of the two operands,
+the comparison convention, or other known asymmetries in the representation or
+learning procedure.
+\item \textbf{Verification.} Search for an input on which a proposed rule
+violates the specification, then return that input as training information.
+\end{enumerate}
+
+The four interventions answer the course's recurring source-of-competence
+question. The missing information can be supplied by the designer, the data
+selection procedure, interaction, or a verifier. Statistical training alone
+does not create a distinction that the complete training setup leaves
+symmetric.
+
+\section{Exact components and statistical interfaces}
+\label{sec:systems}
+
+Exact behavior of a complete AI system need not come entirely from one
+exactly learned predictor. A statistical natural-language interface may map a
+request to a formal representation, after which a sound executor or verifier
+performs an exact operation.
+
+Suppose that a parser produces a formal object \(\widehat S\) from an input
+request whose correct formalization is \(S\). If an executor is correct
+whenever \(\widehat S=S\), then
+\begin{equation}
+ \{\text{system output is incorrect}\}
+ \subseteq
+ \{\widehat S\ne S\}\cup
+ \{\text{executor or invocation fails}\}.
+ \label{eq:system-error-events}
+\end{equation}
+Consequently,
+\begin{equation}
+ \P(\text{system output is incorrect})
+ \le
+ \P(\widehat S\ne S)
+ +\P(\text{executor or invocation fails}).
+ \label{eq:system-error-bound}
+\end{equation}
+An exact executor removes one source of error. The complete system remains
+statistical until semantic parsing, specification, tool selection, and
+invocation are also controlled.
+
+The symmetry theorem should therefore not be read as a general indictment of
+statistical learning or as a representation impossibility. Neural networks
+can represent many exact computations, as Lecture 14 showed. The theorem
+identifies an information problem for a specified learner, target, and passive
+data law. Task-specific training, interaction, and hybrid systems can change
+that problem.
+
+The next lecture studies denoising and score estimation. The denoising setting has a
+different target: a population denoising objective identifies a conditional
+mean and, through it, a distributional score. The relevant questions are
+identifiability and estimation of a probabilistic object, followed by error
+accumulation in reverse dynamics. Exact recovery of one deterministic rule is
+not the universal criterion for learning.
+
+\section{Optional reading: related symmetry claims}
+\label{sec:optional}
+
+Two related lines of work illustrate why claim scope matters. Empirical work
+on recursive feature machines reports that particular algebraic train--test
+partitions preserve symmetries that prevent generalization, while breaking
+those data symmetries changes the observed behavior. These experiments concern
+specified kernels, tasks, and training procedures; they are not the theorem
+proved in \cref{thm:target-symmetry}.
+
+Language-generation impossibility results instead quantify over collections
+of possible languages and specified positive-example protocols. Such results
+can show that one procedure cannot satisfy consistency and breadth throughout
+a language family. They do not by themselves establish that a development
+process using knowledge of English cannot build an English-speaking system.
+The target-specific symmetry theorem supplies the missing kind of connection:
+it states an obstruction for one target only after the target, learner, data
+law, and relevant symmetry have been identified.
+
+\section{Take-home messages}
+\label{sec:take-home}
+
+\begin{enumerate}[leftmargin=*]
+\item Small population risk under one input law and correctness on every valid
+input are different guarantees. Exactness for one specified task does not
+require one learning procedure to succeed for every possible target task.
+\item Pairwise indistinguishability yields a hypothesis-class lower bound:
+some member of a close pair must be hard. The class result alone does not
+lower-bound failure on the one intended target, because a learner can favor
+that target and sacrifice the other member of the pair.
+\item A justified learner symmetry prevents a representation or implementation
+convention from deciding a question that should be settled by data or an
+explicit task specification. Label names, record order, and spatial
+transformations are symmetries only when they preserve the semantics,
+observation protocol, loss, and available prior knowledge of the task.
+\item Gradient descent inherits a learner symmetry when an orthogonal parameter
+action preserves the predictor and training objective and the initialization
+law is invariant. Optimizer state, preprocessing, stopping, and hard-decision
+tie rules are also part of the symmetry claim.
+\item The target-specific symmetry theorem lower-bounds exact recovery for one
+fixed target, learner, and data law. The target orbit is a proof object induced
+by the learner's symmetry. Symmetry turns the pairwise sum bound into an equal
+failure probability for each orbit-related target.
+\item For the rule \(L\ge R\), block-swap and label-flip symmetry produces the
+alternative \(L>R\). Their disagreement mass is \(2^{-m}\), so a symmetric
+learner needs exponentially many passive uniform examples to recover the fixed
+intended rule with high probability.
+\item Target-aware examples, active queries, task-specific structure, and
+verification can break the relevant symmetry. A small teaching set is
+learner-specific: its effectiveness depends on both the intended rule and the
+selection rule used by the learner. A desirable learner symmetry can remain in
+place while the teaching protocol supplies symmetry-breaking evidence.
+\item Exact executors and verifiers can supply exact components inside a larger
+statistical system. Their guarantees do not automatically control errors in
+semantic parsing, specification, or tool invocation.
+\end{enumerate}
+
+\printendnotes
+
+\section*{Bibliographical notes}
+
+\paragraph{Statistical and exact learning.}
+The distinction between average statistical performance and exact correctness,
+the comparison-rule example, the generic disagreement lower bound, the
+target-specific symmetry theorem, and the maximum-margin teaching result are
+based on \citet{gyorgy2025}. The paper states its symmetry result using
+nonidentity group elements. \Cref{eq:target-disagreement} instead ranges over
+elements satisfying \(gh^\star\ne h^\star\), because a nonidentity element in
+the target's stabilizer creates no alternative rule. The proof is otherwise the
+same. The exact bound \cref{eq:target-symmetry-bound} keeps the missed-region
+probability before the paper simplifies it to the constant \(1/4\).
+
+The optional calculation in \cref{app:kl-directions} specializes the
+conditional-support discussion from Lecture 4. The calculation is retained as
+a comparison, not as part of the live argument. Finite reverse KL to a
+deterministic full-support target characterizes exact conditional support, but
+does not provide graded feedback among imperfect candidates. A cost-defined
+Gibbs target provides graded feedback only when an evaluable cost supplies the
+missing information.
+
+\paragraph{Teaching and active learning.}
+Classical exact-learning models use membership and equivalence queries;
+\citet{angluin1988} is a foundational reference. Teaching instead permits
+target-aware selection of examples for a specified learner. The
+maximum-margin proof in \cref{app:max-margin} makes the learner's direction and
+intercept choices explicit; it is a type-complete formulation of the support
+constraint argument in \citet{gyorgy2025}. \citet{liu2016} study teaching
+dimensions for several linear learners.
+
+\paragraph{Implicit bias.}
+For linearly separable data, gradient descent on logistic or cross-entropy loss
+approaches the maximum-margin direction under the assumptions studied by
+\citet{soudry2018}. The connection does not make every training set a teaching
+set: the maximum-margin solution must itself implement the intended rule on
+the entire valid domain. Optimization can also approach that direction slowly,
+so repairing the information problem does not automatically give a fast
+parameter optimization procedure.
+
+\paragraph{Gradient-learner symmetry.}
+The parameter-coupling argument in \cref{prop:gd-equivariance} supplies a
+direct test for symmetry of a gradient learner. The claims about multilayer
+perceptrons, binary heads, and vocabulary renamings require all of the listed
+conditions; a model architecture alone does not establish learner symmetry.
+\citet{gyorgy2025} use input-variable, label, and token symmetries to connect
+the target-specific theorem to gradient-trained multilayer perceptrons and
+transformers. The present notes state the parameter action and optimizer
+qualifications explicitly.
+
+\paragraph{Related symmetry results.}
+\citet{tomasbernal2026} report an empirical symmetry-breaking mechanism for
+recursive feature machines on algebraic tasks. The paper proves algebraic facts
+about the task symmetry groups and reports the learning behavior empirically.
+\citet{kalavasis2025} study consistency and breadth in language generation
+under language-family and information-protocol assumptions. The optional
+discussion uses both works only within those stated scopes.
+
+\section*{Glossary}
+
+\begin{description}[style=nextline,leftmargin=1.5em,labelindent=0pt]
+\item[Statistical error \(L_\rho(h)\)]
+The probability that \(h\) disagrees with the fixed target \(h^\star\) on an
+input drawn from the specified law \(\rho\).
+\item[Exact correctness]
+Agreement with the fixed intended rule on every valid input in \(\cX\).
+\item[Pairwise indistinguishability]
+If a passive sample misses the disagreement region of two rules, the labeled
+data are identical under both rules. The sum of their exact-recovery failure
+probabilities is therefore at least the probability of missing that region.
+\item[Worst-target class failure \(\Phi_n(\cA,\rho,\cH)\)]
+The supremum of the exact-recovery failure probability over targets in
+\(\cH\). A close pair lower-bounds this quantity without identifying which
+member of the pair is hard.
+\item[Group action on rules]
+The transformation \((gh)(x)=g(h(g^{-1}x))\), which changes a rule consistently
+with the group's actions on inputs and labels.
+\item[Invariant input law]
+A law \(\rho\) for which transforming an input by any \(g\in G\) preserves its
+distribution.
+\item[Equivariant learner]
+A learning procedure whose output on transformed data has the same law as the
+correspondingly transformed output on the original data.
+\item[Parameter action \(S_g\)]
+An orthogonal transformation of the parameter vector that realizes a data
+transformation at the predictor level and preserves the training objective.
+\item[Target orbit \(\cO_G(h^\star)\)]
+The set \(\{gh^\star:g\in G\}\) of transformed alternatives induced by the
+learner's symmetry.
+\item[Target stabilizer]
+The transformations \(g\in G\) satisfying \(gh^\star=h^\star\). Such a
+transformation does not create a competing rule.
+\item[Orbit disagreement \(\alpha_g(h^\star)\)]
+The probability under \(\rho\) that the target and its transformed alternative
+\(gh^\star\) give different labels.
+\item[Target-specific disagreement \(\Delta_{\rho,G}(h^\star)\)]
+The infimum orbit disagreement over transformations that produce a rule
+different from the target.
+\item[Teaching set]
+A target-dependent labeled dataset that causes a specified learner to return
+the intended rule.
+\item[Maximum-margin learner]
+The learner defined in \cref{eq:pairwise-margin,eq:margin-intercept}; it selects
+the minimum-norm separating direction and a specified midpoint intercept.
+\end{description}
+
+\section{Exercises}
+\label{sec:exercises}
+
+\exerciseinstructions
+\setcounter{courseexercise}{0}
+\input{../exercises/l22-reverse-kl-exactness.tex}
+\input{../exercises/l22-gradient-symmetry.tex}
+\input{../exercises/l22-comparison-symmetry.tex}
+\input{../exercises/l22-max-margin-teaching.tex}
+
+\appendix
+\section{Optional comparison: KL direction and exact support}
+\label{app:kl-directions}
+
+The main lecture uses disagreement events because they expose the information
+missing from passive data. KL divergence gives a related support calculation,
+but the calculation does not produce a finite-data exact-learning method.
+
+Let \(\cU\) be finite, let \(\mu(u)>0\) for every \(u\in\cU\), and let
+\(f:\cU\to\{0,1\}\) be a deterministic answer rule. Define
+\begin{equation}
+ P_f(u,y)=\mu(u)\I\{y=f(u)\},
+ \qquad
+ Q_q(u,y)=\mu(u)q(y\mid u),
+ \label{eq:appendix-kl-laws}
+\end{equation}
+where \(q(\,\cdot\mid u)\) is a conditional mass function. The two KL
+directions answer different questions:
+\begin{align}
+ \KL(Q_q,P_f)<+\infty
+ &\quad\Longleftrightarrow\quad
+ q(f(u)\mid u)=1
+ \quad\text{for every }u\in\cU,
+ \label{eq:appendix-reverse-exact}\\
+ \KL(P_f,Q_q)
+ &=\sum_{u\in\cU}\mu(u)\log\frac{1}{q(f(u)\mid u)}.
+ \label{eq:appendix-forward-kl}
+\end{align}
+Indeed, positive candidate mass on \((u,1-f(u))\) creates an infinite
+reverse-KL term because \(P_f(u,1-f(u))=0\). The forward direction instead
+averages the log loss of the correct response under \(\mu\). A rare input can
+therefore contribute little to forward KL while still preventing exact
+correctness. Hard reverse KL detects the failure, but assigns the same infinite
+value to every candidate that assigns any positive mass to an incorrect
+response.
+
+An empirical target does not resolve the missing-information problem. If
+\(\widehat P_n\) is the empirical law of \(n\) demonstrations, then
+\begin{equation}
+ \KL(Q,\widehat P_n)<+\infty
+ \quad\Longrightarrow\quad
+ \operatorname{supp}(Q)
+ \subseteq\operatorname{supp}(\widehat P_n).
+ \label{eq:appendix-empirical-support}
+\end{equation}
+The right side contains only observed prompt--answer pairs. The empirical
+reverse-KL objective therefore supplies no intended response at an unseen
+prompt.
+
+Smoothing the target support makes reverse KL finite and graded. The smoothed
+law still depends on \(f(u)\) at every input, including the inputs absent from
+the demonstrations. Smoothing changes the penalty assigned to an error; it
+does not reveal the intended answer. Part (d) of
+\cref{ex:l22-reverse-kl-exactness} gives the corresponding binary-KL formula.
+
+A cost-defined Gibbs target gives a useful graded objective when a method can
+evaluate generated responses. Let \(r(\,\cdot\mid u)\) be positive, let
+\(c(u,y)\) be an evaluable cost, and let \(\beta>0\). Define
+\begin{equation}
+ P_{\beta,c}(u,y)
+ =\mu(u)\frac{r(y\mid u)e^{-\beta c(u,y)}}{Z_\beta(u)},
+ \qquad
+ Z_\beta(u)=\sum_y r(y\mid u)e^{-\beta c(u,y)}.
+ \label{eq:appendix-gibbs-target}
+\end{equation}
+Then
+\begin{equation}
+ \KL(Q_q,P_{\beta,c})
+ =\sum_{u\in\cU}\mu(u)\left(
+ \KL(q(\,\cdot\mid u),r(\,\cdot\mid u))
+ +\beta\sum_y q(y\mid u)c(u,y)+\log Z_\beta(u)\right).
+ \label{eq:appendix-gibbs-identity}
+\end{equation}
+After division by \(\beta\), minimizing the right side is equivalent to
+minimizing expected generated cost plus a
+\(\beta^{-1}\)-scaled KL penalty relative to \(r\). The evaluable cost, not the
+choice of KL direction, supplies feedback on generated answers.
+
+The graded Gibbs objective also does not give exactness at a finite value of
+\(\beta\). For the correctness cost
+\(c_f(u,y)=\I\{y\ne f(u)\}\), the minimizing conditional law is the conditional
+part of \(P_{\beta,c_f}\), and
+\begin{equation}
+ q_\beta^\star(1-f(u)\mid u)
+ =\frac{r(1-f(u)\mid u)e^{-\beta}}
+ {r(f(u)\mid u)+r(1-f(u)\mid u)e^{-\beta}}>0
+ \label{eq:appendix-gibbs-not-exact}
+\end{equation}
+for every finite \(\beta\). Taking \(\beta\) large can make the incorrect mass
+small, but evaluating \(c_f\) already requires the ability to check the
+intended answer. The Gibbs construction is useful for KL-regularized
+expected-cost optimization when such an evaluator exists. The construction is
+not a solution to exact learning from finite demonstrations alone.
+
+\section{Proof of the maximum-margin teaching result}
+\label{app:max-margin}
+
+The appendix proves the positive teaching result from
+\cref{sec:teaching}. The proof selects a small set of active constraints that
+certifies the same strictly convex optimization solution as the full labeled
+domain.
+
+\begin{proposition}[A small teaching set for the maximum-margin learner]
+\label{prop:max-margin-teaching-restated}
+Under the assumptions and learner definition in
+\cref{eq:pairwise-margin,eq:margin-intercept}, let
+\(D_0=\{(x,f(x)):x\in\cX\}\). There is a subset
+\(D\subseteq D_0\) with \(|D|\le2p+2\) such that
+\[
+ w_D=w_{D_0},\qquad b_D=b_{D_0},\qquad
+ f_D(x)=f(x)\quad\text{for every }x\in\cX.
+\]
+\end{proposition}
+\begin{proof}
+For a dataset \(S\) containing both labels, define the positive--negative
+difference set
+\[
+ \Gamma(S)=\{x^+-x^-:x^+\in S_+,\ x^-\in S_-\}
+\]
+and the feasible polyhedron
+\[
+ C(S)=\{w\in\R^p:\langle w,v\rangle\ge2
+                    \text{ for every }v\in\Gamma(S)\}.
+\]
+Write \(w_0=w_{D_0}\). First-order optimality for minimizing
+\(\lVert w\rVert_2^2/2\) over \(C(D_0)\) gives
+\begin{equation}
+ -w_0\in N_{C(D_0)}(w_0),
+ \label{eq:normal-cone-condition}
+\end{equation}
+where \(N_C(w)\) is the normal cone of \(C\) at \(w\).
+
+Only active constraints generate this normal cone. Thus
+\begin{equation}
+ -w_0\in\operatorname{cone}
+ \{-v:v\in\Gamma(D_0),\ \langle w_0,v\rangle=2\}.
+ \label{eq:active-cone}
+\end{equation}
+By the conic form of Carath\'eodory's theorem, one may select at most
+\(p+1\) active differences \(v_1,\ldots,v_k\), \(k\le p+1\), whose negative
+cone still contains \(-w_0\). For each \(v_j\), choose a pair
+\((x_j^+,x_j^-)\) satisfying \(v_j=x_j^+-x_j^-\), and let \(D\) contain
+these labeled endpoints. Then \(|D|\le2p+2\).
+
+The selected constraints imply
+\(-w_0\in N_{C(D)}(w_0)\). Therefore \(w_0\) satisfies the first-order
+optimality condition for the reduced problem. Strict convexity gives
+\begin{equation}
+ w_D=w_0.
+ \label{eq:same-direction}
+\end{equation}
+
+The intercept remains to be checked. Every selected difference is active for
+the full problem:
+\[
+ \langle w_0,x_j^+\rangle-\langle w_0,x_j^-\rangle=2.
+\]
+All full-data positive--negative differences have value at least two. Hence
+each selected positive endpoint attains
+\(\min_{x^+\in(D_0)_+}\langle w_0,x^+\rangle\), and each selected negative
+endpoint attains
+\(\max_{x^-\in(D_0)_-}\langle w_0,x^-\rangle\). Otherwise pairing a smaller
+full-data positive point or a larger full-data negative point with the other
+selected endpoint would violate feasibility. Consequently the extrema used in
+\cref{eq:margin-intercept} are unchanged by restricting from \(D_0\) to
+\(D\), so \(b_D=b_{D_0}\).
+
+The full-data classifier labels every point in \(\cX\) according to \(f\).
+The equal direction and intercept therefore give \(f_D=f\) on \(\cX\).
+\end{proof}
+
+\clearpage
+\begin{thebibliography}{99}
+
+\bibitem[Angluin(1988)]{angluin1988}
+Dana Angluin.
+\newblock Queries and concept learning.
+\newblock \emph{Machine Learning}, 2(4):319--342, 1988.
+\newblock \url{https://doi.org/10.1007/BF00116828}.
+
+\bibitem[Gy\"orgy et~al.(2025)Gy\"orgy, Lattimore, Lazi\'c, and
+Szepesv\'ari]{gyorgy2025}
+Andr\'as Gy\"orgy, Tor Lattimore, Nevena Lazi\'c, and Csaba Szepesv\'ari.
+\newblock Beyond statistical learning: Exact learning is essential for
+general intelligence.
+\newblock arXiv:2506.23908, 2025.
+\newblock \url{https://arxiv.org/abs/2506.23908}.
+
+\bibitem[Kalavasis et~al.(2025)Kalavasis, Mehrotra, and
+Velegkas]{kalavasis2025}
+Alkis Kalavasis, Anay Mehrotra, and Grigoris Velegkas.
+\newblock On the limits of language generation: Trade-offs between
+hallucination and mode collapse.
+\newblock In \emph{Proceedings of the 57th Annual ACM Symposium on Theory of
+Computing}, pages 1732--1743, 2025.
+\newblock \url{https://doi.org/10.1145/3717823.3718108}.
+
+\bibitem[Liu and Zhu(2016)]{liu2016}
+Ji Liu and Xiaojin Zhu.
+\newblock The teaching dimension of linear learners.
+\newblock \emph{Journal of Machine Learning Research}, 17(162):1--25, 2016.
+\newblock \url{https://jmlr.org/papers/v17/15-153.html}.
+
+\bibitem[Soudry et~al.(2018)Soudry, Hoffer, Nacson, Gunasekar, and
+Srebro]{soudry2018}
+Daniel Soudry, Elad Hoffer, Mor Shpigel Nacson, Suriya Gunasekar, and
+Nathan Srebro.
+\newblock The implicit bias of gradient descent on separable data.
+\newblock \emph{Journal of Machine Learning Research}, 19(70):1--57, 2018.
+\newblock \url{https://jmlr.org/papers/v19/18-188.html}.
+
+\bibitem[Tom\`as Bernal et~al.(2026)Tom\`as Bernal, Mallinar, and
+Belkin]{tomasbernal2026}
+Marcel Tom\`as Bernal, Neil Rohit Mallinar, and Mikhail Belkin.
+\newblock Breaking data symmetry is needed for generalization in feature
+learning kernels.
+\newblock In \emph{Proceedings of the 29th International Conference on
+Artificial Intelligence and Statistics}, PMLR 300:4204--4212, 2026.
+\newblock \url{https://proceedings.mlr.press/v300/bernal26a.html}.
+
+\end{thebibliography}
+
+\end{document}

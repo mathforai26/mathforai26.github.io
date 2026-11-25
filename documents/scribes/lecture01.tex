@@ -7,10 +7,11 @@
 \usepackage{tikz}
 \usetikzlibrary{arrows.meta,calc,decorations.pathreplacing,positioning}
 \usepackage{xcolor}
+\usepackage{../misc_files/course-definition-boxes}
 \usepackage{microtype}
 
 % Revision date: maintained by scripts/build_lecture_notes.py. Keep this command.
-\newcommand{\lecturerevised}{2026-10-09 23:50 UTC-07:00}
+\newcommand{\lecturerevised}{2026-11-07 09:30 UTC+00:00}
 \usepackage{eso-pic}
 \AddToShipoutPictureBG{%
   \AtPageLowerLeft{%
@@ -89,39 +90,28 @@ September 1, 2026
 \end{minipage}}
 \end{center}
 
-\noindent\textbf{About these lecture notes.}
-These notes give a self-contained account of inference through an
-archetypical decoder-transformer architecture.
-They began as an example of a scribe note and have grown to include further
-derivations, figures, and background. This extended treatment is not expected
-of student scribe submissions; published notes may incorporate additions by
-the lecturer.
+These notes ask how a decoder transformer computes a next-token distribution
+and how an AI system uses that distribution to generate output. We follow
+the computation from tokenization through the decoder, then examine its
+cost and context-length limitations. These instructor-expanded notes exceed
+what is expected of student scribe submissions.
 
-\medskip
-\noindent\textbf{Scope relative to class.}
-Administrative material occupied a substantial part of the meeting. The class
-covered the harness, tokenization, decoder inference, mixture-of-experts layers,
-attention cost, KV caching, and context-length limitations. Training was
-discussed verbally, without loss or gradient equations. These notes supply
-explicit matrix conventions, multi-head attention and normalization formulas,
-and further derivations and figures. The architecture comparison in
-\cref{app:transformer-arrangements} and tokenizer construction in
-\cref{app:tokenizer-construction} provide optional background. The motivation
-for learning and the first learning-theoretic results begin in Lecture~2.
-The optional architecture comparison precedes the take-home messages. Numbered
-endnotes, bibliographical notes, the glossary, exercises, the tokenizer
-appendix, and references follow in that order.
+\noindent\textbf{Scope and reading guide.}
+The class covered the harness, tokenization, decoder inference,
+mixture-of-experts layers, attention cost, KV caching, and context-length
+limitations. Training was discussed verbally, without loss or gradient
+equations. The notes add explicit matrix conventions, multi-head attention
+and normalization formulas, derivations, and figures. The architecture
+comparison in \cref{app:transformer-arrangements} and tokenizer construction
+in \cref{app:tokenizer-construction} provide optional background. The
+motivation for learning and the first learning-theoretic results begin in
+Lecture~2.
 
 \section{The model inside a harness}
 
-The goal of this lecture is to understand the computation performed by a
-decoder transformer and its role in an AI system. We follow the path from a
-token prefix to the next-token distribution, then examine generation,
-computational cost, and context-length limitations.
-
-As of 2026, today's cutting edge AI systems are composed of a big neural network and some code that makes the neural network usable.
-A
-\emph{harness} is the surrounding program that constructs the model's context,
+A decoder transformer supplies next-token predictions. The surrounding
+program uses those predictions to act on a task. A \emph{harness} is the
+program that constructs the model's context,
 calls the model, interprets the result, optionally invokes tools, records the
 new observation, and decides whether to call the model again. It may provide
 instructions, conversation history, retrieved documents, external memory, or
@@ -803,6 +793,13 @@ A_{ij}=
 0,&j>i.
 \end{cases}
 \]
+The displayed ratio defines the mathematical map. Finite-precision software
+should compute softmax, log-softmax, and cross-entropy directly from the scores
+or logits by using stable log-sum-exp calculations. Subtracting the maximum
+score prevents exponential overflow, but the maximum shift alone can still
+lose small losses and gradients through cancellation.
+\Cref{ex:l1-stable-softmax} derives both failure modes and their logit-based
+calculations.
 Its smooth dependence on the finite scores allows gradient-based training.
 For \emph{bidirectional attention}, every position can use all $T$ sources:
 set $M=0$ and normalize over all of them. Directional matching and causal
@@ -1665,7 +1662,7 @@ O_{t,:}&=A_{t,:}V
 =\sum_{j=1}^t A_{tj}v_j^\top\in\R^{1\times d_h}.
 \label{eq:cached-head}
 \end{align}
-Equation \cref{eq:cached-head} evaluates only the last row of
+\Cref{eq:cached-head} evaluates only the last row of
 \eqref{eq:self-attention-heads},
 the new query row in \cref{fig:attention-head}.
 The new query can attend to all cached positions, so no additional causal mask
@@ -1675,9 +1672,26 @@ Combine the new outputs of all heads, complete the residual, normalization,
 and FFN operations at this position, and pass the new vector to the next layer.
 Each layer and
 head maintains its own cache. Caching changes which intermediate results
-are recomputed; it preserves the model's next-token distribution.
+are recomputed; while no required cache row has been discarded, it preserves
+the model's next-token distribution.
 With RoPE, cache the position-transformed keys actually used in the
 query--key comparisons; their positions remain fixed as the prefix grows.
+After a capacity limit forces eviction, a \emph{rolling cache} discards its
+oldest rows and retains its newest rows. The retained rows can carry the
+influence of tokens that are no longer directly accessible.
+\endnote{\textbf{A rolling cache contains contextualized states.}
+Fix a causal attention window containing \(W\) positions. Recomputing all
+activations from the last \(W\) token identities discards every dependence on
+older tokens beyond the information already expressed by those identities. A
+rolling key--value cache instead keeps the states previously computed for the
+retained positions. Those states were computed while older tokens were
+available. Consequently, rolling cached evaluation need not agree with
+recomputation from the last \(W\) tokens. If each of \(L\) attention layers
+uses this window, the dependency graph permits the final activation at
+position \(i\) to depend on tokens as far back as
+\(i-L(W-1)\). This path establishes possible causal dependence, not reliable
+retention or retrieval.}
+\label{en:rolling-kv}
 
 \paragraph{Attention work and storage.}
 A full forward pass on a length-$t$ prefix computes every row. The number
@@ -2176,6 +2190,16 @@ the variance of a query--key dot product.
 \Cref{rem:attention-scaling} supplies an explicit random-initialization model
 for that calculation.
 
+The maximum-shift calculation is the standard first stabilization of softmax.
+\citet{barron2026} show that maximum shifting does not prevent two further
+floating-point failures. For a highly confident hard target, rounding can set
+the target gradient to zero while retaining non-target gradients. For a soft
+teacher target, separately computed student and teacher probabilities can lose
+their small difference. They give logit-based formulas using stable
+log-sum-exp, softplus, \(\operatorname{log1p}\), and
+\(\operatorname{expm1}\) calculations. \Cref{ex:l1-stable-softmax} derives
+the relevant identities.
+
 The SwiGLU FFN architecture was introduced by \citet{shazeer2020}. It uses
 two hidden projections and coordinatewise gating; the paper also explains how
 to adjust the hidden width when comparing its parameter and operation counts
@@ -2228,6 +2252,15 @@ introduced multi-query attention: multiple query heads share the same key and
 value heads. This reduces cached key--value data and the traffic required to
 read it. Grouped-query attention, introduced by \citet{ainslie2023}, provides
 an intermediate degree of sharing.
+
+\citet{delise2026} compare fixed-width rolling KV inference with recomputing
+the final token window from its token identities. Their dependency-graph
+calculation gives the \(L(W-1)\) range in
+\hyperref[en:rolling-kv]{the rolling-cache endnote}. Their experiments report
+task-relevant retrieval after the source token and, in some cases, its own
+cached state have been evicted. The dependency calculation is exact for the
+stated local-attention graph; the reported retention is behavioral evidence
+for the tested models and tasks.
 
 \citet{dao2022} introduced FlashAttention, which computes exact dense
 attention by tiling and an online softmax. This reduces memory traffic and
@@ -2596,6 +2629,8 @@ even within the supported context length.
 \input{../exercises/l1-rope-retrieval.tex}
 \input{../exercises/l1-rope-collisions.tex}
 \input{../exercises/l1-rope-width.tex}
+\exercisegroup{Numerically stable softmax}
+\input{../exercises/l1-stable-softmax.tex}
 \input{../exercises/l1-greedy-decoding.tex}
 \input{../exercises/l1-bounded-attention.tex}
 
@@ -2773,6 +2808,19 @@ T. Dao, D. Y. Fu, S. Ermon, A. Rudra, and C. R\'e.
 IO-Awareness.
 \newblock \emph{NeurIPS}, 2022.
 \newblock \url{https://arxiv.org/abs/2205.14135}.
+
+\bibitem[DeLise and Cromelin(2026)]{delise2026}
+T. DeLise and S. Cromelin.
+\newblock Thinking Outside the Box: Retention and Transmission of Information
+in Sliding-Window KV Inference.
+\newblock 2026.
+\newblock \url{https://arxiv.org/abs/2609.34049}.
+
+\bibitem[Barron et al.(2026)]{barron2026}
+J. T. Barron, D. Gnanapragasam, and M. Tschannen.
+\newblock A Fix for Softmax and Cross-Entropy.
+\newblock 2026.
+\newblock \url{https://arxiv.org/abs/2610.31642}.
 
 \bibitem[Chiang and Cholak(2022)]{chiang2022}
 D. Chiang and P. Cholak.

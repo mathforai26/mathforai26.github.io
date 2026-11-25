@@ -1,0 +1,28 @@
+\begin{exercisechunk}
+\item \textbf{What group standardization estimates.}
+\label[exercise]{ex:l20-standardization}
+\exerciseprofile{2}{2}{2}{\exproof\quad\excalculation\quad\exinterpretation}{%
+Identify the policy-dependent scaling introduced by a random group denominator.}
+Fix $0<p<1$, and let $A_1,A_2,\ldots$ be independent Bernoulli$(p)$
+variables. For a group of size $n\ge2$, set $R_i=A_i$, $S_i=A_i-p$,
+$\bar A=n^{-1}\sum_{i=1}^n A_i$, and
+$v_n=(n^{-1}\sum_{i=1}^n(A_i-\bar A)^2)^{1/2}$.
+Define the standardized estimator by
+\[
+ Z_n=\begin{cases}
+ \displaystyle\frac1n\sum_{i=1}^n\frac{A_i-\bar A}{v_n}S_i,&v_n>0,\\
+ 0,&v_n=0.
+ \end{cases}
+\]
+\begin{enumerate}[(a)]
+\item Show that $Z_n=\sqrt{\bar A(1-\bar A)}$ for every group,
+including groups with all equal outcomes.
+\item Show that $\E[Z_2]=p(1-p)$, but
+$\lim_{n\to\infty}\E[Z_n]=\sqrt{p(1-p)}$.
+You may use the strong law of large numbers and bounded convergence.
+Compare the limiting expectation with the scalar reward gradient
+$J'(u)=p(1-p)$, where $p=\sigma(u)$: give their ratio and explain why
+no single constant, independent of $p$, corrects the limiting estimator
+for every $p\in(0,1)$.
+\end{enumerate}
+\end{exercisechunk}

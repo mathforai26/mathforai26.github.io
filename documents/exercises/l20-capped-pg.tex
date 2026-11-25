@@ -1,0 +1,43 @@
+\begin{exercisechunk}
+\item \textbf{Capped reward updates and increasing thresholds.}\suppmark
+\label[exercise]{ex:l20-capped-pg}
+\exerciseprofile{3}{3}{3}{\exproof\quad\excalculation\quad\exinterpretation}{%
+Separate a bound on rewarded updates from convergence over sampling rounds.}
+Use the finite binary population and capped REINFORCE update of
+\cref{sec:context-weighting}. Thus fresh contexts have probabilities
+$\mu_j>0$, actions are drawn from the current policy, rewards are
+deterministic correctness indicators, $\|z_j\|_2\le B$, and a
+unit vector $w$ satisfies $w^\top z_j\ge\gamma>0$ for every $j$.
+Fix $\eta>0$ and start at $\theta_0=0$.
+\begin{enumerate}[(a)]
+\item For a fixed threshold $1/2\le\tau<1$, put
+$m_\tau=\log(\tau/(1-\tau))$. Index the nonzero updates by $i$ and write
+their increments as $c_iz_{j_i}$. Show that
+$\eta(1-\tau)\le c_i\le\eta$ and that, with $S_N=\sum_{i=1}^N c_i$,
+\[
+ \gamma^2S_N^2\le\|\theta\|_2^2
+ \le(2m_\tau+\eta B^2)S_N
+\]
+after $N$ such updates. Deduce the update bound in \cref{prop:capped-pg}.
+\item Prove that after finite sampling time every $p_j>\tau$ almost
+surely. Explain why the update bound alone is not a bound on that time.
+\item Now use the increasing-threshold algorithm specified in
+\cref{prop:capped-pg}, with known finite support and $\tau_k=\sigma(k)$.
+Write $\theta^{(k)}$ for the parameter at the beginning of stage $k$ and
+put $D=(1+\eta B^2/2)/\gamma$. Prove that every iterate within stage $k$
+satisfies $\|\theta-\theta^{(k)}\|_2\le2D$ and hence
+\[
+ \min_jz_j^\top\theta\ge k-1-2BD.
+\]
+Show that every stage finishes almost surely and deduce
+$\min_jp_{\theta_t}(x_j)\to1$ along all sampling rounds.
+Include the possibility that the stage is waiting for a first recorded
+success on a context whose current probability already exceeds its threshold.
+\end{enumerate}
+\begin{hints}
+For (b), condition on the state immediately after any fixed number of
+nonzero updates; do not condition on a purported last update as though its
+time were a stopping time. For (c), compare squared distance to a suitable
+translate of $\theta^{(k)}$ in the separator direction.
+\end{hints}
+\end{exercisechunk}

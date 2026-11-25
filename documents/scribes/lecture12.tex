@@ -5,11 +5,12 @@
 \usepackage[inline,shortlabels]{enumitem}
 \usepackage{booktabs,array}
 \usepackage{xcolor}
+\usepackage{../misc_files/course-definition-boxes}
 \usepackage{microtype}
 \usepackage{needspace}
 
 % Revision date: maintained by scripts/build_lecture_notes.py. Keep this command.
-\newcommand{\lecturerevised}{2026-10-25 21:25 UTC-06:00}
+\newcommand{\lecturerevised}{2026-11-07 09:48 UTC+00:00}
 \usepackage{eso-pic}
 \AddToShipoutPictureBG{%
   \AtPageLowerLeft{%
@@ -91,47 +92,21 @@ October 13, 2026
 \end{minipage}}
 \end{center}
 
+How can a first-order method choose its steps without a known smoothness
+constant, and how can it converge faster on poorly conditioned problems?
+Backtracking addresses the first question by testing proposed steps.
+Acceleration and preconditioning address the second by changing how past
+gradients or parameter directions enter the update. Automatic stepsize
+selection alone need not improve conditioning.
+
 \noindent\textbf{Reading guide.}
-Lecture~11 showed that a $\beta$-smooth objective decreases under gradient
-descent when the stepsize satisfies $\eta\le1/\beta$. Under a $\mu$-PL
-inequality, the same update reduces the objective gap geometrically, and the
-number of iterations needed for a fixed relative reduction is proportional
-to $\beta/\mu$. Two questions remain.
-First, an implementation may not know $\beta$. Second, even the best safe
-scalar step can be slow when different directions have very different
-curvature.
-
-The two questions concern different limitations of gradient descent. An
-unknown $\beta$ prevents the algorithm from choosing a certified scalar
-stepsize. A large ratio $\beta/\mu$ means that every safe scalar stepsize is
-slow in some directions. Backtracking addresses the first limitation by
-testing proposed finite steps. Acceleration and preconditioning address the
-second limitation by changing how information from different iterations or
-different parameter directions is used. Keeping stepsize adaptation separate
-from conditioning improvement is important: a method can choose a safe
-stepsize automatically and still
-converge slowly on an ill-conditioned problem.
-
-The first part of this lecture develops backtracking line search, which tests
-the finite-step inequality needed by the proof and therefore avoids advance
-knowledge of $\beta$. The second part explains the condition-number barrier
-for gradient descent and proves the main acceleration result: for smooth,
-strongly convex objectives, the number of gradient evaluations needed to
-reduce the objective gap by a fixed relative amount improves from order
-$\kappa$ to order $\sqrt\kappa$. The third part separates scalar stepsize
-adaptation from adaptation of the update geometry. It first studies
-preconditioning for a fixed smooth objective and then changes the information
-available to the update: AdaGrad and Adam adapt to the subgradients or
-stochastic gradients observed during the run. AdamW adds a separate choice
-about weight decay.
-
-The principal results for a first reading are the backtracking guarantee, the
-linear acceleration theorem and the corresponding lower-bound comparison, the
-preconditioning calculation, and the distinction between scalar online
-adaptation, diagonal AdaGrad, and Adam. Material marked with $\suppmark$ may
-be skipped on a first reading. The prerequisites are the smoothness,
-convexity, strong-convexity, and PL results from Lecture~11, together with
-eigenvalues of symmetric matrices.
+The main development covers backtracking, acceleration for smooth strongly
+convex objectives and its lower-bound comparison, and preconditioning.
+We then study AdaGrad and Adam using the gradients observed during a run,
+and distinguish AdamW's weight decay from gradient adaptation. Material
+marked with $\suppmark$ may be skipped on a first reading. The prerequisites
+are the smoothness, convexity, strong-convexity, and PL results from
+Lecture~11, together with eigenvalues of symmetric matrices.
 
 \section{Review: Gradient descent with smooth objectives}
 \label{sec:tuning-problem}
@@ -141,7 +116,9 @@ smoothness constant. The argument also separates the condition used by the
 convergence proof---a one-step decrease inequality---from one sufficient
 certificate for that condition---a known global smoothness constant.
 
-Let $L:\R^d\to\R$ be differentiable and bounded below, and put
+Throughout the optimization analysis, $L$ denotes the fixed objective;
+any sample-size dependence is suppressed. Let $L:\R^d\to\R$ be
+differentiable and bounded below, and put
 \[
  L^\star=\inf_{\theta\in\R^d}L(\theta).
 \]
@@ -185,7 +162,10 @@ A larger step may still satisfy the same decrease inequality at the current
 parameter. Section~\ref{sec:backtracking} uses the distinction between the
 decrease inequality and the numerical value of $\beta$ to construct a
 stepsize rule: propose a step, test the required decrease, and shorten the
-step only when the test fails.
+step only when the test fails. Choosing a safe step addresses uncertainty
+about smoothness. Even a well-tuned scalar step can converge slowly when
+curvatures differ greatly across directions; after backtracking, we examine
+that separate limitation in \cref{sec:conditioning}.
 
 \section{Adapting to an unknown smoothness constant}
 \label{sec:backtracking}

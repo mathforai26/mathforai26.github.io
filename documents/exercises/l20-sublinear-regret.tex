@@ -1,0 +1,15 @@
+\begin{exercisechunk}
+\item \textbf{From almost-sure convergence to sublinear expected regret.}
+\label[exercise]{ex:l20-sublinear-regret}
+\exerciseprofile{2}{1}{1}{\exproof}{%
+Pass from convergence of the policy to vanishing expected average regret.}
+Under the assumptions of \cref{thm:as}, let
+\[
+ \delta_t=J^\star-\sum_a\pi_t(a)r_a,\qquad
+ \cR_T=\sum_{t=0}^{T-1}\E[\delta_t].
+\]
+Prove \cref{cor:sublinear-regret}, namely
+\[
+ \frac{\cR_T}{T}\longrightarrow0\qquad(T\to\infty).
+\]
+\end{exercisechunk}

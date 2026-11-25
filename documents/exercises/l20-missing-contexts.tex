@@ -1,0 +1,32 @@
+\begin{exercisechunk}
+\item \textbf{Continued training on incomplete data.}
+\label[exercise]{ex:l20-missing-contexts}
+\exerciseprofile{2}{2}{2}{\exproof\quad\excalculation\quad\exinterpretation}{%
+Distinguish drift on unobserved contexts from a zero sampled update on successful data.}
+Use the binary logistic policy and deployment population of
+\cref{ex:missing-contexts}: $x_1=(1,0)^\top$ and $x_2=(-1,1)^\top$
+are equally likely and both have label $1$. Training uses only $x_1$.
+Write $\theta=(u,v)^\top$ and start at $(M,2M)^\top$ for $M>0$.
+\begin{enumerate}[(a)]
+\item Derive the flows for $L_{\rm tr}=-\log\sigma(u)$ and
+$J_{\rm tr}=\sigma(u)$, and show that in both cases
+$v(t)=2M$ and $u(t)\to\infty$.
+Deduce that the initial deterministic classifier is correct on both
+contexts, but eventually misclassifies $x_2$.
+Show that deployment reward starts at $\sigma(M)$ and tends to $1/2$,
+although the deployment population is linearly separable.
+\item At a fixed parameter, let $A_1,\ldots,A_n$ be independent draws
+from a fixed distribution $q$ with $q(-1),q(1)>0$.
+Let $R_i=\I\{A_i=1\}$ and define
+\[
+ \widehat g=\frac1n\sum_{i=1}^n
+ \frac{\pi_\theta(A_i\mid x_1)}{q(A_i)}
+ (R_i-1)\nabla\log\pi_\theta(A_i\mid x_1).
+\]
+Prove that $\E[\widehat g]=\nabla J_{\rm tr}(\theta)$, although
+$\widehat g=0$ whenever all $R_i=1$.
+Explain why the expectation identity need not hold after conditioning
+on all rewards being one, and why multiplying the retained terms by
+finite weights cannot restore it.
+\end{enumerate}
+\end{exercisechunk}

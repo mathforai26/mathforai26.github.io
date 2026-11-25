@@ -1,0 +1,22 @@
+\begin{exercisechunk}
+\item \textbf{REINFORCE for a binary policy.}
+\label[exercise]{ex:l20-binary-update}
+\exerciseprofile{1}{1}{1}{\excalculation}{%
+Derive a sampled parameter update from the policy probabilities and reward.}
+At a fixed input, consider the two-action softmax policy with logits
+$\theta=(\theta_0,\theta_1)^\top$ and deterministic reward $r_a=a$
+for $a\in\{0,1\}$. Put $u=\theta_1-\theta_0$ and $p=\sigma(u)$.
+Show that $\pi_\theta(1)=p$ and
+\[
+ \nabla_\theta\log\pi_\theta(a)=(a-p)(-1,1)^\top.
+\]
+At iteration $t$, write $u_t=\theta_{t,1}-\theta_{t,0}$,
+$p_t=\sigma(u_t)$, and draw
+$A_t\sim\operatorname{Bernoulli}(p_t)$ conditional on the previous history.
+Show that the REINFORCE update in \cref{eq:sampled-update}, with constant
+step size $\eta>0$ and zero baseline, becomes
+\[
+ u_{t+1}=u_t+2\eta A_t(1-p_t),
+\]
+as stated in \cref{eq:binary-update}.
+\end{exercisechunk}

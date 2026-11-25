@@ -7,10 +7,11 @@
 \usepackage{tikz}
 \usetikzlibrary{arrows.meta,calc,fit,positioning}
 \usepackage{xcolor}
+\usepackage{../misc_files/course-definition-boxes}
 \usepackage{microtype}
 
 % Revision date: maintained by scripts/build_lecture_notes.py. Keep this command.
-\newcommand{\lecturerevised}{2026-10-09 23:50 UTC-07:00}
+\newcommand{\lecturerevised}{2026-11-07 09:52 UTC+00:00}
 \usepackage{eso-pic}
 \AddToShipoutPictureBG{%
   \AtPageLowerLeft{%
@@ -98,33 +99,21 @@ September 3, 2026
 \end{minipage}}
 \end{center}
 
-\noindent\textbf{About these lecture notes.}
-These notes develop a self-contained account of learning, information, and
-structural generalization. They examine the role of learning in constructing
-AI systems and use the boxes question throughout: some inputs have been
-observed, while many others remain unseen. What allows the observations to
-constrain the missing answers?
+What allows observations of some inputs to constrain the answers at unseen
+inputs? These notes examine the role of learning in constructing AI systems
+and develop the boxes example to show why generalization requires structure.
+The unstructured problem gives an exact limit; shared labels and a threshold
+promise illustrate what additional information can make possible.
 
-\medskip
-\noindent\textbf{Scope relative to class.}
-The class reviewed final-exam arrangements and the use of Canvas and Slack;
-the course channels contain the exact administrative details. We discussed
-the usefulness and limitations of asymptotics, the motivation for learning,
-the boxes theorem, private coin flips, and the example in which all boxes
-share one label. The meeting stopped before the proof. These notes also include
-the context-counting calculation, the proof of the boxes theorem, threshold
-generalization, hypothesis classes, and Bayesian and minimax extensions. The
-appendices provide a more detailed proof and probability background.
-
-\medskip
-\noindent\textbf{Reading guide.}
-Read through \cref{sec:take-home} before the next class, which will begin by
-reviewing this material.
-\cref{app:detailed-proof,app:probability} provide reference material to consult as needed.
-\Cref{sec:optional-reading} contains optional reading before the take-home
-messages. Numbered endnotes, bibliographical notes, the glossary, one
-collection of exercises, the appendices, and references follow in that
-order. The actual homework will sample from these exercises and may add others.
+\noindent\textbf{Scope and reading guide.}
+The class discussed asymptotics, the motivation for learning, the boxes
+theorem, private coin flips, and the shared-label example, stopping before
+the proof. The notes add the context-counting calculation, proofs, threshold
+generalization, hypothesis classes, and Bayesian and minimax extensions.
+Read through \cref{sec:take-home}; \cref{sec:optional-reading} is optional,
+and \cref{app:detailed-proof,app:probability} provide reference material.
+The exercises supply a pool from which homework may be selected; homework
+may also include other questions.
 
 \section{Why use machine learning to build AI?}
 \label{sec:why-learning}
@@ -394,7 +383,7 @@ After this choice is made, this choice is evaluated on the
 test index $X$. The evaluation simply compares the result with $f(X)$.
 In case of a match, the learner succeeds, otherwise it suffers a unit loss.
 Formally, if $\hat Y\in \{0,1\}$ is the bit that is to be compared to $f(X)$,
-the learner's loss is $0$ when $\hat Y = f(x)$ and is $1$, otherwise.
+the learner's loss is $0$ when $\hat Y = f(X)$ and is $1$, otherwise.
 Formally, we can write that the learner's loss is
 \begin{align}
 \I( \hat Y \ne f(X) )\,. \label{eq:loss}
@@ -543,7 +532,9 @@ Here, the randomness comes from $(X_1,\dots,X_n,X)$ and $W$. Importantly, $W$
 is independent of $(X_1,\dots,X_n,X)$. This expresses that the algorithm's
 randomization is private.
 We suppress the dependence of the risk on the distribution of the random indices
-in the notation $R(\cA,f)$ to minimize clutter.
+in the notation $R(\cA,f)$ to minimize clutter. Here $R$ denotes the risk of
+an entire learning procedure, including its training experiment. Later we
+use $L$ for the population risk of a fixed predictor.
 
 \subsection{Towards robust learners}
 Our goal is to make the learner robust. Given $\cA$, we evaluate its performance
@@ -1051,16 +1042,22 @@ The next theorem assumes realizability and applies to learners that return
 a consistent member of $\cF$. Such a member exists because the target $f$
 belongs to $\cF$ and agrees with every training label.
 
-For a predictor $g$ and target $f$,
-a distribution $P$ over the inputs,
-write
+Let $X$ have input law $P$. For a predictor $g$ and target $f$, write
 \[
-L_P(g,f)=\P( g(X)\ne f(X))
+L(g,f)=\P(g(X)\ne f(X))
 \]
-where the test point $X$ has distribution $P$ (with symbols, $X\sim P$).
-For a learned predictor $\widehat f$,
-this is the same as its error mass:
-$M=L_P(\widehat f,f)$, extending the notation from the threshold problem.
+for the population risk, suppressing the fixed law $P$. On an observed
+sample $((x_i,y_i))_{i=1}^n$, the empirical risk is
+\[
+L_n(g)=\frac1n\sum_{i=1}^n\I\{g(x_i)\ne y_i\}.
+\]
+We use the standard terms \emph{population risk} for expected loss and
+\emph{empirical risk} for average loss on the sample. Choosing a minimizer
+of $L_n$ over a hypothesis class is \emph{empirical risk minimization}
+(ERM). The terminology applies with other losses as well; we use $L$ and
+$L_n$ for these averages.
+For a learned predictor $\widehat f$, the population risk is its error
+mass $M=L(\widehat f,f)$, extending the notation from the threshold problem.
 
 \begin{theorem}[Generalization by consistency in a finite class]
 \label{thm:finite-class-consistency}
@@ -1069,7 +1066,7 @@ $X_1,\ldots,X_n$ be independent draws from a distribution $P$ on $[N]$.
 Any learner returning a member $\widehat f\in\cF$ consistent with
 $((X_i,f(X_i)))_{i=1}^n$ satisfies, for every $\epsilon\in(0,1)$,
 \begin{equation}
-\P\bigl(L_P(\widehat f,f)>\epsilon\bigr)
+\P\bigl(L(\widehat f,f)>\epsilon\bigr)
 \le |\cF|e^{-n\epsilon}.
 \label{eq:finite-class-consistency}
 \end{equation}
@@ -1078,7 +1075,7 @@ $n\ge\epsilon^{-1}(\log|\cF|+\log(1/\delta))$ suffices for error mass
 at most $\epsilon$ with probability at least $1-\delta$.
 \end{theorem}
 
-\Cref{ex:finite-class-consistency} asks you to prove this theorem. It applies
+\Cref{ex:finite-class-consistency} asks you to prove the theorem. It applies
 to any choice among consistent members, including a randomized choice.
 The restriction to $\cF$ matters: matching observed labels alone gave no
 useful prediction on unseen boxes in the unstructured problem. The theorem
@@ -1438,9 +1435,9 @@ observed sample.
 \item[Empirical risk]
 Average loss on the observed training sample. Under $0$--$1$ loss, for
 $s=((x_i,y_i))_{i=1}^n$ with $n\ge1$, it is
-$\widehat L_s(g)=n^{-1}\sum_{i=1}^n\I\{g(x_i)\ne y_i\}$.
+$L_n(g)=n^{-1}\sum_{i=1}^n\I\{g(x_i)\ne y_i\}$.
 \item[Empirical risk minimization (ERM)]
-Choosing $g\in\operatorname*{arg\,min}_{h\in\cF}\widehat L_s(h)$.
+Choosing $g\in\operatorname*{arg\,min}_{h\in\cF}L_n(h)$.
 Under realizability and noiseless labels, the minimum $0$--$1$ empirical
 risk is zero, so every ERM output is consistent. Different choices among
 minimizers can have different generalization guarantees.
@@ -1458,8 +1455,8 @@ fixed. Writing $R_Q$ makes the sampling law explicit; see \cref{eq:risk}.
 \item[Error mass]
 For fixed $g$, $f$, and input distribution $P$, the probability assigned
 to prediction errors is
-$L_P(g,f)=\sum_{x=1}^N P(x)\I\{g(x)\ne f(x)\}$.
-For a learned $\widehat f$, the quantity $M=L_P(\widehat f,f)$ is random
+$L(g,f)=\sum_{x=1}^N P(x)\I\{g(x)\ne f(x)\}$.
+For a learned $\widehat f$, the quantity $M=L(\widehat f,f)$ is random
 through the training data and any private randomization. If the test input
 has law $P$ and is independent of both, then
 $R(\cA,f)=\mathbb E[M]$, with the expectation over the training data and

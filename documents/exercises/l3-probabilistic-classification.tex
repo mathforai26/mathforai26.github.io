@@ -17,12 +17,12 @@ r_x(a)=\P(a\ne Y\mid X=x).
 \]
 For a classifier $h:\cX\to\{0,1\}$, define its risk by
 \[
-R_{01}(h)=\P(h(X)\ne Y).
+L_{01}(h)=\P(h(X)\ne Y).
 \]
-A classifier is \emph{Bayes-optimal} if it minimizes $R_{01}$ over all
+A classifier is \emph{Bayes-optimal} if it minimizes $L_{01}$ over all
 classifiers $h:\cX\to\{0,1\}$. The minimum value
 \[
-R_{01}^*=\min_{h:\cX\to\{0,1\}}R_{01}(h)
+L_{01}^*=\min_{h:\cX\to\{0,1\}}L_{01}(h)
 \]
 is the \emph{Bayes risk}.
 \begin{enumerate}[(a)]
@@ -32,11 +32,11 @@ h^*(x)=\I\{\eta(x)\ge1/2\}
 \]
 is Bayes-optimal and that the Bayes risk is
 \[
-R_{01}^*=\mathbb E[\min\{\eta(X),1-\eta(X)\}].
+L_{01}^*=\mathbb E[\min\{\eta(X),1-\eta(X)\}].
 \]
 \item Prove the exact excess-risk identity
 \[
-R_{01}(h)-R_{01}^*
+L_{01}(h)-L_{01}^*
 =\mathbb E\left[
 |2\eta(X)-1|\I\{h(X)\ne h^*(X)\}
 \right].
@@ -50,7 +50,7 @@ L_{\log}(q)
 Let $L_{\log}^*=L_{\log}(\eta)$, with the usual conventions at
 $\eta(x)\in\{0,1\}$, and let $h_q(x)=\I\{q(x)\ge1/2\}$. Prove
 \[
-R_{01}(h_q)-R_{01}^*
+L_{01}(h_q)-L_{01}^*
 \le \sqrt{2\bigl(L_{\log}(q)-L_{\log}^*\bigr)}.
 \]
 \item \emph{Optional extension.} Construct a family of probabilistic
