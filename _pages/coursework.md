@@ -21,7 +21,7 @@ Homework materials and submission links are added as assignments are released.
 | Homework 4: optimization geometry and shared representations | 10% | Fri, Nov 6, 11:59 p.m. | [PDF]({{ '/documents/assignments/assignment4.pdf' | relative_url }}) · [LaTeX source bundle]({{ '/documents/assignments/assignment4-source.zip' | relative_url }}) · [Submit on Canvas](https://canvas.ualberta.ca/courses/37231/assignments/827641) |
 | Homework 5: representation, computation, and search | 10% | Fri, Nov 20, 11:59 p.m. | [PDF]({{ '/documents/assignments/assignment5.pdf' | relative_url }}) · [LaTeX source bundle]({{ '/documents/assignments/assignment5-source.zip' | relative_url }}) · [Submit on Canvas](https://canvas.ualberta.ca/courses/37231/assignments/831350) |
 | Research-question revised note | Part of 10% | Sun, Nov 29, 11:59 p.m. | [Guidelines]({% link _pages/research-question.md %}) · [Submit on Canvas](https://canvas.ualberta.ca/courses/37231/assignments/823021) |
-| Homework 6 | 10% | Fri, Dec 4, 11:59 p.m. | To be posted |
+| Homework 6: preferences, feedback, and learning guarantees | 10% | Fri, Dec 4, 11:59 p.m. | [PDF]({{ '/documents/assignments/assignment6.pdf' | relative_url }}) · [LaTeX source bundle]({{ '/documents/assignments/assignment6-source.zip' | relative_url }}) · [Submit on Canvas](https://canvas.ualberta.ca/courses/37231/assignments/836132) |
 | Final oral exam | 20% | Final-examination period | Topic list posted at least one week before |
 
 The raw weights shown for the six homeworks are each 10 percentage points. The two-lowest-grade replacement described in the [syllabus]({% link _pages/syllabus.md %}) is applied before the homework component is calculated.
